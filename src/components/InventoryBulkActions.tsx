@@ -1,8 +1,8 @@
 "use client";
 
-import { Archive, MapPin, RotateCcw, ShieldMinus, ShieldPlus, Tags, Trash2, UserRound, type LucideIcon } from "lucide-react";
+import { Archive, Dna, MapPin, PackageMinus, RotateCcw, ShieldMinus, ShieldPlus, Tags, Trash2, UserRound, type LucideIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { applyProductBulk, applyStockBulk, previewProductBulk, previewStockBulk } from "@/app/inventory/bulk-actions";
 import { useI18n } from "@/components/I18nProvider";
 import { formInlineInputClass } from "@/components/forms";
@@ -12,13 +12,14 @@ import { inventoryControlLevels } from "@/lib/inventory";
 import type { BulkEntry } from "@/lib/inventory-bulk";
 
 type Option = { value: string; label: string };
-type Mode = "move" | "pi" | "classify" | "addControl" | "removeControl";
+type Mode = "move" | "pi" | "takeOut" | "classify" | "addControl" | "removeControl" | "sequences";
 
 const questions: Record<string, string> = {
   archive: "Archive the selected records?",
   restore: "Restore the selected records?",
   move: "Move the selected stock?",
   pi: "Change the PI of the selected stock?",
+  takeOut: "Take containers out of the selected stock?",
   classify: "Change the type of the selected products?",
   addControl: "Add this control level to the selected products?",
   removeControl: "Remove this control level from the selected products?",
@@ -43,6 +44,7 @@ export function InventoryBulkActions({ kind, locations = [], classes = [] }: {
   const [count, setCount] = useState(0);
   const [mode, setMode] = useState<Mode | null>(null);
   const [value, setValue] = useState("");
+  const [takeOut, setTakeOut] = useState({ count: "1", holder: "", place: "" });
   const [busy, setBusy] = useState(false);
   const colon = locale === "zh" ? "：" : ": ";
 
@@ -70,7 +72,7 @@ export function InventoryBulkActions({ kind, locations = [], classes = [] }: {
     return lines.join("\n");
   }
 
-  async function run(action: string, params: Record<string, string | null> = {}) {
+  async function run(action: string, params: Record<string, string | number | null> = {}) {
     const ids = checked().map((box) => box.value);
     if (!ids.length || busy) return;
     setBusy(true);
@@ -106,12 +108,24 @@ export function InventoryBulkActions({ kind, locations = [], classes = [] }: {
     if (next === "move") setValue(locations[0]?.value ?? "");
     else if (next === "classify") setValue(classes[0]?.options[0]?.value ?? "none");
     else if (next === "pi") setValue("");
+    else if (next === "sequences") setValue("fasta");
     else setValue(controlOptions[0].value);
   }
 
+  const applyOnEnter = (event: KeyboardEvent<HTMLInputElement>) => { if (event.key === "Enter") { event.preventDefault(); void apply(); } };
   function apply() {
+    // Sequences are a download, not a change: the selected products' strands as FASTA or CSV.
+    if (mode === "sequences") {
+      const ids = checked().map((box) => box.value);
+      if (ids.length) window.location.href = `/api/inventory/products/sequences?ids=${encodeURIComponent(ids.join(","))}&format=${value}`;
+      return setMode(null);
+    }
     if (mode === "move") return run("move", { locationId: value || null });
     if (mode === "pi") return run("pi", { principalInvestigator: value.trim() || null });
+    if (mode === "takeOut") {
+      if (!takeOut.holder.trim()) return dialog.alert({ title: t("Not changed"), description: t("Enter who takes them.") });
+      return run("takeOut", { count: Math.max(1, Math.floor(Number(takeOut.count)) || 1), holder: takeOut.holder.trim(), place: takeOut.place.trim() });
+    }
     if (mode === "classify") {
       const [scope, key] = value.split(":");
       return run("classify", scope === "type" ? { typeId: key } : scope === "group" ? { groupKey: key } : {});
@@ -122,10 +136,15 @@ export function InventoryBulkActions({ kind, locations = [], classes = [] }: {
   return <>
     <span ref={anchor} className="mr-1 text-sm text-graphite"><span>Selected</span> <strong className="tabular-nums text-ink">{count}</strong></span>
     {mode ? <>
-      {mode === "pi" ? (
-        <input aria-label="New PI" value={value} maxLength={120} placeholder="Zhang Lab" onChange={(event) => setValue(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void apply(); } }} className={fieldClass} />
+      {mode === "takeOut" ? <>
+        <label className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-sm text-graphite"><span>Each</span><input aria-label="Containers from each" type="number" min={1} max={100} step={1} value={takeOut.count} onChange={(event) => setTakeOut({ ...takeOut, count: event.target.value })} onKeyDown={applyOnEnter} className={`${fieldClass} w-16`} /></label>
+        <input aria-label="Recipient" required value={takeOut.holder} maxLength={120} placeholder="Recipient" onChange={(event) => setTakeOut({ ...takeOut, holder: event.target.value })} onKeyDown={applyOnEnter} className={fieldClass} />
+        <input aria-label="Put at (optional)" list="bulk-take-out-places" value={takeOut.place} maxLength={240} placeholder="Put at (optional)" onChange={(event) => setTakeOut({ ...takeOut, place: event.target.value })} onKeyDown={applyOnEnter} className={fieldClass} />
+        <datalist id="bulk-take-out-places">{locations.map((option) => <option key={option.value} value={option.label} />)}</datalist>
+      </> : mode === "pi" ? (
+        <input aria-label="New PI" value={value} maxLength={120} placeholder="Zhang Lab" onChange={(event) => setValue(event.target.value)} onKeyDown={applyOnEnter} className={fieldClass} />
       ) : (
-        <select aria-label={mode === "move" ? "Move to" : mode === "classify" ? "Type" : "Control level"} value={value} onChange={(event) => setValue(event.target.value)} className={fieldClass}>
+        <select aria-label={mode === "move" ? "Move to" : mode === "classify" ? "Type" : mode === "sequences" ? "File format" : "Control level"} value={value} onChange={(event) => setValue(event.target.value)} className={fieldClass}>
           {mode === "move" ? <><option value="">Unassigned</option>{locations.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</> : null}
           {mode === "classify" ? <><option value="none">To be classified</option>{classes.map((group) => (
             <optgroup key={group.label} label={group.label}>
@@ -134,17 +153,20 @@ export function InventoryBulkActions({ kind, locations = [], classes = [] }: {
             </optgroup>
           ))}</> : null}
           {mode === "addControl" || mode === "removeControl" ? controlOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>) : null}
+          {mode === "sequences" ? <><option value="fasta">FASTA</option><option value="csv">CSV</option></> : null}
         </select>
       )}
       <Button type="button" size="sm" variant="primary" disabled={busy} onClick={() => void apply()}>Apply</Button>
       <Button type="button" size="sm" variant="ghost" disabled={busy} onClick={() => setMode(null)}>Cancel</Button>
     </> : kind === "stock" ? <>
       <BulkButton icon={MapPin} label="Move…" disabled={busy} onClick={() => start("move")} />
+      <BulkButton icon={PackageMinus} label="Take out…" disabled={busy} onClick={() => start("takeOut")} />
       <BulkButton icon={UserRound} label="Change PI…" disabled={busy} onClick={() => start("pi")} />
       <BulkButton icon={Archive} label="Archive" disabled={busy} onClick={() => void run("archive")} />
       <BulkButton icon={RotateCcw} label="Restore" disabled={busy} onClick={() => void run("restore")} />
     </> : <>
       <BulkButton icon={Tags} label="Change type…" disabled={busy} onClick={() => start("classify")} />
+      <BulkButton icon={Dna} label="Export sequences…" disabled={busy} onClick={() => start("sequences")} />
       <BulkButton icon={ShieldPlus} label="Add control level…" disabled={busy} onClick={() => start("addControl")} />
       <BulkButton icon={ShieldMinus} label="Remove control level…" disabled={busy} onClick={() => start("removeControl")} />
       <BulkButton icon={Archive} label="Archive" disabled={busy} onClick={() => void run("archive")} />

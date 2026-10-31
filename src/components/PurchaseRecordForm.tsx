@@ -4,8 +4,12 @@ import { ContextProperties } from "./ContextProperties";
 import {newClientMutationId} from "@/lib/client-mutation-id";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { LoaderCircle, Sparkles } from "lucide-react";
+import { readPurchaseInvoice, type InvoiceReading } from "@/app/purchases/invoice-actions";
+import { isPdf } from "@/lib/inventory-recognition";
+import { shrinkPhotoFile } from "@/lib/photo-resize";
 import { formInputClass, preventImplicitEnterSubmit } from "./forms";
-import { Button } from "./ui/Button";
+import { Button, buttonStyles } from "./ui/Button";
 type Purchase = {
   id: string;
   title: string;
@@ -22,10 +26,13 @@ export function PurchaseRecordForm({
   purchase,
   stock = [],
   initial = {},
+  invoiceReader,
 }: {
   initial?: Record<string, string>;
   purchase?: Purchase;
   stock?: { id: string; name: string; unit: string }[];
+  /** Whether an AI service can read this purchase's invoice, and why not. */
+  invoiceReader?: { ready: boolean; reason?: string };
 }) {
   const router = useRouter();
   const [operation, setOperation] = useState(
@@ -35,6 +42,33 @@ export function PurchaseRecordForm({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [key, setKey] = useState<string | null>(null);
+  const [reading, setReading] = useState<{ busy: boolean; result?: InvoiceReading; note?: string }>({ busy: false });
+  // Values read from the invoice; the receipt fields are drawn again (new key) when they are filled in.
+  const [filled, setFilled] = useState<{ values: Record<string, string>; round: number }>({ values: {}, round: 0 });
+  async function readInvoice(chosen?: File) {
+    if (!chosen || !purchase) return;
+    setReading({ busy: true });
+    const data = new FormData();
+    data.set("file", isPdf(chosen) ? chosen : await shrinkPhotoFile(chosen));
+    const result = await readPurchaseInvoice(purchase.id, data);
+    if (result.error) { setReading({ busy: false, note: result.error }); return; }
+    const read = [result.invoiceNumber ? `发票号 ${result.invoiceNumber}` : "", result.quantity ? `数量 ${result.quantity}` : "", result.lotNumber ? `批号 ${result.lotNumber}` : "", result.expiryDate ? `有效期 ${result.expiryDate}` : ""].filter(Boolean);
+    setReading({ busy: false, result, note: [read.length ? `读到：${read.join(" · ")}` : "没有读到可用的信息", ...result.warnings].join(" ") });
+    router.refresh();
+  }
+  function fillReceipt() {
+    const result = reading.result;
+    if (!result) return;
+    setOperation("receive");
+    setFilled({ values: { quantity: result.quantity ?? "", lotNumber: result.lotNumber ?? "", expiryDate: result.expiryDate ?? "" }, round: filled.round + 1 });
+  }
+  async function saveInvoiceNumber() {
+    if (!purchase || !reading.result?.invoiceNumber) return;
+    const response = await fetch(`/api/purchases/${purchase.id}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "invoice", invoiceStatus: "available", invoiceReference: reading.result.invoiceNumber, clientMutationId: newClientMutationId() }) });
+    const result = await response.json();
+    setReading({ ...reading, note: response.ok ? `已写入发票编号 ${reading.result.invoiceNumber}` : result.error });
+    if (response.ok) router.refresh();
+  }
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setPending(true);
@@ -49,6 +83,8 @@ export function PurchaseRecordForm({
             ...data,
             action: operation,
             quantity: data.quantity ? Number(data.quantity) : undefined,
+            lotNumber: data.lotNumber || undefined,
+            expiryDate: data.expiryDate || undefined,
             ...(operation === "details"
               ? { actualAmount: data.actualAmount || null }
               : {}),
@@ -95,7 +131,7 @@ export function PurchaseRecordForm({
         aria-label={label}
         type={type}
         required={required}
-        defaultValue={initial[name] ?? ""}
+        defaultValue={filled.values[name] || initial[name] || ""}
         step={type === "number" ? "any" : undefined}
         min={type === "number" ? "0" : undefined}
         className={formInputClass}
@@ -146,6 +182,19 @@ export function PurchaseRecordForm({
         </>
       ) : (
         <>
+          {invoiceReader ? (
+            <div className="flex flex-wrap items-center gap-3 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/50 px-3 py-2 text-sm sm:col-span-2">
+              <label className={buttonStyles({ variant: invoiceReader.ready ? "ai" : "ai-off", size: "sm", className: invoiceReader.ready && !reading.busy ? "cursor-pointer" : "cursor-not-allowed" })}>
+                {reading.busy ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden /> : <Sparkles className="h-4 w-4" aria-hidden />}识别发票
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,application/pdf" aria-label="识别发票" className="sr-only" disabled={!invoiceReader.ready || reading.busy} onChange={(event) => { void readInvoice(event.target.files?.[0]); event.target.value = ""; }} />
+              </label>
+              <span className="min-w-0 flex-1 text-graphite">{reading.busy ? "正在读取…" : reading.note ?? (invoiceReader.ready ? "读出批号、数量、有效期和发票号，核对后再保存；原文件会留在这条采购上。" : invoiceReader.reason)}</span>
+              {reading.result ? <>
+                <Button type="button" size="sm" variant="secondary" onClick={fillReceipt}>填入收货</Button>
+                {reading.result.invoiceNumber ? <Button type="button" size="sm" variant="secondary" onClick={saveInvoiceNumber}>写入发票编号</Button> : null}
+              </> : null}
+            </div>
+          ) : null}
           <label className="text-sm">
             操作
             <select
@@ -164,12 +213,14 @@ export function PurchaseRecordForm({
           </label>
           {operation === "receive" ? (
             <>
-              {field(
-                "quantity",
-                `本次收货（${purchase.unit}）`,
-                "number",
-                true,
-              )}
+              <span key={`quantity-${filled.round}`} className="contents">
+                {field(
+                  "quantity",
+                  `本次收货（${purchase.unit}）`,
+                  "number",
+                  true,
+                )}
+              </span>
               <label className="text-sm">
                 库存处理
                 <select
@@ -183,6 +234,7 @@ export function PurchaseRecordForm({
                   <option value="existing">补充已有库存</option>
                 </select>
               </label>
+              {inventory === "new" ? <span key={`lot-${filled.round}`} className="contents">{field("lotNumber", "批号")}{field("expiryDate", "有效期", "date")}</span> : null}
             </>
           ) : null}
           {operation === "link" ||

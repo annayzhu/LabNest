@@ -2,7 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GitMerge, Pencil, Plus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { InventoryBackLink } from "@/components/InventoryBackLink";
 import { InventoryDocuments } from "@/components/InventoryDocuments";
+import { InventoryNav } from "@/components/InventoryNav";
+import { ProductSequences } from "@/components/ProductSequences";
 import { Fact, Panel, QuantityText, Row, SideSection } from "@/components/InventoryDetail";
 import { InventoryKitComponents } from "@/components/InventoryKitComponents";
 import { InventoryLifecycleMenu } from "@/components/InventoryLifecycleMenu";
@@ -15,6 +18,8 @@ import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
 import { controlLevelName, deleteBlockers, isStrictlyControlled, lotRiskFlags, lowStockAdvice, productSafetyStock } from "@/lib/inventory";
 import { inventoryGroupName, inventoryTypeFields } from "@/lib/inventory-types";
+import { sequenceKind } from "@/lib/product-sequences";
+import { readProductSequences } from "@/lib/product-sequences.server";
 import { deleteInventoryProduct, setInventoryProductArchived } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -34,7 +39,10 @@ export default async function InventoryProductPage({ params }: { params: Promise
     },
   });
   if (!product) notFound();
-  const documents = await prisma.attachmentLink.findMany({ where: { targetType: "inventory_product", targetId: id }, include: { attachment: { select: { originalFilename: true, size: true } } }, orderBy: { createdAt: "asc" } });
+  const [documents, sequences] = await Promise.all([
+    prisma.attachmentLink.findMany({ where: { targetType: "inventory_product", targetId: id }, include: { attachment: { select: { originalFilename: true, size: true } } }, orderBy: { createdAt: "asc" } }),
+    readProductSequences(prisma, product.entityId, product.type?.key),
+  ]);
 
   const fields = product.type ? inventoryTypeFields(product.type.fieldDefinitions) : [];
   const values = product.fieldValues as Record<string, string>;
@@ -48,18 +56,22 @@ export default async function InventoryProductPage({ params }: { params: Promise
   return (
     <AppShell>
       <div className="space-y-4">
-        <PageHeader
-          identifier={[product.brand, product.catalogNumber].filter(Boolean).join(" · ") || undefined}
-          title={product.name}
-          actions={<>
-            {product.status === "active" ? <Link href={`/inventory/new?product=${product.id}`} className={primary}><Plus className="h-4 w-4" aria-hidden />Register stock</Link> : null}
-            <Link href={`/inventory/products/${product.id}/edit`} className={secondary}><Pencil className="h-4 w-4" aria-hidden />Edit</Link>
-            <PageActionsMenu>
-              <Link href={`/inventory/products/merge?keep=${product.id}`}><GitMerge className="h-4 w-4" aria-hidden />Merge another product into this…</Link>
-              <InventoryLifecycleMenu id={product.id} name={product.name} archived={product.status === "archived"} blockers={deleteBlockers({ lots: product.items.length })} archiveAction={setInventoryProductArchived} deleteAction={deleteInventoryProduct} />
-            </PageActionsMenu>
-          </>}
-        />
+        <InventoryNav current="products" />
+        <div className="space-y-1">
+          <InventoryBackLink href="/inventory/products" label="Products" />
+          <PageHeader
+            identifier={[product.brand, product.catalogNumber].filter(Boolean).join(" · ") || undefined}
+            title={product.name}
+            actions={<>
+              {product.status === "active" ? <Link href={`/inventory/new?product=${product.id}`} className={primary}><Plus className="h-4 w-4" aria-hidden />Register stock</Link> : null}
+              <Link href={`/inventory/products/${product.id}/edit`} className={secondary}><Pencil className="h-4 w-4" aria-hidden />Edit</Link>
+              <PageActionsMenu>
+                <Link href={`/inventory/products/merge?keep=${product.id}`}><GitMerge className="h-4 w-4" aria-hidden />Merge another product into this…</Link>
+                <InventoryLifecycleMenu id={product.id} name={product.name} archived={product.status === "archived"} blockers={deleteBlockers({ lots: product.items.length })} archiveAction={setInventoryProductArchived} deleteAction={deleteInventoryProduct} />
+              </PageActionsMenu>
+            </>}
+          />
+        </div>
 
         <section aria-label="Product summary" className="grid grid-cols-2 divide-x divide-y divide-hairline overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface md:grid-cols-4 md:divide-y-0">
           <Fact label="Stock" value={total !== undefined ? <QuantityText quantity={total} unit={product.lowThresholdUnit} /> : <span className="text-sm text-muted">Set a safety stock to add up lots</span>} detail={product.lowThreshold != null ? <><span>Safety stock</span> <QuantityText quantity={product.lowThreshold} unit={product.lowThresholdUnit} /></> : null} />
@@ -85,6 +97,12 @@ export default async function InventoryProductPage({ params }: { params: Promise
               />
             </Panel>
 
+            {sequenceKind(product.type?.key) || sequences.length ? (
+              <Panel title="Sequences">
+                <ProductSequences productId={product.id} strands={sequences} />
+              </Panel>
+            ) : null}
+
             {showKit ? (
               <Panel title="Kit components">
                 <InventoryKitComponents productId={product.id} components={product.kitComponents.map(({ id: componentId, name, spec, storageCondition }) => ({ id: componentId, name, spec, storageCondition }))} />
@@ -108,7 +126,8 @@ export default async function InventoryProductPage({ params }: { params: Promise
               <Row label="Catalog" value={product.catalogNumber} mono />
               <Row label="English name" value={product.englishName} />
               <Row label="CAS" value={product.casNumber} mono />
-              {product.entity ? <Row label="Made from" value={<Link href="/entities" className="text-moss hover:underline">{product.entity.name}</Link>} /> : null}
+              {/* A sequence product's entity only holds its strands, shown under Sequences. */}
+              {product.entity && !sequenceKind(product.type?.key) ? <Row label="Made from" value={<Link href="/entities" className="text-moss hover:underline">{product.entity.name}</Link>} /> : null}
             </SideSection>
             {fields.length ? (
               <SideSection title={product.type?.label ?? "Fields"}>

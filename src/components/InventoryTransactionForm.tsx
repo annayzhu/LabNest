@@ -6,6 +6,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { formInputClass, formLabelClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
 import type { FormAction } from "@/lib/form-actions";
+import { quantityStep } from "@/lib/inventory";
 import { enqueueMobileMutation } from "@/lib/mobile-mutation-queue";
 
 type ExperimentOption = { id: string; title: string; project: { name: string } | null };
@@ -66,6 +67,9 @@ export function InventoryTransactionForm({
     }
   }
 
+  // Whole bottles, mL to 0.001: the browser refuses finer amounts before anything is sent (Q172).
+  const step = quantityStep(unit);
+
   return (
     <form ref={form} action={formAction} onSubmit={handleSubmit} className="grid gap-3 sm:grid-cols-3">
       <label>
@@ -80,7 +84,7 @@ export function InventoryTransactionForm({
       <label>
         <span className={formLabelClass}>Amount</span>
         <span className="relative block">
-          <input required type="number" min="0.000001" step="any" name="quantity" className={`${formInputClass} pr-12`} />
+          <input required type="number" min={step} step={step} name="quantity" className={`${formInputClass} pr-12`} />
           <span className="pointer-events-none absolute bottom-0 right-3 flex h-[var(--ln-control-height-lg)] items-center font-mono text-xs text-muted">{unit}</span>
         </span>
       </label>

@@ -3,15 +3,17 @@ import { CopyCheck, Plus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CollectionToolbar, collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
 import { InventoryBulkActions } from "@/components/InventoryBulkActions";
+import { InventoryReturnPoint } from "@/components/InventoryBackLink";
 import { InventoryNav } from "@/components/InventoryNav";
 import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
 import { QuantityText } from "@/components/InventoryDetail";
 import { prisma } from "@/lib/db";
-import { firstOptionSearchParam, firstSearchParam, type PageSearchParams } from "@/lib/filters";
+import { filterHref, firstOptionSearchParam, firstSearchParam, type PageSearchParams } from "@/lib/filters";
 import { controlLevelName, isStrictlyControlled, productSafetyStock } from "@/lib/inventory";
 import { duplicateOverview } from "@/lib/inventory-products.server";
+import { strandWhere } from "@/lib/inventory-search";
 import { inventoryGroupName } from "@/lib/inventory-types";
 import { objectStatusOptions } from "@/lib/status-options";
 
@@ -34,7 +36,11 @@ export default async function InventoryProductsPage({ searchParams }: { searchPa
         ...(status ? { status } : {}),
         ...(groupKey ? { groupKey: groupKey === "none" ? null : groupKey } : {}),
         ...(typeId ? { typeId } : {}),
-        ...(query ? { OR: [{ name: contains(query) }, { englishName: contains(query) }, { brand: contains(query) }, { catalogNumber: contains(query) }, { casNumber: contains(query) }] } : {}),
+        ...(query ? { OR: [
+          { name: contains(query) }, { englishName: contains(query) }, { brand: contains(query) }, { catalogNumber: contains(query) }, { casNumber: contains(query) },
+          ...strandWhere(query).map((entity) => ({ entity })),
+        ] } : {}),
+        ...(flag === "sequences" ? { entity: { sequenceLinks: { some: {} } } } : {}),
       },
       include: { type: { select: { label: true } }, items: { select: { currentQuantity: true, unit: true, quantityRecorded: true, status: true } } },
       orderBy: sort === "updated_desc" ? { updatedAt: "desc" } : { name: "asc" },
@@ -68,6 +74,7 @@ export default async function InventoryProductsPage({ searchParams }: { searchPa
       <div className="space-y-4">
         <PageHeader title="Inventory" />
         <InventoryNav current="products" />
+        <InventoryReturnPoint href={filterHref("/inventory/products", { q: query, group: groupKey, type: typeId, flag, status, sort: sort === "name_asc" ? undefined : sort })} label="Products" />
         <CollectionToolbar
           path="/inventory/products"
           query={query}
@@ -79,7 +86,7 @@ export default async function InventoryProductsPage({ searchParams }: { searchPa
           filters={[
             { name: "group", label: "groups", value: groupKey, options: [...groups.map((group) => ({ value: group.key, label: inventoryGroupName(group) })), { value: "none", label: "To be classified" }] },
             { name: "type", label: "types", value: typeId, options: types.map((type) => ({ value: type.id, label: type.label })) },
-            { name: "flag", label: "attention", value: flag, options: [{ value: "low", label: "Low stock" }, { value: "sds", label: "SDS missing" }] },
+            { name: "flag", label: "attention", value: flag, options: [{ value: "low", label: "Low stock" }, { value: "sds", label: "SDS missing" }, { value: "sequences", label: "Has sequences" }] },
             { name: "status", label: "statuses", value: status, options: objectStatusOptions },
           ]}
           sortOptions={[{ value: "name_asc", label: "Name A–Z" }, { value: "updated_desc", label: "Recently updated" }]}

@@ -2,12 +2,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { newClientMutationId } from "@/lib/client-mutation-id";
-import { formInputClass, preventImplicitEnterSubmit } from "./forms";
+import { useI18n } from "./I18nProvider";
+import { formInputClass, formLabelClass, preventImplicitEnterSubmit } from "./forms";
 import { Button } from "./ui/Button";
 
 /** Freeze bottle IDs and retry keys before issuing, so a lost response cannot issue extra bottles. */
-export function InventoryBatchIssue({ itemId, available }: { itemId: string; available: string[] }) {
+export function InventoryBatchIssue({ itemId, available, placesList }: { itemId: string; available: string[]; placesList: string }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [quantity, setQuantity] = useState("1");
   const [holder, setHolder] = useState("");
   const [location, setLocation] = useState("");
@@ -18,7 +20,7 @@ export function InventoryBatchIssue({ itemId, available }: { itemId: string; ava
     event.preventDefault();
     const count = Number(quantity);
     if (!attempt && (!Number.isInteger(count) || count < 1 || count > available.length)) {
-      setMessage("领用数量应为当前可领实物范围内的整数。"); return;
+      setMessage(t(`Take out a whole number from 1 to ${available.length}.`)); return;
     }
     const batch = attempt ?? { holder, location, rows: available.slice(0, count).map(id => ({ id, key: newClientMutationId() })) };
     setAttempt(batch); setBusy(true); setMessage("");
@@ -30,17 +32,17 @@ export function InventoryBatchIssue({ itemId, available }: { itemId: string; ava
         if (!response.ok) throw new Error(result.error);
         completed++;
       }
-      setMessage(`已领用 ${completed} 个实物；未自动开封或耗尽。`); setAttempt(null);
+      setMessage(t(`Took out ${completed}; none was marked opened or empty.`)); setAttempt(null);
     } catch (error) {
-      setMessage(`本批已确认 ${completed}/${batch.rows.length}；${error instanceof Error ? error.message : "网络失败"}。重试保留原瓶编号，不重复领用。`);
+      setMessage(`${t(`${completed} of ${batch.rows.length} taken out.`)} ${error instanceof Error ? t(error.message) : t("The network failed.")} ${t("Retrying takes the same containers, so none is taken twice.")}`);
     } finally { setBusy(false); router.refresh(); }
   }
   return <form onSubmit={issue} onKeyDown={preventImplicitEnterSubmit} className="flex flex-wrap items-end gap-3 border-b border-hairline py-3">
-    <label className="text-sm">领用数量<input className={formInputClass} type="number" min="1" step="1" value={quantity} disabled={busy || !!attempt} onChange={e => setQuantity(e.target.value)} required /></label>
-    <label className="text-sm">领用人<input className={formInputClass} value={holder} disabled={busy || !!attempt} onChange={e => setHolder(e.target.value)} required /></label>
-    <label className="text-sm">领用位置<input className={formInputClass} value={location} disabled={busy || !!attempt} onChange={e => setLocation(e.target.value)} /></label>
-    <Button type="submit" disabled={busy || (!attempt && !available.length)}>{attempt ? "重试原批领用" : "确认批量领用"}</Button>
-    {attempt && !busy ? <Button type="button" onClick={() => { setAttempt(null); setMessage("未继续执行本批剩余操作；已领用实物及历史保留。"); }}>结束本批</Button> : null}
+    <label className="w-24"><span className={formLabelClass}>How many</span><input className={formInputClass} type="number" min="1" max={available.length} step="1" value={quantity} disabled={busy || !!attempt} onChange={e => setQuantity(e.target.value)} required /></label>
+    <label><span className={formLabelClass}>Recipient</span><input className={formInputClass} value={holder} disabled={busy || !!attempt} onChange={e => setHolder(e.target.value)} required /></label>
+    <label><span className={formLabelClass}>Put at (optional)</span><input className={formInputClass} list={placesList} value={location} disabled={busy || !!attempt} onChange={e => setLocation(e.target.value)} placeholder="B302 bench" /></label>
+    <Button type="submit" disabled={busy || (!attempt && !available.length)}>{attempt ? "Retry the same batch" : "Take out"}</Button>
+    {attempt && !busy ? <Button type="button" onClick={() => { setAttempt(null); setMessage(t("Stopped; what was taken out stays recorded.")); }}>Stop this batch</Button> : null}
     {message ? <p role="status" className="basis-full text-sm">{message}</p> : null}
   </form>;
 }

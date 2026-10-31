@@ -1,5 +1,6 @@
 import {purchaseInput} from "@/lib/purchase-records";
 import { linkInventoryProduct, lotIdentity } from "@/lib/inventory-products.server";
+import { quantityPrecisionProblem } from "@/lib/inventory";
 import { inventoryClassFromCategory } from "@/lib/inventory-types";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
@@ -116,6 +117,7 @@ type ResultData = {
 type InventoryData = {
   kind: "inventory";
   inventoryId?:string;
+  productId?: string;
   importMode:"balance"|"arrival";
   name: string;
   englishName?: string;
@@ -134,7 +136,6 @@ type InventoryData = {
   managementMode: "information"|"precise"|"package";
   unit: string;
   lowThreshold?: number;
-  concentration?: string;
   locationId?: string;
   positionCode?: string;
   expiryDate?: Date;
@@ -268,7 +269,7 @@ function uniqueMatch<T>(items: T[], label: string): { value?: T; error?: string 
 }
 
 export async function validateStructuredImport(parsed: ParsedStructuredFile): Promise<StructuredImportValidation> {
-  const [projects, plans, protocols, experiments, locations, inventoryItems, duplicateAttachment, inventoryTypes] = await Promise.all([
+  const [projects, plans, protocols, experiments, locations, inventoryItems, duplicateAttachment, inventoryTypes, inventoryProducts] = await Promise.all([
     prisma.project.findMany(),
     prisma.researchPlan.findMany({ include: { protocols: true } }),
     prisma.protocol.findMany({ include: { versions: { orderBy: { revision: "desc" } }, researchPlans: true } }),
@@ -277,6 +278,7 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
     prisma.inventoryItem.findMany({ select: { id: true, aliquotCode: true, barcode: true } }),
     prisma.attachment.findFirst({ where: { sha256: parsed.checksum, links: { some: { linkType: "structured_import_source" } } }, select: { id: true } }),
     prisma.scientificSchemaDefinition.findMany({ where: { inventoryGroupKey: { not: null } }, select: { key: true, label: true, inventoryGroupKey: true } }),
+    parsed.module === "inventory" ? prisma.inventoryProduct.findMany({ select: { id: true } }) : Promise.resolve([]),
   ]);
 
   const prepared: PreparedRow[] = [];
@@ -459,6 +461,9 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
         ? undefined
         : numberValue(record.lowThreshold, "Safety stock", errors);
       if (lowThreshold !== undefined && lowThreshold < 0) errors.push("Safety stock cannot be negative.");
+      // Amounts keep their unit's precision (Q172): whole bottles, mL to 0.001.
+      const unitText = optionalText(record.unit);
+      if (unitText) errors.push(...new Set([quantityRecorded ? quantity : undefined, lowThreshold].flatMap((amount) => amount === undefined ? [] : quantityPrecisionProblem(amount, unitText) ?? [])));
       const freezeThawCount = numberValue(record.freezeThawCount, "Freeze-thaw count", errors, 0);
       if (!Number.isInteger(freezeThawCount) || freezeThawCount < 0) errors.push("Freeze-thaw count must be a non-negative integer.");
       const locationName = optionalText(record.location);
@@ -467,10 +472,12 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
       const inventoryId=optionalText(record.inventoryId);
       if(inventoryId&&!inventoryItems.some(item=>item.id===inventoryId))errors.push("Existing Inventory ID was not found; no name-based matching is performed.");
       const importMode=enumValue(record.importMode,["balance","arrival"] as const,"balance","Import meaning",errors);
+      const productId = optionalText(record.productId);
+      if (productId && !inventoryProducts.some((product) => product.id === productId)) errors.push("Existing product ID was not found.");
       const category = optionalText(record.category);
       // A category LabNest does not know leaves the product unclassified for a person to decide.
-      if (!inventoryId && category && !inventoryClassFromCategory(category, inventoryTypes).groupKey) warnings.push(`Category “${category}” is not an inventory type or 大类; the product will be To be classified.`);
-      data = { kind: "inventory", inventoryId,importMode,managementMode,quantityRecorded,name, englishName: optionalText(record.englishName), category, brand: optionalText(record.brand), principalInvestigator: optionalText(record.principalInvestigator), containerType: optionalText(record.containerType), barcode: optionalText(record.barcode), aliquotCode, lotNumber: optionalText(record.lotNumber), vendor: optionalText(record.vendor), catalogNumber: optionalText(record.catalogNumber), casNumber: optionalText(record.casNumber), currentQuantity: quantity, unit: !quantityRecorded && managementMode === "information" ? optionalText(record.unit) ?? "未指定" : requiredText(record.unit, "Unit", errors), lowThreshold, concentration: optionalText(record.concentration), locationId: locationMatch?.value?.id, positionCode: optionalText(record.positionCode), expiryDate: dateValue(record.expiryDate, "Expiry date", errors), storageCondition: optionalText(record.storageCondition), freezeThawCount, status: enumValue(record.status, ["active", "inactive", "archived"] as const, "active", "Status", errors), notes: optionalText(record.notes) };
+      if (!inventoryId && !productId && category && !inventoryClassFromCategory(category, inventoryTypes).groupKey) warnings.push(`Category “${category}” is not an inventory type or 大类; the product will be To be classified.`);
+      data = { kind: "inventory", inventoryId, productId, importMode,managementMode,quantityRecorded,name, englishName: optionalText(record.englishName), category, brand: optionalText(record.brand), principalInvestigator: optionalText(record.principalInvestigator), containerType: optionalText(record.containerType), barcode: optionalText(record.barcode), aliquotCode, lotNumber: optionalText(record.lotNumber), vendor: optionalText(record.vendor), catalogNumber: optionalText(record.catalogNumber), casNumber: optionalText(record.casNumber), currentQuantity: quantity, unit: !quantityRecorded && managementMode === "information" ? optionalText(record.unit) ?? "未指定" : requiredText(record.unit, "Unit", errors), lowThreshold, locationId: locationMatch?.value?.id, positionCode: optionalText(record.positionCode), expiryDate: dateValue(record.expiryDate, "Expiry date", errors), storageCondition: optionalText(record.storageCondition), freezeThawCount, status: enumValue(record.status, ["active", "inactive", "archived"] as const, "active", "Status", errors), notes: optionalText(record.notes) };
     }
 
     if (parsed.module === "reports") {
@@ -630,10 +637,10 @@ export async function commitStructuredImport(
         createdTargets.push({targetType:"inventory_item",targetId:item.id,href:`/inventory/${item.id}`});
       }
       if (data.kind === "inventory" && !data.inventoryId) {
-        // The row's product is found by brand + catalogue number, or made and classified from its category.
-        const product = await linkInventoryProduct(tx, { name: data.name, englishName: data.englishName, brand: data.brand, vendor: data.vendor, catalogNumber: data.catalogNumber, casNumber: data.casNumber, category: data.category });
+        // The row names its product, or it is found by brand + catalogue number, or made and classified from its category.
+        const product = data.productId ? await tx.inventoryProduct.findUniqueOrThrow({ where: { id: data.productId }, include: { type: { select: { key: true } } } }) : await linkInventoryProduct(tx, { name: data.name, englishName: data.englishName, brand: data.brand, vendor: data.vendor, catalogNumber: data.catalogNumber, casNumber: data.casNumber, category: data.category });
         if (data.lowThreshold !== undefined && product.lowThreshold == null) await tx.inventoryProduct.update({ where: { id: product.id }, data: { lowThreshold: data.lowThreshold, lowThresholdUnit: data.unit } });
-        const record = await tx.inventoryItem.create({ data: { ...lotIdentity(product), productId: product.id, principalInvestigator: data.principalInvestigator, containerType: data.containerType, barcode: data.barcode, aliquotCode: data.aliquotCode, lotNumber: data.lotNumber, vendor: data.vendor, managementMode:data.managementMode,quantityRecorded:data.quantityRecorded,currentQuantity: data.currentQuantity, unit: data.unit, lowThreshold: data.lowThreshold, concentration: data.concentration, locationId: data.locationId, positionCode: data.positionCode, expiryDate: data.expiryDate, storageCondition: data.storageCondition, freezeThawCount: data.freezeThawCount, status: data.status, notes: data.notes } });
+        const record = await tx.inventoryItem.create({ data: { ...lotIdentity(product), productId: product.id, principalInvestigator: data.principalInvestigator, containerType: data.containerType, barcode: data.barcode, aliquotCode: data.aliquotCode, lotNumber: data.lotNumber, vendor: data.vendor, managementMode:data.managementMode,quantityRecorded:data.quantityRecorded,currentQuantity: data.currentQuantity, unit: data.unit, lowThreshold: data.lowThreshold, locationId: data.locationId, positionCode: data.positionCode, expiryDate: data.expiryDate, storageCondition: data.storageCondition, freezeThawCount: data.freezeThawCount, status: data.status, notes: data.notes } });
         if(data.managementMode==="package"&&data.currentQuantity>0)await tx.inventoryContainer.createMany({data:Array.from({length:data.currentQuantity},()=>({inventoryItemId:record.id,location:data.positionCode}))});
         if (data.quantityRecorded && data.currentQuantity !== 0) await tx.inventoryTransaction.create({ data: { inventoryItemId: record.id, type: data.importMode === "arrival" ? "receive" : "adjust", quantityChange: data.currentQuantity, unit: data.unit, toLocationId: data.locationId, notes: `${data.importMode === "arrival" ? "Arrival" : "Opening balance; no inferred prior movements"}: ${parsed.fileName}.` } });
         await tx.activityLog.create({ data: { action: "structured_import", targetType: "inventory_item", targetId: record.id, metadataJson: sourceMetadata } });

@@ -7,11 +7,13 @@ import type { Prisma } from "@/generated/prisma/client";
 import { keepAttachment } from "@/lib/attachment-files";
 import { prisma } from "@/lib/db";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
-import { deleteBlockers, inventoryControlKeys, isStrictlyControlled, productDocumentKinds } from "@/lib/inventory";
+import { assertPrecision, deleteBlockers, inventoryControlKeys, isStrictlyControlled, productDocumentKinds } from "@/lib/inventory";
 import { mergeProductPlan, pairKey } from "@/lib/inventory-duplicates";
 import { manualFileProblem } from "@/lib/inventory-manuals";
 import { deleteProduct, productWithCatalog, syncProductLots } from "@/lib/inventory-products.server";
 import { inventoryTypeFields, isInventoryGroupKey, type InventoryTypeField } from "@/lib/inventory-types";
+import { sequenceKind } from "@/lib/product-sequences";
+import { saveProductSequences } from "@/lib/product-sequences.server";
 
 type Tx = Prisma.TransactionClient;
 
@@ -68,10 +70,10 @@ function fieldValues(formData: FormData, fields: InventoryTypeField[]) {
 
 /** The type decides the 大类; without one, the chosen 大类 (or none: 待归类). A disabled type stays only where it already is. */
 async function classify(tx: Tx, parsed: z.infer<typeof productSchema>, currentTypeId?: string | null) {
-  if (!parsed.typeId) return { typeId: null, groupKey: parsed.groupKey && isInventoryGroupKey(parsed.groupKey) ? parsed.groupKey : null, fields: [] as InventoryTypeField[] };
+  if (!parsed.typeId) return { typeId: null, typeKey: null, groupKey: parsed.groupKey && isInventoryGroupKey(parsed.groupKey) ? parsed.groupKey : null, fields: [] as InventoryTypeField[] };
   const type = await tx.scientificSchemaDefinition.findUnique({ where: { id: parsed.typeId } });
   if (!type?.inventoryGroupKey || (!type.enabled && type.id !== currentTypeId)) throw new Error("Choose an inventory type that is in use.");
-  return { typeId: type.id, groupKey: type.inventoryGroupKey, fields: inventoryTypeFields(type.fieldDefinitions) };
+  return { typeId: type.id, typeKey: type.key, groupKey: type.inventoryGroupKey, fields: inventoryTypeFields(type.fieldDefinitions) };
 }
 
 async function assertNoDuplicate(tx: Tx, parsed: z.infer<typeof productSchema>) {
@@ -86,15 +88,26 @@ async function assertControlFits(tx: Tx, productId: string, levels: string[]) {
   if (loose) throw new Error(`Highly toxic and drug-precursor stock must be recorded with precise use; switch ${loose} lot${loose === 1 ? "" : "s"} to precise use first.`);
 }
 
+/**
+ * The entity a product points at. A product of a sequence type points at the entity its strands hang on, made with
+ * the first strand (Q185); any other product keeps the entity chosen in the form.
+ */
+async function productEntity(tx: Tx, parsed: z.infer<typeof productSchema>, classified: Awaited<ReturnType<typeof classify>>, formData: FormData, currentEntityId: string | null) {
+  const kind = sequenceKind(classified.typeKey);
+  if (!kind) return parsed.entityId ?? null;
+  const typed = Object.fromEntries(kind.strands.map((strand) => [strand.role, String(formData.get(`sequence:${strand.role}`) ?? "")]));
+  return saveProductSequences(tx, { name: parsed.name, entityId: currentEntityId }, kind, typed);
+}
+
 function productData(parsed: z.infer<typeof productSchema>, classified: Awaited<ReturnType<typeof classify>>, values: Record<string, string>) {
   if (parsed.lowThreshold !== undefined && !parsed.lowThresholdUnit) throw new Error("Choose the unit of the safety stock.");
+  if (parsed.lowThreshold !== undefined && parsed.lowThresholdUnit) assertPrecision(parsed.lowThreshold, parsed.lowThresholdUnit);
   return {
     name: parsed.name,
     englishName: parsed.englishName ?? null,
     brand: parsed.brand ?? null,
     catalogNumber: parsed.catalogNumber ?? null,
     casNumber: parsed.casNumber ?? null,
-    entityId: parsed.entityId ?? null,
     typeId: classified.typeId,
     groupKey: classified.groupKey,
     fieldValues: values,
@@ -118,7 +131,8 @@ export async function createInventoryProduct(_previous: FormActionState, formDat
     id = await prisma.$transaction(async (tx) => {
       const classified = await classify(tx, parsed);
       await assertNoDuplicate(tx, parsed);
-      const product = await tx.inventoryProduct.create({ data: productData(parsed, classified, fieldValues(formData, classified.fields)) });
+      const entityId = await productEntity(tx, parsed, classified, formData, null);
+      const product = await tx.inventoryProduct.create({ data: { ...productData(parsed, classified, fieldValues(formData, classified.fields)), entityId } });
       await tx.activityLog.create({ data: { action: "create", targetType: "inventory_product", targetId: product.id, metadataJson: { name: product.name, typeId: product.typeId, groupKey: product.groupKey } } });
       return product.id;
     });
@@ -141,7 +155,8 @@ export async function updateInventoryProduct(_previous: FormActionState, formDat
       const classified = await classify(tx, parsed, current.typeId);
       await assertNoDuplicate(tx, parsed);
       await assertControlFits(tx, id, parsed.controlLevels);
-      await tx.inventoryProduct.update({ where: { id }, data: productData(parsed, classified, fieldValues(formData, classified.fields)) });
+      const entityId = await productEntity(tx, parsed, classified, formData, current.entityId);
+      await tx.inventoryProduct.update({ where: { id }, data: { ...productData(parsed, classified, fieldValues(formData, classified.fields)), entityId } });
       await syncProductLots(tx, id);
       await tx.activityLog.create({ data: { action: "update", targetType: "inventory_product", targetId: id, metadataJson: { previous: { name: current.name, typeId: current.typeId, groupKey: current.groupKey, controlLevels: current.controlLevels }, next: { name: parsed.name, typeId: classified.typeId, groupKey: classified.groupKey, controlLevels: parsed.controlLevels } } } });
     });

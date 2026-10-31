@@ -1,24 +1,30 @@
 import { deleteBlockers, isStrictlyControlled } from "./inventory";
 
 // What a bulk action on the stock or product list does to each selected record, worked out before anything is written
-// (docs/modules/inventory/bulk-duplicates-20261030/PLAN.md). Quantities never change in bulk; they change through movements.
+// (docs/modules/inventory/bulk-duplicates-20261030/PLAN.md). Quantities change only through movements; a bulk take-out
+// moves containers out of the store one by one, as on the stock page.
 
 type BulkOutcome = "change" | "delete" | "archive" | "skip";
 export type BulkEntry = { id: string; name: string; outcome: BulkOutcome; reason?: string };
 
-export const stockBulkActions = ["archive", "restore", "move", "pi", "delete"] as const;
+export const stockBulkActions = ["archive", "restore", "move", "pi", "takeOut", "delete"] as const;
 type StockBulkAction = (typeof stockBulkActions)[number];
 export const productBulkActions = ["archive", "restore", "classify", "addControl", "removeControl", "delete"] as const;
 type ProductBulkAction = (typeof productBulkActions)[number];
 
 export function bulkStockPlan(
   action: StockBulkAction,
-  rows: (Row & { locationId: string | null; principalInvestigator: string | null; blockers: string[] })[],
-  params: { locationId?: string | null; principalInvestigator?: string | null } = {},
+  rows: (Row & { locationId: string | null; principalInvestigator: string | null; blockers: string[]; managementMode: string; inStore: number })[],
+  params: { locationId?: string | null; principalInvestigator?: string | null; count?: number } = {},
 ) {
   return rows.map((row) => {
     if (action === "archive" || action === "restore") return lifecycle(row, action);
     if (action === "delete") return removal(row, row.blockers);
+    if (action === "takeOut") {
+      if (row.status === "archived") return entry(row, "skip", "Archived; restore it first.");
+      if (row.managementMode !== "package") return entry(row, "skip", "Not kept as containers; record use on its page.");
+      return row.inStore < (params.count ?? 1) ? entry(row, "skip", `Only ${row.inStore} in store.`) : entry(row, "change");
+    }
     if (action === "move") {
       if (row.status === "archived") return entry(row, "skip", "Archived; restore it first.");
       return row.locationId === (params.locationId ?? null) ? entry(row, "skip", "Already in this location.") : entry(row, "change");

@@ -9,6 +9,7 @@ import { formActionErrorMessage } from "@/lib/form-actions";
 import { inventoryControlKeys } from "@/lib/inventory";
 import { bulkProductPlan, bulkStockPlan, productBulkActions, stockBulkActions, type BulkEntry } from "@/lib/inventory-bulk";
 import { deleteProduct, deleteStockItem, stockItemBlockers, syncProductLots } from "@/lib/inventory-products.server";
+import { applyContainerCommand } from "@/lib/inventory-containers";
 import { isInventoryGroupKey } from "@/lib/inventory-types";
 
 type Tx = Prisma.TransactionClient;
@@ -20,6 +21,9 @@ const stockInput = z.object({
   ids,
   locationId: z.string().min(1).nullish(),
   principalInvestigator: z.string().trim().max(120).nullish(),
+  count: z.number().int().min(1).max(100).default(1),
+  holder: z.string().trim().max(120).optional(),
+  place: z.string().trim().max(240).optional(),
   confirmation: z.string().optional(),
 });
 const productInput = z.object({
@@ -41,10 +45,13 @@ function assertConfirmed(input: { action: string; ids: string[]; confirmation?: 
 
 async function stockPlan(tx: Tx, input: z.infer<typeof stockInput>) {
   if (input.action === "move" && input.locationId && !await tx.inventoryLocation.findUnique({ where: { id: input.locationId }, select: { id: true } })) throw new Error("This storage location no longer exists.");
-  const items = inSelectionOrder(await tx.inventoryItem.findMany({ where: { id: { in: input.ids } }, select: { id: true, name: true, status: true, locationId: true, principalInvestigator: true, unit: true } }), input.ids);
+  const items = inSelectionOrder(await tx.inventoryItem.findMany({
+    where: { id: { in: input.ids } },
+    select: { id: true, name: true, status: true, locationId: true, principalInvestigator: true, unit: true, managementMode: true, containers: { where: { state: "warehouse" }, select: { id: true }, orderBy: { createdAt: "asc" } } },
+  }), input.ids);
   const rows = [];
-  for (const item of items) rows.push({ ...item, blockers: input.action === "delete" ? await stockItemBlockers(tx, item.id) : [] });
-  return { items, plan: bulkStockPlan(input.action, rows, { locationId: input.locationId ?? null, principalInvestigator: input.principalInvestigator || null }) };
+  for (const item of items) rows.push({ ...item, inStore: item.containers.length, blockers: input.action === "delete" ? await stockItemBlockers(tx, item.id) : [] });
+  return { items, plan: bulkStockPlan(input.action, rows, { locationId: input.locationId ?? null, principalInvestigator: input.principalInvestigator || null, count: input.count }) };
 }
 
 async function productPlan(tx: Tx, input: z.infer<typeof productInput>) {
@@ -82,6 +89,7 @@ export async function applyStockBulk(raw: unknown): Promise<BulkState> {
   try {
     const input = stockInput.parse(raw);
     assertConfirmed(input);
+    if (input.action === "takeOut" && !input.holder) throw new Error("Enter who takes them.");
     const entries = await prisma.$transaction(async (tx) => {
       const { items, plan } = await stockPlan(tx, input);
       const changed = idsWith(plan, "change");
@@ -93,11 +101,19 @@ export async function applyStockBulk(raw: unknown): Promise<BulkState> {
           await tx.inventoryItem.update({ where: { id: item.id }, data: { locationId: input.locationId ?? null } });
         }
       }
+      // The oldest containers in store go first, each through the same command as a take-out on the stock page.
+      if (input.action === "takeOut") {
+        for (const item of items.filter((entry) => changed.includes(entry.id))) {
+          for (const container of item.containers.slice(0, input.count)) {
+            await applyContainerCommand(tx, item.id, { action: "issue", containerId: container.id, clientMutationId: randomUUID(), holder: input.holder, location: input.place || undefined });
+          }
+        }
+      }
       if (input.action === "delete") {
         for (const id of idsWith(plan, "delete")) await deleteStockItem(tx, id);
         await tx.inventoryItem.updateMany({ where: { id: { in: idsWith(plan, "archive") } }, data: { status: "archived" } });
       }
-      await tx.activityLog.create({ data: { action: `bulk_${input.action}`, targetType: "inventory_item_bulk", targetId: randomUUID(), metadataJson: { locationId: input.locationId ?? null, principalInvestigator: input.principalInvestigator ?? null, entries: plan } } });
+      await tx.activityLog.create({ data: { action: `bulk_${input.action}`, targetType: "inventory_item_bulk", targetId: randomUUID(), metadataJson: { locationId: input.locationId ?? null, principalInvestigator: input.principalInvestigator ?? null, ...(input.action === "takeOut" ? { count: input.count, holder: input.holder, place: input.place ?? null } : {}), entries: plan } } });
       return plan;
     });
     revalidatePath("/inventory");

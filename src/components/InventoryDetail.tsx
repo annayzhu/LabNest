@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { formatQuantity } from "@/lib/calculators/quantity-format";
+import { formatStockQuantity } from "@/lib/inventory";
 
 // The building blocks inventory detail pages share, so the stock, product and type pages line up the same way.
 
@@ -49,5 +49,5 @@ export function Row({ label, value, mono = false }: { label: string; value: Reac
 /** An amount with its unit as separate text, so the unit reads in Chinese; stock never counted says so. */
 export function QuantityText({ quantity, unit, recorded = true }: { quantity: number; unit: string | null; recorded?: boolean }) {
   if (!recorded) return <span className="text-muted">Quantity not recorded</span>;
-  return <span><span className="font-mono">{formatQuantity(quantity)}</span> <span>{unit}</span></span>;
+  return <span><span className="font-mono">{formatStockQuantity(quantity, unit)}</span> <span>{unit}</span></span>;
 }

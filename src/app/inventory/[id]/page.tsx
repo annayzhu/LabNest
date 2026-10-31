@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FileText, Pencil, ShoppingCart } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { InventoryBackLink } from "@/components/InventoryBackLink";
 import { InventoryContainers } from "@/components/InventoryContainers";
+import { InventoryNav } from "@/components/InventoryNav";
 import { InventoryLifecycleMenu } from "@/components/InventoryLifecycleMenu";
 import { InventoryRiskBadges } from "@/components/InventoryRiskBadges";
 import { InventoryTransactionForm } from "@/components/InventoryTransactionForm";
@@ -14,12 +16,12 @@ import { buttonStyles } from "@/components/ui/Button";
 import { DataTable } from "@/components/ui/DataTable";
 import { Fact, Panel, QuantityText, Row, SideSection } from "@/components/InventoryDetail";
 import { ExperimentStatus, PurchaseStatus } from "@/generated/prisma/enums";
-import { formatQuantity } from "@/lib/calculators/quantity-format";
 import { prisma } from "@/lib/db";
 import {
-  controlLevelName, inventoryNoteText, isStrictlyControlled, lotRiskFlags, lowStockAdvice, managementModeLabels,
+  controlLevelName, formatStockQuantity, inventoryNoteText, isStrictlyControlled, lotRiskFlags, lowStockAdvice, managementModeLabels,
   movementReversalProblem, observationUnits, productDocumentKindNames,
 } from "@/lib/inventory";
+import { locationPaths, temperatureLabel } from "@/lib/inventory-location-lifecycle";
 import { stockItemBlockers } from "@/lib/inventory-products.server";
 import { inventoryGroupName, inventoryTypeFields } from "@/lib/inventory-types";
 import { deleteInventoryItem, recordInventoryTransaction, setInventoryItemArchived } from "../actions";
@@ -53,14 +55,16 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
   });
   if (!item) notFound();
 
-  const [experiments, purchases, documents, blockers] = await Promise.all([
+  const [experiments, purchases, documents, blockers, allLocations] = await Promise.all([
     prisma.experiment.findMany({ where: { status: { in: [ExperimentStatus.planned, ExperimentStatus.running, ExperimentStatus.completed] } }, select: { id: true, title: true, project: { select: { name: true } } }, orderBy: { updatedAt: "desc" }, take: 100 }),
     prisma.purchaseRequest.findMany({ where: { OR: [{ linkedInventoryItemId: id }, { status: { in: [PurchaseStatus.planned, PurchaseStatus.ordered, PurchaseStatus.received] } }] }, select: { id: true, title: true, status: true }, orderBy: { updatedAt: "desc" }, take: 100 }),
     item.productId ? prisma.attachmentLink.findMany({ where: { targetType: "inventory_product", targetId: item.productId }, include: { attachment: { select: { originalFilename: true } } }, orderBy: { createdAt: "asc" } }) : Promise.resolve([]),
     stockItemBlockers(prisma, id),
+    prisma.inventoryLocation.findMany({ select: { id: true, name: true, parentLocationId: true, status: true } }),
   ]);
 
   const product = item.product;
+  const paths = locationPaths(allLocations);
   const riskFlags = lotRiskFlags(item, product, product?.items ?? []);
   const strict = isStrictlyControlled(product?.controlLevels ?? []);
   const advice = lowStockAdvice(product?.groupKey);
@@ -73,21 +77,25 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
   return (
     <AppShell>
       <div className="space-y-4">
-        <PageHeader
-          identifier={item.lotNumber ? `Lot ${item.lotNumber}` : item.aliquotCode ?? undefined}
-          title={item.name}
-          actions={<>
-            <Link href={`/inventory/${item.id}/edit`} className={secondary}><Pencil className="h-4 w-4" aria-hidden />Edit</Link>
-            <PageActionsMenu>
-              <Link href={`/purchases/new?inventory=${item.id}`}><ShoppingCart className="h-4 w-4" aria-hidden />Purchase</Link>
-              <InventoryLifecycleMenu id={item.id} name={item.name} archived={item.status === "archived"} blockers={blockers} archiveAction={setInventoryItemArchived} deleteAction={deleteInventoryItem} />
-            </PageActionsMenu>
-          </>}
-        />
+        <InventoryNav current="list" />
+        <div className="space-y-1">
+          <InventoryBackLink href="/inventory/list" label="Stock list" />
+          <PageHeader
+            identifier={item.lotNumber ? `Lot ${item.lotNumber}` : item.aliquotCode ?? undefined}
+            title={item.name}
+            actions={<>
+              <Link href={`/inventory/${item.id}/edit`} className={secondary}><Pencil className="h-4 w-4" aria-hidden />Edit</Link>
+              <PageActionsMenu>
+                <Link href={`/purchases/new?inventory=${item.id}`}><ShoppingCart className="h-4 w-4" aria-hidden />Purchase</Link>
+                <InventoryLifecycleMenu id={item.id} name={item.name} archived={item.status === "archived"} blockers={blockers} archiveAction={setInventoryItemArchived} deleteAction={deleteInventoryItem} />
+              </PageActionsMenu>
+            </>}
+          />
+        </div>
 
         <section aria-label="Stock summary" className="grid grid-cols-2 divide-x divide-y divide-hairline overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface md:grid-cols-4 md:divide-y-0">
           <Fact label="Current stock" value={<QuantityText quantity={item.currentQuantity} unit={item.unit} recorded={item.quantityRecorded} />} detail={product?.lowThreshold != null ? <><span>Safety stock</span> <QuantityText quantity={product.lowThreshold} unit={product.lowThresholdUnit} /></> : <span>No safety stock</span>} />
-          <Fact label="Location" value={item.location?.name ?? "Unassigned"} detail={item.positionCode ?? item.location?.temperature ?? "—"} />
+          <Fact label="Location" value={item.location ? paths.get(item.location.id) ?? item.location.name : "Unassigned"} detail={item.positionCode ?? temperatureLabel(item.location?.temperature) ?? "—"} />
           <Fact label="Expiry" value={<span className="font-mono">{item.expiryDate?.toISOString().slice(0, 10) ?? "—"}</span>} detail={<span>{managementModeLabels[item.managementMode] ?? item.managementMode}</span>} />
           <Fact label="Attention" value={item.status === "archived" ? <span className="text-sm text-muted">Archived</span> : riskFlags.length || sdsMissing ? <div className="flex flex-wrap gap-1.5"><InventoryRiskBadges flags={riskFlags} />{sdsMissing ? <Badge tone="danger">SDS missing</Badge> : null}</div> : <span className="text-sm text-muted">Nothing needs attention</span>} detail={item.status === "active" && (riskFlags.includes("low") || riskFlags.includes("depleted")) ? <AdviceText advice={advice} item={item} /> : null} />
         </section>
@@ -104,6 +112,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
                   observationUnits={observationUnits(product?.type?.key)}
                   kitComponents={product?.kitComponents.map((component) => ({ id: component.id, name: component.name, spec: component.spec, storageCondition: component.storageCondition })) ?? []}
                   containers={JSON.parse(JSON.stringify(item.containers))}
+                  places={allLocations.filter((location) => location.status === "active").map((location) => paths.get(location.id) ?? location.name).sort()}
                 />
               </Panel>
             ) : (
@@ -122,7 +131,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
                 columns={[
                   { key: "date", header: "Date", render: (row) => <span className="whitespace-nowrap font-mono text-xs">{row.createdAt.toISOString().slice(0, 16).replace("T", " ")}{row.deviceCreatedAt ? <span className="block text-muted">{row.deviceCreatedAt.toISOString().slice(0, 10)}</span> : null}</span> },
                   { key: "type", header: "Movement", render: (row) => <div className="space-y-1"><StatusPill status={row.type} />{row.reversedBy ? <p className="text-xs text-muted">Reversed</p> : null}{row.reverses ? <p className="whitespace-nowrap text-xs text-muted"><span>Reverses</span> <span className="font-mono">{row.reverses.createdAt.toISOString().slice(0, 10)}</span></p> : null}</div> },
-                  { key: "change", header: "Change", render: (row) => <span className={`whitespace-nowrap font-semibold ${row.reversedBy ? "text-muted line-through" : row.quantityChange < 0 ? "text-error" : "text-success"}`}><span className="font-mono">{row.quantityChange > 0 ? "+" : ""}{formatQuantity(row.quantityChange)}</span> <span>{row.unit}</span></span> },
+                  { key: "change", header: "Change", render: (row) => <span className={`whitespace-nowrap font-semibold ${row.reversedBy ? "text-muted line-through" : row.quantityChange < 0 ? "text-error" : "text-success"}`}><span className="font-mono">{row.quantityChange > 0 ? "+" : ""}{formatStockQuantity(row.quantityChange, row.unit)}</span> <span>{row.unit}</span></span> },
                   { key: "handler", header: "Handled by", render: (row) => row.performedBy ?? "—" },
                   { key: "source", header: "Link", render: (row) => row.experiment ? <Link href={`/experiments/${row.experiment.id}`} className="text-moss hover:underline">{row.experiment.runCode}</Link> : row.purchase ? <span>{row.purchase.title}</span> : "—" },
                   { key: "notes", header: "Note", render: (row) => <span className="text-xs">{inventoryNoteText(row.notes, row.experiment) ?? "—"}</span> },
@@ -159,11 +168,10 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
                 {product.controlLevels.length ? <div className="flex flex-wrap gap-1.5 pt-1">{product.controlLevels.map((level) => <Badge key={level} tone={isStrictlyControlled([level]) ? "danger" : "warning"}>{controlLevelName(level)}</Badge>)}</div> : null}
               </> : <p className="text-sm text-muted">Saved before products existed. Choose its product in Edit.</p>}
             </SideSection>
-            {[item.lotNumber, item.expiryDate, item.containerType, item.concentration, item.barcode, item.aliquotCode, item.parentInventoryItem].some(Boolean) ? <SideSection title="This lot">
+            {[item.lotNumber, item.expiryDate, item.containerType, item.barcode, item.aliquotCode, item.parentInventoryItem].some(Boolean) ? <SideSection title="This lot">
               <Row label="Lot number" value={item.lotNumber} mono />
               <Row label="Expiry date" value={item.expiryDate?.toISOString().slice(0, 10)} mono />
               <Row label="Container type" value={item.containerType} />
-              <Row label="Concentration" value={item.concentration} />
               <Row label="Barcode" value={item.barcode} mono />
               <Row label="Aliquot code" value={item.aliquotCode} mono />
               {item.parentInventoryItem ? <Row label="Parent stock" value={<Link href={`/inventory/${item.parentInventoryItem.id}`} className="text-moss hover:underline">{item.parentInventoryItem.aliquotCode ?? item.parentInventoryItem.name}</Link>} /> : null}

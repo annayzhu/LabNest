@@ -447,7 +447,7 @@ export async function searchLabNestRecords(query: string, limit = 50): Promise<G
             { versions: { some: { validationSummary: textFilter(normalizedQuery) } } },
           ],
         },
-        include: { project: true, versions: { orderBy: { versionNumber: "desc" }, take: 1 } },
+        include: { versions: { orderBy: { versionNumber: "desc" }, take: 1 }, entityLinks: { select: { entity: { select: { inventoryProducts: { select: { id: true, name: true }, take: 1 } } } }, take: 1 } },
         take: perSourceLimit,
         orderBy: { updatedAt: "desc" },
       }),
@@ -464,7 +464,7 @@ export async function searchLabNestRecords(query: string, limit = 50): Promise<G
             { members: { some: { sequenceVersion: { validationSummary: textFilter(normalizedQuery) } } } },
           ],
         },
-        include: { project: true, members: { include: { sequenceVersion: true }, orderBy: { order: "asc" } } },
+        include: { members: { include: { sequenceVersion: true, sequenceRecord: { select: { entityLinks: { select: { entity: { select: { inventoryProducts: { select: { id: true, name: true }, take: 1 } } } }, take: 1 } } } }, orderBy: { order: "asc" } } },
         take: perSourceLimit,
         orderBy: { updatedAt: "desc" },
       }),
@@ -631,24 +631,33 @@ export async function searchLabNestRecords(query: string, limit = 50): Promise<G
         href: `/purchases?quote=${line.id}`,
         matchedText: firstMatch(normalizedQuery, [line.supplierName, line.productCategory, line.casNumber, line.specification, line.brand, line.catalogNumber, line.decisionReason]),
       })),
-      ...sequences.map((sequence) => ({
-        id: sequence.id,
-        type: "sequence" as const,
-        title: sequence.name,
-        subtitle: `${sequence.code} · ${sequence.designType} · v${sequence.versions[0]?.displayVersion ?? "?"}`,
-        location: `${sequence.project?.name ? `Projects / ${sequence.project.name} / ` : ""}Sequences`,
-        href: `/sequences/${sequence.id}`,
-        matchedText: firstMatch(normalizedQuery, [sequence.targetName, sequence.organism, sequence.description, sequence.versions[0]?.validationSummary, sequence.versions[0]?.sequence]),
-      })),
-      ...sequencePairs.map((pair) => ({
-        id: pair.id,
-        type: "sequence" as const,
-        title: pair.name,
-        subtitle: `${pair.code} · ${pair.type.replaceAll("_", " ")} · 2 members`,
-        location: `${pair.project?.name ? `Projects / ${pair.project.name} / ` : ""}Sequences`,
-        href: `/sequences/pairs/${pair.id}`,
-        matchedText: firstMatch(normalizedQuery, [pair.targetName, pair.organism, pair.description, ...pair.members.flatMap((member) => [member.sequenceVersion.validationSummary, member.sequenceVersion.sequence])]),
-      })),
+      // A sequence opens the product that holds it (Q187), once however many of its strands match.
+      ...uniqueByHref([
+        ...sequences.map((sequence) => {
+          const product = sequence.entityLinks[0]?.entity.inventoryProducts[0];
+          return {
+            id: sequence.id,
+            type: "sequence" as const,
+            title: product?.name ?? sequence.name,
+            subtitle: `${sequence.code} · ${sequence.designType}`,
+            location: "Inventory / Products",
+            href: product ? `/inventory/products/${product.id}` : "/inventory/products?flag=sequences",
+            matchedText: firstMatch(normalizedQuery, [sequence.targetName, sequence.organism, sequence.description, sequence.versions[0]?.validationSummary, sequence.versions[0]?.sequence]),
+          };
+        }),
+        ...sequencePairs.map((pair) => {
+          const product = pair.members.flatMap((member) => member.sequenceRecord.entityLinks.flatMap((link) => link.entity.inventoryProducts))[0];
+          return {
+            id: pair.id,
+            type: "sequence" as const,
+            title: product?.name ?? pair.name,
+            subtitle: `${pair.code} · ${pair.type.replaceAll("_", " ")}`,
+            location: "Inventory / Products",
+            href: product ? `/inventory/products/${product.id}` : "/inventory/products?flag=sequences",
+            matchedText: firstMatch(normalizedQuery, [pair.targetName, pair.organism, pair.description, ...pair.members.flatMap((member) => [member.sequenceVersion.validationSummary, member.sequenceVersion.sequence])]),
+          };
+        }),
+      ]),
       ...attachments.map((attachment) => ({
         id: attachment.id,
         type: "attachment" as const,
@@ -675,4 +684,8 @@ export async function searchLabNestRecords(query: string, limit = 50): Promise<G
   } catch {
     return rankResults(searchTools(normalizedQuery), normalizedQuery).slice(0, safeLimit);
   }
+}
+
+function uniqueByHref<T extends { href: string }>(results: T[]) {
+  return results.filter((result, index) => results.findIndex((other) => other.href === result.href) === index);
 }

@@ -22,6 +22,10 @@ export type StructuredFieldDefinition = {
   description?: string;
   example?: string | number | boolean;
   allowedValues?: readonly string[];
+  /** Fixed choices: the stored code and the name the app shows for it. */
+  optionLabels?: Record<string, string>;
+  /** Choices the template loads from the app (types, units, locations); `suggest` still takes other text, `list` does not. */
+  choices?: "suggest" | "list";
 };
 
 export type StructuredModuleDefinition = {
@@ -236,31 +240,31 @@ export const structuredModules: Record<StructuredModuleKey, StructuredModuleDefi
     importFormats: ["csv", "xlsx", "json"],
     exportFormats: ["csv", "xlsx", "json"],
     fields: [
-      { key: "name", label: "Item name", required: true, aliases: ["item", "物料", "名称"], example: "Replace with item name" },
+      { key: "name", label: "Item name", required: true, aliases: ["item", "物料", "名称"], example: "Replace with item name", description: "What the item is called, as on its label." },
       { key: "englishName", label: "English name", aliases: ["英文名"] },
-      { key: "category", label: "Category", aliases: ["materialType", "物料类型", "分类"], example: "reagent" },
-      { key: "brand", label: "Brand", aliases: ["品牌"] },
+      { key: "category", label: "Type or 大类", aliases: ["Category", "materialType", "物料类型", "分类", "类型", "大类"], example: "Reagents & chemicals", choices: "suggest", description: "Choose a type or 大类; leave it empty to classify the product after importing." },
+      { key: "brand", label: "Brand", aliases: ["品牌"], description: "The maker, such as Sigma-Aldrich." },
       { key: "principalInvestigator", label: "Principal investigator (PI)", aliases: ["PI", "principalInvestigator", "课题负责人", "负责人", "所属PI"] },
-      { key: "containerType", label: "Container type" },
+      { key: "containerType", label: "Container type", description: "Such as tube, bottle or box." },
       { key: "barcode", label: "Barcode" },
       { key: "aliquotCode", label: "Aliquot code" },
-      { key: "lotNumber", label: "Lot number", aliases: ["lot", "批号"] },
-      { key: "vendor", label: "Vendor" },
-      { key: "catalogNumber", label: "Catalog number" },
+      { key: "lotNumber", label: "Lot number", aliases: ["lot", "批号"], description: "As printed on the label." },
+      { key: "vendor", label: "Vendor", aliases: ["supplier", "供应商"], description: "Who it was bought from." },
+      { key: "catalogNumber", label: "Catalog number", aliases: ["货号"], description: "With the brand, finds the product this stock belongs to." },
       { key: "casNumber", label: "CAS number", aliases: ["CAS", "CAS号"] },
       { key:"inventoryId",label:"Existing Inventory ID",description:"Optional explicit stock ID; never matched by name." },
-      { key:"importMode",label:"Import meaning",allowedValues:["balance","arrival"],example:"balance",description:"balance = dated physical count; arrival = newly received amount." },
-      { key: "managementMode",label:"管理方式",allowedValues:["information","precise","package"],example:"information" },
-      { key: "currentQuantity", label: "Initial quantity", aliases: ["quantity", "数量"], example: 0 },
-      { key: "unit", label: "Unit", required: true, aliases: ["单位"], example: "µL" },
-      { key: "lowThreshold", label: "Safety stock", aliases: ["reorderPoint", "安全库存", "最低库存"], example: 10 },
-      { key: "concentration", label: "Concentration" },
-      { key: "location", label: "Location", aliases: ["locationName", "位置"] },
-      { key: "positionCode", label: "Position" },
-      { key: "expiryDate", label: "Expiry date" },
-      { key: "storageCondition", label: "Storage condition" },
+      { key: "productId", label: "Existing product ID", description: "Optional; the product this stock is a lot of. Without it the product is found by brand and catalogue number." },
+      { key: "importMode", label: "Import meaning", allowedValues: ["balance", "arrival"], optionLabels: { balance: "Opening balance", arrival: "Arrival" }, example: "balance", description: "Opening balance: the amount counted now. Arrival: an amount just received." },
+      { key: "managementMode", label: "Management", aliases: ["管理方式"], allowedValues: ["information", "precise", "package"], optionLabels: { information: "Record only", precise: "Precise use", package: "By container" }, example: "information", description: "Record only keeps no amounts; Precise use records every use; By container counts each bottle or box." },
+      { key: "currentQuantity", label: "Initial quantity", aliases: ["quantity", "数量"], example: 0, description: "A number. By container: how many containers are in store." },
+      { key: "unit", label: "Unit", required: true, aliases: ["单位"], example: "µL", choices: "suggest", description: "Choose a unit, or type another." },
+      { key: "lowThreshold", label: "Safety stock", aliases: ["reorderPoint", "安全库存", "最低库存"], example: 10, description: "Below this amount the stock is shown as low." },
+      { key: "location", label: "Storage location", aliases: ["Location", "locationName", "位置"], choices: "list", description: "Choose a storage location; add new ones on the Storage locations page before importing." },
+      { key: "positionCode", label: "Position in location", aliases: ["Position", "positionCode"], description: "Shelf, box or well inside the location, such as Shelf 2 / Box A / A01." },
+      { key: "expiryDate", label: "Expiry date", aliases: ["有效期"], description: "As YYYY-MM-DD." },
+      { key: "storageCondition", label: "Storage condition", description: "Such as -20 °C, dark." },
       { key: "freezeThawCount", label: "Freeze-thaw count", example: 0 },
-      { key: "status", label: "Status", example: "active" },
+      { key: "status", label: "Status", allowedValues: ["active", "inactive", "archived"], optionLabels: { active: "Active", inactive: "Inactive", archived: "Archived" }, example: "active" },
       { key: "notes", label: "Notes" },
     ],
   },

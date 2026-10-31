@@ -39,8 +39,10 @@ const stateLabels: Record<string, string> = { warehouse: "In store", held: "In u
 const componentStateLabels: Record<string, string> = { present: "Present", used_up: "Used up", missing: "Missing" };
 
 /** The bottles, boxes or cylinders of package-managed stock: what is where, who has it, what is left. */
-export function InventoryContainers({ itemId, unit, containers, observationUnits, kitComponents }: {
+export function InventoryContainers({ itemId, unit, containers, observationUnits, kitComponents, places }: {
   itemId: string;
+  /** Storage location paths, offered as suggestions wherever a container's place is typed. */
+  places: string[];
   unit: string;
   containers: Bottle[];
   observationUnits: string[];
@@ -141,10 +143,11 @@ export function InventoryContainers({ itemId, unit, containers, observationUnits
     }
   }
 
+  const placesList = `places-${itemId}`;
   const field = (name: string, label: string, type = "text", required = false) => (
     <label className="min-w-0">
       <span className={formLabelClass}>{label}</span>
-      <input aria-label={label} type={type} className={formInputClass} value={draft[name] ?? (name === "label" ? bottle?.label ?? "" : name === "location" && action === "edit" ? bottle?.location ?? "" : "")} onChange={(e) => change(name, e.target.value)} required={required} />
+      <input aria-label={label} type={type} list={name === "location" || name === "componentLocation" ? placesList : undefined} className={formInputClass} value={draft[name] ?? (name === "label" ? bottle?.label ?? "" : name === "location" && action === "edit" ? bottle?.location ?? "" : "")} onChange={(e) => change(name, e.target.value)} required={required} />
     </label>
   );
   const offered = (key: string) => {
@@ -160,6 +163,7 @@ export function InventoryContainers({ itemId, unit, containers, observationUnits
 
   return (
     <div className="space-y-3">
+      <datalist id={placesList}>{places.map((place) => <option key={place} value={place} />)}</datalist>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-graphite">
           <span><span>In store</span> <strong className="tabular-nums">{count("warehouse")}</strong></span>
@@ -178,12 +182,12 @@ export function InventoryContainers({ itemId, unit, containers, observationUnits
         <form onSubmit={addContainers} onKeyDown={preventImplicitEnterSubmit} className="grid gap-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm p-3 sm:grid-cols-[6rem_minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
           <label><span className={formLabelClass}>How many</span><input aria-label="How many" type="number" min={1} max={1000} step={1} required className={formInputClass} value={adding.count} onChange={(e) => setAdding({ ...adding, count: e.target.value })} /></label>
           <label><span className={formLabelClass}>Container number</span><input aria-label="Container number" maxLength={80} placeholder="CO2-07" className={formInputClass} value={adding.label} onChange={(e) => setAdding({ ...adding, label: e.target.value })} /></label>
-          <label><span className={formLabelClass}>Place</span><input aria-label="Place" maxLength={240} className={formInputClass} value={adding.location} onChange={(e) => setAdding({ ...adding, location: e.target.value })} /></label>
+          <label><span className={formLabelClass}>Place</span><input aria-label="Place" list={placesList} maxLength={240} className={formInputClass} value={adding.location} onChange={(e) => setAdding({ ...adding, location: e.target.value })} /></label>
           <Button type="submit" variant="primary" disabled={busy}>Add</Button>
         </form>
       ) : null}
 
-      {batch && count("warehouse") ? <InventoryBatchIssue itemId={itemId} available={containers.filter((c) => c.state === "warehouse").map((c) => c.id)} /> : null}
+      {batch && count("warehouse") ? <InventoryBatchIssue itemId={itemId} placesList={placesList} available={containers.filter((c) => c.state === "warehouse").map((c) => c.id)} /> : null}
 
       <ul className="divide-y divide-hairline rounded-[var(--ln-radius-panel-inner)] border border-hairline">
         {containers.length ? containers.map((c, index) => {
@@ -227,11 +231,11 @@ export function InventoryContainers({ itemId, unit, containers, observationUnits
                         </select>
                       </label>
                       {action === "issue" || action === "transfer" ? field("holder", "Recipient", "text", true) : null}
-                      {action === "issue" || action === "transfer" || action === "return" ? field("location", "Place") : null}
+                      {action === "issue" || action === "transfer" || action === "return" ? field("location", "Put at (optional)") : null}
                       {action === "edit" ? <>{field("label", "Container number")}{field("location", "Place")}</> : null}
                       {action === "open" ? field("openedAt", "Opened on", "date", true) : null}
                       {action === "observe" ? <>
-                        <QuantityInput label={t("Remaining")} name="remaining" required value={draft.remaining ?? ""} unit={draft.unit ?? observationUnits[0]} options={observationUnits} onChange={(remaining, nextUnit) => { if (selected) setDrafts((current) => ({ ...current, [selected]: { ...current[selected], remaining, unit: nextUnit } })); setMutationKey(null); }} />
+                        <QuantityInput label={t("Remaining")} name="remaining" required value={draft.remaining ?? ""} unit={draft.unit ?? observationUnits[0]} options={observationUnits} checkPrecision onChange={(remaining, nextUnit) => { if (selected) setDrafts((current) => ({ ...current, [selected]: { ...current[selected], remaining, unit: nextUnit } })); setMutationKey(null); }} />
                         <label><span className={formLabelClass}>Estimate or measure</span><select aria-label="Estimate or measure" className={formInputClass} value={draft.quality ?? "estimated"} onChange={(e) => change("quality", e.target.value)}><option value="estimated">Estimated</option><option value="measured">Measured</option></select></label>
                         {field("performedBy", "Recorded by", "text", true)}
                       </> : null}

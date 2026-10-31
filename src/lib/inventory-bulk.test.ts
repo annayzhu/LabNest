@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { bulkProductPlan, bulkStockPlan } from "./inventory-bulk";
 
-const stock = (id: string, fields: Partial<{ status: string; locationId: string | null; principalInvestigator: string | null; blockers: string[] }> = {}) => ({
-  id, name: id, status: "active", locationId: "shelf", principalInvestigator: "Zhang Lab", blockers: [], ...fields,
+const stock = (id: string, fields: Partial<{ status: string; locationId: string | null; principalInvestigator: string | null; blockers: string[]; managementMode: string; inStore: number }> = {}) => ({
+  id, name: id, status: "active", locationId: "shelf", principalInvestigator: "Zhang Lab", blockers: [], managementMode: "package", inStore: 3, ...fields,
 });
 
 describe("bulkStockPlan", () => {
@@ -24,6 +24,15 @@ describe("bulkStockPlan", () => {
 
   it("changes the PI only where it differs", () => {
     expect(bulkStockPlan("pi", [stock("a"), stock("b", { principalInvestigator: null })], { principalInvestigator: "Zhang Lab" }).map((entry) => entry.outcome)).toEqual(["skip", "change"]);
+  });
+
+  it("takes containers out only of container stock with enough in store", () => {
+    expect(bulkStockPlan("takeOut", [stock("a"), stock("b", { inStore: 1 }), stock("c", { managementMode: "precise" }), stock("d", { status: "archived" })], { count: 2 }).map((entry) => [entry.id, entry.outcome, entry.reason])).toEqual([
+      ["a", "change", undefined],
+      ["b", "skip", "Only 1 in store."],
+      ["c", "skip", "Not kept as containers; record use on its page."],
+      ["d", "skip", "Archived; restore it first."],
+    ]);
   });
 
   it("deletes stock nothing refers to and archives the rest, saying why", () => {

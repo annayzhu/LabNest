@@ -5,7 +5,7 @@ import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { formActionErrorMessage } from "@/lib/form-actions";
-import { inventoryLocationDeleteBlockers, inventoryLocationTypes } from "@/lib/inventory-location-lifecycle";
+import { inventoryLocationDeleteBlockers, inventoryLocationTypes, locationTemperature } from "@/lib/inventory-location-lifecycle";
 
 export type InventoryLocationActionState = { error?: string; success?: string };
 
@@ -32,7 +32,7 @@ function parseLocation(formData: FormData) {
     name: formData.get("name"),
     type: formData.get("type"),
     parentLocationId: optionalText(formData.get("parentLocationId")),
-    temperature: optionalText(formData.get("temperature")),
+    temperature: locationTemperature(optionalText(formData.get("temperature")), formData.get("roomTemperature") === "on"),
     description: optionalText(formData.get("description")),
   });
 }

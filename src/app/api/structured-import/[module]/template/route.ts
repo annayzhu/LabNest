@@ -1,3 +1,5 @@
+import { prisma } from "@/lib/db";
+import { inventoryTemplateLists } from "@/lib/inventory-products.server";
 import { buildStructuredTemplate } from "@/lib/structured-files";
 import { formatFromFilename, isStructuredModuleKey, structuredModules, type StructuredFileFormat } from "@/lib/structured-modules";
 
@@ -10,7 +12,7 @@ export async function GET(request: Request, context: { params: Promise<{ module:
   const format = formatFromFilename(`template.${requested}`) as StructuredFileFormat | undefined;
   if (!format || !structuredModules[module].importFormats.includes(format)) return Response.json({ error: "Unsupported template format." }, { status: 400 });
   try {
-    const template = await buildStructuredTemplate(module, format);
+    const template = await buildStructuredTemplate(module, format, module === "inventory" ? await inventoryTemplateLists(prisma) : {});
     const body = template.body instanceof Uint8Array
       ? template.body.buffer.slice(template.body.byteOffset, template.body.byteOffset + template.body.byteLength) as ArrayBuffer
       : template.body;

@@ -8,6 +8,7 @@ import { Disclosure } from "@/components/ui/Disclosure";
 import type { FormAction, FormActionState } from "@/lib/form-actions";
 import { inventoryBiosafetyLevels, inventoryControlLevels, stockUnits } from "@/lib/inventory";
 import type { InventoryTypeField } from "@/lib/inventory-types";
+import { sequenceKind } from "@/lib/product-sequences";
 import type { GroupOption, TypeOption } from "./InventoryItemForm";
 
 type ProductInitial = {
@@ -21,6 +22,8 @@ type ProductInitial = {
   groupKey?: string | null;
   entityId?: string | null;
   fieldValues?: Record<string, string>;
+  /** The product's strands by role (forward, reverse, sense, antisense, primary). */
+  sequences?: Record<string, string>;
   controlLevels?: string[];
   lowThreshold?: number | null;
   lowThresholdUnit?: string | null;
@@ -31,7 +34,7 @@ type EntityOption = { id: string; name: string; type: string; code: string | nul
 /** A product: what it is (type and 大类), its catalogue identity, its type's fields, control levels and safety stock. */
 export function InventoryProductForm({ action, types, groups, entities, initial = {} }: {
   action: FormAction;
-  types: (TypeOption & { fields: InventoryTypeField[] })[];
+  types: (TypeOption & { key: string; fields: InventoryTypeField[] })[];
   groups: GroupOption[];
   entities: EntityOption[];
   initial?: ProductInitial;
@@ -40,6 +43,7 @@ export function InventoryProductForm({ action, types, groups, entities, initial 
   const [typeId, setTypeId] = useState(initial.typeId ?? "");
   const [groupKey, setGroupKey] = useState(initial.groupKey ?? "");
   const type = types.find((entry) => entry.id === typeId);
+  const kind = sequenceKind(type?.key);
   const group = type?.groupKey ?? groupKey;
   const biological = group === "biological" || group === "sample";
   const levels = new Set(initial.controlLevels ?? []);
@@ -83,7 +87,7 @@ export function InventoryProductForm({ action, types, groups, entities, initial 
           <span className={formLabelClass}>Catalog number</span>
           <input name="catalogNumber" defaultValue={initial.catalogNumber ?? ""} maxLength={120} className={formInputClass} />
         </label>
-        <QuantityInput key={type?.id ?? "none"} label="Safety stock" name="lowThreshold" unitName="lowThresholdUnit" initialValue={initial.lowThreshold == null ? "" : String(initial.lowThreshold)} initialUnit={initial.lowThresholdUnit ?? type?.defaults.unit ?? "mL"} options={stockUnits} />
+        <QuantityInput key={type?.id ?? "none"} label="Safety stock" name="lowThreshold" unitName="lowThresholdUnit" initialValue={initial.lowThreshold == null ? "" : String(initial.lowThreshold)} initialUnit={initial.lowThresholdUnit ?? type?.defaults.unit ?? "mL"} options={stockUnits} checkPrecision />
       </section>
 
       {type?.fields.length ? (
@@ -101,6 +105,26 @@ export function InventoryProductForm({ action, types, groups, entities, initial 
               )}
             </label>
           ))}
+        </section>
+      ) : null}
+
+      {kind ? (
+        <section className="grid gap-4 border-b border-hairline p-4 md:grid-cols-2" aria-label="Sequences">
+          {kind.strands.map((strand) => (
+            <label key={strand.role} className={kind.strands.length === 1 ? "md:col-span-2" : undefined}>
+              <span className={formLabelClass}>{strand.label}</span>
+              <textarea
+                name={`sequence:${strand.role}`}
+                defaultValue={initial.sequences?.[strand.role] ?? ""}
+                rows={kind.design === "plasmid" || kind.design === "protein" ? 5 : 2}
+                spellCheck={false}
+                autoCapitalize="characters"
+                placeholder={kind.molecule === "Protein" ? "MKTAYIAKQR…" : kind.molecule === "RNA" ? "GCAGAAUGCUGAAGUGAAATT" : "GTCTCCTCTGACTTCAACAGCG"}
+                className={`${formTextareaClass} font-mono text-sm tracking-wide`}
+              />
+            </label>
+          ))}
+          <p className="text-xs text-muted md:col-span-2">{kind.molecule === "Protein" ? "N- to C-terminus." : "5′ to 3′. Spaces and line breaks are ignored; a changed sequence keeps its earlier version."}</p>
         </section>
       ) : null}
 
@@ -132,13 +156,13 @@ export function InventoryProductForm({ action, types, groups, entities, initial 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <label><span className={formLabelClass}>English name</span><input name="englishName" defaultValue={initial.englishName ?? ""} maxLength={180} className={formInputClass} /></label>
           <label><span className={formLabelClass}>CAS number</span><input name="casNumber" defaultValue={initial.casNumber ?? ""} maxLength={64} className={formInputClass} /></label>
-          <label>
+          {kind ? null : <label>
             <span className={formLabelClass}>Made from</span>
             <select name="entityId" defaultValue={initial.entityId ?? ""} className={formInputClass}>
               <option value="">Not linked</option>
               {entities.map((entity) => <option key={entity.id} value={entity.id}>{entity.name} · {entity.type}{entity.code ? ` · ${entity.code}` : ""}</option>)}
             </select>
-          </label>
+          </label>}
           <label className="md:col-span-2 xl:col-span-3"><span className={formLabelClass}>Notes</span><textarea name="notes" defaultValue={initial.notes ?? ""} maxLength={5000} className={formTextareaClass} /></label>
         </div>
       </Disclosure>

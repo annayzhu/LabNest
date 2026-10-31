@@ -9,7 +9,8 @@ const itemId = process.argv[3] ?? "i_rneasy";
 const productId = process.argv[4] ?? "p_rneasy";
 const out = process.argv[5] ?? "docs/modules/inventory/classification-20261030/evidence";
 const pages = [
-  ["stock", "/inventory"],
+  ["home", "/inventory"],
+  ["stock", "/inventory/list"],
   ["stock-item", `/inventory/${itemId}`],
   ["stock-new", "/inventory/new"],
   ["products", "/inventory/products"],
@@ -19,6 +20,10 @@ const pages = [
   ["locations", "/inventory/locations"],
   ["duplicates", "/inventory/products/duplicates"],
   ["merge", `/inventory/products/merge?keep=${productId}`],
+  ["import-table", "/inventory/import?source=table"],
+  ["import-documents", "/inventory/import?source=documents"],
+  ["import-text", "/inventory/import?source=text"],
+  ["import-sequences", "/inventory/import?source=sequences"],
 ];
 
 await mkdir(out, { recursive: true });

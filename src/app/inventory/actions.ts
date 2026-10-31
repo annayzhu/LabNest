@@ -6,7 +6,7 @@ import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
-import { controlledUseProblem, isStrictlyControlled, movementReversalProblem } from "@/lib/inventory";
+import { assertPrecision, controlledUseProblem, isStrictlyControlled, movementChange, movementReversalProblem } from "@/lib/inventory";
 import { deleteStockItem, linkInventoryProduct, lotIdentity, stockItemBlockers } from "@/lib/inventory-products.server";
 
 type Tx = Prisma.TransactionClient;
@@ -38,7 +38,6 @@ const inventoryItemSchema = z.object({
   managementMode: z.enum(["information", "package", "precise"]).default("precise"),
   quantityRecorded: z.boolean().default(true),
   unit: z.string().trim().min(1, "Unit is required.").max(32),
-  concentration: z.string().trim().max(120).optional(),
   locationId: z.string().trim().optional(),
   positionCode: z.string().trim().max(120).optional(),
   expiryDate: z.date().optional(),
@@ -67,7 +66,6 @@ function parseInventoryItem(formData: FormData) {
     managementMode: optionalText(formData.get("managementMode")) ?? "precise",
     quantityRecorded: !!optionalText(formData.get("currentQuantity")),
     unit: optionalText(formData.get("unit")) ?? (formData.get("managementMode") === "information" && !optionalText(formData.get("currentQuantity")) ? "未指定" : ""),
-    concentration: optionalText(formData.get("concentration")),
     locationId: optionalText(formData.get("locationId")),
     positionCode: optionalText(formData.get("positionCode")),
     expiryDate: optionalDate(formData.get("expiryDate")),
@@ -111,6 +109,8 @@ async function assertAliquotCodeFree(tx: Tx, aliquotCode: string | undefined, ex
 
 async function persistNewInventoryItem(formData: FormData) {
   const parsed = parseInventoryItem(formData);
+  if (parsed.quantityRecorded) assertPrecision(parsed.currentQuantity, parsed.unit);
+  const counted = formData.get("opening") === "count";
 
   const item = await prisma.$transaction(async (tx) => {
     await assertAliquotCodeFree(tx, parsed.aliquotCode);
@@ -123,14 +123,15 @@ async function persistNewInventoryItem(formData: FormData) {
     if (parsed.managementMode === "package" && parsed.currentQuantity > 0) await tx.inventoryContainer.createMany({ data: Array.from({ length: parsed.currentQuantity }, () => ({ inventoryItemId: created.id, location: parsed.positionCode })) });
 
     if (parsed.quantityRecorded && parsed.currentQuantity > 0) {
+      // A new arrival comes in; stock already on the shelf is counted. Both notes start “Opening balance”, which deleting relies on.
       await tx.inventoryTransaction.create({
         data: {
           inventoryItemId: created.id,
-          type: "receive",
+          type: counted ? "adjust" : "receive",
           quantityChange: parsed.currentQuantity,
           unit: parsed.unit,
           toLocationId: parsed.locationId,
-          notes: "Opening balance recorded when the item was registered.",
+          notes: counted ? "Opening balance counted when the item was registered." : "Opening balance recorded when the item was registered.",
         },
       });
     }
@@ -196,6 +197,7 @@ async function persistInventoryItemUpdate(formData: FormData) {
       countedBy=input.by;countSource=input.source;
     }
     const quantityChange = Number((parsed.currentQuantity - current.currentQuantity).toFixed(6));
+    if (quantityChange !== 0) assertPrecision(parsed.currentQuantity, parsed.unit);
     const locationChanged = parsed.locationId !== (current.locationId ?? undefined);
     const principalInvestigatorChanged = parsed.principalInvestigator !== (current.principalInvestigator ?? undefined);
     if (parsed.unit !== current.unit) {
@@ -336,12 +338,12 @@ export async function recordInventoryTransaction(itemId: string, _previous: Form
       notes: optionalText(formData.get("notes")),
     });
     const isInbound = parsed.type === "receive" || parsed.type === "return";
-    const quantityChange = isInbound ? parsed.quantity : -parsed.quantity;
 
     await prisma.$transaction(async (tx) => {
       const item = await tx.inventoryItem.findUnique({ where: { id: itemId }, include: { product: { select: { controlLevels: true } } } });
       if (!item) throw new Error("Inventory item not found.");
       if (item.status !== "active") throw new Error("This stock is archived; restore it before recording movements.");
+      const quantityChange = movementChange(parsed.quantity, item, isInbound);
 
       if (!item.quantityRecorded || item.managementMode !== "precise") throw new Error("请使用该物料的管理方式；未知数量需要先盘点。 / Use the item management workflow; unknown stock requires an opening count.");
       const controlProblem = controlledUseProblem(item.product?.controlLevels ?? [], parsed);

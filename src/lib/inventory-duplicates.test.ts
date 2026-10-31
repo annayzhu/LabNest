@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { catalogKey, duplicateLotGroups, duplicateProductPairs, mergeProductPlan, pairKey } from "./inventory-duplicates";
+import { catalogKey, duplicateLotGroups, duplicateProductPairs, mergeProductPlan, pairKey, productMatches } from "./inventory-duplicates";
 
 describe("catalogKey", () => {
   it("compares catalogue numbers without case, spaces, hyphens or full-width forms", () => {
@@ -103,5 +103,29 @@ describe("mergeProductPlan", () => {
 
   it("takes the other's safety stock when only it has one", () => {
     expect(mergeProductPlan(side(), side({ lowThreshold: 2, lowThresholdUnit: "box" })).data).toMatchObject({ lowThreshold: 2, lowThresholdUnit: "box" });
+  });
+});
+
+describe("productMatches", () => {
+  const products = [
+    product("p-sigma", { name: "Sodium azide", brand: "Sigma-Aldrich", catalogNumber: "S2002" }),
+    product("p-plain", { name: "PBS 10x", catalogNumber: "P-100" }),
+    product("p-aladdin", { name: "叠氮化钠", englishName: "Sodium azide", brand: "Aladdin", catalogNumber: "S101101" }),
+  ];
+
+  it("finds the product with the line's brand and catalogue number, or one saved without a brand", () => {
+    expect(productMatches({ name: "azide", brand: "sigma-aldrich", catalogNumber: "s-2002" }, products)).toEqual({ exact: products[0], candidates: [] });
+    expect(productMatches({ name: "PBS", brand: "Gibco", catalogNumber: "P100" }, products).exact).toBe(products[1]);
+  });
+
+  it("takes a line without a brand as its supplier's product when the supplier's name holds the brand", () => {
+    expect(productMatches({ name: "Kit", brand: null, catalogNumber: "S2002", supplier: "Sigma-Aldrich Trading Co., Ltd" }, products).exact).toBe(products[0]);
+    expect(productMatches({ name: "Kit", brand: null, catalogNumber: "S2002", supplier: "Thermo Fisher" }, products).exact).toBeUndefined();
+  });
+
+  it("offers products sharing the catalogue number or the name when none is the same", () => {
+    const match = productMatches({ name: "Sodium Azide", brand: "Merck", catalogNumber: "S2002" }, products);
+    expect(match.exact).toBeUndefined();
+    expect(match.candidates.map((candidate) => candidate.id)).toEqual(["p-sigma", "p-aladdin"]);
   });
 });

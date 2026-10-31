@@ -22,7 +22,7 @@ export function InventoryRiskBadges({
   return (
     <div className="flex flex-wrap gap-1.5">
       {flags.map((flag) => linkToFilters ? (
-        <BadgeLink key={flag} href={`/inventory?flag=${flag}`} tone={flag === "expired" || flag === "depleted" ? "danger" : "warning"}>
+        <BadgeLink key={flag} href={`/inventory/list?flag=${flag}`} tone={flag === "expired" || flag === "depleted" ? "danger" : "warning"}>
           {labels[flag]}
         </BadgeLink>
       ) : (

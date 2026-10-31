@@ -5,8 +5,11 @@ vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 
 type Item = { id: string; name: string; status: string; locationId: string | null; principalInvestigator: string | null; unit: string; productId: string | null; managementMode: string };
 type Product = { id: string; name: string; status: string; typeId: string | null; groupKey: string | null; controlLevels: string[] };
+type Container = { id: string; inventoryItemId: string; state: string; holder: string | null; location: string | null; version: number };
 const db = vi.hoisted(() => ({
   items: [] as Item[],
+  containers: [] as Container[],
+  events: [] as { containerId: string; action: string }[],
   products: [] as Product[],
   movementsByItem: {} as Record<string, number>,
   transfers: [] as { inventoryItemId: string; fromLocationId?: string; toLocationId?: string }[],
@@ -18,13 +21,13 @@ vi.mock("@/lib/db", () => {
   const inIds = (where: { id?: { in: string[] } }) => (entry: { id: string }) => !where.id || where.id.in.includes(entry.id);
   const tx = {
     inventoryItem: {
-      findMany: async ({ where }: { where: { id: { in: string[] } } }) => db.items.filter(inIds(where)),
+      findMany: async ({ where }: { where: { id: { in: string[] } } }) => db.items.filter(inIds(where)).map((item) => ({ ...item, containers: db.containers.filter((container) => container.inventoryItemId === item.id && container.state === "warehouse") })),
       updateMany: async ({ where, data }: { where: { id?: { in: string[] }; productId?: string }; data: Partial<Item> }) => {
         const matched = db.items.filter((item) => (where.productId ? item.productId === where.productId : inIds(where)(item)));
         matched.forEach((item) => Object.assign(item, data));
         return { count: matched.length };
       },
-      update: async ({ where, data }: { where: { id: string }; data: Partial<Item> }) => Object.assign(db.items.find((item) => item.id === where.id)!, data),
+      update: async ({ where, data }: { where: { id: string }; data: Partial<Item> & { currentQuantity?: unknown } }) => { const { currentQuantity: _quantity, ...rest } = data; return Object.assign(db.items.find((item) => item.id === where.id)!, rest); },
       delete: async ({ where }: { where: { id: string } }) => { db.deleted.push(where.id); db.items = db.items.filter((item) => item.id !== where.id); },
       count: async () => 0,
     },
@@ -43,12 +46,19 @@ vi.mock("@/lib/db", () => {
       delete: async ({ where }: { where: { id: string } }) => { db.deleted.push(where.id); db.products = db.products.filter((product) => product.id !== where.id); },
     },
     inventoryLocation: { findUnique: async ({ where }: { where: { id: string } }) => (["shelf", "freezer"].includes(where.id) ? { id: where.id } : null) },
-    inventoryContainer: { deleteMany: async () => ({ count: 0 }) },
+    inventoryContainer: {
+      deleteMany: async () => ({ count: 0 }),
+      findUniqueOrThrow: async ({ where }: { where: { id: string } }) => {
+        const container = db.containers.find((entry) => entry.id === where.id)!;
+        return { ...container, label: null, openedAt: null, componentStates: null, inventoryItem: { ...db.items.find((item) => item.id === container.inventoryItemId)!, product: null } };
+      },
+      updateMany: async ({ where, data }: { where: { id: string }; data: Partial<Container> & { version: unknown } }) => { const { version: _version, ...rest } = data; Object.assign(db.containers.find((entry) => entry.id === where.id)!, rest); return { count: 1 }; },
+    },
     attachmentLink: { deleteMany: async () => ({ count: 0 }) },
     runMaterialUse: { count: async () => 0 },
     purchaseReceipt: { count: async () => 0 },
     purchaseRequest: { count: async () => 0 },
-    inventoryContainerEvent: { count: async () => 0 },
+    inventoryContainerEvent: { count: async () => 0, create: async ({ data }: { data: { containerId: string; action: string } }) => { db.events.push(data); return data; } },
     inventoryObservation: { count: async () => 0 },
     sampleLifecycleEvent: { count: async () => 0 },
     activityLog: { create: async ({ data }: { data: (typeof db.logs)[number] }) => { db.logs.push(data); return data; } },
@@ -67,6 +77,8 @@ beforeEach(() => {
     { id: "p-cd3", name: "Anti-CD3", status: "active", typeId: "t-ab", groupKey: "reagent", controlLevels: [] },
     { id: "p-empty", name: "Unused", status: "active", typeId: null, groupKey: null, controlLevels: [] },
   ];
+  db.containers = ["b1", "b2", "b3"].map((id) => ({ id, inventoryItemId: "b", state: "warehouse", holder: null, location: "Shelf 2", version: 0 }));
+  db.events = [];
   db.movementsByItem = { b: 2 };
   db.transfers = [];
   db.deleted = [];
@@ -96,6 +108,15 @@ it("moves active stock with a transfer movement each and skips archived stock (Q
   expect(db.items.filter((item) => item.locationId === "freezer").map((item) => item.id)).toEqual(["a", "b"]);
   expect(db.transfers).toEqual([expect.objectContaining({ inventoryItemId: "a", fromLocationId: "shelf", toLocationId: "freezer" }), expect.objectContaining({ inventoryItemId: "b", fromLocationId: "shelf", toLocationId: "freezer" })]);
   expect(db.logs[0].metadataJson.entries).toHaveLength(3);
+});
+
+it("takes the oldest containers out of container stock and skips stock kept by amount (Q166)", async () => {
+  expect(await applyStockBulk({ action: "takeOut", ids: ["a", "b"], count: 2 })).toMatchObject({ error: "Enter who takes them." });
+  const result = await applyStockBulk({ action: "takeOut", ids: ["a", "b"], count: 2, holder: "QA", place: "B302 bench" });
+  expect(result.entries?.map((entry) => [entry.id, entry.outcome])).toEqual([["a", "skip"], ["b", "change"]]);
+  expect(db.containers.map((container) => [container.id, container.state, container.holder, container.location])).toEqual([["b1", "held", "QA", "B302 bench"], ["b2", "held", "QA", "B302 bench"], ["b3", "warehouse", null, "Shelf 2"]]);
+  expect(db.events.map((event) => [event.containerId, event.action])).toEqual([["b1", "issue"], ["b2", "issue"]]);
+  expect(db.logs[0]).toMatchObject({ action: "bulk_takeOut", metadataJson: { count: 2, holder: "QA", place: "B302 bench" } });
 });
 
 it("refuses a move to a location that no longer exists", async () => {

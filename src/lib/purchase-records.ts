@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { sameUnit } from "@/lib/inventory";
 import { linkInventoryProduct, lotIdentity } from "@/lib/inventory-products.server";
 const text = z.string().trim().min(1).max(240);
 export const purchaseInput = z.object({
@@ -83,6 +84,9 @@ const receiptInput = z.discriminatedUnion("action", [
     quantity: z.number().finite().positive(),
     inventory: z.enum(["none", "new", "existing"]),
     inventoryItemId: text.optional(),
+    /** Read from the delivery's invoice or label; new stock takes them over the purchase's own. */
+    lotNumber: z.string().trim().max(120).optional(),
+    expiryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     clientMutationId: z.string().uuid(),
   }),
   z.object({
@@ -204,7 +208,8 @@ export async function updateIndependentPurchase(id: string, raw: unknown) {
             ...lotIdentity(product),
             productId: product.id,
             vendor: purchase.vendor,
-            lotNumber: purchase.lotNumber,
+            lotNumber: input.lotNumber || purchase.lotNumber,
+            expiryDate: input.expiryDate ? new Date(`${input.expiryDate}T00:00:00.000Z`) : purchase.expiryDate,
             currentQuantity: input.quantity,
             unit: purchase.unit,
           },
@@ -220,7 +225,7 @@ export async function updateIndependentPurchase(id: string, raw: unknown) {
         if (
           item.status !== "active" ||
           !item.quantityRecorded ||
-          item.unit !== purchase.unit
+          !sameUnit(item.unit, purchase.unit)
         )
           throw new Error(
             "库存状态或单位不匹配，请检查后收货。 / Stock state or unit does not match.",

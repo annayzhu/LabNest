@@ -1,6 +1,7 @@
 import { z } from "zod";
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
-import { deleteBlockers, observationUnitValues, type KitComponentStates } from "@/lib/inventory";
+import { assertPrecision, deleteBlockers, observationUnitValues, type KitComponentStates } from "@/lib/inventory";
 
 export const containerCommand = z.object({
   action: z.enum(["issue", "open", "transfer", "return", "empty", "observe", "edit", "return_supplier", "component"]),
@@ -65,168 +66,7 @@ export async function commandInventoryContainer(
     return replay;
   }
   try {
-    return await prisma.$transaction(async (tx) => {
-      const bottle = await tx.inventoryContainer.findUniqueOrThrow({
-        where: { id: input.containerId },
-        include: { inventoryItem: { include: { product: { select: { kitComponents: { select: { id: true, name: true } } } } } } },
-      });
-      if (
-        bottle.inventoryItemId !== inventoryItemId ||
-        bottle.inventoryItem.status !== "active" ||
-        bottle.inventoryItem.managementMode !== "package"
-      )
-        throw new Error("该实物不可操作。 / Container is unavailable.");
-      if (bottle.state === "returned")
-        throw new Error("This container has been returned to the supplier.");
-      // An empty container can still be relabelled, returned to the supplier, or have a remaining amount noted.
-      if (bottle.state === "empty" && !["edit", "return_supplier", "observe"].includes(input.action))
-        throw new Error("该瓶已用完，历史保持不变。 / Container is empty.");
-      const patch: {
-        state?: string;
-        holder?: string | null;
-        location?: string;
-        label?: string | null;
-        openedAt?: Date;
-        componentStates?: KitComponentStates;
-      } = {};
-      if (input.action === "issue") {
-        if (bottle.state !== "warehouse" || !input.holder)
-          throw new Error(
-            "请选择仓库实物并填写领用人。 / Select warehouse stock and a holder.",
-          );
-        patch.state = "held";
-        patch.holder = input.holder;
-      }
-      if (input.action === "transfer") {
-        if (bottle.state !== "held" || !input.holder)
-          throw new Error(
-            "转交需要当前持有的实物和接收人。 / Transfer needs held stock and a recipient.",
-          );
-        patch.holder = input.holder;
-      }
-      if (input.action === "return") {
-        if (bottle.state !== "held")
-          throw new Error(
-            "只有已领用实物可归还。 / Only held stock can be returned.",
-          );
-        patch.state = "warehouse";
-        patch.holder = null;
-      }
-      if (input.action === "empty") patch.state = "empty";
-      // A cylinder (or any container) goes back to the supplier from the store or once empty.
-      if (input.action === "return_supplier") {
-        if (bottle.state === "held") throw new Error("Return the container to the store, or mark it empty, before returning it to the supplier.");
-        patch.state = "returned";
-        patch.holder = null;
-      }
-      if (input.action === "edit") patch.label = input.label || null;
-      if (input.location !== undefined) patch.location = input.location;
-      if (input.action === "open") {
-        if (bottle.openedAt)
-          throw new Error(
-            "开封日期已记录。 / Opened date is already recorded.",
-          );
-        if (!input.openedAt)
-          throw new Error("请填写开封日期。 / Opened date is required.");
-        const date = new Date(input.openedAt + "T00:00:00Z");
-        if (
-          !Number.isFinite(date.getTime()) ||
-          date.toISOString().slice(0, 10) !== input.openedAt
-        )
-          throw new Error("无效日期。 / Invalid date.");
-        patch.openedAt = date;
-      }
-      // Each box records which of its kit's components are used up or missing; present without a place is the default.
-      if (input.action === "component") {
-        const component = bottle.inventoryItem.product?.kitComponents.find((entry) => entry.id === input.componentId);
-        if (!component || !input.componentState) throw new Error("Choose a component of this kit.");
-        const states = { ...((bottle.componentStates ?? {}) as KitComponentStates) };
-        if (input.componentState === "present" && !input.componentLocation) delete states[component.id];
-        else states[component.id] = { state: input.componentState, ...(input.componentLocation ? { location: input.componentLocation } : {}) };
-        patch.componentStates = states;
-      }
-      if (input.action === "observe") {
-        if (input.remaining === undefined || !input.unit || !input.performedBy)
-          throw new Error(
-            "请填写余量、单位和登记人。 / Remaining amount, unit and recorder are required.",
-          );
-        if (input.experimentId)
-          await tx.experiment.findUniqueOrThrow({
-            where: { id: input.experimentId },
-            select: { id: true },
-          });
-        await tx.inventoryObservation.create({
-          data: {
-            containerId: bottle.id,
-            remaining: input.remaining,
-            unit: input.unit,
-            quality: input.quality ?? "estimated",
-            performedBy: input.performedBy,
-            experimentId: input.experimentId,
-          },
-        });
-      }
-      // Compare-and-swap prevents a concurrent issue/return from changing the same physical bottle twice.
-      const changed = await tx.inventoryContainer.updateMany({
-        where: { id: bottle.id, version: bottle.version },
-        data: { ...patch, version: { increment: 1 } },
-      });
-      if (changed.count !== 1)
-        throw new Error(
-          "实物状态已变化，请刷新后重试。 / Container changed; refresh before retrying.",
-        );
-      const nextState = patch.state ?? bottle.state;
-      const warehouseChange =
-        Number(nextState === "warehouse") -
-        Number(bottle.state === "warehouse");
-      if (warehouseChange) {
-        await tx.inventoryItem.update({
-          where: { id: inventoryItemId },
-          data: { currentQuantity: { increment: warehouseChange } },
-        });
-        await tx.inventoryTransaction.create({
-          data: {
-            inventoryItemId,
-            type: input.action === "empty" || input.action === "return_supplier" ? "discard" : "transfer",
-            quantityChange: warehouseChange,
-            unit: bottle.inventoryItem.unit,
-            performedBy: input.performedBy,
-            clientMutationId: input.clientMutationId,
-            notes: `Container ${bottle.label ?? bottle.id}: ${input.action}; physical movement, not inferred liquid consumption.`,
-          },
-        });
-      }
-      const event = await tx.inventoryContainerEvent.create({
-        data: {
-          containerId: bottle.id,
-          action: input.action,
-          performedBy: input.performedBy,
-          clientMutationId: input.clientMutationId,
-          snapshotJson: {
-            before: {
-              state: bottle.state,
-              label: bottle.label,
-              holder: bottle.holder,
-              location: bottle.location,
-              openedAt: bottle.openedAt?.toISOString() ?? null,
-              componentStates: bottle.componentStates ?? {},
-            },
-            after: {
-              state: nextState,
-              label: patch.label === undefined ? bottle.label : patch.label,
-              holder: patch.holder === undefined ? bottle.holder : patch.holder,
-              location: patch.location ?? bottle.location,
-              openedAt:
-                patch.openedAt?.toISOString() ??
-                bottle.openedAt?.toISOString() ??
-                null,
-              componentStates: patch.componentStates ?? bottle.componentStates ?? {},
-            },
-          },
-        },
-      });
-      return event;
-    });
+    return await prisma.$transaction((tx) => applyContainerCommand(tx, inventoryItemId, input));
   } catch (error) {
     const replay = await prisma.inventoryContainerEvent.findUnique({
       where: { clientMutationId: input.clientMutationId },
@@ -239,6 +79,171 @@ export async function commandInventoryContainer(
       return replay;
     throw error;
   }
+}
+
+/** One container command inside the caller's transaction; the list's bulk take-out runs several in one. */
+export async function applyContainerCommand(tx: Prisma.TransactionClient, inventoryItemId: string, input: z.infer<typeof containerCommand>) {
+  const bottle = await tx.inventoryContainer.findUniqueOrThrow({
+    where: { id: input.containerId },
+    include: { inventoryItem: { include: { product: { select: { kitComponents: { select: { id: true, name: true } } } } } } },
+  });
+  if (
+    bottle.inventoryItemId !== inventoryItemId ||
+    bottle.inventoryItem.status !== "active" ||
+    bottle.inventoryItem.managementMode !== "package"
+  )
+    throw new Error("该实物不可操作。 / Container is unavailable.");
+  if (bottle.state === "returned")
+    throw new Error("This container has been returned to the supplier.");
+  // An empty container can still be relabelled, returned to the supplier, or have a remaining amount noted.
+  if (bottle.state === "empty" && !["edit", "return_supplier", "observe"].includes(input.action))
+    throw new Error("该瓶已用完，历史保持不变。 / Container is empty.");
+  const patch: {
+    state?: string;
+    holder?: string | null;
+    location?: string;
+    label?: string | null;
+    openedAt?: Date;
+    componentStates?: KitComponentStates;
+  } = {};
+  if (input.action === "issue") {
+    if (bottle.state !== "warehouse" || !input.holder)
+      throw new Error(
+        "请选择仓库实物并填写领用人。 / Select warehouse stock and a holder.",
+      );
+    patch.state = "held";
+    patch.holder = input.holder;
+  }
+  if (input.action === "transfer") {
+    if (bottle.state !== "held" || !input.holder)
+      throw new Error(
+        "转交需要当前持有的实物和接收人。 / Transfer needs held stock and a recipient.",
+      );
+    patch.holder = input.holder;
+  }
+  if (input.action === "return") {
+    if (bottle.state !== "held")
+      throw new Error(
+        "只有已领用实物可归还。 / Only held stock can be returned.",
+      );
+    patch.state = "warehouse";
+    patch.holder = null;
+  }
+  if (input.action === "empty") patch.state = "empty";
+  // A cylinder (or any container) goes back to the supplier from the store or once empty.
+  if (input.action === "return_supplier") {
+    if (bottle.state === "held") throw new Error("Return the container to the store, or mark it empty, before returning it to the supplier.");
+    patch.state = "returned";
+    patch.holder = null;
+  }
+  if (input.action === "edit") patch.label = input.label || null;
+  if (input.location !== undefined) patch.location = input.location;
+  if (input.action === "open") {
+    if (bottle.openedAt)
+      throw new Error(
+        "开封日期已记录。 / Opened date is already recorded.",
+      );
+    if (!input.openedAt)
+      throw new Error("请填写开封日期。 / Opened date is required.");
+    const date = new Date(input.openedAt + "T00:00:00Z");
+    if (
+      !Number.isFinite(date.getTime()) ||
+      date.toISOString().slice(0, 10) !== input.openedAt
+    )
+      throw new Error("无效日期。 / Invalid date.");
+    patch.openedAt = date;
+  }
+  // Each box records which of its kit's components are used up or missing; present without a place is the default.
+  if (input.action === "component") {
+    const component = bottle.inventoryItem.product?.kitComponents.find((entry) => entry.id === input.componentId);
+    if (!component || !input.componentState) throw new Error("Choose a component of this kit.");
+    const states = { ...((bottle.componentStates ?? {}) as KitComponentStates) };
+    if (input.componentState === "present" && !input.componentLocation) delete states[component.id];
+    else states[component.id] = { state: input.componentState, ...(input.componentLocation ? { location: input.componentLocation } : {}) };
+    patch.componentStates = states;
+  }
+  if (input.action === "observe") {
+    if (input.remaining === undefined || !input.unit || !input.performedBy)
+      throw new Error(
+        "请填写余量、单位和登记人。 / Remaining amount, unit and recorder are required.",
+      );
+    assertPrecision(input.remaining, input.unit);
+    if (input.experimentId)
+      await tx.experiment.findUniqueOrThrow({
+        where: { id: input.experimentId },
+        select: { id: true },
+      });
+    await tx.inventoryObservation.create({
+      data: {
+        containerId: bottle.id,
+        remaining: input.remaining,
+        unit: input.unit,
+        quality: input.quality ?? "estimated",
+        performedBy: input.performedBy,
+        experimentId: input.experimentId,
+      },
+    });
+  }
+  // Compare-and-swap prevents a concurrent issue/return from changing the same physical bottle twice.
+  const changed = await tx.inventoryContainer.updateMany({
+    where: { id: bottle.id, version: bottle.version },
+    data: { ...patch, version: { increment: 1 } },
+  });
+  if (changed.count !== 1)
+    throw new Error(
+      "实物状态已变化，请刷新后重试。 / Container changed; refresh before retrying.",
+    );
+  const nextState = patch.state ?? bottle.state;
+  const warehouseChange =
+    Number(nextState === "warehouse") -
+    Number(bottle.state === "warehouse");
+  if (warehouseChange) {
+    await tx.inventoryItem.update({
+      where: { id: inventoryItemId },
+      data: { currentQuantity: { increment: warehouseChange } },
+    });
+    await tx.inventoryTransaction.create({
+      data: {
+        inventoryItemId,
+        type: input.action === "empty" || input.action === "return_supplier" ? "discard" : "transfer",
+        quantityChange: warehouseChange,
+        unit: bottle.inventoryItem.unit,
+        performedBy: input.performedBy,
+        clientMutationId: input.clientMutationId,
+        notes: `Container ${bottle.label ?? bottle.id}: ${input.action}; physical movement, not inferred liquid consumption.`,
+      },
+    });
+  }
+  const event = await tx.inventoryContainerEvent.create({
+    data: {
+      containerId: bottle.id,
+      action: input.action,
+      performedBy: input.performedBy,
+      clientMutationId: input.clientMutationId,
+      snapshotJson: {
+        before: {
+          state: bottle.state,
+          label: bottle.label,
+          holder: bottle.holder,
+          location: bottle.location,
+          openedAt: bottle.openedAt?.toISOString() ?? null,
+          componentStates: bottle.componentStates ?? {},
+        },
+        after: {
+          state: nextState,
+          label: patch.label === undefined ? bottle.label : patch.label,
+          holder: patch.holder === undefined ? bottle.holder : patch.holder,
+          location: patch.location ?? bottle.location,
+          openedAt:
+            patch.openedAt?.toISOString() ??
+            bottle.openedAt?.toISOString() ??
+            null,
+          componentStates: patch.componentStates ?? bottle.componentStates ?? {},
+        },
+      },
+    },
+  });
+  return event;
 }
 
 const addContainers = z.object({

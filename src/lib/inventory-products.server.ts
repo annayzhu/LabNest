@@ -1,7 +1,8 @@
 import type { Prisma } from "@/generated/prisma/client";
-import { deleteBlockers, isStrictlyControlled } from "./inventory";
+import { deleteBlockers, isStrictlyControlled, stockUnits } from "./inventory";
+import { locationPaths, temperatureLabel } from "./inventory-location-lifecycle";
 import { catalogKey, duplicateLotGroups, duplicateProductPairs, pairKey } from "./inventory-duplicates";
-import { inventoryClassFromCategory, inventoryGroupName, inventoryTypeDefaults, inventoryTypeFields, isInventoryGroupKey, type InventoryGroupKey } from "./inventory-types";
+import { inventoryClassFromCategory, inventoryGroupKeys, inventoryGroupName, inventoryGroupNames, inventoryTypeDefaults, inventoryTypeFields, isInventoryGroupKey, type InventoryGroupKey } from "./inventory-types";
 
 type Tx = Prisma.TransactionClient;
 
@@ -129,17 +130,47 @@ export async function stockItemBlockers(db: Pick<Tx, "inventoryTransaction" | "r
   });
 }
 
+/** Every location for the stock form, named by its full path and sorted by it; callers drop the archived ones they do not need. */
+export async function stockFormLocations(db: Pick<Tx, "inventoryLocation">) {
+  const locations = await db.inventoryLocation.findMany({ select: { id: true, name: true, parentLocationId: true, temperature: true, status: true } });
+  const paths = locationPaths(locations);
+  return locations
+    .map((location) => ({ id: location.id, name: paths.get(location.id) ?? location.name, temperature: temperatureLabel(location.temperature), status: location.status }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** The choices the inventory import template offers: types and 大类 by the names the import reads, units, locations. */
+export async function inventoryTemplateLists(db: Pick<Tx, "scientificSchemaDefinition" | "inventoryGroup" | "inventoryLocation">) {
+  const [types, groups, locations] = await Promise.all([
+    db.scientificSchemaDefinition.findMany({ where: { inventoryGroupKey: { not: null }, enabled: true }, select: { label: true, inventoryGroupKey: true }, orderBy: { label: "asc" } }),
+    db.inventoryGroup.findMany({ where: { hidden: false }, select: { key: true }, orderBy: { sortOrder: "asc" } }),
+    db.inventoryLocation.findMany({ where: { status: "active" }, select: { name: true }, orderBy: { name: "asc" } }),
+  ]);
+  const shown = new Set(groups.map((group) => group.key));
+  return {
+    category: [...inventoryGroupKeys.filter((key) => shown.has(key)).map((key) => inventoryGroupNames[key]), ...types.filter((type) => shown.has(type.inventoryGroupKey!)).map((type) => type.label)],
+    unit: stockUnits,
+    location: locations.map((location) => location.name),
+  };
+}
+
 /** Products, types and 大类 the stock and product forms choose from; archived products only when already chosen. */
 export async function inventoryFormOptions(prisma: Pick<Tx, "inventoryProduct" | "scientificSchemaDefinition" | "inventoryGroup">) {
   const [products, types, groups] = await Promise.all([
-    prisma.inventoryProduct.findMany({ select: { id: true, name: true, brand: true, catalogNumber: true, typeId: true, groupKey: true, controlLevels: true, status: true }, orderBy: { name: "asc" } }),
-    prisma.scientificSchemaDefinition.findMany({ where: { inventoryGroupKey: { not: null } }, select: { id: true, label: true, inventoryGroupKey: true, defaultSettings: true, fieldDefinitions: true, enabled: true }, orderBy: { label: "asc" } }),
+    prisma.inventoryProduct.findMany({
+      select: {
+        id: true, name: true, brand: true, catalogNumber: true, typeId: true, groupKey: true, controlLevels: true, status: true,
+        items: { where: { status: { not: "archived" } }, select: { id: true, lotNumber: true, currentQuantity: true, unit: true, quantityRecorded: true, locationId: true }, orderBy: { createdAt: "asc" } },
+      },
+      orderBy: { name: "asc" },
+    }),
+    prisma.scientificSchemaDefinition.findMany({ where: { inventoryGroupKey: { not: null } }, select: { id: true, key: true, label: true, inventoryGroupKey: true, defaultSettings: true, fieldDefinitions: true, enabled: true }, orderBy: { label: "asc" } }),
     prisma.inventoryGroup.findMany({ orderBy: { sortOrder: "asc" } }),
   ]);
   const groupNames = new Map(groups.map((group) => [group.key, inventoryGroupName(group)]));
   return {
-    products: products.map(({ controlLevels, ...product }) => ({ ...product, strict: isStrictlyControlled(controlLevels) })),
-    types: types.map((type) => ({ id: type.id, label: type.label, groupKey: type.inventoryGroupKey!, groupName: groupNames.get(type.inventoryGroupKey!) ?? type.inventoryGroupKey!, defaults: inventoryTypeDefaults(type.defaultSettings), fields: inventoryTypeFields(type.fieldDefinitions), enabled: type.enabled })),
+    products: products.map(({ controlLevels, items, ...product }) => ({ ...product, strict: isStrictlyControlled(controlLevels), lots: items })),
+    types: types.map((type) => ({ id: type.id, key: type.key, label: type.label, groupKey: type.inventoryGroupKey!, groupName: groupNames.get(type.inventoryGroupKey!) ?? type.inventoryGroupKey!, defaults: inventoryTypeDefaults(type.defaultSettings), fields: inventoryTypeFields(type.fieldDefinitions), enabled: type.enabled })),
     groups: groups.map((group) => ({ key: group.key, name: inventoryGroupName(group), hidden: group.hidden })),
   };
 }

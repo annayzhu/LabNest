@@ -3,17 +3,17 @@ import { InventoryLocationManager } from "@/components/InventoryLocationManager"
 import { InventoryNav } from "@/components/InventoryNav";
 import { PageHeader } from "@/components/PageHeader";
 import { prisma } from "@/lib/db";
+import { locationPaths } from "@/lib/inventory-location-lifecycle";
 
 export const dynamic = "force-dynamic";
 
 export default async function InventoryLocationsPage() {
   const locations = await prisma.inventoryLocation.findMany({
     include: {
-      parentLocation: { select: { name: true } },
       _count: { select: { items: true, itemsFrom: true, itemsTo: true, sampleEventsFrom: true, sampleEventsTo: true, childLocations: true } },
     },
-    orderBy: [{ status: "asc" }, { name: "asc" }],
   });
+  const paths = locationPaths(locations);
 
   return (
     <AppShell>
@@ -21,13 +21,14 @@ export default async function InventoryLocationsPage() {
         <PageHeader title="Inventory" />
         <InventoryNav current="locations" />
         <InventoryLocationManager
-          locations={locations.map((location) => ({
+          // Sorted by path, so the shelves of a fridge follow the fridge.
+          locations={locations.sort((a, b) => Number(a.status !== "active") - Number(b.status !== "active") || (paths.get(a.id) ?? "").localeCompare(paths.get(b.id) ?? "")).map((location) => ({
             id: location.id,
             name: location.name,
             type: location.type,
             status: location.status,
             parentLocationId: location.parentLocationId,
-            parentLocationName: location.parentLocation?.name ?? null,
+            path: paths.get(location.id) ?? location.name,
             temperature: location.temperature,
             description: location.description,
             counts: location._count,

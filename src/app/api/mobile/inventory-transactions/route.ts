@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { controlledUseProblem } from "@/lib/inventory";
+import { controlledUseProblem, movementChange } from "@/lib/inventory";
 
 const inputSchema = z.object({
   inventoryItemId: z.string().min(1),
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
         if (!step) throw new Error("The selected experiment step is no longer available.");
       }
       const inbound = input.type === "receive" || input.type === "return";
-      const quantityChange = inbound ? input.quantity : -input.quantity;
+      const quantityChange = movementChange(input.quantity, item, inbound);
       const nextQuantity = Number((item.currentQuantity + quantityChange).toFixed(6));
       if (nextQuantity < 0) throw new Error(`Stock changed while offline. Available: ${item.currentQuantity} ${item.unit}.`);
       const transaction = await tx.inventoryTransaction.create({ data: {

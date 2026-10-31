@@ -5,9 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { useI18n } from "@/components/I18nProvider";
-import { formatQuantity } from "@/lib/calculators/quantity-format";
 import { readInventoryBarcode } from "@/lib/inventory-barcode";
-import type { InventoryRiskFlag } from "@/lib/inventory";
+import { formatStockQuantity, type InventoryRiskFlag } from "@/lib/inventory";
 
 type MobileInventoryItem = {
   id: string; name: string; subtitle: string; code: string; lot: string;
@@ -43,7 +42,7 @@ export function MobileInventoryBench({ items, totalCount, query, filters, riskCo
       if (searchInput.current) searchInput.current.value = value;
       setScanStatus(zh ? "已识别，请核对物料和批次。" : "Code read. Confirm the material and lot.");
       // A scan starts a search, never an inventory mutation or an automatic choice of bottle.
-      router.push(`/inventory?q=${encodeURIComponent(value)}`);
+      router.push(`/inventory/list?q=${encodeURIComponent(value)}`);
     } catch {
       setScanStatus(zh ? "未识别到清晰条码。请靠近标签重新拍照，或输入条码、批号查找。" : "No readable barcode. Take a closer photo, or enter the barcode or lot number.");
       searchInput.current?.focus();
@@ -54,11 +53,11 @@ export function MobileInventoryBench({ items, totalCount, query, filters, riskCo
 
   return <section className="space-y-4 lg:hidden" aria-label={zh ? "实验台库存" : "Bench inventory"}>
     <header className="flex items-center justify-between gap-3">
-      <div className="min-w-0"><h1 className="page-header-title text-ink">{zh ? "实验台库存" : "Inventory at the bench"}</h1></div>
+      <div className="min-w-0"><h1 className="page-header-title text-ink">{zh ? "库存清单" : "Stock list"}</h1></div>
       <Link href="/inventory/new" className="focus-ring inline-flex min-h-11 items-center gap-1 text-sm text-moss"><Plus className="h-4 w-4" aria-hidden />{zh ? "新增物料" : "Add material"}</Link>
     </header>
     <div>
-      <form action="/inventory" className="space-y-3">
+      <form action="/inventory/list" className="space-y-3">
         {Object.entries(filters).filter(([key, value]) => key !== "flag" && value).map(([key, value]) => <input key={key} type="hidden" name={key} value={value} />)}
         <div className="flex gap-2">
           <label className="relative min-w-0 flex-1">
@@ -92,7 +91,7 @@ export function MobileInventoryBench({ items, totalCount, query, filters, riskCo
     <section aria-labelledby="recent-inventory-title">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <h2 id="recent-inventory-title" className="text-base font-semibold text-ink">{filtered ? (zh ? "查找结果" : "Matches") : (zh ? "最近更新" : "Recently updated")}</h2>
-        {filtered ? <Link href="/inventory" className="focus-ring flex min-h-11 items-center px-2 text-sm text-moss">{zh ? "清除筛选" : "Clear filters"}</Link> : null}
+        {filtered ? <Link href="/inventory/list" className="focus-ring flex min-h-11 items-center px-2 text-sm text-moss">{zh ? "清除筛选" : "Clear filters"}</Link> : null}
         <span className="text-sm text-muted" data-i18n-ignore>{zh ? `${items.length} 项` : `${items.length} items`}</span>
       </div>
       <div className="divide-y divide-hairline border-y border-hairline">
@@ -104,7 +103,7 @@ export function MobileInventoryBench({ items, totalCount, query, filters, riskCo
             {item.code ? <span className="mt-1 block break-all text-xs text-muted" data-i18n-ignore>{item.code}</span> : null}
             {item.riskFlags.length ? <span className="mt-1 block text-sm font-medium text-warning">{item.riskFlags.map(flag => labels[flag]).join(" · ")}</span> : null}
           </span>
-          <span className="max-w-28 shrink-0 text-right text-sm font-medium text-ink">{item.quantityRecorded ? <><span>{formatQuantity(item.quantity)}</span> <span>{item.unit}</span></> : (zh ? "余量未登记" : "Quantity not recorded")}</span>
+          <span className="max-w-28 shrink-0 text-right text-sm font-medium text-ink">{item.quantityRecorded ? <><span>{formatStockQuantity(item.quantity, item.unit)}</span> <span>{item.unit}</span></> : (zh ? "余量未登记" : "Quantity not recorded")}</span>
           <ChevronRight className="h-4 w-4 shrink-0 text-muted" aria-hidden />
         </Link>)}
         {!items.length ? <div className="py-6 text-sm leading-6 text-muted">

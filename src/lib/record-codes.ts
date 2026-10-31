@@ -1,15 +1,12 @@
 import { Prisma } from "../generated/prisma/client";
 
-export type RecordCodeKind = "researchPlan" | "protocol" | "experiment" | "sequence" | "sequencePair" | "sequenceCollection" | "sequenceWorkflow";
+export type RecordCodeKind = "researchPlan" | "protocol" | "experiment" | "sequence";
 
 const recordCodeRules = {
   researchPlan: { counterKey: "research-plan", prefix: "RP-", width: 3, firstValue: 1 },
   protocol: { counterKey: "protocol", prefix: "PRT-", width: 6, firstValue: 100001 },
   experiment: { counterKey: "experiment", prefix: "EXP-", width: 3, firstValue: 1 },
   sequence: { counterKey: "sequence", prefix: "SEQ-", width: 6, firstValue: 1 },
-  sequencePair: { counterKey: "sequence-pair", prefix: "PAI-", width: 6, firstValue: 1 },
-  sequenceCollection: { counterKey: "sequence-collection", prefix: "SET-", width: 6, firstValue: 1 },
-  sequenceWorkflow: { counterKey: "sequence-workflow", prefix: "WF-", width: 6, firstValue: 1 },
 } as const;
 
 export function formatRecordCode(kind: RecordCodeKind, value: number) {
@@ -66,14 +63,8 @@ async function existingRecordCodes(tx: Prisma.TransactionClient, kind: RecordCod
     existingCodes = (await tx.protocol.findMany({ select: { humanCode: true } })).map((item) => item.humanCode);
   } else if (kind === "experiment") {
     existingCodes = (await tx.experiment.findMany({ select: { runCode: true } })).map((item) => item.runCode);
-  } else if (kind === "sequence") {
-    existingCodes = (await tx.sequence.findMany({ select: { code: true } })).map((item) => item.code);
-  } else if (kind === "sequencePair") {
-    existingCodes = (await tx.sequencePair.findMany({ select: { code: true } })).map((item) => item.code);
-  } else if (kind === "sequenceCollection") {
-    existingCodes = (await tx.sequenceCollection.findMany({ select: { code: true } })).map((item) => item.code);
   } else {
-    existingCodes = (await tx.sequenceWorkflow.findMany({ select: { code: true } })).map((item) => item.code);
+    existingCodes = (await tx.sequence.findMany({ select: { code: true } })).map((item) => item.code);
   }
 
   return existingCodes;

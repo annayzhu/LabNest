@@ -9,6 +9,11 @@ import {
   isStrictlyControlled,
   controlledUseProblem,
   deleteBlockers,
+  formatStockQuantity,
+  quantityDecimals,
+  quantityPrecisionProblem,
+  sameUnit,
+  stockUnit,
   exportedSafetyStock,
   kitBoxStatus,
   lotRiskFlags,
@@ -60,9 +65,9 @@ describe("inventory transaction logic", () => {
 });
 
 describe("inventory display", () => {
-  it("shows stock by the site-wide quantity rule: at most two decimals from 1 up, two significant figures below 1", () => {
+  it("shows stock to its unit's precision", () => {
     // 5 mL less two confirmed 0.264 mL uses, as the stored float sum.
-    expect(inventoryQuantityLabel({ currentQuantity: 5 - 0.264 - 0.264, unit: "mL" })).toBe("4.47 mL");
+    expect(inventoryQuantityLabel({ currentQuantity: 5 - 0.264 - 0.264, unit: "mL" })).toBe("4.472 mL");
     expect(inventoryQuantityLabel({ currentQuantity: 0.63008, unit: "mL" })).toBe("0.63 mL");
     expect(inventoryQuantityLabel({ currentQuantity: 0.005, unit: "mL" })).toBe("0.005 mL");
     expect(inventoryQuantityLabel({ currentQuantity: 500, unit: "mL" })).toBe("500 mL");
@@ -80,6 +85,39 @@ describe("inventory display", () => {
     expect(inventoryNoteText(`Consumed during ${experiment.id}.`, null)).toBe("Consumed during an experiment.");
     expect(inventoryNoteText("Opening balance recorded when the item was registered.", null)).toBe("Opening balance recorded when the item was registered.");
     expect(inventoryNoteText(null, experiment)).toBeNull();
+  });
+});
+
+describe("amounts by unit (Q172)", () => {
+  it("counts containers in whole numbers and volumes and masses to a working precision", () => {
+    expect(["bottle", "瓶", "boxes", "个", "reaction", "mL", "µL", "μl", "g", "mg", "µg", "U"].map(quantityDecimals)).toEqual([0, 0, 0, 0, 0, 3, 1, 1, 4, 3, 1, 3]);
+  });
+
+  it("says why an amount does not fit its unit", () => {
+    expect(quantityPrecisionProblem(2.000001, "瓶")).toBe("瓶: whole numbers only.");
+    expect(quantityPrecisionProblem(1.2345, "mL")).toBe("mL: at most 3 decimal places.");
+    expect(quantityPrecisionProblem(12.5, "µL")).toBeUndefined();
+    expect(quantityPrecisionProblem(0.1 + 0.2, "mL")).toBeUndefined();
+  });
+
+  it("shows an amount to its unit's precision, and a trace as less than the smallest step", () => {
+    expect(formatStockQuantity(2.000001, "瓶")).toBe("2");
+    expect(formatStockQuantity(0.0125, "g")).toBe("0.0125");
+    expect(formatStockQuantity(-1.25, "µL")).toBe("-1.3");
+    expect(formatStockQuantity(0.0004, "mL")).toBe("<0.001");
+    expect(formatStockQuantity(0, "mL")).toBe("0");
+  });
+
+  it("treats a unit and its Chinese name as one unit, so lots saved either way add up", () => {
+    expect(sameUnit("瓶", "bottle")).toBe(true);
+    expect(sameUnit("个", "piece")).toBe(true);
+    expect(sameUnit("µL", "uL")).toBe(true);
+    expect(sameUnit("mL", "µL")).toBe(false);
+    expect(productStock([{ currentQuantity: 2, unit: "瓶" }, { currentQuantity: 3, unit: "bottle" }, { currentQuantity: 9, unit: "mL" }], "bottle")).toBe(5);
+  });
+
+  it("reads units as printed in the spelling stock uses", () => {
+    expect(["盒", "支", "ML", "ul", "μg", "pcs", "Box", "tube(s)", "kg", "bottles", "boxes", "kits", "pieces"].map(stockUnit)).toEqual(["box", "vial", "mL", "µL", "µg", "piece", "box", "tube", "kg", "bottle", "box", "box", "piece"]);
   });
 });
 

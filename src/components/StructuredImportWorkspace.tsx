@@ -2,7 +2,8 @@
 
 import { useMemo, useRef, useState, type DragEvent } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, Check, Download, FileCheck2, FileSearch, FileUp, LoaderCircle } from "lucide-react";
+import { AlertTriangle, Check, Download, FileCheck2, FileSearch, FileUp, LoaderCircle, Sparkles } from "lucide-react";
+import { suggestImportColumns } from "@/app/inventory/import/actions";
 import { Button } from "@/components/ui/Button";
 import { ProtocolImportDecisionNotice } from "@/components/ProtocolImportDecisionNotice";
 import { useI18n } from "@/components/I18nProvider";
@@ -20,7 +21,7 @@ const acceptByFormat = {
   docx: ".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 };
 
-const structuredTemplateVersion = "5";
+const structuredTemplateVersion = "6";
 const maxStructuredImportBytes = 25 * 1024 * 1024;
 
 function formatFileSize(bytes: number) {
@@ -83,7 +84,8 @@ function groupPreviewFields(module: StructuredModuleKey, values: Record<string, 
   const fieldsByLabel = new Map(structuredModules[module].fields.map((field) => [field.label, field]));
   const entries = Object.entries(values).map(([label, value]) => {
     const field = fieldsByLabel.get(label);
-    return { label, value, key: field?.key };
+    // A stored code reads as the name the app shows for it, as in the template.
+    return { label, value: field?.optionLabels?.[value] ?? value, key: field?.key };
   });
   const technical = entries.filter(isTechnicalPreviewField);
   const narrative = entries.filter((field) => !isTechnicalPreviewField(field) && (narrativePreviewKeys.has(field.key ?? "") || field.value.length > 180 || field.value.includes("\n")));
@@ -101,7 +103,11 @@ function recordPreviewTitle(module: StructuredModuleKey, values: Record<string, 
   return `Record ${index}`;
 }
 
-export function StructuredImportWorkspace({ module }: { module: StructuredModuleKey }) {
+/**
+ * `columnHelper`: the AI service that can suggest fields for columns the import did not recognise (inventory only);
+ * `reason` says why it cannot when it is not ready.
+ */
+export function StructuredImportWorkspace({ module, columnHelper }: { module: StructuredModuleKey; columnHelper?: { ready: boolean; reason?: string } }) {
   const definition = structuredModules[module];
   const router = useRouter();
   const { locale } = useI18n();
@@ -119,6 +125,7 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
     setPreview(undefined);
     setColumnOverrides({});
     setError(undefined);
+    setSuggestion({ busy: false });
 
     if (source === "drop" && fileInput.current) fileInput.current.value = "";
     if (!nextFile) { setFile(undefined); return; }
@@ -184,10 +191,11 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
   }
 
   const [columnOverrides,setColumnOverrides]=useState<Record<string,string>>({});
-  async function requestPreview() {
+  const [suggestion, setSuggestion] = useState<{ busy: boolean; note?: string }>({ busy: false });
+  async function requestPreview(overrides = columnOverrides) {
     if (!file) { setError("Choose an import file first."); return; }
     setPending("preview"); setError(undefined); setPreview(undefined);
-    const formData = new FormData(); formData.set("file", file); formData.set("mapping",JSON.stringify(columnOverrides));
+    const formData = new FormData(); formData.set("file", file); formData.set("mapping",JSON.stringify(overrides));
     try {
       const response = await fetch(`/api/structured-import/${module}/preview`, { method: "POST", body: formData });
       const payload = await response.json() as { error?: string; preview?: StructuredImportPreview };
@@ -196,6 +204,20 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The file could not be previewed.");
     } finally { setPending(undefined); }
+  }
+
+  // The model only fills the column choices; the preview that follows checks the rows as for any other mapping.
+  async function suggestColumns() {
+    if (!file) return;
+    setSuggestion({ busy: true });
+    const formData = new FormData(); formData.set("file", file); formData.set("mapping", JSON.stringify(columnOverrides));
+    const result = await suggestImportColumns(formData);
+    if (result.error) { setSuggestion({ busy: false, note: result.error }); return; }
+    const suggested = Object.keys(result.overrides ?? {}).length;
+    const next = { ...columnOverrides, ...result.overrides };
+    setColumnOverrides(next);
+    setSuggestion({ busy: false, note: suggested ? `AI matched ${suggested} more column${suggested === 1 ? "" : "s"}; check them under Field recognition details.` : "AI found no field for the remaining columns." });
+    await requestPreview(next);
   }
 
   async function confirmImport() {
@@ -229,8 +251,8 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
                   <p className="text-sm font-semibold text-ink">{formatLabel(format)}</p>
                   <p className="mt-1 text-xs text-muted">Structured {definition.singular} input</p>
                   {showCompactGuidance ? controlledFields.map((field) => (
-                    <p key={field.key} className="mt-1 truncate text-xs text-muted" title={`${field.label}: ${field.allowedValues?.join(", ")}`}>
-                      {field.label}: {field.allowedValues?.join(" · ")}
+                    <p key={field.key} className="mt-1 truncate text-xs text-muted">
+                      <span>{field.label}</span>: {(field.optionLabels ? Object.values(field.optionLabels) : field.allowedValues ?? []).map((choice, index) => <span key={choice}>{index ? " · " : ""}<span>{choice}</span></span>)}
                     </p>
                   )) : null}
                 </div>
@@ -283,7 +305,7 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
             <p className="mt-3 text-xs leading-5 text-muted">LabNest revalidates the original file at confirmation and keeps it with a SHA-256 checksum.</p>
           </div>
           <div className="flex justify-end">
-            <Button type="button" variant="secondary" onClick={requestPreview} disabled={!file || Boolean(pending)}>
+            <Button type="button" variant="secondary" onClick={() => requestPreview()} disabled={!file || Boolean(pending)}>
               {pending === "preview" ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden /> : <FileSearch className="h-4 w-4" aria-hidden />}
               Preview mapping
             </Button>
@@ -292,6 +314,14 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
         </CardBody>
       </Card>
 
+      {columnHelper && preview && preview.mapping.some((mapping) => !mapping.target) ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-[var(--ln-radius-panel)] border border-hairline bg-surface px-4 py-3 text-sm">
+          <Button type="button" size="sm" variant={columnHelper.ready ? "ai" : "ai-off"} disabled={!columnHelper.ready || suggestion.busy || Boolean(pending)} onClick={suggestColumns}>
+            {suggestion.busy ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden /> : <Sparkles className="h-4 w-4" aria-hidden />}Suggest columns with AI
+          </Button>
+          <span className="text-graphite">{suggestion.note ?? (columnHelper.ready ? "Only the unrecognised column headers and their first five values are sent." : columnHelper.reason)}</span>
+        </div>
+      ) : null}
       {preview ? <PreviewPanel preview={preview} pending={pending === "confirm"} onConfirm={confirmImport} onRemap={["inventory","purchases"].includes(module)?(source,target)=>{setColumnOverrides(current=>({...current,[source]:target}));setPreview(current=>current?{...current,canImport:false,confirmationToken:undefined}:current);}:undefined} /> : null}
     </div>
   );

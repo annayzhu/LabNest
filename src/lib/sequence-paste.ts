@@ -8,8 +8,6 @@ export type SequencePasteMember = {
 };
 
 export type SequencePasteEntry = {
-  kind: "pair" | "single";
-  pairType?: "primer_pair" | "sirna_duplex";
   name: string;
   targetName?: string;
   organism?: string;
@@ -175,7 +173,7 @@ export function parseSequencePaste(input: string, mode: SequencePasteMode, molec
       const sequence = memberSequence(row, columns.sequence, 0);
       if (!name) errors.push(`Row ${row.rowNumber}: a name could not be identified.`);
       else if (!sequence) errors.push(`Row ${row.rowNumber}: a sequence could not be identified.`);
-      else entries.push({ kind: "single", name, targetName: name, ...rowMetadata(row, columns), sourceRows: [row.rowNumber], members: [{ role: "sequence", sequence }] });
+      else entries.push({ name, targetName: name, ...rowMetadata(row, columns), sourceRows: [row.rowNumber], members: [{ role: "sequence", sequence }] });
     }
   } else if (mode === "sirna_duplex") {
     for (const row of parsedRows) {
@@ -184,7 +182,7 @@ export function parseSequencePaste(input: string, mode: SequencePasteMode, molec
       const antisense = memberSequence(row, columns.antisense, 1);
       if (!name) errors.push(`Row ${row.rowNumber}: a gene or duplex name could not be identified.`);
       else if (!sense || !antisense || sense === antisense) errors.push(`Row ${row.rowNumber}: both sense and antisense sequences are required.`);
-      else entries.push({ kind: "pair", pairType: "sirna_duplex", name, targetName: name, ...rowMetadata(row, columns), sourceRows: [row.rowNumber], members: [{ role: "sense", sequence: sense }, { role: "antisense", sequence: antisense }] });
+      else entries.push({ name, targetName: name, ...rowMetadata(row, columns), sourceRows: [row.rowNumber], members: [{ role: "sense", sequence: sense }, { role: "antisense", sequence: antisense }] });
     }
   } else {
     const grouped = new Map<string, { root: string; index: string; forward?: ParsedRow; reverse?: ParsedRow }>();
@@ -193,7 +191,7 @@ export function parseSequencePaste(input: string, mode: SequencePasteMode, molec
       const forward = memberSequence(row, columns.forward, 0);
       const reverse = memberSequence(row, columns.reverse, 1);
       if (name && forward && reverse && forward !== reverse) {
-        entries.push({ kind: "pair", pairType: "primer_pair", name, targetName: name, ...rowMetadata(row, columns), sourceRows: [row.rowNumber], members: [{ role: "forward", sequence: forward }, { role: "reverse", sequence: reverse }] });
+        entries.push({ name, targetName: name, ...rowMetadata(row, columns), sourceRows: [row.rowNumber], members: [{ role: "forward", sequence: forward }, { role: "reverse", sequence: reverse }] });
         continue;
       }
       if (!name) {
@@ -225,8 +223,6 @@ export function parseSequencePaste(input: string, mode: SequencePasteMode, molec
       const needsIndex = (rootCounts.get(group.root.toLocaleLowerCase()) ?? 0) > 1;
       const name = needsIndex && group.index ? `${group.root} ${group.index}` : group.root;
       entries.push({
-        kind: "pair",
-        pairType: "primer_pair",
         name,
         targetName: group.root,
         organism: cellAt(group.forward, columns.organism) ?? cellAt(group.reverse, columns.organism),

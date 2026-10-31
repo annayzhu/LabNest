@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { PageHeader } from "@/components/PageHeader";
 import { PurchaseRecordForm } from "@/components/PurchaseRecordForm";
+import { readAISettings } from "@/lib/ai-settings";
 import { prisma } from "@/lib/db";
 export const dynamic = "force-dynamic";
 export default async function Page({
@@ -10,15 +12,19 @@ export default async function Page({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const [purchase, stock] = await Promise.all([
+  const id = (await params).id;
+  // Pictures need the service that reads pictures; a PDF's text goes to the default service.
+  const [purchase, stock, invoices, { vision: pictures, availability: text }] = await Promise.all([
     prisma.purchaseRequest.findUnique({
-      where: { id: (await params).id },
+      where: { id },
       include: { procurementQuoteLine: { select: { specification: true } }, receipts: { orderBy: { createdAt: "asc" } } },
     }),
     prisma.inventoryItem.findMany({
       where: { status: "active" },
       select: { id: true, name: true, unit: true },
     }),
+    prisma.attachmentLink.findMany({ where: { targetType: "purchase", targetId: id, linkType: "invoice" }, include: { attachment: { select: { originalFilename: true } } }, orderBy: { createdAt: "asc" } }),
+    readAISettings(),
   ]);
   if (!purchase) notFound();
   return (
@@ -57,7 +63,21 @@ export default async function Page({
         <PurchaseRecordForm
           purchase={JSON.parse(JSON.stringify(purchase))}
           stock={stock}
+          invoiceReader={{ ready: pictures.ready || text.connected, reason: pictures.reason ?? text.reason }}
         />
+        {invoices.length ? (
+          <section className="border-t border-hairline pt-4">
+            <h2 className="font-semibold">发票与送货单</h2>
+            <ul className="divide-y divide-hairline">
+              {invoices.map((link) => (
+                <li key={link.id} className="flex items-center gap-2 py-2 text-sm">
+                  <a href={`/api/attachments/${link.attachmentId}`} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate text-moss hover:underline">{link.attachment.originalFilename}</a>
+                  <AttachmentDeleteButton attachmentId={link.attachmentId} linkId={link.id} filename={link.attachment.originalFilename} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
         <section className="border-t border-hairline pt-4">
           <h2 className="font-semibold">收货记录</h2>
           {purchase.receipts.length ? (

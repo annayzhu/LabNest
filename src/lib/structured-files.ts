@@ -7,8 +7,8 @@ import {
   getOrderOfSiblings,
   insertElementMarkupAccordingToOrderOfSiblings,
   sanitizeAttributeValue,
-  sanitizeTextContent,
 } from "write-excel-file/utility";
+import { translateUiText } from "./i18n";
 import { parseProtocolDocxBytes } from "./protocol-docx";
 import { convertLegacyProtocol, isLegacyProtocol } from "./protocol-conversion";
 import { extractDocxMedia, type DocxEmbeddedImage } from "./docx-media-import";
@@ -18,10 +18,12 @@ import { createEmptyProtocolDocument, type ProtocolDocument } from "./protocol-d
 import { exportStructuredDocxTemplate, parseStructuredDocx } from "./structured-docx";
 import {
   formatFromFilename,
+  type StructuredFieldDefinition,
   type StructuredFileFormat,
   type StructuredModuleKey,
   structuredModules,
 } from "./structured-modules";
+import { bilingual, choiceValue, columnHeader, hasChoices, headerNames, sampleValue, templateChoices } from "./structured-template";
 
 export type StructuredColumnMapping = { source: string; target?: string; targetLabel?: string };
 export type ParsedStructuredFile = {
@@ -53,10 +55,10 @@ function scalar(value: unknown): unknown {
 }
 
 function fieldLookup(module: StructuredModuleKey) {
-  const lookup = new Map<string, { key: string; label: string }>();
+  const lookup = new Map<string, StructuredFieldDefinition>();
   for (const field of structuredModules[module].fields) {
-    for (const alias of [field.key, field.label, ...(field.aliases ?? [])]) {
-      lookup.set(normalizeKey(alias), { key: field.key, label: field.label });
+    for (const alias of headerNames(field)) {
+      lookup.set(normalizeKey(alias), field);
     }
   }
   return lookup;
@@ -75,7 +77,7 @@ function mapRecords(module: StructuredModuleKey, records: Record<string, unknown
       const field = Object.hasOwn(overrides,source) ? structuredModules[module].fields.find(field=>field.key===overrides[source]) : lookup.get(normalizeKey(source));
       if(field && Object.hasOwn(normalized,field.key))throw new Error(`Multiple source columns map to ${field.label}; choose one source.`);
       mapping.set(source, { source, target: field?.key, targetLabel: field?.label });
-      if (field) normalized[field.key] = scalar(value);
+      if (field) normalized[field.key] = hasChoices(field) ? choiceValue(field, scalar(value)) : scalar(value);
     }
     return normalized;
   });
@@ -250,32 +252,7 @@ function protocolDocxRecord(bytes: Uint8Array, fileName: string) {
 }
 
 export async function parseStructuredFile(file: File, module: StructuredModuleKey, overrides: Record<string,string> = {}): Promise<ParsedStructuredFile> {
-  if (!file.name || file.size === 0) throw new Error("Choose a non-empty import file.");
-  if (file.size > 25 * 1024 * 1024) throw new Error("Structured import files must be 25 MB or smaller.");
-  const format = formatFromFilename(file.name);
-  if (!format || !structuredModules[module].importFormats.includes(format)) {
-    throw new Error(`${file.name} is not a supported ${structuredModules[module].singular} import format.`);
-  }
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const checksum = createHash("sha256").update(buffer).digest("hex");
-  let rawRecords: Record<string, unknown>[];
-  const warnings: string[] = [];
-  const embedded = format === "docx" ? extractDocxMedia(new Uint8Array(buffer)) : undefined;
-  if (embedded) warnings.push(...embedded.warnings);
-
-  if (format === "csv" || format === "tsv") rawRecords = parseDelimited(buffer.toString("utf8"), format === "tsv" ? "\t" : ",");
-  else if (format === "xlsx") rawRecords = workbookRows(await readSheet(buffer, { trim: true }) as unknown[][]);
-  else if (format === "json") rawRecords = parseJsonRecords(buffer.toString("utf8"), module);
-  else if (format === "md") {
-    rawRecords = buffer.toString("utf8")
-      .split(/\n?<!-- LabNest record boundary -->\n?/g)
-      .map((part) => part.trim())
-      .filter(Boolean)
-      .map((part) => parseMarkdownRecord(part, module));
-  }
-  else if (module === "protocols") rawRecords = [protocolDocxRecord(new Uint8Array(buffer), file.name)];
-  else rawRecords = [parseStructuredDocx(new Uint8Array(buffer), module)];
-
+  const { format, checksum, rawRecords, warnings, embedded } = await readRawRecords(file, module);
   if (rawRecords.length > 500) throw new Error("A single structured import is limited to 500 records.");
   if (!rawRecords.length) throw new Error("No data rows were found in the import file.");
   const mapped = mapRecords(module, rawRecords, overrides);
@@ -293,6 +270,8 @@ export async function parseStructuredFile(file: File, module: StructuredModuleKe
 function templateSample(module: StructuredModuleKey) {
   return Object.fromEntries(structuredModules[module].fields.map((field) => [field.key, field.example ?? ""]));
 }
+
+const zhAndEn = (zh: string, en: string) => `${zh}\n${en}`;
 
 function templateFieldGuidance(module: StructuredModuleKey) {
   return Object.fromEntries(
@@ -330,32 +309,33 @@ function markdownTemplate(module: StructuredModuleKey) {
   ].join("\n");
 }
 
-function xlsxControlledValueFeature(module: StructuredModuleKey) {
-  const fields = structuredModules[module].fields;
-  const rules = fields.flatMap((field, columnIndex) => field.allowedValues?.length
-    ? [{ field, columnIndex }]
-    : []);
-
+/**
+ * Drop-downs on the Import sheet. Every list lives on the hidden Lists sheet (an inline list stops at 255 characters).
+ * A `suggest` list warns about other text but takes it; any other list refuses it.
+ */
+function xlsxChoicesFeature(rules: { column: number; listColumn: number; count: number; strict: boolean; header: string }[]) {
   if (!rules.length) return undefined;
-
   return {
     files: {
       transform: {
+        "xl/workbook.xml": {
+          transformElementAttributes(tagName: string, attributes: Record<string, string | number>) {
+            return tagName === "sheet" && attributes.name === "Lists" ? { ...attributes, state: "hidden" } : attributes;
+          },
+        },
         "xl/worksheets/sheet{id}.xml": {
           transform(xml: string, _sheetOptions: unknown, { sheetIndex }: { sheetIndex: number }) {
             if (sheetIndex !== 0) return xml;
-            const validations = rules.map(({ field, columnIndex }) => {
-              const start = getCellAddress(1, columnIndex);
-              const end = getCellAddress(500, columnIndex);
-              const values = field.allowedValues ?? [];
-              const formula = `&quot;${sanitizeTextContent(values.join(","))}&quot;`;
-              const prompt = `Choose one of: ${values.join(", ")}.`;
-              return `<dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" errorStyle="stop" promptTitle="Allowed ${sanitizeAttributeValue(field.label)}" prompt="${sanitizeAttributeValue(prompt)}" errorTitle="Invalid ${sanitizeAttributeValue(field.label)}" error="${sanitizeAttributeValue(prompt)}" sqref="${start}:${end}"><formula1>${formula}</formula1></dataValidation>`;
+            const validations = rules.map((rule) => {
+              const letter = getCellAddress(1, rule.listColumn).replace(/\d+$/, "");
+              const message = sanitizeAttributeValue(rule.strict ? "从下拉中选择。 / Choose from the list." : "从下拉中选择，或填写其他内容。 / Choose from the list, or type another value.");
+              // Excel refuses a drop-down title longer than 32 characters.
+              const title = sanitizeAttributeValue(rule.header.slice(0, 32));
+              return `<dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" errorStyle="${rule.strict ? "stop" : "warning"}" promptTitle="${title}" prompt="${message}" errorTitle="${title}" error="${message}" sqref="${getCellAddress(1, rule.column)}:${getCellAddress(500, rule.column)}"><formula1>Lists!$${letter}$2:$${letter}$${rule.count + 1}</formula1></dataValidation>`;
             }).join("");
-            const markup = `<dataValidations count="${rules.length}">${validations}</dataValidations>`;
             return insertElementMarkupAccordingToOrderOfSiblings(
               xml,
-              markup,
+              `<dataValidations count="${rules.length}">${validations}</dataValidations>`,
               getOrderOfSiblings("xl/worksheets/sheet{id}.xml", "worksheet") ?? [],
               "worksheet",
             );
@@ -366,7 +346,28 @@ function xlsxControlledValueFeature(module: StructuredModuleKey) {
   };
 }
 
-export async function buildStructuredTemplate(module: StructuredModuleKey, format: StructuredFileFormat): Promise<StructuredTemplate> {
+/** The Instructions sheet: how to fill the template, then one row per column with whether it is required and its choices. */
+function templateInstructions(module: StructuredModuleKey, lists: Record<string, string[]>): SheetData {
+  const definition = structuredModules[module];
+  const header = (value: string) => ({ value, type: String, fontWeight: "bold" as const, backgroundColor: "#DDE8EA", wrap: true });
+  const text = (value: string) => ({ value, type: String, wrap: true });
+  return [
+    [{ value: `${bilingual(definition.title)} · 导入说明 / Import instructions`, type: String, fontWeight: "bold" }],
+    [text(zhAndEn("每行填一条记录。表头保持不变，带 * 的列必填。", "Add one record per row. Keep the headers as they are; columns marked * are required."))],
+    [text(zhAndEn("第 2 行是示例，导入前请替换或删除。", "Row 2 is an example; replace or delete it before importing."))],
+    [text(zhAndEn("有可选值的列可以点单元格，从下拉中选择。", "Where a column has choices, click a cell and pick one from its drop-down."))],
+    [],
+    [header("列 / Column"), header("必填 / Required"), header("怎么填 / How to fill"), header("可选值 / Choices")],
+    ...definition.fields.map((field) => {
+      const choices = templateChoices(field, lists);
+      const how = field.description ? (translateUiText(field.description, "zh") === field.description ? field.description : zhAndEn(translateUiText(field.description, "zh"), field.description)) : "";
+      return [text(columnHeader(field)), text(field.required ? "是 / Yes" : ""), text(how), text(choices.join("\n"))];
+    }),
+  ];
+}
+
+/** An import template; `lists` holds the choices the app loads for a field, such as its types or storage locations. */
+export async function buildStructuredTemplate(module: StructuredModuleKey, format: StructuredFileFormat, lists: Record<string, string[]> = {}): Promise<StructuredTemplate> {
   const definition = structuredModules[module];
   if (!definition.importFormats.includes(format)) throw new Error(`${format.toUpperCase()} is not supported for ${definition.title}.`);
   const filenameBase = `LabNest_${definition.title.replaceAll(" ", "_")}_Import_Template`;
@@ -377,16 +378,15 @@ export async function buildStructuredTemplate(module: StructuredModuleKey, forma
   }
   if (format === "md") return { body: markdownTemplate(module), filename: `${filenameBase}.md`, contentType: "text/markdown; charset=utf-8" };
   if (format === "json") return { body: JSON.stringify({ schemaVersion: "labnest.structured-import/v1", module, fieldGuidance: templateFieldGuidance(module), records: [templateSample(module)] }, null, 2), filename: `${filenameBase}.json`, contentType: "application/json; charset=utf-8" };
-  const headers = definition.fields.map((field) => field.key);
+  const headers = definition.fields.map(columnHeader);
   if (format === "csv" || format === "tsv") {
     const delimiter = format === "tsv" ? "\t" : ",";
     return { body: `${headers.map(csvValue).join(delimiter)}\n`, filename: `${filenameBase}.${format}`, contentType: `${format === "csv" ? "text/csv" : "text/tab-separated-values"}; charset=utf-8` };
   }
-  const sample = templateSample(module);
   const data: SheetData = [
     headers.map((header) => ({ value: header, type: String, fontWeight: "bold", backgroundColor: "#DDE8EA", wrap: true })),
-    headers.map((header) => {
-      const value = sample[header];
+    definition.fields.map((field) => {
+      const value = sampleValue(field);
       const cellValue = typeof value === "boolean" ? value : typeof value === "number" ? value : String(value ?? "");
       return {
         value: cellValue,
@@ -398,25 +398,63 @@ export async function buildStructuredTemplate(module: StructuredModuleKey, forma
       };
     }),
   ];
-  const instructions: SheetData = [
-    [{ value: `${definition.title} structured import`, type: String, fontWeight: "bold" }],
-    ["Keep the header names unchanged. Add one structured record per row."],
-    ["Row 2 is an example. Replace its placeholder values before importing; unchanged placeholders are blocked."],
-    ...definition.fields.filter((field) => field.allowedValues?.length).map((field) => [
-      `${field.label} (${field.key}) only accepts: ${field.allowedValues?.join(", ")}. Use the drop-down in the Import sheet.`,
-    ]),
-    ["Download JSON or Markdown templates when nested scientific sections are required."],
+  const listed = definition.fields.map((field, column) => ({ field, column, choices: templateChoices(field, lists) })).filter((entry) => entry.choices.length);
+  const listRows = Math.max(0, ...listed.map((entry) => entry.choices.length));
+  const listSheet: SheetData = [
+    listed.map((entry) => ({ value: columnHeader(entry.field), type: String, fontWeight: "bold" as const })),
+    ...Array.from({ length: listRows }, (_, row) => listed.map((entry) => entry.choices[row] === undefined ? null : { value: entry.choices[row], type: String })),
   ];
-  const controlledValueFeature = xlsxControlledValueFeature(module);
+  const choicesFeature = xlsxChoicesFeature(listed.map((entry, listColumn) => ({ column: entry.column, listColumn, count: entry.choices.length, strict: entry.field.choices !== "suggest", header: columnHeader(entry.field) })));
   const buffer = await writeXlsxFile([
-    { sheet: "Import", data, columns: headers.map(() => ({ width: 22 })) },
-    { sheet: "Instructions", data: instructions, columns: [{ width: 120 }] },
+    { sheet: "Import", data, columns: headers.map(() => ({ width: 22 })), stickyRowsCount: 1 },
+    { sheet: "Instructions", data: templateInstructions(module, lists), columns: [{ width: 28 }, { width: 12 }, { width: 60 }, { width: 36 }] },
+    ...(listed.length ? [{ sheet: "Lists", data: listSheet, columns: listed.map(() => ({ width: 28 })) }] : []),
   ], {
     fontFamily: "Arial",
     fontSize: 10,
-    ...(controlledValueFeature ? { features: [controlledValueFeature] } : {}),
+    ...(choicesFeature ? { features: [choicesFeature] } : {}),
   }).toBuffer();
   return { body: buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer, filename: `${filenameBase}.xlsx`, contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" };
+}
+
+/** A file's rows as written, before its columns are matched to fields. */
+async function readRawRecords(file: File, module: StructuredModuleKey) {
+  if (!file.name || file.size === 0) throw new Error("Choose a non-empty import file.");
+  if (file.size > 25 * 1024 * 1024) throw new Error("Structured import files must be 25 MB or smaller.");
+  const format = formatFromFilename(file.name);
+  if (!format || !structuredModules[module].importFormats.includes(format)) {
+    throw new Error(`${file.name} is not a supported ${structuredModules[module].singular} import format.`);
+  }
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const checksum = createHash("sha256").update(buffer).digest("hex");
+  let rawRecords: Record<string, unknown>[];
+  const warnings: string[] = [];
+  const embedded = format === "docx" ? extractDocxMedia(new Uint8Array(buffer)) : undefined;
+  if (embedded) warnings.push(...embedded.warnings);
+
+  if (format === "csv" || format === "tsv") rawRecords = parseDelimited(buffer.toString("utf8"), format === "tsv" ? "\t" : ",");
+  else if (format === "xlsx") rawRecords = workbookRows(await readSheet(buffer, { trim: true }) as unknown[][]);
+  else if (format === "json") rawRecords = parseJsonRecords(buffer.toString("utf8"), module);
+  else if (format === "md") {
+    rawRecords = buffer.toString("utf8")
+      .split(/\n?<!-- LabNest record boundary -->\n?/g)
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .map((part) => parseMarkdownRecord(part, module));
+  }
+  else if (module === "protocols") rawRecords = [protocolDocxRecord(new Uint8Array(buffer), file.name)];
+  else rawRecords = [parseStructuredDocx(new Uint8Array(buffer), module)];
+  return { format, checksum, rawRecords, warnings, embedded };
+}
+
+/** Each column of a file with up to five of its values and the field it is matched to now. */
+export async function readColumnSamples(file: File, module: StructuredModuleKey, overrides: Record<string,string> = {}) {
+  const { rawRecords } = await readRawRecords(file, module);
+  const { mapping } = mapRecords(module, rawRecords, overrides);
+  return mapping.map((column) => ({
+    ...column,
+    samples: rawRecords.map((record) => scalar(record[column.source])).filter((value) => value !== undefined && value !== null && value !== "").slice(0, 5).map(String),
+  }));
 }
 
 export function parseColumnOverrides(value:FormDataEntryValue|null):Record<string,string>{

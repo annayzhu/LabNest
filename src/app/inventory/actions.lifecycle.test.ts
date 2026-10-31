@@ -1,5 +1,5 @@
 import { beforeEach, expect, it, vi } from "vitest";
-import { deleteInventoryItem, reverseInventoryTransaction } from "./actions";
+import { createInventoryItem, deleteInventoryItem, recordInventoryTransaction, reverseInventoryTransaction } from "./actions";
 
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 vi.mock("next/navigation", () => ({ redirect: (href: string) => { throw new Error(`redirect ${href}`); } }));
@@ -23,6 +23,11 @@ vi.mock("@/lib/db", () => {
       },
       count: async () => db.counts.aliquots,
       delete: async () => { db.deleted.push("item"); },
+      findFirst: async () => null,
+      create: async ({ data }: { data: Record<string, unknown> }) => ({ ...data, id: "i2" }),
+    },
+    inventoryProduct: {
+      findUnique: async () => ({ id: "p1", name: "PBS 10x", englishName: null, brand: "Gibco", catalogNumber: "10010", casNumber: null, groupKey: "reagent", status: "active", controlLevels: [], type: null }),
     },
     inventoryTransaction: {
       findUnique: async ({ where }: { where: { id: string } }) => {
@@ -52,6 +57,7 @@ vi.mock("@/lib/db", () => {
 
 beforeEach(() => {
   db.item.currentQuantity = 10;
+  db.item.unit = "mL";
   db.movements = [{ id: "m0", inventoryItemId: "i1", type: "receive", quantityChange: 10, unit: "mL", notes: "Opening balance recorded when the item was registered.", purchaseId: null, reversesTransactionId: null, createdAt: new Date() }];
   db.counts = { materialUses: 0, receipts: 0, purchases: 0, containerActions: 0, observations: 0, aliquots: 0, sampleEvents: 0 };
   db.deleted = [];
@@ -83,4 +89,23 @@ it("reverses a movement with the opposite quantity, links the two, restores the 
   expect(db.item.currentQuantity).toBe(10);
   expect(db.movements.at(-1)).toMatchObject({ type: "adjust", quantityChange: 4, unit: "mL", reversesTransactionId: "m1", notes: expect.stringContaining("Wrong bottle") });
   expect(await reverseInventoryTransaction({}, form({ id: "m1" }))).toMatchObject({ error: expect.stringMatching(/already been reversed/) });
+});
+
+it("refuses an amount finer than its unit keeps, and lets the shown amount take a finer remainder (Q172)", async () => {
+  db.item.unit = "瓶";
+  expect(await recordInventoryTransaction("i1", {}, form({ type: "consume", quantity: "2.000001" }))).toMatchObject({ error: "瓶: whole numbers only." });
+  db.item.unit = "mL";
+  db.item.currentQuantity = 4.4725;
+  expect(await recordInventoryTransaction("i1", {}, form({ type: "consume", quantity: "4.473" }))).toMatchObject({ success: expect.any(String) });
+  expect(db.item.currentQuantity).toBe(0);
+  expect(db.movements.at(-1)).toMatchObject({ type: "consume", quantityChange: -4.4725 });
+});
+
+it("records a new lot as an arrival, or as stock counted here (Q178)", async () => {
+  const lot = (opening: string) => form({ productId: "p1", managementMode: "precise", currentQuantity: "3", unit: "mL", opening });
+  await expect(createInventoryItem({}, lot("arrival"))).rejects.toThrow("redirect /inventory/i2");
+  expect(db.movements.at(-1)).toMatchObject({ type: "receive", quantityChange: 3, notes: "Opening balance recorded when the item was registered." });
+  await expect(createInventoryItem({}, lot("count"))).rejects.toThrow("redirect /inventory/i2");
+  expect(db.movements.at(-1)).toMatchObject({ type: "adjust", quantityChange: 3, notes: "Opening balance counted when the item was registered." });
+  expect(await createInventoryItem({}, form({ productId: "p1", managementMode: "precise", currentQuantity: "1.2345", unit: "mL" }))).toMatchObject({ error: "mL: at most 3 decimal places." });
 });

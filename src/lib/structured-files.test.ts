@@ -4,6 +4,7 @@ import { normalizeProtocolDocument } from "./protocol-document";
 import { researchPlanSections, scientificDocumentFromStructuredRecord } from "./scientific-document";
 import { buildStructuredTemplate, parseStructuredFile } from "./structured-files";
 import { structuredModules } from "./structured-modules";
+import { columnHeader } from "./structured-template";
 
 function fileFromBody(body: string | Uint8Array | ArrayBuffer, filename: string, type: string) {
   const part = typeof body === "string" ? body : body instanceof Uint8Array
@@ -51,9 +52,9 @@ describe("structured import files", () => {
 
     expect(importSheet).toContain('type="list"');
     expect(importSheet).toContain('sqref="C2:C501"');
-    expect(importSheet).toContain("active,paused,completed,archived");
+    expect(importSheet).toContain("Lists!$A$2:$A$5");
     expect(sharedStrings).toContain("Replace with Project name");
-    expect(sharedStrings).toContain("only accepts:");
+    expect(sharedStrings).toContain("paused");
   });
 
   it("adds controlled execution and record status choices to the Experiment XLSX template", async () => {
@@ -70,10 +71,44 @@ describe("structured import files", () => {
     expect(importSheet).toContain('<dataValidations count="2">');
     expect(importSheet).toContain('sqref="F2:F501"');
     expect(importSheet).toContain('sqref="G2:G501"');
-    expect(importSheet).toContain("planned,running,completed,failed,archived");
-    expect(importSheet).toContain("draft,recorded,submitted,reviewed");
-    expect(sharedStrings).toContain("Execution status (status) only accepts:");
-    expect(sharedStrings).toContain("Record status (recordStatus) only accepts:");
+    expect(importSheet).toContain("Lists!$A$2:$A$6");
+    expect(importSheet).toContain("Lists!$B$2:$B$5");
+    expect(sharedStrings).toContain("failed");
+    expect(sharedStrings).toContain("submitted");
+  });
+
+  it("writes the inventory template with the app's names in Chinese and English, and drop-downs from the lists it is given", async () => {
+    const template = await buildStructuredTemplate("inventory", "xlsx", { category: ["Reagents & chemicals", "Antibody"], unit: ["mL", "box"], location: ["16F fridge"] });
+    const files = unzipSync(new Uint8Array(template.body as ArrayBuffer));
+    const importSheet = strFromU8(files["xl/worksheets/sheet1.xml"]!);
+    const sharedStrings = strFromU8(files["xl/sharedStrings.xml"]!);
+    const fields = structuredModules.inventory.fields;
+    const column = (key: string) => String.fromCharCode(65 + fields.findIndex((field) => field.key === key));
+
+    expect(sharedStrings).toContain("物料名称 / Item name *");
+    expect(sharedStrings).toContain("类型或大类 / Type or 大类");
+    expect(sharedStrings).toContain("库位 / Storage location");
+    expect(sharedStrings).toContain("精确用量 / Precise use");
+    expect(sharedStrings).toContain("盒 / box");
+    expect(sharedStrings).toContain("抗体 / Antibody");
+    expect(sharedStrings).toContain("可选值 / Choices");
+    expect(strFromU8(files["xl/workbook.xml"]!)).toMatch(/name="Lists"[^>]*state="hidden"|state="hidden"[^>]*name="Lists"/);
+    // Types and units take other text with a warning; a location must be one that exists.
+    expect(importSheet).toMatch(new RegExp(`errorStyle="warning"[^>]*sqref="${column("unit")}2:`));
+    expect(importSheet).toMatch(new RegExp(`errorStyle="stop"[^>]*sqref="${column("location")}2:`));
+    expect(new Set(fields.map((field) => columnHeader(field).replace(" *", "").split(" / ")[0])).size).toBe(fields.length);
+  });
+
+  it("reads a filled-in inventory template back to fields and stored codes", async () => {
+    const parsed = await parseStructuredFile(new File([
+      "物料名称 / Item name *,类型或大类 / Type or 大类,管理方式 / Management,导入含义 / Import meaning,单位 / Unit *,库位 / Storage location,状态 / Status,具体位置 / Position in location\n" +
+      "PBS,抗体 / Antibody,精确用量 / Precise use,到货 / Arrival,盒 / box,16F fridge / Shelf 2,启用,Shelf 2 / Box A\n",
+    ], "inventory.csv", { type: "text/csv" }), "inventory");
+
+    expect(parsed.mapping.every((item) => item.target)).toBe(true);
+    expect(parsed.records[0]).toEqual(expect.objectContaining({
+      name: "PBS", category: "Antibody", managementMode: "precise", importMode: "arrival", unit: "box", location: "16F fridge / Shelf 2", status: "active", positionCode: "Shelf 2 / Box A",
+    }));
   });
 
   it("turns the Protocol Markdown template into the fixed seven-section document", async () => {

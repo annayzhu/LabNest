@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { convert } from "@/lib/calculators/quantities";
+import { sameUnit } from "@/lib/inventory";
 const rowInput = z.object({
   action: z.literal("save"),
   id: z.string().uuid(),
@@ -119,7 +120,7 @@ export async function confirmRunMaterials(experimentId: string, raw: unknown) {
           throw new Error("请选择有效精确库存或已领用的具体瓶。");
         if (row.actual === null) throw new Error("请先确认实际用量。");
         const amount =
-          row.unit === item.unit
+          sameUnit(row.unit, item.unit)
             ? row.actual
             : convert(row.actual, row.unit, item.unit);
         let prior = 0;
@@ -129,7 +130,7 @@ export async function confirmRunMaterials(experimentId: string, raw: unknown) {
           });
           if (original.actual === null) throw new Error("原记录没有实际量。");
           prior =
-            original.unit === item.unit
+            sameUnit(original.unit, item.unit)
               ? original.actual
               : convert(original.actual, original.unit, item.unit);
         }

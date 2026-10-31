@@ -1,4 +1,4 @@
-import { formatQuantity } from "./calculators/quantity-format";
+import { zhUi } from "./i18n";
 import type { InventoryItem, InventoryTransaction } from "./types";
 
 export type InventoryRiskFlag = "depleted" | "low" | "expired" | "expiring";
@@ -48,7 +48,7 @@ type SafetyStock = { lowThreshold: number | null; lowThresholdUnit: string | nul
 
 /** A product's stock, adding its active, counted lots in the unit its safety stock is set in; lots in another unit are left out. */
 export function productStock(lots: StockLot[], unit: string) {
-  return Number(lots.filter((lot) => lot.unit === unit && lot.quantityRecorded !== false && (lot.status ?? "active") === "active")
+  return Number(lots.filter((lot) => sameUnit(lot.unit, unit) && lot.quantityRecorded !== false && (lot.status ?? "active") === "active")
     .reduce((sum, lot) => sum + lot.currentQuantity, 0).toFixed(6));
 }
 
@@ -69,7 +69,7 @@ export function lotRiskFlags(lot: InventoryRiskInput & { unit: string }, product
 /** The safety stock a lot exports in its own unit: its product's when set in that unit, else the lot's own (from before products). */
 export function exportedSafetyStock(lot: { unit: string; lowThreshold: number | null; product?: SafetyStock | null }) {
   if (!lot.product) return lot.lowThreshold;
-  return lot.product.lowThreshold != null && lot.product.lowThresholdUnit === lot.unit ? lot.product.lowThreshold : null;
+  return lot.product.lowThreshold != null && sameUnit(lot.product.lowThresholdUnit, lot.unit) ? lot.product.lowThreshold : null;
 }
 
 /** What low stock asks for, by 大类. Biological material is grown again from its own stock; a sample cannot be replaced. */
@@ -81,6 +81,69 @@ export const managementModeLabels: Record<string, string> = { information: "Reco
 
 /** Units stock and safety stock are counted in. */
 export const stockUnits = ["mL", "µL", "L", "g", "mg", "µg", "vial", "tube", "bottle", "box", "pack", "cylinder", "piece", "reaction"];
+
+const unitWords = new Map<string, string>([
+  ...stockUnits.flatMap((unit) => [[unit.toLowerCase(), unit], ...(zhUi[unit] ? [[zhUi[unit], unit]] : [])] as [string, string][]),
+  ["ul", "µL"], ["ug", "µg"], ["pcs", "piece"], ["pc", "piece"], ["件", "piece"], ["只", "piece"], ["瓶装", "bottle"],
+  // A kit arrives and is counted as a box.
+  ["kit", "box"], ["套", "box"],
+]);
+
+/** A unit as printed (盒, ML, μL, pcs, tube(s), bottles) in the spelling stock uses; anything else is kept as printed. */
+export function stockUnit(value: string) {
+  const word = value.trim().replace(/\(s\)$/i, "").replace(/μ/g, "µ");
+  const lower = word.toLowerCase();
+  return unitWords.get(lower) ?? unitWords.get(lower.replace(/e?s$/, "")) ?? unitWords.get(lower.replace(/s$/, "")) ?? word;
+}
+
+/** Whether two units are the same once spelled the way stock uses them: 瓶 and bottle, 个 and piece, uL and µL. */
+export function sameUnit(a: string | null | undefined, b: string | null | undefined) {
+  return !!a && !!b && stockUnit(a) === stockUnit(b);
+}
+
+/** Decimal places by unit: counted units (bottles, boxes, pieces, reactions) are whole numbers, mL to 1 µL, g to 0.1 mg; other units keep 3. */
+const unitDecimals: Record<string, number> = { L: 3, mL: 3, "µL": 1, g: 4, mg: 3, "µg": 1, vial: 0, tube: 0, bottle: 0, box: 0, pack: 0, cylinder: 0, piece: 0, reaction: 0 };
+
+/** How many decimal places an amount in this unit keeps (docs/modules/inventory/ai-import-20261030, Q172). */
+export function quantityDecimals(unit: string | null | undefined) {
+  return unitDecimals[stockUnit(unit ?? "")] ?? 3;
+}
+
+/** The smallest amount a unit keeps, as an input's min and step: "1" for bottles, "0.001" for mL. */
+export function quantityStep(unit: string | null | undefined) {
+  const decimals = quantityDecimals(unit);
+  return (10 ** -decimals).toFixed(decimals);
+}
+
+/** Why a typed amount is finer than its unit keeps, or undefined. */
+export function quantityPrecisionProblem(value: number, unit: string) {
+  const decimals = quantityDecimals(unit);
+  if (Math.abs(Number(value.toFixed(decimals)) - value) < 1e-9) return undefined;
+  return decimals ? `${unit}: at most ${decimals} decimal places.` : `${unit}: whole numbers only.`;
+}
+
+/** A typed amount must keep its unit's precision: whole bottles, mL to 0.001 and so on (Q172). */
+export function assertPrecision(quantity: number, unit: string) {
+  const problem = quantityPrecisionProblem(quantity, unit);
+  if (problem) throw new Error(problem);
+}
+
+/**
+ * The quantity change a typed movement books, negative going out. It must keep its unit's precision; taking out the
+ * amount shown for a balance kept finer than its unit (experiment use can leave 4.4725 mL, shown as 4.473) empties it.
+ */
+export function movementChange(typed: number, item: { currentQuantity: number; unit: string }, inbound: boolean) {
+  assertPrecision(typed, item.unit);
+  const remainder = !inbound && typed > item.currentQuantity && typed - item.currentQuantity < 10 ** -quantityDecimals(item.unit);
+  const amount = remainder ? item.currentQuantity : typed;
+  return inbound ? amount : -amount;
+}
+
+/** An amount to its unit's precision without trailing zeros; a trace too small to show reads as “<0.001”. */
+export function formatStockQuantity(value: number, unit: string | null | undefined) {
+  const shown = Number(value.toFixed(quantityDecimals(unit)));
+  return shown === 0 && value !== 0 ? `<${quantityStep(unit)}` : String(shown || 0);
+}
 
 /** The fixed control levels. Chemical controls apply to any product; biosafety levels to biological material and samples. */
 export const inventoryControlLevels = [
@@ -233,7 +296,7 @@ export function directQuantityEditToAdjustTransaction({
 }
 
 export function inventoryQuantityLabel(item: {currentQuantity:number;unit:string;quantityRecorded?:boolean}) {
-  return item.quantityRecorded === false ? "数量未记录 / Quantity not recorded" : `${formatQuantity(item.currentQuantity)} ${item.unit}`;
+  return item.quantityRecorded === false ? "数量未记录 / Quantity not recorded" : `${formatStockQuantity(item.currentQuantity, item.unit)} ${item.unit}`;
 }
 
 const recordId = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";

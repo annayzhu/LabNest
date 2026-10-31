@@ -815,6 +815,133 @@ export const zhUi: Record<string, string> = {
   "Choose the product to merge into this one.": "请选择要并入的产品。",
   "One of these products no longer exists.": "其中一个产品已不存在。",
   "The products could not be merged.": "产品未能合并。",
+  // Locations, take-out and the import template (docs/modules/inventory/ai-import-20261030, Q166–Q171)
+  "Locations can sit inside one another, such as room, fridge, shelf, box. Add the fridge first, then its shelves inside it.": "位置可以一层套一层，比如房间、冰箱、层架、盒子。先建冰箱，再在它里面建各层。",
+  "Room temperature": "室温",
+  "Inside location (optional)": "放在哪个位置里（可选）",
+  "None (top level)": "无（顶层位置）",
+  "Enter the temperature as a number of °C.": "温度请填摄氏度数字。",
+  "Take containers out of the selected stock?": "从所选库存领用实物？",
+  "Take out…": "领用…",
+  "Each": "每条",
+  "Containers from each": "每条领用的数量",
+  "Put at (optional)": "放到哪里（可选）",
+  "Enter who takes them.": "请填写领用人。",
+  "Not kept as containers; record use on its page.": "不是按实物管理，请在详情页登记用量。",
+  "Retry the same batch": "重试原批领用",
+  "Stop this batch": "结束本批",
+  "B302 bench": "B302 实验台",
+  "Stopped; what was taken out stays recorded.": "已停止；已领用的实物照常记录。",
+  "The network failed.": "网络失败。",
+  "Retrying takes the same containers, so none is taken twice.": "重试仍领用原来的实物，不会重复领用。",
+  // Sequences on products (Q185–Q187)
+  "Forward primer": "上游引物",
+  "Reverse primer": "下游引物",
+  "Sense strand": "正义链",
+  "Antisense strand": "反义链",
+  "Spacer sequence": "间隔序列",
+  "Target gene": "靶基因",
+  "Copy sequence": "复制序列",
+  "Download FASTA": "下载 FASTA",
+  "No sequence yet.": "还没有序列。",
+  "Add it in Edit": "在编辑中添加",
+  "Export sequences…": "导出序列…",
+  "File format": "文件格式",
+  "N- to C-terminus.": "从 N 端到 C 端。",
+  "5′ to 3′. Spaces and line breaks are ignored; a changed sequence keeps its earlier version.": "5′→3′。空格和换行会被忽略；修改后的序列会保留之前的版本。",
+  "Has sequences": "有序列",
+  "Product type": "产品类型",
+  "One row with forward and reverse columns, or two rows named -F and -R.": "一行写上游和下游两列，或写成以 -F、-R 结尾的两行。",
+  "One row per duplex with its sense and antisense strands.": "每个双链一行，写正义链和反义链。",
+  "One row per sequence, or a FASTA file.": "每条序列一行，或选择 FASTA 文件。",
+  "Rows copied from Excel": "从 Excel 复制的行",
+  "Or a file: FASTA, CSV, TSV or XLSX": "或选择文件：FASTA、CSV、TSV 或 XLSX",
+  "Each entry becomes a product with its sequences; one with the same name and type is skipped.": "每条成为一个带序列的产品；同名同类型的已有产品会跳过。",
+  "Open products with sequences": "查看带序列的产品",
+  "Rows without sequence-shaped cells were ignored.": "没有序列样式单元格的行已忽略。",
+  // Inventory home (Q179–Q184)
+  "Inventory home": "主页",
+  "Stock list": "库存清单",
+  "Recently used": "最近用过",
+  "Scan": "扫码",
+  "Clear search": "清空搜索",
+  "Name, lot, barcode, catalogue, CAS or place": "名称、批号、条码、货号、CAS 或位置",
+  "Receive": "入库",
+  "Expires": "有效期至",
+  "Recorded.": "已记录。",
+  "Reading barcode…": "正在识别条码…",
+  "Code read. Choose the stock below.": "已识别，请在下面选择库存。",
+  "No stock has this code.": "没有库存使用这个条码。",
+  "No readable barcode. Take a closer photo, or type the code.": "没有识别到清晰的条码。请靠近标签重拍，或直接输入。",
+  "Categories": "分类",
+  "Search products": "搜索产品",
+  "No stock yet. Register what is on the shelf, or import a spreadsheet.": "还没有库存。登记架上的物品，或导入表格。",
+  "Heat inactivated": "热灭活",
+  "Opening balance counted when the item was registered.": "登记时清点的初始余额。",
+  "This lot is": "这批是",
+  "A new arrival": "新到货",
+  "Stock already here, counted": "已有库存（盘点）",
+  "This registers a new lot of the product. For more of a lot already here, receive it on that lot's page.": "这里为这个产品新建一个批次。已有批次再到货，请在那个批次的页面登记入库。",
+  "No lot number": "无批号",
+  "No lots yet.": "还没有批次。",
+  "Receive into this lot": "给这个批次入库",
+  "Receive into that lot": "给那个批次入库",
+  "Type or 大类": "类型或大类",
+  "Storage location": "库位",
+  "Position in location": "具体位置",
+  "Import meaning": "导入含义",
+  "Opening balance": "期初余额",
+  "Arrival": "到货",
+  "Existing Inventory ID": "已有库存 ID",
+  "Optional explicit stock ID; never matched by name.": "可选：直接指定已有库存的 ID，不按名称匹配。",
+  "What the item is called, as on its label.": "物料的名称，照标签填写。",
+  "Choose a type or 大类; leave it empty to classify the product after importing.": "选择类型或大类；不确定可留空，导入后再归类。",
+  "The maker, such as Sigma-Aldrich.": "生产商，例如 Sigma-Aldrich。",
+  "Such as tube, bottle or box.": "例如管、瓶、盒。",
+  "As printed on the label.": "照标签上印的填写。",
+  "Who it was bought from.": "从哪家买的。",
+  "With the brand, finds the product this stock belongs to.": "与品牌一起，用来找到这份库存所属的产品。",
+  "Opening balance: the amount counted now. Arrival: an amount just received.": "期初余额：现在清点的数量。到货：刚收到的数量。",
+  "Record only keeps no amounts; Precise use records every use; By container counts each bottle or box.": "只登记：不记数量；精确用量：每次使用都登记；按包装：每瓶、每盒单独计数。",
+  "A number. By container: how many containers are in store.": "填数字。按包装管理时，填在库的包装数。",
+  "Choose a unit, or type another.": "从下拉选择单位，也可以填写其他单位。",
+  "Below this amount the stock is shown as low.": "低于这个数量时显示为库存不足。",
+  "Choose a storage location; add new ones on the Storage locations page before importing.": "选择库位；新的库位请先在“库位”页添加，再导入。",
+  "Shelf, box or well inside the location, such as Shelf 2 / Box A / A01.": "库位里的层、盒或孔位，例如 第 2 层 / A 盒 / A01。",
+  "As YYYY-MM-DD.": "按 YYYY-MM-DD 填写。",
+  "Such as -20 °C, dark.": "例如 -20 °C、避光。",
+  // AI import: column suggestions, documents read into a draft, invoices on purchases (docs/modules/inventory/ai-import-20261030)
+  "Import source": "导入来源",
+  "Spreadsheet": "表格",
+  "Invoice, delivery note or label": "发票、送货单或标签",
+  "Suggest columns with AI": "AI 建议对应",
+  "Only the unrecognised column headers and their first five values are sent.": "只发送没认出的列名和每列前 5 个值。",
+  "AI found no field for the remaining columns.": "其余的列 AI 也没有找到对应字段。",
+  "Invoices, delivery notes or labels (pictures or PDF, up to 10)": "发票、送货单或标签（图片或 PDF，最多 10 个）",
+  "Text of an order, invoice or email": "订单、发票或邮件里的文字",
+  "Read with AI": "AI 识别",
+  "Pictures go to the service that reads pictures; PDF text and pasted text to the default service.": "图片交给读图服务；PDF 的文字和粘贴的文字交给默认服务。",
+  "Invoice number": "发票号",
+  "Existing: same brand and catalogue number": "已有产品：品牌和货号相同",
+  "Remove line": "删除这一行",
+  "No items were read.": "没有读出任何物品。",
+  "Each line arrives as stock with a receive movement. A line without a chosen product finds one by brand and catalogue number, or becomes a new product to classify.": "每一行都会作为到货入库并记一笔入库流水。没有选产品的行，会按品牌和货号归到已有产品，否则新建一个待归类的产品。",
+  "The model did not return a list of items.": "模型没有返回物品清单。",
+  "Choose a picture or PDF, or paste the text.": "请选择图片或 PDF，或粘贴文字。",
+  "Read at most 10 files at a time.": "一次最多识别 10 个文件。",
+  "The documents could not be read.": "未能识别这些文件。",
+  "Every line needs a name.": "每一行都需要名称。",
+  "Keep at least one line.": "至少保留一行。",
+  "The documents the draft was read from are missing; read them again.": "找不到草稿对应的原文件，请重新识别。",
+  "The draft could not be imported.": "草稿未能导入。",
+  "The columns could not be suggested.": "未能给出列对应建议。",
+  "Existing product ID": "已有产品 ID",
+  "Existing product ID was not found.": "找不到这个已有产品 ID。",
+  "Optional; the product this stock is a lot of. Without it the product is found by brand and catalogue number.": "可选；这条库存所属的产品。不填时按品牌和货号查找产品。",
+  "Choose the invoice picture or PDF.": "请选择发票图片或 PDF。",
+  "This purchase no longer exists.": "这条采购已不存在。",
+  "No line on this document matches the purchase; fill the receipt by hand.": "单据上没有与这条采购对应的行，请手动填写收货。",
+  "The invoice could not be read.": "未能识别发票。",
   "Products": "产品",
   "Types": "类型",
   "Storage locations": "库位",
@@ -3606,6 +3733,9 @@ function translateDynamic(value: string): string {
   if (stock) return `${stock[1]} 个实物入库。`;
   stock = value.match(/^Container ([\s\S]+) deleted; it was registered by mistake\.$/);
   if (stock) return `删除误登记的实物 ${stock[1]}。`;
+  // Before the plain “Lot X”, which would swallow it.
+  stock = value.match(/^Lot (.+) of this product is already registered\.$/);
+  if (stock) return `这个产品的批号 ${stock[1]} 已经登记过。`;
   stock = value.match(/^Lot (\S[\s\S]*)$/);
   if (stock) return `批号 ${stock[1]}`;
   stock = value.match(/^Highly toxic and drug-precursor stock must be recorded with precise use; switch (\d+) lots? to precise use first\.$/);
@@ -3618,6 +3748,55 @@ function translateDynamic(value: string): string {
   if (stock) return `请准确输入 ${stock[1]} 以确认永久删除。`;
   stock = value.match(/^Merged; (\d+) products? moved\.$/);
   if (stock) return `已合并，移动了 ${stock[1]} 个产品。`;
+  // Amounts by unit (Q172) and lots that already exist (Q177)
+  stock = value.match(/^(.+): whole numbers only\.$/);
+  if (stock) return `${zhUi[stock[1]] ?? stock[1]}：只能填整数。`;
+  stock = value.match(/^(.+): at most (\d) decimal places\.$/);
+  if (stock) return `${zhUi[stock[1]] ?? stock[1]}：最多 ${stock[2]} 位小数。`;
+  // Sequence import into products (Q186)
+  stock = value.match(/^Import (\d+) products?$/);
+  if (stock) return `导入 ${stock[1]} 个产品`;
+  stock = value.match(/^Imported (\d+) products?\.$/);
+  if (stock) return `已导入 ${stock[1]} 个产品。`;
+  stock = value.match(/^Skipped, already there: ([\s\S]+)\.$/);
+  if (stock) return `已跳过（已存在）：${stock[1]}。`;
+  stock = value.match(/^(\d+) header or administrative rows? (?:was|were) skipped\.$/);
+  if (stock) return `已跳过 ${stock[1]} 行表头或说明。`;
+  stock = value.match(/^Row (\d+): ([\s\S]+)$/);
+  if (stock && /could not be identified|are required|F\/R suffix|missing its|duplicate/.test(stock[2])) return `第 ${stock[1]} 行：${{ "a name could not be identified.": "没有识别到名称。", "a sequence could not be identified.": "没有识别到序列。", "a gene or duplex name could not be identified.": "没有识别到基因或双链名称。", "both sense and antisense sequences are required.": "需要正义链和反义链两条序列。", "a primer name could not be identified.": "没有识别到引物名称。", "add an F/R suffix to the primer name, or paste Forward and Reverse sequences in the same row.": "请给引物名称加上 F/R 后缀，或把上游和下游序列放在同一行。" }[stock[2]] ?? stock[2]}`;
+  // Inventory home: counts beside the rows
+  stock = value.match(/^All (\d+) in the stock list$/);
+  if (stock) return `在库存清单中查看全部 ${stock[1]} 条`;
+  stock = value.match(/^\+(\d+) more$/);
+  if (stock) return `另 ${stock[1]} 处`;
+  stock = value.match(/^(\d+) lots$/);
+  if (stock) return `${stock[1]} 个批次`;
+  stock = value.match(/^No stock matches “([\s\S]+)”\.$/);
+  if (stock) return `没有库存匹配“${stock[1]}”。`;
+  // Take-out: counts in the stock list and on the stock page
+  stock = value.match(/^Only (\d+) in store\.$/);
+  if (stock) return `库房里只有 ${stock[1]} 个。`;
+  stock = value.match(/^Take out a whole number from 1 to (\d+)\.$/);
+  if (stock) return `领用数量应为 1 到 ${stock[1]} 的整数。`;
+  stock = value.match(/^Took out (\d+); none was marked opened or empty\.$/);
+  if (stock) return `已领用 ${stock[1]} 个；没有标记开封或用完。`;
+  stock = value.match(/^(\d+) of (\d+) taken out\.$/);
+  if (stock) return `本批已领用 ${stock[1]}/${stock[2]} 个。`;
+  // AI import: counts, file names and the ledger notes an import writes
+  stock = value.match(/^AI matched (\d+) more columns?; check them under Field recognition details\.$/);
+  if (stock) return `AI 又对应了 ${stock[1]} 列，请在“字段识别详情”里核对。`;
+  stock = value.match(/^Import (\d+) lines?$/);
+  if (stock) return `导入 ${stock[1]} 行`;
+  stock = value.match(/^([\s\S]+) has no text to read; photograph or screenshot it instead\.$/);
+  if (stock) return `${stock[1]} 读不出文字，请改为拍照或截图上传。`;
+  stock = value.match(/^([\s\S]+?) could not be read: ([\s\S]+)$/);
+  if (stock) return `${stock[1]} 未能识别：${translateUiText(stock[2], "zh")}`;
+  stock = value.match(/^“([\s\S]+)” cannot (read pictures|read documents here|answer here)\.$/);
+  if (stock) return `“${stock[1]}”${stock[2] === "read pictures" ? "不能识别图片" : "不能在这里识别"}。`;
+  stock = value.match(/^Pack size: ([\s\S]+)$/);
+  if (stock) return `规格：${stock[1]}`;
+  stock = value.match(/^(Arrival|Opening balance; no inferred prior movements): ([\s\S]+)\.$/);
+  if (stock) return `${stock[1] === "Arrival" ? "到货" : "初始余额（不推算此前的流水）"}：${stock[2].replace(" · invoice ", " · 发票 ")}。`;
   // Bulk actions: the preview and the result, record by record
   stock = value.match(/^(\d+) (will be changed|will be deleted|changed|deleted)\.$/);
   if (stock) return `${{ "will be changed": "将修改", "will be deleted": "将删除", changed: "已修改", deleted: "已删除" }[stock[2]]} ${stock[1]} 条。`;

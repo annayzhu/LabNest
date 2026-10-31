@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { QuantityInput } from "./QuantityInput";
 import { useActionState, useMemo, useState } from "react";
+import { QuantityText } from "@/components/InventoryDetail";
 import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
 import { Disclosure } from "@/components/ui/Disclosure";
@@ -13,7 +15,8 @@ const initialState: FormActionState = {};
 const NEW_PRODUCT = "__new";
 
 type LocationOption = { id: string; name: string; temperature?: string | null; status?: "active" | "inactive" | "archived" };
-export type ProductOption = { id: string; name: string; brand: string | null; catalogNumber: string | null; typeId: string | null; groupKey: string | null; strict: boolean; status: string };
+type LotOption = { id: string; lotNumber: string | null; currentQuantity: number; unit: string; quantityRecorded: boolean; locationId: string | null };
+export type ProductOption = { id: string; name: string; brand: string | null; catalogNumber: string | null; typeId: string | null; groupKey: string | null; strict: boolean; status: string; lots: LotOption[] };
 export type TypeOption = { id: string; label: string; groupKey: string; groupName: string; defaults: InventoryTypeDefaults; enabled: boolean };
 export type GroupOption = { key: string; name: string; hidden: boolean };
 type InventoryItemInitial = {
@@ -29,7 +32,6 @@ type InventoryItemInitial = {
   quantityRecorded?: boolean;
   managementMode?: string;
   unit?: string;
-  concentration?: string | null;
   locationId?: string | null;
   positionCode?: string | null;
   expiryDate?: Date | string | null;
@@ -68,6 +70,16 @@ export function InventoryItemForm({ action, locations, products, types, groups, 
   const tracksLot = !defaults || defaults.tracksLot || !!initial.lotNumber;
   const tracksExpiry = !defaults || defaults.tracksExpiry || !!initial.expiryDate;
   const expiryDate = initial.expiryDate ? new Date(initial.expiryDate).toISOString().slice(0, 10) : "";
+  const [lotNumber, setLotNumber] = useState(initial.lotNumber ?? "");
+  // Registering a lot number this product already has would split one lot in two; more of it is received on its page.
+  const sameLot = lotNumber.trim() ? product?.lots.find((lot) => lot.id !== initial.id && lot.lotNumber?.trim().toLowerCase() === lotNumber.trim().toLowerCase()) : undefined;
+  const lotField = (
+    <label>
+      <span className={formLabelClass}>Lot number</span>
+      <input name="lotNumber" value={lotNumber} onChange={(event) => setLotNumber(event.target.value)} maxLength={120} className={formInputClass} />
+      {sameLot ? <span role="status" className="mt-1 block text-xs text-warning"><span>{`Lot ${sameLot.lotNumber} of this product is already registered.`}</span> <Link href={`/inventory/${sameLot.id}`} className="font-medium underline">Receive into that lot</Link></span> : null}
+    </label>
+  );
   const choosable = useMemo(() => {
     const byGroup = new Map<string, ProductOption[]>();
     for (const entry of products) {
@@ -135,6 +147,7 @@ export function InventoryItemForm({ action, locations, products, types, groups, 
             <input name="productCatalogNumber" defaultValue={initial.catalogNumber ?? ""} maxLength={120} className={formInputClass} />
           </label>
         </> : null}
+        {product && !initial.id ? <ProductLots lots={product.lots} locations={locations} /> : null}
       </section>
 
       {initial.quantityRecorded === false ? (
@@ -164,24 +177,29 @@ export function InventoryItemForm({ action, locations, products, types, groups, 
           initialUnit={initial.unit || defaults?.unit || "mL"}
           storageUnit={initial.id && initial.quantityRecorded !== false ? initial.unit : undefined}
           options={stockUnits}
+          checkPrecision
         />
+        {!initial.id && mode !== "information" ? (
+          <label>
+            <span className={formLabelClass}>This lot is</span>
+            <select name="opening" defaultValue="arrival" className={formInputClass}>
+              <option value="arrival">A new arrival</option>
+              <option value="count">Stock already here, counted</option>
+            </select>
+          </label>
+        ) : null}
         <label>
-          <span className={formLabelClass}>Location</span>
+          <span className={formLabelClass}>Storage location</span>
           <select name="locationId" defaultValue={initial.locationId ?? ""} className={formInputClass}>
             <option value="">Unassigned</option>
             {locations.map((location) => <option key={location.id} value={location.id}>{location.name}{location.temperature ? ` · ${location.temperature}` : ""}{location.status === "archived" ? " · archived" : ""}</option>)}
           </select>
         </label>
         <label>
-          <span className={formLabelClass}>Position</span>
+          <span className={formLabelClass}>Position in location</span>
           <input name="positionCode" defaultValue={initial.positionCode ?? ""} maxLength={120} className={formInputClass} placeholder="Shelf 2 / Box A / A01" />
         </label>
-        {tracksLot ? (
-          <label>
-            <span className={formLabelClass}>Lot number</span>
-            <input name="lotNumber" defaultValue={initial.lotNumber ?? ""} maxLength={120} className={formInputClass} />
-          </label>
-        ) : null}
+        {tracksLot ? lotField : null}
         {tracksExpiry ? (
           <label>
             <span className={formLabelClass}>Expiry date</span>
@@ -196,10 +214,9 @@ export function InventoryItemForm({ action, locations, products, types, groups, 
           <label><span className={formLabelClass}>Principal investigator (PI)</span><input name="principalInvestigator" defaultValue={initial.principalInvestigator ?? ""} maxLength={120} className={formInputClass} placeholder="Prof. Zhang / Zhang Lab" /></label>
           <label><span className={formLabelClass}>Storage condition</span><input name="storageCondition" defaultValue={initial.storageCondition ?? ""} maxLength={240} className={formInputClass} placeholder="4 °C, protect from light" /></label>
           <label><span className={formLabelClass}>Container type</span><input name="containerType" defaultValue={initial.containerType ?? ""} maxLength={80} className={formInputClass} placeholder="bottle, tube, box…" /></label>
-          <label><span className={formLabelClass}>Concentration</span><input name="concentration" defaultValue={initial.concentration ?? ""} maxLength={120} className={formInputClass} placeholder="1 mg/mL" /></label>
           <label><span className={formLabelClass}>Barcode</span><input name="barcode" defaultValue={initial.barcode ?? ""} maxLength={160} className={formInputClass} /></label>
           <label><span className={formLabelClass}>Aliquot code</span><input name="aliquotCode" defaultValue={initial.aliquotCode ?? ""} maxLength={160} className={formInputClass} /></label>
-          {!tracksLot ? <label><span className={formLabelClass}>Lot number</span><input name="lotNumber" defaultValue="" maxLength={120} className={formInputClass} /></label> : null}
+          {!tracksLot ? lotField : null}
           {!tracksExpiry ? <label><span className={formLabelClass}>Expiry date</span><input type="date" name="expiryDate" defaultValue="" className={formInputClass} /></label> : null}
           <label className="md:col-span-2 xl:col-span-3"><span className={formLabelClass}>Notes</span><textarea name="notes" defaultValue={initial.notes ?? ""} maxLength={5000} className={formTextareaClass} /></label>
         </div>
@@ -212,5 +229,27 @@ export function InventoryItemForm({ action, locations, products, types, groups, 
         </Button>
       </div>
     </form>
+  );
+}
+
+/** The lots a chosen product already has; this form adds another, and more of one of them is received on its page. */
+function ProductLots({ lots, locations }: { lots: LotOption[]; locations: LocationOption[] }) {
+  const place = (id: string | null) => locations.find((location) => location.id === id)?.name;
+  return (
+    <div className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-2 text-sm md:col-span-2 xl:col-span-3">
+      <p className="text-graphite">This registers a new lot of the product. For more of a lot already here, receive it on that lot&apos;s page.</p>
+      {lots.length ? (
+        <ul className="mt-1.5 divide-y divide-hairline/70">
+          {lots.map((lot) => (
+            <li key={lot.id} className="flex flex-wrap items-center gap-x-3 gap-y-0.5 py-1.5">
+              <span className="font-medium text-ink">{lot.lotNumber ? `Lot ${lot.lotNumber}` : <span>No lot number</span>}</span>
+              <QuantityText quantity={lot.currentQuantity} unit={lot.unit} recorded={lot.quantityRecorded} />
+              {place(lot.locationId) ? <span className="text-muted">{place(lot.locationId)}</span> : null}
+              <Link href={`/inventory/${lot.id}`} className="ml-auto font-medium text-moss hover:underline">Receive into this lot</Link>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="mt-1 text-muted">No lots yet.</p>}
+    </div>
   );
 }

@@ -12,7 +12,7 @@ import {
 } from "@/app/inventory/locations/actions";
 import { formInputClass, formLabelClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
-import { inventoryLocationDeleteBlockers, inventoryLocationTypes } from "@/lib/inventory-location-lifecycle";
+import { inventoryLocationDeleteBlockers, inventoryLocationTypes, readLocationTemperature, temperatureLabel } from "@/lib/inventory-location-lifecycle";
 
 const initialState: InventoryLocationActionState = {};
 
@@ -22,7 +22,7 @@ export type InventoryLocationManagerRecord = {
   type: (typeof inventoryLocationTypes)[number];
   status: "active" | "inactive" | "archived";
   parentLocationId: string | null;
-  parentLocationName: string | null;
+  path: string;
   temperature: string | null;
   description: string | null;
   counts: {
@@ -47,17 +47,17 @@ export function InventoryLocationManager({ locations }: { locations: InventoryLo
   return (
     <div className="space-y-4">
       <section className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
-        <h2 className="border-b border-hairline px-4 py-2.5 text-sm font-semibold text-ink">Add location</h2>
-        <form ref={formRef} action={formAction} className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1.3fr)_9rem_8rem_minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-end">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-b border-hairline px-4 py-2.5">
+          <h2 className="text-sm font-semibold text-ink">Add location</h2>
+          <p className="text-xs text-muted">Locations can sit inside one another, such as room, fridge, shelf, box. Add the fridge first, then its shelves inside it.</p>
+        </div>
+        <form ref={formRef} action={formAction} className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1.3fr)_9rem_12rem_minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-end">
           <label>
             <span className={formLabelClass}>Location name *</span>
             <input required name="name" maxLength={120} className={formInputClass} placeholder="Freezer B / Shelf 3" />
           </label>
           <LocationTypeField />
-          <label>
-            <span className={formLabelClass}>Temperature</span>
-            <input name="temperature" maxLength={60} className={formInputClass} placeholder="-80 °C" />
-          </label>
+          <TemperatureField />
           <ParentLocationField locations={activeLocations} />
           <label>
             <span className={formLabelClass}>Description</span>
@@ -99,13 +99,12 @@ function InventoryLocationEditor({ location, locations }: { location: InventoryL
     <li className={location.status === "active" ? undefined : "bg-warm/60"}>
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 px-4 py-2 text-sm md:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_minmax(0,11rem)_auto]">
         <span className="min-w-0">
-          <span className={`font-medium ${location.status === "active" ? "text-ink" : "text-muted"}`}>{location.name}</span>
+          <span className={`font-medium ${location.status === "active" ? "text-ink" : "text-muted"}`}>{location.path}</span>
           <span className="ml-2 text-xs text-muted">{location.type}</span>
           {location.status !== "active" ? <span className="ml-2 text-xs text-muted">Archived</span> : null}
         </span>
         <span className="hidden min-w-0 truncate text-xs text-muted md:block">
-          {location.parentLocationName ? <><span>Under</span> <span>{location.parentLocationName}</span></> : <span>Top level</span>}
-          {[location.temperature, location.description].filter(Boolean).map((part) => <span key={part}> · {part}</span>)}
+          {[temperatureLabel(location.temperature), location.description].filter(Boolean).map((part, index) => <span key={part}>{index ? " · " : ""}{part}</span>)}
         </span>
         <span className="hidden text-xs text-muted md:block"><span className="tabular-nums">{location.counts.items}</span> <span>stock items</span> · <span className="tabular-nums">{movementReferences}</span> <span>stock movements</span></span>
         <span className="flex justify-end gap-0.5">
@@ -121,11 +120,11 @@ function InventoryLocationEditor({ location, locations }: { location: InventoryL
       <ActionMessage state={archiveState.error ? archiveState : restoreState.error ? restoreState : location.status === "active" ? restoreState : archiveState} className="mx-4 mb-2" />
 
       {editing ? (
-        <form action={updateAction} className="grid gap-3 border-t border-hairline/70 bg-warm px-4 py-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1.3fr)_9rem_8rem_minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-end">
+        <form action={updateAction} className="grid gap-3 border-t border-hairline/70 bg-warm px-4 py-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1.3fr)_9rem_12rem_minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-end">
           <input type="hidden" name="id" value={location.id} />
           <label><span className={formLabelClass}>Location name *</span><input required name="name" defaultValue={location.name} maxLength={120} className={formInputClass} /></label>
           <LocationTypeField defaultValue={location.type} />
-          <label><span className={formLabelClass}>Temperature</span><input name="temperature" defaultValue={location.temperature ?? ""} maxLength={60} className={formInputClass} /></label>
+          <TemperatureField stored={location.temperature} />
           <ParentLocationField locations={locations.filter((candidate) => candidate.id !== location.id)} defaultValue={location.parentLocationId} />
           <label><span className={formLabelClass}>Description</span><input name="description" defaultValue={location.description ?? ""} maxLength={1000} className={formInputClass} /></label>
           <div className="flex gap-2"><Button type="button" onClick={() => setEditing(false)} disabled={updating}>Cancel</Button><Button type="submit" variant="primary" disabled={updating} aria-busy={updating}>{updating ? "Saving…" : "Save"}</Button></div>
@@ -156,8 +155,26 @@ function LocationTypeField({ defaultValue = "other" }: { defaultValue?: string }
   return <label><span className={formLabelClass}>Type *</span><select required name="type" defaultValue={defaultValue} className={formInputClass}>{inventoryLocationTypes.map((type) => <option key={type} value={type}>{type}</option>)}</select></label>;
 }
 
+/** The number in °C, or room temperature; older text that is not one number is shown so it is not lost unseen. */
+function TemperatureField({ stored }: { stored?: string | null }) {
+  const read = readLocationTemperature(stored);
+  const [room, setRoom] = useState(read?.room ?? false);
+  return (
+    <div>
+      <span className={formLabelClass}>Temperature</span>
+      <div className="flex items-center gap-2">
+        <span className="relative min-w-0 flex-1">
+          <input aria-label="Temperature" name="temperature" type="number" step="any" min={-273} max={300} defaultValue={read?.degrees ?? ""} disabled={room} placeholder={read ? "-80" : stored ?? ""} className={`${formInputClass} pr-9 tabular-nums`} />
+          <span aria-hidden className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted">°C</span>
+        </span>
+        <label className="flex shrink-0 items-center gap-1.5 text-xs text-graphite"><input type="checkbox" name="roomTemperature" checked={room} onChange={(event) => setRoom(event.target.checked)} />Room temperature</label>
+      </div>
+    </div>
+  );
+}
+
 function ParentLocationField({ locations, defaultValue }: { locations: InventoryLocationManagerRecord[]; defaultValue?: string | null }) {
-  return <label><span className={formLabelClass}>Parent location</span><select name="parentLocationId" defaultValue={defaultValue ?? ""} className={formInputClass}><option value="">Top level</option>{locations.map((location) => <option key={location.id} value={location.id}>{location.name}</option>)}</select></label>;
+  return <label><span className={formLabelClass}>Inside location (optional)</span><select name="parentLocationId" defaultValue={defaultValue ?? ""} className={formInputClass}><option value="">None (top level)</option>{locations.map((location) => <option key={location.id} value={location.id}>{location.path}</option>)}</select></label>;
 }
 
 function ActionMessage({ state, className = "" }: { state: InventoryLocationActionState; className?: string }) {

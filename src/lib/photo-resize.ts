@@ -18,3 +18,8 @@ export async function shrinkPhoto(file: File): Promise<Blob> {
     return await new Promise<Blob>((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('图片转换失败')), 'image/jpeg', 0.85));
   } finally { bitmap.close(); }
 }
+
+/** `shrinkPhoto` as an upload: a JPEG under the picture's own name. */
+export async function shrinkPhotoFile(file: File) {
+  return new File([await shrinkPhoto(file)], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+}

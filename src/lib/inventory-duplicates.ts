@@ -10,7 +10,7 @@ export function catalogKey(value: string | null | undefined) {
 
 const brandKey = (value: string | null | undefined) => fold(value)?.replace(/\s+/g, " ").trim() || null;
 const casKey = (value: string | null | undefined) => fold(value)?.replace(/\s+/g, "") || null;
-const nameKey = (value: string | null | undefined) => fold(value)?.replace(/[\s\p{P}\p{S}]+/gu, "") || null;
+export const nameKey = (value: string | null | undefined) => fold(value)?.replace(/[\s\p{P}\p{S}]+/gu, "") || null;
 
 /** Two ids in order, so a pair marked as not duplicates reads the same either way round. */
 export const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
@@ -95,4 +95,24 @@ export function mergeProductPlan(keep: MergeSide, other: MergeSide, safetyStock?
       notes: [...new Set([keep.notes?.trim(), other.notes?.trim()].filter(Boolean))].join("\n\n") || null,
     },
   };
+}
+
+/**
+ * The product a received line belongs to: the one with its brand and catalogue number (or that catalogue number and no
+ * brand, as stock registration matches). A line printed without a brand takes its supplier's name instead, which often
+ * carries a company suffix ("Qiagen GmbH" for Qiagen). Otherwise up to five that share its catalogue number or its name.
+ */
+export function productMatches<T extends ProductIdentity>(line: { name: string; brand: string | null; catalogNumber: string | null; supplier?: string | null }, products: readonly T[]) {
+  const key = catalogKey(line.catalogNumber);
+  const brand = brandKey(line.brand);
+  const supplier = brand ? null : brandKey(line.supplier);
+  const sameMaker = (product: T) => {
+    const own = brandKey(product.brand);
+    return own === brand || (!!brand && !own) || (!!supplier && !!own && supplier.includes(own));
+  };
+  const exact = key ? products.find((product) => catalogKey(product.catalogNumber) === key && sameMaker(product)) : undefined;
+  if (exact) return { exact, candidates: [] as T[] };
+  const name = nameKey(line.name);
+  const candidates = products.filter((product) => (key && catalogKey(product.catalogNumber) === key) || (name && [nameKey(product.name), nameKey(product.englishName)].includes(name)));
+  return { exact: undefined, candidates: candidates.slice(0, 5) };
 }

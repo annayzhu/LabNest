@@ -6,13 +6,17 @@ import type { ExecutionPlan } from '@/lib/structured-run';
 import { Button } from './ui/Button';
 import { formInputClass } from './forms';
 
-/** Splitting a single-group run into treatment groups, before anything is recorded. Groups already set up show in the group table. */
-export function RunGroupPreparation({ experimentId, plan, editable }: { experimentId: string; plan: ExecutionPlan; editable: boolean }) {
+/**
+ * Splitting a single-group run into treatment groups, before anything is recorded. Groups already set up show in the group table.
+ * The experiment's sample groups give the names when it has two or more (S13), so one experiment has one set of group names.
+ */
+export function RunGroupPreparation({ experimentId, plan, editable, suggestedLabels = [] }: { experimentId: string; plan: ExecutionPlan; editable: boolean; suggestedLabels?: string[] }) {
   const [editing, setEditing] = useState(false);
   const [groups, setGroups] = useState<Array<{ id: string; label: string }>>([]);
   const [state, action, pending] = useActionState(saveRunGroups, {});
   if (plan.groups.length || !editable) return null;
-  if (!editing) return <button type="button" className="focus-ring ln-prep-link" onClick={() => { setGroups([{ id: newClientMutationId(), label: 'A组' }, { id: newClientMutationId(), label: 'B组' }]); setEditing(true); }}>Set up several groups</button>;
+  const initial = suggestedLabels.length > 1 ? suggestedLabels.slice(0, 24) : ['A组', 'B组'];
+  if (!editing) return <button type="button" className="focus-ring ln-prep-link" onClick={() => { setGroups(initial.map(label => ({ id: newClientMutationId(), label }))); setEditing(true); }}>Set up several groups</button>;
   return <form action={action} className="ln-prep-group-setup space-y-3">
     <input type="hidden" name="experimentId" value={experimentId}/><input type="hidden" name="executionPlanRevision" value={plan.revision}/><input type="hidden" name="groups" value={JSON.stringify(groups)}/>
     <fieldset disabled={pending} className="space-y-2"><legend className="text-sm font-medium">Groups in this run</legend>

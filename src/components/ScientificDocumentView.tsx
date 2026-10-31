@@ -13,6 +13,7 @@ export function ScientificDocumentView({
   identifier,
   subtitle,
   leadingContent,
+  sectionLeading = {},
 }: {
   document: ScientificDocument;
   showEmptySections?: boolean;
@@ -20,8 +21,10 @@ export function ScientificDocumentView({
   identifier?: string | null;
   subtitle?: string | null;
   leadingContent?: ReactNode;
+  /** Live content at the head of a section, by section key (an experiment's samples in 实验设置与样本); such a section always shows. */
+  sectionLeading?: Record<string, ReactNode>;
 }) {
-  const populatedSections = document.sections.filter((section) => section.blocks.length > 0);
+  const populatedSections = document.sections.filter((section) => section.blocks.length > 0 || sectionLeading[section.key]);
   const displayedSections = showEmptySections ? document.sections : populatedSections;
 
   const canvas = <DocumentCanvas label={title ?? "Scientific document"}>
@@ -37,13 +40,14 @@ export function ScientificDocumentView({
             <h2 style={section.titleFontSizePt ? {fontSize: `${section.titleFontSizePt}pt`} : undefined} className={`document-section-title font-serif font-medium ${section.key === "constraints" ? "text-error" : "text-ink"}`}>{section.title}</h2>
           </header>
           <div>
+            {sectionLeading[section.key]}
             {section.blocks.length
               ? executionSegments(section.blocks).map((segment) => segment.kind === "block"
                 ? <div key={segment.block.id} className="document-block"><ScientificBlockView block={segment.block} /></div>
                 : segment.kind === "step"
                   ? <div key={segment.block.id} className="document-block"><ExecutionStepLine execution={segment.block.execution!}>{segment.details.map((block) => <div key={block.id} className="document-block"><ScientificBlockView block={{ ...block, execution: undefined }} /></div>)}</ExecutionStepLine></div>
                   : <details key={segment.blocks[0].id} className="document-block ln-execution-fold"><summary className="focus-ring">{segment.label}</summary>{segment.blocks.map((block) => <div key={block.id} className="document-block"><ScientificBlockView block={block} /></div>)}</details>)
-              : <p className="text-sm italic text-muted">Not recorded.</p>}
+              : sectionLeading[section.key] ? null : <p className="text-sm italic text-muted">Not recorded.</p>}
           </div>
         </section>
       )) : <p className="text-sm text-muted">No structured sections have been recorded yet.</p>}

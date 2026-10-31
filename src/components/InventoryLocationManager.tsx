@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { Archive, MapPin, Pencil, RotateCcw, Trash2, X } from "lucide-react";
 import {
@@ -29,8 +30,7 @@ export type InventoryLocationManagerRecord = {
     items: number;
     itemsFrom: number;
     itemsTo: number;
-    sampleEventsFrom: number;
-    sampleEventsTo: number;
+    samples: number;
     childLocations: number;
   };
 };
@@ -107,7 +107,7 @@ function InventoryLocationEditor({ location, locations }: { location: InventoryL
           {location.parentLocationName ? <><span>Under</span> <span>{location.parentLocationName}</span></> : <span>Top level</span>}
           {[location.temperature, location.description].filter(Boolean).map((part) => <span key={part}> · {part}</span>)}
         </span>
-        <span className="hidden text-xs text-muted md:block"><span className="tabular-nums">{location.counts.items}</span> <span>stock items</span> · <span className="tabular-nums">{movementReferences}</span> <span>stock movements</span></span>
+        <span className="hidden text-xs text-muted md:block"><span className="tabular-nums">{location.counts.items}</span> <span>stock items</span> · <span className="tabular-nums">{movementReferences}</span> <span>stock movements</span>{location.counts.samples ? <> · <Link href={`/samples?location=${location.id}`} className="text-moss hover:underline"><span className="tabular-nums">{location.counts.samples}</span> <span>samples</span></Link></> : null}</span>
         <span className="flex justify-end gap-0.5">
           <button type="button" onClick={() => setEditing((value) => !value)} disabled={pending} aria-label="Edit location" title="Edit location" className={iconButton}><Pencil className="h-4 w-4" /></button>
           {location.status === "active" ? (

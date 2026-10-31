@@ -8,7 +8,7 @@ type Movement = { id: string; inventoryItemId: string; type: string; quantityCha
 const db = vi.hoisted(() => ({
   item: { id: "i1", name: "PBS 10x", currentQuantity: 10, unit: "mL", managementMode: "precise", quantityRecorded: true, status: "active", locationId: null as string | null, productId: "p1" },
   movements: [] as Movement[],
-  counts: { materialUses: 0, receipts: 0, purchases: 0, containerActions: 0, observations: 0, aliquots: 0, sampleEvents: 0 },
+  counts: { materialUses: 0, receipts: 0, purchases: 0, containerActions: 0, observations: 0, aliquots: 0 },
   deleted: [] as string[],
 }));
 
@@ -42,7 +42,6 @@ vi.mock("@/lib/db", () => {
     purchaseRequest: { count: async () => db.counts.purchases },
     inventoryContainerEvent: { count: async () => db.counts.containerActions },
     inventoryObservation: { count: async () => db.counts.observations },
-    sampleLifecycleEvent: { count: async () => db.counts.sampleEvents },
     inventoryContainer: { deleteMany: async () => ({ count: 0 }) },
     attachmentLink: { deleteMany: async () => ({ count: 0 }) },
     activityLog: { create: async () => ({}) },
@@ -53,7 +52,7 @@ vi.mock("@/lib/db", () => {
 beforeEach(() => {
   db.item.currentQuantity = 10;
   db.movements = [{ id: "m0", inventoryItemId: "i1", type: "receive", quantityChange: 10, unit: "mL", notes: "Opening balance recorded when the item was registered.", purchaseId: null, reversesTransactionId: null, createdAt: new Date() }];
-  db.counts = { materialUses: 0, receipts: 0, purchases: 0, containerActions: 0, observations: 0, aliquots: 0, sampleEvents: 0 };
+  db.counts = { materialUses: 0, receipts: 0, purchases: 0, containerActions: 0, observations: 0, aliquots: 0 };
   db.deleted = [];
 });
 

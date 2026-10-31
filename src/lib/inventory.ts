@@ -166,7 +166,6 @@ const blockerNouns: Record<string, [string, string]> = {
   containerActions: ["container action", "container actions"],
   observations: ["remaining-amount reading", "remaining-amount readings"],
   aliquots: ["aliquot", "aliquots"],
-  sampleEvents: ["sample event", "sample events"],
   lots: ["lot", "lots"],
   products: ["product", "products"],
 };

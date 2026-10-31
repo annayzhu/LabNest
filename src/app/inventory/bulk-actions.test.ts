@@ -50,7 +50,6 @@ vi.mock("@/lib/db", () => {
     purchaseRequest: { count: async () => 0 },
     inventoryContainerEvent: { count: async () => 0 },
     inventoryObservation: { count: async () => 0 },
-    sampleLifecycleEvent: { count: async () => 0 },
     activityLog: { create: async ({ data }: { data: (typeof db.logs)[number] }) => { db.logs.push(data); return data; } },
   };
   return { prisma: { ...tx, $transaction: async (run: (client: typeof tx) => unknown) => run(tx) } };

@@ -7,6 +7,8 @@ import type { SheetData } from "write-excel-file/node";
 import { prisma } from "@/lib/db";
 import { documentMediaToMarkdown } from "@/lib/document-media";
 import { experimentNarrativeFromDocument, experimentExecutionDocument } from "@/lib/experiment-document";
+import { withExperimentSamples } from "@/lib/experiment-samples";
+import { experimentSampleLines } from "@/lib/samples.server";
 import { exportedSafetyStock, lotRiskFlags } from "@/lib/inventory";
 import { normalizeProtocolDocument, sectionPlainText as protocolSectionPlainText, type ProtocolDocument } from "@/lib/protocol-document";
 import { documentPlainText, normalizeResearchPlanDocument, normalizeResultDocument, normalizeScientificDocument, reportSections, type ScientificDocument } from "@/lib/scientific-document";
@@ -100,8 +102,9 @@ export async function structuredExportRecords(
       selection,
       (row) => ({ search: [row.runCode, row.title, row.purpose], filters: { project: row.projectId, plan: row.researchPlanId, status: row.status } }),
     );
+    const sampleLines = await experimentSampleLines(prisma, rows.map((row) => row.id));
     return Promise.all(rows.map(async (row) => {
-      const document = experimentExecutionDocument(row.contentJson, await stepsWithExecutionEvidence(row.steps),row.protocolRun?.parametersJson,row.protocolSnapshotJson,row.protocolRun?.executionPlanJson);
+      const document = withExperimentSamples(experimentExecutionDocument(row.contentJson, await stepsWithExecutionEvidence(row.steps),row.protocolRun?.parametersJson,row.protocolSnapshotJson,row.protocolRun?.executionPlanJson), sampleLines.get(row.id) ?? []);
       const narrative = experimentNarrativeFromDocument(document);
       if (preserveMedia) {
         narrative.background = scientificSectionText(document, "background");

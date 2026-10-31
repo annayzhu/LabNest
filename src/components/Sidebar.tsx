@@ -22,6 +22,7 @@ import {
   Search,
   Settings,
   TabletSmartphone,
+  TestTube2,
   Bot,
   Trash2,
   Wrench,
@@ -47,6 +48,7 @@ const navItems = [
   { href: "/results", label: "Results", icon: Database },
   { href: "/reports", label: "Reports", icon: FileBarChart },
   { href: "/inventory", label: "Inventory", icon: Boxes, separated: true },
+  { href: "/samples", label: "Samples", icon: TestTube2 },
   { href: "/sequences", label: "Sequences", icon: Dna },
   { href: "/tools", label: "Tools", icon: Wrench },
 ];

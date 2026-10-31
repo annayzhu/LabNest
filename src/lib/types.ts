@@ -17,8 +17,7 @@ export type ItemType =
   | "report"
   | "tool"
   | "entity"
-  | "sample_profile"
-  | "sample_lifecycle_event"
+  | "sample"
   | "inventory_item"
   | "result"
   | "purchase"
@@ -349,80 +348,6 @@ export type InventoryTransaction = {
   performedBy?: string;
   notes?: string;
   createdAt: string;
-};
-
-export type SampleLifecycleStatus =
-  | "registered"
-  | "prepared"
-  | "stocked"
-  | "in_use"
-  | "depleted"
-  | "discarded"
-  | "archived";
-
-export type SampleLifecycleEventType =
-  | "register"
-  | "collect"
-  | "prepare"
-  | "aliquot"
-  | "receive"
-  | "store"
-  | "transfer"
-  | "thaw"
-  | "refreeze"
-  | "consume"
-  | "qc"
-  | "discard"
-  | "result_link"
-  | "note";
-
-export type SampleWarning = {
-  type: "expiry" | "low_quantity" | "freeze_thaw" | "missing_location" | "unlinked_result";
-  severity: "watch" | "action";
-  message: string;
-};
-
-export type SampleProfile = {
-  id: string;
-  entityId: string;
-  name: string;
-  sampleCode: string;
-  sampleType: string;
-  sourceLabel?: string;
-  sourceType?: string;
-  parentSampleId?: string;
-  projectId?: string;
-  projectName?: string;
-  status: SampleLifecycleStatus;
-  collectedAt?: string;
-  preparedAt?: string;
-  biosafetyLevel?: string;
-  storageRequirement?: string;
-  freezeThawCount: number;
-  aliquotCount: number;
-  totalQuantity: number;
-  unit: string;
-  primaryLocation?: string;
-  relatedExperimentIds: string[];
-  warnings: SampleWarning[];
-  notes?: string;
-};
-
-export type SampleLifecycleEvent = {
-  id: string;
-  sampleProfileId: string;
-  type: SampleLifecycleEventType;
-  title: string;
-  occurredAt: string;
-  experimentId?: string;
-  experimentTitle?: string;
-  inventoryItemId?: string;
-  aliquotCode?: string;
-  fromLocation?: string;
-  toLocation?: string;
-  quantityChange?: number;
-  unit?: string;
-  notes?: string;
 };
 
 export type ProposedAction = {

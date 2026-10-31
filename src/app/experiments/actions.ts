@@ -184,12 +184,15 @@ export async function deleteExperiment(
           projectId: true,
           researchPlanId: true,
           protocolRun: { select: { id: true } },
-          _count: { select: { results: true, inventoryTransactions: true, sampleEvents: true } },
+          _count: { select: { results: true, inventoryTransactions: true } },
         },
       });
       if (!experiment) throw new Error("This Experiment no longer exists.");
       if (parsed.confirmation !== experiment.runCode) throw new Error(`Enter ${experiment.runCode} exactly to confirm moving it to the Recycle Bin.`);
-      const [completedSteps, deviations, attachments, reportSourceReferences, entryReferences, proposedActions] = await Promise.all([
+      // Samples only chosen for a planned experiment leave with it; outputs and amounts taken are evidence.
+      const [samplesProduced, samplesUsed, completedSteps, deviations, attachments, reportSourceReferences, entryReferences, proposedActions] = await Promise.all([
+        tx.experimentSample.count({ where: { experimentId: experiment.id, role: "output" } }),
+        tx.experimentSample.count({ where: { experimentId: experiment.id, role: "input", usedAmount: { not: null } } }),
         tx.experimentStep.count({ where: { experimentId: experiment.id, completed: true } }),
         tx.experimentStep.count({ where: { experimentId: experiment.id, deviationNote: { not: null } } }),
         tx.attachmentLink.count({ where: { targetType: "experiment", targetId: experiment.id } }),
@@ -197,7 +200,7 @@ export async function deleteExperiment(
         tx.itemLink.count({ where: { sourceType: "entry", targetType: "experiment", targetId: experiment.id } }),
         experiment.protocolRun ? tx.proposedAction.count({ where: { sourceType: "protocol", sourceId: experiment.protocolRun.id } }) : Promise.resolve(0),
       ]);
-      const counts = { ...experiment._count, completedSteps, deviations, attachments, reportSourceReferences, entryReferences, proposedActions };
+      const counts = { ...experiment._count, samplesProduced, samplesUsed, completedSteps, deviations, attachments, reportSourceReferences, entryReferences, proposedActions };
       const blockers = experimentDeleteBlockers(experiment.status, experiment.recordStatus, counts);
       if (blockers.length) throw new Error("This Experiment contains execution evidence and can only be archived.");
 

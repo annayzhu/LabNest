@@ -6,7 +6,7 @@ import { mixQuantityLabel, mixTitle, runQuantityLabels, runQuantityLabelText, ru
 import { consumptionAmount, consumptionRecorded, lineStock, runConsumption } from './run-consumption';
 import { mixState, stepMixes, stepVersion, type ExecutionPlan, type StructuredRunView } from './structured-run';
 
-export type PreparationKind = 'material' | 'mix' | 'plate' | 'equipment';
+export type PreparationKind = 'sample' | 'material' | 'mix' | 'plate' | 'equipment';
 export type PreparationItem = { key: string; kind: PreparationKind; label: string; detail?: string; warning?: string; badge?: string; stepId?: string };
 export type PreparationState = ExecutionPlan['preparation'][string];
 export type PreparationChecklist = {
@@ -20,7 +20,7 @@ export type PreparationChecklist = {
   /** Something is entered in preparation before the run can go on: systems to choose or a 本次数量 to fill in. */
   needsInput: boolean;
 };
-export const preparationKindLabels: Record<PreparationKind, string> = { material: 'Materials and amounts', mix: 'Mix cards', plate: 'Plate layouts', equipment: 'Equipment setup' };
+export const preparationKindLabels: Record<PreparationKind, string> = { sample: 'Samples to take out', material: 'Materials and amounts', mix: 'Mix cards', plate: 'Plate layouts', equipment: 'Equipment setup' };
 // The checklist's text is English; the Chinese interface translates it (translateDynamic in i18n.ts), names and codes untouched.
 const equipmentNames: Record<ToolKind, string> = { centrifuge: 'Centrifuge', mix: 'Mix', incubate: 'Incubate', shake: 'Shaker', vacuum: 'Vacuum', electrophoresis: 'Electrophoresis', electroporation: 'Electroporation', gas: 'Gas', dark: 'Protect from light', gradient: 'Gradient' };
 /** A tool field still open, named in English by its toolSpecs label. */
@@ -28,7 +28,9 @@ const toolFieldNames = Object.fromEntries(Object.entries(toolFieldNamesZh).map((
 
 type PlateAttachment = { id: string; name: string };
 export type PreparationStock = { id?: string; name: string; unit: string; currentQuantity: number; quantityRecorded: boolean };
-type Options = { plates?: PlateAttachment[]; stock?: PreparationStock[]; recorded?: Array<{ source: string }> };
+/** The boxes the experiment's samples come out of (S15), with their positions. */
+export type PreparationSamples = { boxes: Array<{ label: string; count: number; positions: string }>; unplaced: number };
+type Options = { plates?: PlateAttachment[]; stock?: PreparationStock[]; recorded?: Array<{ source: string }>; samples?: PreparationSamples };
 
 /** The unit 1000 times larger in the same material scale (µL → mL, mg → g, nmol → µmol); none past the largest. */
 const largerUnit = (unit: string) => {
@@ -111,6 +113,8 @@ export function preparationChecklist(run: Pick<StructuredRunView, 'steps' | 'pla
     const quantity = state.quantity === undefined ? `Not filled in: ${runQuantityLabelText(label)}` : runQuantityText(state.quantity, label);
     items.push({ key: `mix:${stepId}:${mix.id}`, kind: 'mix', stepId, label: `${groupOf(step)}${mixTitle(mix)} · ${stepLabel(step)}`, detail: `${quantity} · ${state.current && state.receipt ? 'Confirmed' : 'Not confirmed'}`, ...(state.quantity === undefined ? { warning: quantity } : {}) });
   }
+  for (const box of options.samples?.boxes ?? []) items.push({ key: `sample:${box.label}`, kind: 'sample', label: box.label, detail: `${box.count} ${box.count === 1 ? 'sample' : 'samples'}${box.positions ? ` · ${box.positions}` : ''}` });
+  if (options.samples?.unplaced) items.push({ key: 'sample:unplaced', kind: 'sample', label: 'Samples without a place', detail: `${options.samples.unplaced} ${options.samples.unplaced === 1 ? 'sample' : 'samples'}` });
   for (const plate of options.plates ?? []) items.push({ key: `plate:${plate.id}`, kind: 'plate', label: plate.name, detail: 'Plate layout attachment' });
   // Equipment: each tool a step uses, with this run's settings. Groups that set it up the same way share one row.
   const equipment = new Map<string, Array<{ item: PreparationItem; settings: string; steps: string[]; group?: string }>>();

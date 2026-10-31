@@ -10,7 +10,7 @@ export default async function InventoryLocationsPage() {
   const locations = await prisma.inventoryLocation.findMany({
     include: {
       parentLocation: { select: { name: true } },
-      _count: { select: { items: true, itemsFrom: true, itemsTo: true, sampleEventsFrom: true, sampleEventsTo: true, childLocations: true } },
+      _count: { select: { items: true, itemsFrom: true, itemsTo: true, samples: true, childLocations: true } },
     },
     orderBy: [{ status: "asc" }, { name: "asc" }],
   });

@@ -28,6 +28,8 @@ import { buttonStyles } from "@/components/ui/Button";
 import { prisma } from "@/lib/db";
 import { buildExperimentResultRecording } from "@/lib/experiment-results";
 import { isRecordLocked } from "@/lib/record-lifecycle";
+import { samplesByBox } from "@/lib/samples";
+import { sampleLocationOptions } from "@/lib/samples.server";
 
 
 export const dynamic = "force-dynamic";
@@ -50,6 +52,8 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
         protocolRun: true,
         steps: { orderBy: [{ groupOrder: "asc" }, { order: "asc" }], include: { _count: { select: { entries: true, results: true, inventoryTransactions: true } } } },
         results: { orderBy: { updatedAt: "desc" }, take: 8 },
+        samples: { where: { role: "input" }, orderBy: { sortOrder: "asc" }, select: { group: { select: { label: true } }, sample: { select: { locationId: true, position: true } } } },
+        sampleGroups: { orderBy: { sortOrder: "asc" }, select: { label: true } },
       },
     }),
     prisma.attachmentLink.findMany({
@@ -101,6 +105,9 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
   }
   const plates = attachmentLinks.filter(link => link.linkType === 'plate_layout').map(link => ({ id: link.attachment.id, originalFilename: link.attachment.originalFilename, mimeType: link.attachment.mimeType }));
   const prepStock = inventoryItems.map(item => ({ id: item.id, name: item.name, unit: item.unit, currentQuantity: item.currentQuantity, quantityRecorded: item.quantityRecorded }));
+  // Where the experiment's samples are taken from (S15): one line per box at the bench.
+  const boxLabels = experiment.samples.length ? new Map((await sampleLocationOptions(prisma)).map(location => [location.id, location.label])) : new Map<string, string>();
+  const samplePrep = samplesByBox(experiment.samples.map(link => ({ locationLabel: link.sample.locationId ? boxLabels.get(link.sample.locationId) ?? null : null, position: link.sample.position })));
   const recordedUses = experiment.materialUses.map(row => ({ source: row.source }));
   const resultRecording = buildExperimentResultRecording(experiment.protocolVersions.map((link) => ({
     protocolVersionId: link.protocolVersionId,
@@ -147,7 +154,15 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
         </details>
 
         {locked ? <p role="status" className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-2 text-sm text-graphite">This run is submitted or reviewed and read-only. Reopen it from the experiment record to change steps or deviations.</p> : null}
-        <RunSystemPreparation experimentId={id} view={structured} editable={editable} started={experiment.steps.some(step => step.completed || step.completedAt || step.timerStartedAt || step.timerPausedAt)} plates={plates} stock={prepStock} recorded={recordedUses}/>
+        <RunSystemPreparation experimentId={id} view={structured} editable={editable} started={experiment.steps.some(step => step.completed || step.completedAt || step.timerStartedAt || step.timerPausedAt)} plates={plates} stock={prepStock} recorded={recordedUses} samples={samplePrep} inputGroups={experiment.samples.map(link => link.group?.label ?? null)} sampleGroupLabels={experiment.sampleGroups.map(group => group.label)}/>
+        {!structured.hasSystems && experiment.samples.length ? (
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[var(--ln-radius-panel)] border border-hairline bg-surface px-3 py-2 text-sm">
+            <span className="font-medium text-ink">Samples to take out</span>
+            {samplePrep.boxes.map(box => <span key={box.label} className="text-graphite">{box.label}{box.positions ? <span className="ml-1 font-mono text-ink">{box.positions}</span> : null}</span>)}
+            {samplePrep.unplaced ? <span className="text-muted">{`${samplePrep.unplaced} without a place`}</span> : null}
+            <span className="ml-auto flex gap-3"><Link className="text-moss hover:underline" href={`/experiments/${experiment.id}#section-setup`}>Samples and plate layouts</Link>{editable ? <Link className="text-moss hover:underline" href={`/samples/new?experiment=${experiment.id}`}>Register outputs</Link> : null}</span>
+          </p>
+        ) : null}
         <ProtocolRunProgressForm
           key={`${structured.plan.revision}:${experiment.steps.map((step) => `${step.id}:${step.completed ? 1 : 0}:${step.deviationNote ?? ""}`).join("|")}`}
           structured={structured.hasSystems ? { plan: structured.plan, steps: structured.steps } : undefined}

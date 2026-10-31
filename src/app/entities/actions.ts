@@ -12,7 +12,8 @@ export async function createEntity(_previousState: FormActionState, formData: Fo
   try {
     const parsed = z.object({
       name: z.string().trim().min(1, "Entity name is required.").max(180),
-      type: z.enum(EntityType),
+      // Samples are registered in the Samples module (S2); the enum value stays for history.
+      type: z.enum(EntityType).refine((value) => value !== "sample", "Register samples in Samples."),
       code: z.string().trim().max(80).optional(),
       ownershipScope: z.enum(["library", "project"]),
       projectId: z.string().trim().optional(),

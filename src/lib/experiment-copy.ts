@@ -19,7 +19,7 @@ export async function copyExperiment(sourceId: string, raw: unknown) {
     }
     // Group configuration and every execution write hold this same parent lock.
     await tx.$queryRaw`SELECT id FROM "Experiment" WHERE id=${sourceId} FOR UPDATE`;
-    const source = await tx.experiment.findUniqueOrThrow({ where: { id: sourceId }, include: { steps: true, protocolVersions: true, protocolRun: true, materialUses: true } });
+    const source = await tx.experiment.findUniqueOrThrow({ where: { id: sourceId }, include: { steps: true, protocolVersions: true, protocolRun: true, materialUses: true, sampleGroups: true, samples: { where: { role: "input" } } } });
     const stepIds = new Map(source.steps.map(step=>[step.id,randomUUID()]));
     const capturedPlan = parseExecutionPlan(source.protocolRun?.executionPlanJson);
     const freshPlan = {...emptyExecutionPlan(),groups:capturedPlan.groups,stepGroups:Object.fromEntries(Object.entries(capturedPlan.stepGroups).filter(([old])=>stepIds.has(old)).map(([old,group])=>[stepIds.get(old)!,group]))};
@@ -33,6 +33,10 @@ export async function copyExperiment(sourceId: string, raw: unknown) {
       materialUses: { create: source.materialUses.filter(r => !r.correctionOfId).map(r => ({ id: randomUUID(), name: r.name, expected: r.expected, unit: r.unit, source: `Copied plan from ${source.runCode}: ${r.source}`, status: "recorded" })) },
     } });
     if (source.protocolRun) await tx.protocolRun.create({ data: { experimentId: id, protocolVersionId: source.protocolRun.protocolVersionId, executionPlanJson:freshPlan as Prisma.InputJsonValue, parametersJson: source.protocolRun.parametersJson as Prisma.InputJsonValue, calculatedConsumptionJson: source.protocolRun.calculatedConsumptionJson as Prisma.InputJsonValue } });
+    // The samples it takes and their groups come along (S12); what was taken from them and what it produced do not.
+    const groupIds = new Map(source.sampleGroups.map(group => [group.id, randomUUID()]));
+    if (groupIds.size) await tx.experimentSampleGroup.createMany({ data: source.sampleGroups.map(group => ({ id: groupIds.get(group.id)!, experimentId: id, label: group.label, sortOrder: group.sortOrder })) });
+    if (source.samples.length) await tx.experimentSample.createMany({ data: source.samples.map(link => ({ experimentId: id, sampleId: link.sampleId, role: "input" as const, groupId: link.groupId ? groupIds.get(link.groupId) ?? null : null, sortOrder: link.sortOrder })) });
     await associateDocumentMedia(tx, [copy.contentJson,copy.protocolSnapshotJson], "experiment",id);
     await tx.activityLog.create({ data: { action: "copy", targetType: "experiment", targetId: id, metadataJson: { sourceId, sourceRunCode: source.runCode, executionReset: true } } });
     return copy;

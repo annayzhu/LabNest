@@ -7,6 +7,7 @@
 | Protocol 与实验执行 | [结构化规程导航](structured-protocol/README.md) |
 | AI 辅助 | [AI 方案与验证批次](ai/README.md) |
 | 计算器与孔板 | [计算器版本及功能批次](calculator/README.md) |
+| 库存 | [分类、产品层与完整的增删改（2026-10-30）](inventory/classification-20261030/PLAN.md) |
 | 富文本编辑器 | [修复规格](editor-repair/SPEC.md) · [验收](editor-repair/ACCEPTANCE.md) · [复查](editor-repair/REVIEW.md) |
 | 外观与主题 | [外观基础方案与证据目录](appearance/foundation/) |
 | Tools 接入 | [2026-10-20 入口验证](tools-entrypoints-20261020/VERIFICATION.md) · [部署说明](../operations/tools-deployment.md) |

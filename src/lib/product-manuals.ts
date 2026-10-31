@@ -13,7 +13,7 @@ export type ManualHit = {
   /** Only a PDF can be taken straight into 整理说明书; a page has to be saved as PDF and uploaded. */
   isPdf: boolean;
   attachmentId?: string;
-  inventoryItem?: { id: string; name: string; catalogNumber?: string };
+  product?: { id: string; name: string; catalogNumber?: string };
 };
 
 /** The vendors searched unless the list is changed. Domains cover the vendors' document hosts; the list is the user's to edit. */

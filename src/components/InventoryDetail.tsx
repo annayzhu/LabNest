@@ -1,0 +1,53 @@
+import type { ReactNode } from "react";
+import { formatQuantity } from "@/lib/calculators/quantity-format";
+
+// The building blocks inventory detail pages share, so the stock, product and type pages line up the same way.
+
+/** One cell of the summary row under a detail page's title. */
+export function Fact({ label, value, detail }: { label: string; value: ReactNode; detail?: ReactNode }) {
+  return (
+    <div className="min-w-0 px-4 py-3">
+      <p className="text-xs text-muted">{label}</p>
+      <div className="mt-1 min-h-6 truncate text-base font-semibold text-ink">{value}</div>
+      {detail ? <p className="mt-0.5 truncate text-xs text-muted">{detail}</p> : null}
+    </div>
+  );
+}
+
+/** A bordered section of the main column; `flush` lets a table reach the border. */
+export function Panel({ title, children, flush = false }: { title: string; children: ReactNode; flush?: boolean }) {
+  return (
+    <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
+      <h2 className="border-b border-hairline px-4 py-2.5 font-semibold text-ink">{title}</h2>
+      {/* A table reaching the panel's border drops its own frame, so the panel is not a box inside a box. */}
+      <div className={flush ? "[&_.ln-data-table-frame]:rounded-none! [&_.ln-data-table-frame]:border-0! [&_.ln-data-table-frame]:shadow-none!" : "p-4"}>{children}</div>
+    </section>
+  );
+}
+
+/** A section of the side panel, separated from the next by the panel's hairline. */
+export function SideSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="space-y-1.5 px-4 py-3">
+      <h3 className="text-xs! font-semibold text-muted">{title}</h3>
+      {children}
+    </section>
+  );
+}
+
+/** A label and value in the side panel; empty values are left out. */
+export function Row({ label, value, mono = false }: { label: string; value: ReactNode; mono?: boolean }) {
+  if (value === null || value === undefined || value === "") return null;
+  return (
+    <div className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-3 text-sm">
+      <span className="text-muted">{label}</span>
+      <span className={`min-w-0 break-words text-ink ${mono ? "font-mono text-xs leading-5" : ""}`}>{value}</span>
+    </div>
+  );
+}
+
+/** An amount with its unit as separate text, so the unit reads in Chinese; stock never counted says so. */
+export function QuantityText({ quantity, unit, recorded = true }: { quantity: number; unit: string | null; recorded?: boolean }) {
+  if (!recorded) return <span className="text-muted">Quantity not recorded</span>;
+  return <span><span className="font-mono">{formatQuantity(quantity)}</span> <span>{unit}</span></span>;
+}

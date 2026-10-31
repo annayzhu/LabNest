@@ -1,11 +1,12 @@
 import { downloadResponse, formatExportTimestamp, toCsv } from "@/lib/export";
 import { prisma } from "@/lib/db";
+import { exportedSafetyStock } from "@/lib/inventory";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   const items = await prisma.inventoryItem.findMany({
-    include: { entity: true, location: true, parentInventoryItem: true },
+    include: { entity: true, location: true, parentInventoryItem: true, product: { select: { lowThreshold: true, lowThresholdUnit: true } } },
     orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
   });
   const rows = items.map((item) => ({
@@ -27,7 +28,7 @@ export async function GET() {
     managementMode: item.managementMode,
     quantityRecorded: item.quantityRecorded,
     unit: item.unit,
-    lowThreshold: item.lowThreshold,
+    lowThreshold: exportedSafetyStock(item),
     concentration: item.concentration,
     location: item.location?.name,
     positionCode: item.positionCode,

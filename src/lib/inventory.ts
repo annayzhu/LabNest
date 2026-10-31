@@ -1,23 +1,14 @@
 import { formatQuantity } from "./calculators/quantity-format";
 import type { InventoryItem, InventoryTransaction } from "./types";
 
-export const inventoryCategories = [
-  { value: "reagent", label: "Reagent" },
-  { value: "consumable", label: "Consumable" },
-  { value: "antibody", label: "Antibody" },
-  { value: "kit", label: "Kit" },
-  { value: "chemical", label: "Chemical" },
-  { value: "instrument_accessory", label: "Instrument accessory" },
-  { value: "biological_sample", label: "Biological sample" },
-  { value: "other", label: "Other" },
-] as const;
-
 export type InventoryRiskFlag = "depleted" | "low" | "expired" | "expiring";
 
 type InventoryRiskInput = {
   currentQuantity: number;
   quantityRecorded?: boolean;
   lowThreshold?: number | null;
+  /** The product's stock across its lots (productStock); safety stock is the product's, so "low" compares this total. */
+  productQuantity?: number;
   expiryDate?: string | Date | null;
 };
 
@@ -30,7 +21,7 @@ export function getInventoryRiskFlags(
 
   if (item.quantityRecorded !== false && item.currentQuantity <= 0) {
     flags.push("depleted");
-  } else if (item.quantityRecorded !== false && item.lowThreshold != null && item.currentQuantity <= item.lowThreshold) {
+  } else if (item.quantityRecorded !== false && item.lowThreshold != null && (item.productQuantity ?? item.currentQuantity) <= item.lowThreshold) {
     flags.push("low");
   }
 
@@ -50,6 +41,139 @@ export function getInventoryRiskFlags(
   }
 
   return flags;
+}
+
+type StockLot = { currentQuantity: number; unit: string; quantityRecorded?: boolean; status?: string };
+type SafetyStock = { lowThreshold: number | null; lowThresholdUnit: string | null };
+
+/** A product's stock, adding its active, counted lots in the unit its safety stock is set in; lots in another unit are left out. */
+export function productStock(lots: StockLot[], unit: string) {
+  return Number(lots.filter((lot) => lot.unit === unit && lot.quantityRecorded !== false && (lot.status ?? "active") === "active")
+    .reduce((sum, lot) => sum + lot.currentQuantity, 0).toFixed(6));
+}
+
+/** A product's stock in its safety-stock unit, and whether that is at or below its safety stock. */
+export function productSafetyStock(product: SafetyStock, lots: StockLot[]) {
+  if (product.lowThreshold == null || !product.lowThresholdUnit) return { total: undefined, low: false };
+  const total = productStock(lots, product.lowThresholdUnit);
+  return { total, low: total <= product.lowThreshold };
+}
+
+/** A lot's flags: "low" compares its product's total in the safety-stock unit; stock saved before products keeps its own threshold. */
+export function lotRiskFlags(lot: InventoryRiskInput & { unit: string }, product: SafetyStock | null | undefined, productLots: StockLot[], now = new Date()) {
+  if (!product) return getInventoryRiskFlags(lot, now);
+  const productQuantity = product.lowThreshold != null && product.lowThresholdUnit ? productStock(productLots, product.lowThresholdUnit) : undefined;
+  return getInventoryRiskFlags({ ...lot, lowThreshold: productQuantity === undefined ? null : product.lowThreshold, productQuantity }, now);
+}
+
+/** The safety stock a lot exports in its own unit: its product's when set in that unit, else the lot's own (from before products). */
+export function exportedSafetyStock(lot: { unit: string; lowThreshold: number | null; product?: SafetyStock | null }) {
+  if (!lot.product) return lot.lowThreshold;
+  return lot.product.lowThreshold != null && lot.product.lowThresholdUnit === lot.unit ? lot.product.lowThreshold : null;
+}
+
+/** What low stock asks for, by 大类. Biological material is grown again from its own stock; a sample cannot be replaced. */
+export function lowStockAdvice(groupKey: string | null | undefined): "purchase" | "expand" | "remaining" {
+  return groupKey === "biological" ? "expand" : groupKey === "sample" ? "remaining" : "purchase";
+}
+
+export const managementModeLabels: Record<string, string> = { information: "Record only", package: "By container", precise: "Precise use" };
+
+/** Units stock and safety stock are counted in. */
+export const stockUnits = ["mL", "µL", "L", "g", "mg", "µg", "vial", "tube", "bottle", "box", "pack", "cylinder", "piece", "reaction"];
+
+/** The fixed control levels. Chemical controls apply to any product; biosafety levels to biological material and samples. */
+export const inventoryControlLevels = [
+  { key: "hazardous", label: "Hazardous chemical" },
+  { key: "highly_toxic", label: "Highly toxic" },
+  { key: "precursor", label: "Drug precursor" },
+  { key: "explosive_precursor", label: "Explosive precursor" },
+  { key: "narcotic", label: "Narcotic or psychotropic" },
+] as const;
+export const inventoryBiosafetyLevels = [
+  { key: "bsl1", label: "BSL-1" },
+  { key: "bsl2", label: "BSL-2" },
+  { key: "bsl3", label: "BSL-3" },
+] as const;
+const controlLevels = [...inventoryControlLevels, ...inventoryBiosafetyLevels];
+export const inventoryControlKeys: readonly string[] = controlLevels.map((level) => level.key);
+export const controlLevelName = (key: string) => controlLevels.find((level) => level.key === key)?.label ?? key;
+
+/** Highly toxic and drug-precursor stock is recorded precisely, with who took it and why, and its product needs an SDS. */
+export function isStrictlyControlled(levels: readonly string[]) {
+  return levels.includes("highly_toxic") || levels.includes("precursor");
+}
+
+/** The documents a product keeps, as AttachmentLink link types on the product. */
+export const productDocumentKinds = ["product_manual", "sds", "kit_manual"] as const;
+export const productDocumentKindNames: Record<(typeof productDocumentKinds)[number], string> = { product_manual: "Product manual", sds: "SDS", kit_manual: "Kit manual" };
+
+/** Taking strictly controlled stock out (use or discard) records who did it and what for. */
+export function controlledUseProblem(levels: readonly string[], movement: { type: string; performedBy?: string | null; notes?: string | null }) {
+  if (!isStrictlyControlled(levels) || (movement.type !== "consume" && movement.type !== "discard")) return null;
+  if (!movement.performedBy?.trim()) return "Record who took this highly toxic or drug-precursor stock.";
+  if (!movement.notes?.trim()) return "Record the purpose of using this highly toxic or drug-precursor stock.";
+  return null;
+}
+
+/** Per kit component, what a box records about it; a component without an entry is present. */
+export type KitComponentStates = Record<string, { state?: string; location?: string }>;
+
+/** A box is complete while every component of its kit is present; one used up or missing makes the whole box incomplete. */
+export function kitBoxStatus(components: { id: string; name: string }[], states: KitComponentStates) {
+  const unavailable = components.flatMap((component) => {
+    const state = states[component.id]?.state;
+    return state === "used_up" || state === "missing" ? [{ id: component.id, name: component.name, state }] : [];
+  });
+  return { complete: unavailable.length === 0, unavailable };
+}
+
+/** Units a remaining amount is read in: a gas cylinder by its gauge, a kit by reactions, everything else by amount. */
+export function observationUnits(typeKey: string | null | undefined) {
+  return typeKey === "gas" ? ["MPa", "%"] : typeKey === "kit" ? ["reactions", "%"] : ["mL", "µL", "L", "mg", "g", "%"];
+}
+export const observationUnitValues = ["mL", "µL", "L", "mg", "g", "reactions", "MPa", "%"] as const;
+
+type ReversibleMovement = {
+  type: string;
+  quantityChange: number;
+  purchaseId?: string | null;
+  reversesTransactionId?: string | null;
+  reversedBy?: { id: string } | null;
+  materialUse?: { id: string } | null;
+};
+
+/**
+ * Why a movement cannot be undone here, or null. A reversal books the opposite quantity and leaves the original as
+ * recorded; material used in an experiment, purchase receipts and container stock are corrected where they were made.
+ */
+export function movementReversalProblem(movement: ReversibleMovement, item: { managementMode: string; currentQuantity: number }) {
+  if (movement.reversedBy) return "This movement has already been reversed.";
+  if (movement.reversesTransactionId) return "This movement is itself a reversal; record the movement again instead.";
+  if (movement.quantityChange === 0) return "This movement changed no quantity.";
+  if (movement.materialUse) return "Correct this in the experiment's material list.";
+  if (movement.purchaseId) return "This movement came with a purchase; correct the purchase receipt instead.";
+  if (item.managementMode !== "precise") return "Stock of this item changes through its containers.";
+  if (item.currentQuantity - movement.quantityChange < 0) return "Reversing this movement would make stock negative.";
+  return null;
+}
+
+const blockerNouns: Record<string, [string, string]> = {
+  movements: ["stock movement", "stock movements"],
+  materialUses: ["experiment material use", "experiment material uses"],
+  receipts: ["purchase receipt", "purchase receipts"],
+  purchases: ["linked purchase", "linked purchases"],
+  containerActions: ["container action", "container actions"],
+  observations: ["remaining-amount reading", "remaining-amount readings"],
+  aliquots: ["aliquot", "aliquots"],
+  sampleEvents: ["sample event", "sample events"],
+  lots: ["lot", "lots"],
+  products: ["product", "products"],
+};
+
+/** What still refers to a record ("2 stock movements"); a record can be deleted only when this is empty. */
+export function deleteBlockers(counts: Partial<Record<keyof typeof blockerNouns, number>>) {
+  return Object.entries(counts).flatMap(([key, count]) => count ? [`${count} ${blockerNouns[key][count === 1 ? 0 : 1]}`] : []);
 }
 
 export type InventoryLedgerItem = Pick<InventoryItem, "id" | "name" | "currentQuantity" | "unit">;

@@ -16,7 +16,8 @@ export default async function NewEntityPage({ searchParams }: { searchParams?: P
   const initialProjectId = firstSearchParam(params, "projectId");
   const [projects, schemas] = await Promise.all([
     prisma.project.findMany({ where: { status: { not: "archived" } }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
-    prisma.scientificSchemaDefinition.findMany({ where: { enabled: true }, select: { key: true, label: true, entityType: true }, orderBy: { label: "asc" } }),
+    // Types only inventory uses (no entity type) are not entity schemas.
+    prisma.scientificSchemaDefinition.findMany({ where: { enabled: true, entityType: { not: null } }, select: { key: true, label: true, entityType: true }, orderBy: { label: "asc" } }),
   ]);
-  return <AppShell><div className="space-y-4"><PageHeader title={initialType === "mixture" ? `New Mixture ${mixtureKind}` : "New Entity from schema"} /><EntityCreateForm action={createEntity} projects={projects} schemas={schemas} initialType={initialType} initialMixtureKind={mixtureKind} initialProjectId={initialProjectId} /></div></AppShell>;
+  return <AppShell><div className="space-y-4"><PageHeader title={initialType === "mixture" ? `New Mixture ${mixtureKind}` : "New Entity from schema"} /><EntityCreateForm action={createEntity} projects={projects} schemas={schemas.flatMap((schema) => schema.entityType ? [{ ...schema, entityType: schema.entityType }] : [])} initialType={initialType} initialMixtureKind={mixtureKind} initialProjectId={initialProjectId} /></div></AppShell>;
 }

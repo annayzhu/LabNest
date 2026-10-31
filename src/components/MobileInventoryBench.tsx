@@ -104,7 +104,7 @@ export function MobileInventoryBench({ items, totalCount, query, filters, riskCo
             {item.code ? <span className="mt-1 block break-all text-xs text-muted" data-i18n-ignore>{item.code}</span> : null}
             {item.riskFlags.length ? <span className="mt-1 block text-sm font-medium text-warning">{item.riskFlags.map(flag => labels[flag]).join(" · ")}</span> : null}
           </span>
-          <span className="max-w-28 shrink-0 text-right text-sm font-medium text-ink">{item.quantityRecorded ? `${formatQuantity(item.quantity)} ${item.unit}` : (zh ? "余量未登记" : "Quantity not recorded")}</span>
+          <span className="max-w-28 shrink-0 text-right text-sm font-medium text-ink">{item.quantityRecorded ? <><span>{formatQuantity(item.quantity)}</span> <span>{item.unit}</span></> : (zh ? "余量未登记" : "Quantity not recorded")}</span>
           <ChevronRight className="h-4 w-4 shrink-0 text-muted" aria-hidden />
         </Link>)}
         {!items.length ? <div className="py-6 text-sm leading-6 text-muted">

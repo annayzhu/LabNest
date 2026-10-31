@@ -1,4 +1,4 @@
-export type FormActionState = { error?: string };
+export type FormActionState = { error?: string; success?: string };
 export type FormAction = (
   previousState: FormActionState,
   formData: FormData,

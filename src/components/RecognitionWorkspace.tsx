@@ -28,7 +28,7 @@ const problemLine = (problem: string): string => {
  * 整理说明书或非模板规程: read the source as written first (no AI); when that reads badly, the connected model lays it
  * out and every line is checked against the original. Nothing is saved until 存为草稿规程.
  */
-export function RecognitionWorkspace({ manualSettings }: { manualSettings: ProductSearchSettingsView }) {
+export function RecognitionWorkspace({ manualSettings, manualQuery }: { manualSettings: ProductSearchSettingsView; manualQuery?: string }) {
   const ai = useAiStatus();
   const [view, setView] = useState<RecognitionView>();
   const [title, setTitle] = useState('');
@@ -70,7 +70,7 @@ export function RecognitionWorkspace({ manualSettings }: { manualSettings: Produ
   };
   const busy = pending || thinking;
   return <div className="space-y-5">
-    <ProductManualSearch settings={manualSettings} onTake={show} disabled={busy} />
+    <ProductManualSearch settings={manualSettings} onTake={show} disabled={busy} initialQuery={manualQuery} />
     <section className="ln-design-form rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4" aria-label="Choose the source">
       <label>Protocol name (optional; you can change it after reading)<input value={title} onChange={event => setTitle(event.target.value)} placeholder="e.g. Total RNA extraction from cells (Vazyme RC112)" /></label>
       <label>Instructions or Protocol file (PDF, Word, TXT, Markdown)<input ref={file} type="file" accept=".pdf,.docx,.txt,.md" /></label>

@@ -708,6 +708,7 @@ model Entity {
   updatedAt      DateTime     @updatedAt
 
   inventoryItems InventoryItem[]
+  inventoryProducts InventoryProduct[]
   sequenceLinks  EntitySequenceLink[]
   results        Result[]
   sampleProfile  SampleProfile?
@@ -742,6 +743,9 @@ model InventoryLocation {
 
 model InventoryItem {
   id                    String             @id @default(cuid())
+  /// The product this stock is a lot of; name, English name, brand, catalogue and CAS are written from it.
+  productId             String?
+  product               InventoryProduct?  @relation(fields: [productId], references: [id], onDelete: Restrict)
   entityId              String?
   entity                Entity?            @relation(fields: [entityId], references: [id], onDelete: SetNull)
   name                  String
@@ -784,6 +788,7 @@ model InventoryItem {
   sampleEvents SampleLifecycleEvent[]
 
   @@unique([aliquotCode])
+  @@index([productId])
   @@index([entityId])
   @@index([category])
   @@index([principalInvestigator])
@@ -817,6 +822,10 @@ model InventoryTransaction {
   notes            String?
   clientMutationId String?                  @unique
   deviceCreatedAt  DateTime?
+  /// A reversal points at the movement it undoes; the original stays as recorded.
+  reversesTransactionId String?             @unique
+  reverses         InventoryTransaction?    @relation("TransactionReversal", fields: [reversesTransactionId], references: [id], onDelete: Restrict)
+  reversedBy       InventoryTransaction?    @relation("TransactionReversal")
   createdAt        DateTime                 @default(now())
 
   @@index([inventoryItemId])
@@ -965,8 +974,13 @@ model ScientificSchemaDefinition {
   id               String     @id @default(cuid())
   key              String     @unique
   label            String
-  entityType       EntityType
+  /// Empty for types only inventory uses (objectKind "inventory").
+  entityType       EntityType?
   objectKind       String     @default("entity")
+  /// The 大类 an inventory type belongs to; empty when inventory does not use the type.
+  inventoryGroupKey String?
+  inventoryGroup   InventoryGroup? @relation(fields: [inventoryGroupKey], references: [key], onDelete: Restrict)
+  inventoryProducts InventoryProduct[]
   prefix           String?
   fieldDefinitions Json       @default("[]")
   defaultSettings  Json       @default("{}")
@@ -976,6 +990,7 @@ model ScientificSchemaDefinition {
 
   @@index([enabled, label])
   @@index([entityType])
+  @@index([inventoryGroupKey])
 }
 
 model ResultDataset {
@@ -1545,9 +1560,13 @@ model InventoryContainer {
   inventoryItemId String
   inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Restrict)
   state           String @default("warehouse")
+  /// Bottle, box or cylinder number people write on it.
+  label           String?
   holder          String?
   location        String?
   openedAt        DateTime?
+  /// Kit components used up or missing in this box, by component ID; absent means present.
+  componentStates Json @default("{}")
   version         Int @default(0)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -1679,4 +1698,64 @@ model ResearchPlanCopilotRun {
   updatedAt       DateTime     @updatedAt
 
   @@index([researchPlanId, createdAt])
+}
+
+/// The fixed lifecycle 大类 of inventory: they can be renamed or hidden, never added or removed.
+model InventoryGroup {
+  key       String   @id
+  label     String?
+  hidden    Boolean  @default(false)
+  sortOrder Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  types    ScientificSchemaDefinition[]
+  products InventoryProduct[]
+}
+
+/// One catalogue entry (brand + catalogue number) or one self-made design; inventory items are its lots.
+model InventoryProduct {
+  id               String       @id @default(cuid())
+  name             String
+  englishName      String?
+  brand            String?
+  catalogNumber    String?
+  casNumber        String?
+  groupKey         String?
+  group            InventoryGroup? @relation(fields: [groupKey], references: [key], onDelete: Restrict)
+  typeId           String?
+  type             ScientificSchemaDefinition? @relation(fields: [typeId], references: [id], onDelete: Restrict)
+  entityId         String?
+  entity           Entity?      @relation(fields: [entityId], references: [id], onDelete: SetNull)
+  fieldValues      Json         @default("{}")
+  controlLevels    String[]     @default([])
+  lowThreshold     Float?
+  lowThresholdUnit String?
+  notes            String?
+  status           ObjectStatus @default(active)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  items         InventoryItem[]
+  kitComponents InventoryKitComponent[]
+
+  @@index([groupKey])
+  @@index([typeId])
+  @@index([catalogNumber])
+  @@index([entityId])
+  @@index([status])
+}
+
+/// A component every box of a kit product should contain.
+model InventoryKitComponent {
+  id               String   @id @default(cuid())
+  productId        String
+  product          InventoryProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name             String
+  spec             String?
+  storageCondition String?
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([productId, sortOrder])
 }

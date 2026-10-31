@@ -1,7 +1,7 @@
 'use client';
 import { FileText, Search } from 'lucide-react';
 import Link from 'next/link';
-import { useActionState, useState, useTransition } from 'react';
+import { useActionState, useEffect, useRef, useState, useTransition } from 'react';
 import { saveProductSearchSettings, searchManuals, takeManual, type ManualSearchState, type ManualSettingsState } from '@/app/protocols/import/recognize/product-actions';
 import type { RecognitionState } from '@/app/protocols/import/recognize/actions';
 import type { ProductSearchSettingsView } from '@/lib/product-manuals.server';
@@ -10,11 +10,11 @@ import { Button } from './ui/Button';
 import './product-manual-search.css';
 
 /**
- * 按产品查找说明书: the manuals kept on inventory items first, then the vendors' own sites when AI is on and a search
+ * 按产品查找说明书: the manuals kept on products first, then the vendors' own sites when AI is on and a search
  * key is saved. A PDF found goes straight into 整理说明书 and is read like an uploaded one.
  */
-export function ProductManualSearch({ settings, onTake, disabled }: { settings: ProductSearchSettingsView; onTake: (result: RecognitionState) => void; disabled?: boolean }) {
-  const [query, setQuery] = useState('');
+export function ProductManualSearch({ settings, onTake, disabled, initialQuery }: { settings: ProductSearchSettingsView; onTake: (result: RecognitionState) => void; disabled?: boolean; initialQuery?: string }) {
+  const [query, setQuery] = useState(initialQuery ?? '');
   const [found, setFound] = useState<ManualSearchState>();
   const [searching, startSearch] = useTransition();
   const [taking, startTake] = useTransition();
@@ -24,6 +24,13 @@ export function ProductManualSearch({ settings, onTake, disabled }: { settings: 
   const busy = searching || taking || Boolean(disabled);
 
   const search = () => startSearch(async () => { setTaken(undefined); setFound(await searchManuals(query)); });
+  // Opened from a product's kit manual: search for it straight away, once.
+  const searchedInitial = useRef(false);
+  useEffect(() => {
+    if (!initialQuery || initialQuery.length < 2 || searchedInitial.current) return;
+    searchedInitial.current = true;
+    startSearch(async () => setFound(await searchManuals(initialQuery)));
+  }, [initialQuery]);
   const take = (hit: ManualHit) => startTake(async () => {
     setTaken(hit.key);
     const result = await takeManual(hit.source === 'inventory' ? { source: 'inventory', attachmentId: hit.attachmentId! } : { source: 'web', url: hit.url!, title: hit.title });
@@ -46,12 +53,12 @@ export function ProductManualSearch({ settings, onTake, disabled }: { settings: 
       <FileText className="h-4 w-4 shrink-0 text-muted" aria-hidden />
       <div className="min-w-0">
         <p className="ln-manual-title">{hit.url ? <a href={hit.url} target="_blank" rel="noreferrer" className="focus-ring">{hit.title}</a> : hit.title}</p>
-        <p className="ln-manual-source">{hit.source === 'inventory' ? <>{`Kept on inventory item “${hit.inventoryItem?.name}”${hit.inventoryItem?.catalogNumber ? ` · ${hit.inventoryItem.catalogNumber}` : ''}`}{hit.inventoryItem ? <> · <Link href={`/inventory/${hit.inventoryItem.id}`} className="focus-ring text-moss underline">Open item</Link></> : null}</> : `From ${hit.vendor}`}</p>
+        <p className="ln-manual-source">{hit.source === 'inventory' ? <>{`Kept on product “${hit.product?.name}”${hit.product?.catalogNumber ? ` · ${hit.product.catalogNumber}` : ''}`}{hit.product ? <> · <Link href={`/inventory/products/${hit.product.id}`} className="focus-ring text-moss underline">Open product</Link></> : null}</> : `From ${hit.vendor}`}</p>
         {hit.snippet ? <p className="ln-manual-snippet">{hit.snippet}</p> : null}
       </div>
       {hit.isPdf ? <Button type="button" variant="primary" size="sm" disabled={busy} aria-busy={taken === hit.key} onClick={() => take(hit)}>{taken === hit.key ? 'Taking it in…' : 'Organize into a Protocol'}</Button>
         : <span className="ln-manual-snippet">A web page, not a PDF: save it as PDF and upload it below.</span>}
-    </li>)}</ol> : <p className="text-sm text-muted">No manual found. Try the catalogue number, or add the manual to the inventory item.</p>) : null}
+    </li>)}</ol> : <p className="text-sm text-muted">No manual found. Try the catalogue number, or add the manual to the product.</p>) : null}
     <details className="ln-manuals-settings">
       <summary>Web search settings</summary>
       <form action={save} className="ln-design-form">

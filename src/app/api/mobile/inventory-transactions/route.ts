@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { controlledUseProblem } from "@/lib/inventory";
 
 const inputSchema = z.object({
   inventoryItemId: z.string().min(1),
@@ -21,8 +22,10 @@ export async function POST(request: Request) {
     if (replay) return Response.json({ transactionId: replay.id, inventoryItemId: replay.inventoryItemId, replay: true });
 
     const result = await prisma.$transaction(async (tx) => {
-      const item = await tx.inventoryItem.findUnique({ where: { id: input.inventoryItemId } });
+      const item = await tx.inventoryItem.findUnique({ where: { id: input.inventoryItemId }, include: { product: { select: { controlLevels: true } } } });
       if (!item || item.status !== "active") throw new Error("Inventory item is missing or inactive.");
+      const controlProblem = controlledUseProblem(item.product?.controlLevels ?? [], input);
+      if (controlProblem) throw new Error(controlProblem);
     if (!item.quantityRecorded || item.managementMode !== "precise") throw new Error("该物料不支持精确扣减；请使用实物流转或先盘点。 / Item requires physical management or an opening count.");
       if (input.experimentStepId) {
         const step = await tx.experimentStep.findFirst({ where: { id: input.experimentStepId, ...(input.experimentId ? { experimentId: input.experimentId } : {}) }, select: { id: true } });

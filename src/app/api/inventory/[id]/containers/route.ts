@@ -1,5 +1,8 @@
 import {
+  addInventoryContainers,
   commandInventoryContainer,
+  deleteInventoryContainer,
+  deleteInventoryObservation,
   readInventoryContainers,
 } from "@/lib/inventory-containers";
 export async function GET(
@@ -23,9 +26,21 @@ export async function POST(
   if (origin && origin !== new URL(request.url).origin)
     return Response.json({ error: "Origin mismatch" }, { status: 403 });
   try {
-    return Response.json(
-      await commandInventoryContainer((await params).id, await request.json()),
-    );
+    const id = (await params).id;
+    const body = await request.json();
+    if (body?.action === "add") {
+      await addInventoryContainers(id, body);
+      return Response.json({ added: true });
+    }
+    if (body?.action === "delete") {
+      await deleteInventoryContainer(id, String(body.containerId ?? ""));
+      return Response.json({ deleted: true });
+    }
+    if (body?.action === "delete_observation") {
+      await deleteInventoryObservation(id, String(body.observationId ?? ""));
+      return Response.json({ deleted: true });
+    }
+    return Response.json(await commandInventoryContainer(id, body));
   } catch (error) {
     return Response.json(
       {

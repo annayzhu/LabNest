@@ -29,28 +29,28 @@ export async function writeProductSearchSettings(change: { key?: string; clearKe
   return readProductSearchSettings();
 }
 
-/** Manuals the group has kept on its inventory items, matched on the item's name, brand, vendor or catalogue number. */
+/** Manuals and kit manuals the group keeps on its products, matched on the product's name, brand, catalogue or CAS, or a lot's supplier. */
 async function inventoryManuals(query: string): Promise<ManualHit[]> {
-  const links = await prisma.attachmentLink.findMany({ where: { targetType: 'inventory_item', linkType: 'product_manual' }, include: { attachment: true }, take: 500 });
+  const links = await prisma.attachmentLink.findMany({ where: { targetType: 'inventory_product', linkType: { in: ['product_manual', 'kit_manual'] } }, include: { attachment: true }, take: 500 });
   if (!links.length) return [];
   const contains = { contains: query, mode: 'insensitive' as const };
-  const items = await prisma.inventoryItem.findMany({
-    where: { id: { in: [...new Set(links.map(link => link.targetId))] }, OR: [{ name: contains }, { englishName: contains }, { brand: contains }, { vendor: contains }, { catalogNumber: contains }, { casNumber: contains }] },
-    select: { id: true, name: true, vendor: true, brand: true, catalogNumber: true }, take: 50,
+  const products = await prisma.inventoryProduct.findMany({
+    where: { id: { in: [...new Set(links.map(link => link.targetId))] }, OR: [{ name: contains }, { englishName: contains }, { brand: contains }, { catalogNumber: contains }, { casNumber: contains }, { items: { some: { vendor: contains } } }] },
+    select: { id: true, name: true, brand: true, catalogNumber: true }, take: 50,
   });
-  const byId = new Map(items.map(item => [item.id, item]));
+  const byId = new Map(products.map(product => [product.id, product]));
   return links.flatMap(link => {
-    const item = byId.get(link.targetId);
-    return item ? [{ key: `inventory:${link.attachmentId}`, source: 'inventory' as const, title: link.attachment.originalFilename, vendor: item.vendor ?? item.brand ?? undefined, isPdf: /\.pdf$/i.test(link.attachment.originalFilename), attachmentId: link.attachmentId,
-      inventoryItem: { id: item.id, name: item.name, ...(item.catalogNumber ? { catalogNumber: item.catalogNumber } : {}) } }] : [];
+    const product = byId.get(link.targetId);
+    return product ? [{ key: `inventory:${link.attachmentId}`, source: 'inventory' as const, title: link.attachment.originalFilename, vendor: product.brand ?? undefined, isPdf: /\.pdf$/i.test(link.attachment.originalFilename), attachmentId: link.attachmentId,
+      product: { id: product.id, name: product.name, ...(product.catalogNumber ? { catalogNumber: product.catalogNumber } : {}) } }] : [];
   });
 }
 
 /** The web search: only with AI switched on and a key saved, only on the listed vendors, one request per search. */
 async function webManuals(query: string, fetchImpl: FetchLike): Promise<{ hits: ManualHit[]; note?: string }> {
   const [ai, row, settings] = await Promise.all([prisma.aISettings.findUnique({ where: { id: 'default' } }), prisma.methodSearchSettings.findUnique({ where: { id: 'default' } }), readProductSearchSettings()]);
-  if (!ai?.enabled) return { hits: [], note: 'AI is off, so only the manuals kept on inventory items were searched.' };
-  if (!row?.webSearchKeyEncrypted) return { hits: [], note: 'No web search key is saved, so only the manuals kept on inventory items were searched.' };
+  if (!ai?.enabled) return { hits: [], note: 'AI is off, so only the manuals kept on products were searched.' };
+  if (!row?.webSearchKeyEncrypted) return { hits: [], note: 'No web search key is saved, so only the manuals kept on products were searched.' };
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 20_000);
   try {
@@ -105,10 +105,10 @@ export async function fetchVendorPdf(url: string, vendors: readonly string[], fe
   throw new Error('Too many redirects');
 }
 
-/** A manual kept on an inventory item, as a file ready to be read. */
+/** A document kept on a product, as a file ready to be read. */
 export async function inventoryManualFile(attachmentId: string) {
-  const link = await prisma.attachmentLink.findFirst({ where: { attachmentId, targetType: 'inventory_item', linkType: 'product_manual' }, include: { attachment: true } });
-  if (!link) throw new Error('This manual is no longer on the inventory item');
+  const link = await prisma.attachmentLink.findFirst({ where: { attachmentId, targetType: 'inventory_product', linkType: { in: ['product_manual', 'kit_manual', 'sds'] } }, include: { attachment: true } });
+  if (!link) throw new Error('This manual is no longer on the product');
   const bytes = await readFile(resolveAttachmentPath(link.attachment.storagePath));
   return new File([new Uint8Array(bytes)], link.attachment.originalFilename, { type: link.attachment.mimeType });
 }

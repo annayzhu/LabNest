@@ -31,7 +31,7 @@ export async function createEntity(_previousState: FormActionState, formData: Fo
       mixtureKind: optionalText(formData.get("mixtureKind")),
       schemaKey: optionalText(formData.get("schemaKey")),
     });
-    const schema = parsed.schemaKey ? await prisma.scientificSchemaDefinition.findFirst({ where: { key: parsed.schemaKey, enabled: true }, select: { key: true, entityType: true } }) : null;
+    const schema = parsed.schemaKey ? await prisma.scientificSchemaDefinition.findFirst({ where: { key: parsed.schemaKey, enabled: true, entityType: { not: null } }, select: { key: true, entityType: true } }) : null;
     if (parsed.schemaKey && !schema) throw new Error("The selected scientific schema is no longer available.");
     const resolvedType = schema?.entityType ?? parsed.type;
     if (parsed.ownershipScope === "project" && !parsed.projectId) throw new Error("Choose a Project.");

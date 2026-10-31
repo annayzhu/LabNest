@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { linkInventoryProduct, lotIdentity } from "@/lib/inventory-products.server";
 const text = z.string().trim().min(1).max(240);
 export const purchaseInput = z.object({
   title: text,
@@ -197,11 +198,12 @@ export async function updateIndependentPurchase(id: string, raw: unknown) {
         );
       let inventoryItemId: string | undefined;
       if (input.inventory === "new") {
+        const product = await linkInventoryProduct(tx, { name: purchase.title, vendor: purchase.vendor, catalogNumber: purchase.catalogNumber });
         const item = await tx.inventoryItem.create({
           data: {
-            name: purchase.title,
+            ...lotIdentity(product),
+            productId: product.id,
             vendor: purchase.vendor,
-            catalogNumber: purchase.catalogNumber,
             lotNumber: purchase.lotNumber,
             currentQuantity: input.quantity,
             unit: purchase.unit,

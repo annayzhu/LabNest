@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const database = vi.hoisted(() => ({
   prisma: {
     attachmentLink: { findMany: vi.fn(), findFirst: vi.fn() },
-    inventoryItem: { findMany: vi.fn() },
+    inventoryProduct: { findMany: vi.fn() },
     aISettings: { findUnique: vi.fn() },
     methodSearchSettings: { findUnique: vi.fn(), upsert: vi.fn() },
     activityLog: { create: vi.fn() },
@@ -52,15 +52,15 @@ describe('Downloading a manual from a vendor', () => {
 describe('Searching for the manual of a product', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    database.prisma.attachmentLink.findMany.mockResolvedValue([{ targetId: 'item-1', attachmentId: 'att-1', attachment: { originalFilename: 'RNeasy_handbook.pdf' } }]);
-    database.prisma.inventoryItem.findMany.mockResolvedValue([{ id: 'item-1', name: 'RNeasy Mini Kit', vendor: 'Qiagen', brand: null, catalogNumber: '74104' }]);
+    database.prisma.attachmentLink.findMany.mockResolvedValue([{ targetId: 'product-1', attachmentId: 'att-1', linkType: 'kit_manual', attachment: { originalFilename: 'RNeasy_handbook.pdf' } }]);
+    database.prisma.inventoryProduct.findMany.mockResolvedValue([{ id: 'product-1', name: 'RNeasy Mini Kit', brand: 'Qiagen', catalogNumber: '74104' }]);
     database.prisma.methodSearchSettings.findUnique.mockResolvedValue({ webSearchKeyEncrypted: 'v1:tvly-key', manualVendorsJson: null });
   });
 
-  it('finds the manual kept on an inventory item, and says so when AI is off and the web was not searched', async () => {
+  it('finds the manual kept on a product (Q145), and says so when AI is off and the web was not searched', async () => {
     database.prisma.aISettings.findUnique.mockResolvedValue({ enabled: false });
     const result = await searchProductManuals('rneasy');
-    expect(result.hits).toEqual([expect.objectContaining({ key: 'inventory:att-1', source: 'inventory', title: 'RNeasy_handbook.pdf', vendor: 'Qiagen', isPdf: true, inventoryItem: { id: 'item-1', name: 'RNeasy Mini Kit', catalogNumber: '74104' } })]);
+    expect(result.hits).toEqual([expect.objectContaining({ key: 'inventory:att-1', source: 'inventory', title: 'RNeasy_handbook.pdf', vendor: 'Qiagen', isPdf: true, product: { id: 'product-1', name: 'RNeasy Mini Kit', catalogNumber: '74104' } })]);
     expect(result.note).toMatch(/AI is off/);
   });
 

@@ -1,109 +1,104 @@
-import { inventoryQuantityLabel } from "@/lib/inventory";
-import { formatQuantity } from "@/lib/calculators/quantity-format";
-import type { ReactNode } from "react";
 import Link from "next/link";
-import { Filter, MapPin, Plus, Search, ShoppingCart, X } from "lucide-react";
-import { FilterPopover } from "@/components/ui/FilterPopover";
+import { Plus, ShoppingCart } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
-import {
-  collectionPrimaryActionClass,
-  collectionSecondaryActionClass,
-} from "@/components/CollectionToolbar";
+import { CollectionToolbar, collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
+import { InventoryNav } from "@/components/InventoryNav";
 import { InventoryRiskBadges } from "@/components/InventoryRiskBadges";
 import { MobileInventoryBench } from "@/components/MobileInventoryBench";
 import { PageHeader } from "@/components/PageHeader";
-import { Badge, StatusPill } from "@/components/ui/Badge";
-import { buttonStyles } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
 import { PurchaseStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { filterHref, firstOptionSearchParam, firstSearchParam, type PageSearchParams } from "@/lib/filters";
-import { getInventoryRiskFlags, inventoryCategories, type InventoryRiskFlag } from "@/lib/inventory";
+import { isStrictlyControlled, lotRiskFlags, type InventoryRiskFlag } from "@/lib/inventory";
+import { QuantityText } from "@/components/InventoryDetail";
+import { inventoryGroupName } from "@/lib/inventory-types";
 import { objectStatusOptions } from "@/lib/status-options";
 
 export const dynamic = "force-dynamic";
+
+const flagOptions = [
+  { value: "low", label: "Low stock" },
+  { value: "depleted", label: "Out of stock" },
+  { value: "expired", label: "Expired" },
+  { value: "expiring", label: "Expires in 30 days" },
+];
 
 export default async function InventoryPage({ searchParams }: { searchParams?: PageSearchParams }) {
   const params = searchParams ? await searchParams : undefined;
   const query = firstSearchParam(params, "q")?.trim();
   const status = firstOptionSearchParam(params, "status", objectStatusOptions);
   const locationId = firstSearchParam(params, "location");
-  const category = firstSearchParam(params, "category");
+  const groupKey = firstSearchParam(params, "group");
+  const typeId = firstSearchParam(params, "type");
   const principalInvestigator = firstSearchParam(params, "pi");
   const flag = firstSearchParam(params, "flag") as InventoryRiskFlag | undefined;
   const sort = firstSearchParam(params, "sort") ?? "updated_desc";
   const now = new Date();
 
+  const contains = (value: string) => ({ contains: value, mode: "insensitive" as const });
   const where = {
     ...(status ? { status } : {}),
     ...(locationId ? { locationId } : {}),
-    ...(category ? { category } : {}),
+    ...(groupKey || typeId ? { product: { ...(groupKey ? { groupKey: groupKey === "none" ? null : groupKey } : {}), ...(typeId ? { typeId } : {}) } } : {}),
     ...(principalInvestigator ? { principalInvestigator } : {}),
     ...(query ? {
       OR: [
-        { name: { contains: query, mode: "insensitive" as const } },
-        { positionCode: { contains: query, mode: "insensitive" as const } },
-        { location: { name: { contains: query, mode: "insensitive" as const } } },
-        { englishName: { contains: query, mode: "insensitive" as const } },
-        { principalInvestigator: { contains: query, mode: "insensitive" as const } },
-        { barcode: { contains: query, mode: "insensitive" as const } },
-        { aliquotCode: { contains: query, mode: "insensitive" as const } },
-        { lotNumber: { contains: query, mode: "insensitive" as const } },
-        { vendor: { contains: query, mode: "insensitive" as const } },
-        { brand: { contains: query, mode: "insensitive" as const } },
-        { catalogNumber: { contains: query, mode: "insensitive" as const } },
-        { casNumber: { contains: query, mode: "insensitive" as const } },
+        { name: contains(query) }, { englishName: contains(query) }, { positionCode: contains(query) }, { location: { name: contains(query) } },
+        { principalInvestigator: contains(query) }, { barcode: contains(query) }, { aliquotCode: contains(query) }, { lotNumber: contains(query) },
+        { vendor: contains(query) }, { brand: contains(query) }, { catalogNumber: contains(query) }, { casNumber: contains(query) },
       ],
     } : {}),
   };
-  const orderBy = sort === "name_asc"
-    ? { name: "asc" as const }
-    : sort === "expiry_asc"
-      ? { expiryDate: { sort: "asc" as const, nulls: "last" as const } }
-      : { updatedAt: "desc" as const };
+  const orderBy = sort === "name_asc" ? { name: "asc" as const } : sort === "expiry_asc" ? { expiryDate: { sort: "asc" as const, nulls: "last" as const } } : { updatedAt: "desc" as const };
 
-  const [matchedItems, totalCount, locations, principalInvestigators, allStock, openPurchaseCount] = await Promise.all([
-    prisma.inventoryItem.findMany({ where, include: { location: true }, orderBy }),
+  const [matchedItems, totalCount, locations, groups, types, principalInvestigators, allStock, openPurchaseCount, strictProducts] = await Promise.all([
+    prisma.inventoryItem.findMany({ where, include: { location: true, product: { include: { type: { select: { label: true } } } } }, orderBy }),
     prisma.inventoryItem.count(),
     prisma.inventoryLocation.findMany({ select: { id: true, name: true, status: true }, orderBy: { name: "asc" } }),
-    prisma.inventoryItem.findMany({
-      where: { principalInvestigator: { not: null } },
-      distinct: ["principalInvestigator"],
-      select: { principalInvestigator: true },
-      orderBy: { principalInvestigator: "asc" },
-    }),
-    prisma.inventoryItem.findMany({ select: { id: true, currentQuantity: true, quantityRecorded: true, lowThreshold: true, expiryDate: true } }),
+    prisma.inventoryGroup.findMany({ orderBy: { sortOrder: "asc" } }),
+    prisma.scientificSchemaDefinition.findMany({ where: { inventoryGroupKey: { not: null } }, select: { id: true, label: true }, orderBy: { label: "asc" } }),
+    prisma.inventoryItem.findMany({ where: { principalInvestigator: { not: null } }, distinct: ["principalInvestigator"], select: { principalInvestigator: true }, orderBy: { principalInvestigator: "asc" } }),
+    prisma.inventoryItem.findMany({ select: { id: true, productId: true, currentQuantity: true, unit: true, quantityRecorded: true, status: true, lowThreshold: true, expiryDate: true, product: { select: { lowThreshold: true, lowThresholdUnit: true } } } }),
     prisma.purchaseRequest.count({ where: { status: { in: [PurchaseStatus.planned, PurchaseStatus.ordered, PurchaseStatus.received] } } }),
+    prisma.inventoryProduct.findMany({ where: { controlLevels: { hasSome: ["highly_toxic", "precursor"] } }, select: { id: true, controlLevels: true } }),
   ]);
 
-  const itemsWithRisk = matchedItems.map((item) => ({ ...item, riskFlags: getInventoryRiskFlags(item, now) }));
+  const lotsByProduct = Map.groupBy(allStock, (lot) => lot.productId ?? lot.id);
+  const flagsOf = (lot: (typeof allStock)[number] | (typeof matchedItems)[number]) => lotRiskFlags(lot, lot.product, lotsByProduct.get(lot.productId ?? lot.id) ?? [], now);
+  const itemsWithRisk = matchedItems.map((item) => ({ ...item, riskFlags: flagsOf(item) }));
   const items = flag ? itemsWithRisk.filter((item) => item.riskFlags.includes(flag)) : itemsWithRisk;
-  const stockRisk = allStock.map((item) => getInventoryRiskFlags(item, now));
-  const lowCount = stockRisk.filter((flags) => flags.includes("low")).length;
-  const depletedCount = stockRisk.filter((flags) => flags.includes("depleted")).length;
-  const expiryRiskCount = stockRisk.filter((flags) => flags.includes("expired") || flags.includes("expiring")).length;
+  const stockRisk = allStock.filter((lot) => lot.status === "active").map(flagsOf);
+  const count = (wanted: InventoryRiskFlag) => stockRisk.filter((flags) => flags.includes(wanted)).length;
+  const sdsLinks = strictProducts.length ? await prisma.attachmentLink.findMany({ where: { targetType: "inventory_product", linkType: "sds", targetId: { in: strictProducts.map((product) => product.id) } }, select: { targetId: true } }) : [];
+  const sdsMissing = strictProducts.filter((product) => isStrictlyControlled(product.controlLevels) && !sdsLinks.some((link) => link.targetId === product.id)).length;
+  const groupNames = new Map(groups.map((group) => [group.key, inventoryGroupName(group)]));
   const piOptions = principalInvestigators.flatMap((item) => item.principalInvestigator ? [item.principalInvestigator] : []);
-  const activeFilterCount = [query, status, locationId, category, principalInvestigator, flag].filter(Boolean).length;
-  const hasActiveView = activeFilterCount > 0 || sort !== "updated_desc";
-  const exportHref = filterHref("/inventory/export", { exportScope: "filtered", q: query, status, location: locationId, category, pi: principalInvestigator, flag, sort });
-  const filterFormId = "inventory-table-filters";
+  const exportHref = filterHref("/inventory/export", { exportScope: "filtered", q: query, status, location: locationId, group: groupKey, type: typeId, pi: principalInvestigator, flag, sort });
+  const attention = [
+    { label: "Low stock", value: count("low"), href: "/inventory?flag=low", tone: "warning" as const },
+    { label: "Out of stock", value: count("depleted"), href: "/inventory?flag=depleted", tone: "danger" as const },
+    { label: "Expired", value: count("expired"), href: "/inventory?flag=expired", tone: "danger" as const },
+    { label: "Expires in 30 days", value: count("expiring"), href: "/inventory?flag=expiring", tone: "warning" as const },
+    { label: "SDS missing", value: sdsMissing, href: "/inventory/products?flag=sds", tone: "danger" as const },
+    { label: "Open purchases", value: openPurchaseCount, href: "/purchases", tone: "info" as const },
+  ].filter((entry) => entry.value > 0);
 
   return (
     <AppShell>
-      <div className="space-y-5">
-        <div className="hidden lg:block"><PageHeader title="Inventory" /></div>
-
+      <div className="space-y-4">
         <MobileInventoryBench
           query={query}
-          key={JSON.stringify([query, status, locationId, category, principalInvestigator, flag, sort])}
+          key={JSON.stringify([query, status, locationId, groupKey, typeId, principalInvestigator, flag, sort])}
           totalCount={totalCount}
-          filters={{ status, location: locationId, category, pi: principalInvestigator, flag, sort: sort === "updated_desc" ? undefined : sort }}
-          riskCounts={{ low: lowCount, depleted: depletedCount, expired: stockRisk.filter(flags => flags.includes("expired")).length, expiring: stockRisk.filter(flags => flags.includes("expiring")).length }}
+          filters={{ status, location: locationId, group: groupKey, type: typeId, pi: principalInvestigator, flag, sort: sort === "updated_desc" ? undefined : sort }}
+          riskCounts={{ low: count("low"), depleted: count("depleted"), expired: count("expired"), expiring: count("expiring") }}
           items={items.map((item) => ({
             id: item.id,
             name: item.name,
-            subtitle: item.brand ?? item.vendor ?? item.category ?? "Unclassified",
+            subtitle: item.product?.type?.label ?? (item.product?.groupKey ? groupNames.get(item.product.groupKey) : undefined) ?? item.brand ?? item.vendor ?? "To be classified",
             code: item.aliquotCode ?? item.barcode ?? item.lotNumber ?? item.catalogNumber ?? "",
             quantity: item.currentQuantity,
             quantityRecorded: item.quantityRecorded,
@@ -114,278 +109,109 @@ export default async function InventoryPage({ searchParams }: { searchParams?: P
           }))}
         />
 
-        <div className="hidden min-w-0 gap-5 lg:grid xl:grid-cols-[minmax(0,1fr)_220px] 2xl:grid-cols-[minmax(0,1fr)_240px]">
-          <section className="min-w-0 space-y-4">
-            <form id={filterFormId} action="/inventory" method="get" className="hidden" aria-hidden="true" />
+        <div className="hidden space-y-4 lg:block">
+          <PageHeader title="Inventory" />
+          <InventoryNav current="stock" />
+          <CollectionToolbar
+            path="/inventory"
+            query={query}
+            searchPlaceholder="Name, lot, barcode, catalogue, PI…"
+            resultCount={items.length}
+            totalCount={totalCount}
+            sort={sort}
+            defaultSort="updated_desc"
+            filters={[
+              { name: "group", label: "groups", value: groupKey, options: [...groups.map((group) => ({ value: group.key, label: inventoryGroupName(group) })), { value: "none", label: "To be classified" }] },
+              { name: "type", label: "types", value: typeId, options: types.map((type) => ({ value: type.id, label: type.label })) },
+              { name: "flag", label: "stock states", value: flag, options: flagOptions },
+              { name: "location", label: "locations", value: locationId, options: locations.map((location) => ({ value: location.id, label: location.status === "archived" ? `${location.name} (archived)` : location.name })) },
+              { name: "pi", label: "PIs", value: principalInvestigator, options: piOptions.map((value) => ({ value, label: value })) },
+              { name: "status", label: "statuses", value: status, options: objectStatusOptions },
+            ]}
+            sortOptions={[
+              { value: "updated_desc", label: "Recently updated" },
+              { value: "name_asc", label: "Name A–Z" },
+              { value: "expiry_asc", label: "Expiry date" },
+            ]}
+            actions={<>
+              <Link href="/purchases" className={collectionSecondaryActionClass}><ShoppingCart className="h-4 w-4" aria-hidden />Purchases</Link>
+              <CollectionExportMenu filteredHref={exportHref} exportPath="/inventory/export" importHref="/inventory/import" />
+              <Link href="/inventory/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />Register stock</Link>
+            </>}
+          />
 
-            <section className="border-y border-hairline bg-surface" aria-label="Inventory tools">
-              <div className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <InventoryMobileFilters
-                    query={query}
-                    status={status}
-                    category={category}
-                    locationId={locationId}
-                    principalInvestigator={principalInvestigator}
-                    flag={flag}
-                    sort={sort}
-                    locations={locations}
-                    principalInvestigators={piOptions}
-                    activeFilterCount={activeFilterCount}
-                  />
-                  <span className="whitespace-nowrap text-xs text-muted">
-                    {items.length === totalCount ? `${totalCount} ${totalCount === 1 ? "record" : "records"}` : `${items.length} of ${totalCount}`}
-                  </span>
-                  <div className="hidden items-center gap-1.5 md:flex">
-                    <button form={filterFormId} type="submit" className={filterApplyButtonClass}>
-                      <Filter className="h-3.5 w-3.5" aria-hidden />Apply
-                    </button>
-                    {hasActiveView ? (
-                      <Link href="/inventory" className={filterClearButtonClass}>
-                        <X className="h-3.5 w-3.5" aria-hidden />Clear
-                      </Link>
-                    ) : null}
+          {attention.length ? (
+            <nav aria-label="Needs attention" className="flex flex-wrap items-center gap-2">
+              {attention.map((entry) => (
+                <Link key={entry.label} href={entry.href} className="focus-ring inline-flex h-7 items-center gap-1.5 rounded-[var(--ln-radius-control-sm)] border border-hairline bg-surface px-2.5 text-xs text-graphite hover:border-border-strong hover:text-ink">
+                  <span>{entry.label}</span>
+                  <span className={`font-semibold tabular-nums ${entry.tone === "danger" ? "text-error" : entry.tone === "warning" ? "text-warning" : "text-info"}`}>{entry.value}</span>
+                </Link>
+              ))}
+            </nav>
+          ) : null}
+
+          <DataTable
+            rows={items}
+            getRowKey={(row) => row.id}
+            emptyMessage="No stock matches this view."
+            selection={{ exportPath: "/inventory/export" }}
+            columns={[
+              {
+                key: "name",
+                header: "Item",
+                minWidth: 220,
+                render: (row) => (
+                  <div className="min-w-0">
+                    <Link href={`/inventory/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.name}</Link>
+                    <p className="mt-0.5 truncate text-xs text-muted">{[row.brand, row.catalogNumber].filter(Boolean).join(" · ") || row.englishName || row.vendor || "—"}</p>
                   </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <Link href="/inventory/locations" className={collectionSecondaryActionClass}><MapPin className="h-4 w-4" aria-hidden />Locations</Link>
-                  <Link href="/purchases" className={collectionSecondaryActionClass}><ShoppingCart className="h-4 w-4" aria-hidden />Purchases</Link>
-                  <CollectionExportMenu filteredHref={exportHref} exportPath="/inventory/export" importHref="/inventory/import" />
-                  <Link href="/inventory/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Item</Link>
-                </div>
-              </div>
-            </section>
-
-            <DataTable
-              rows={items}
-              getRowKey={(row) => row.id}
-              emptyMessage="No Inventory Items match this view."
-              selection={{ exportPath: "/inventory/export" }}
-              columns={[
-                {
-                  key: "name",
-                  header: (
-                    <InventoryColumnFilter label="Item" className="md:min-w-48">
-                      <div className="relative">
-                        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" aria-hidden />
-                        <input form={filterFormId} name="q" defaultValue={query ?? ""} placeholder="Name, barcode, lot…" aria-label="Filter Inventory by item" className={`${tableFilterClass} pl-8`} />
-                      </div>
-                    </InventoryColumnFilter>
-                  ),
-                  render: (row) => (
-                    <div>
-                      <Link href={`/inventory/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.name}</Link>
-                      <p className="mt-0.5 text-xs text-muted">{row.englishName ?? row.brand ?? row.vendor ?? "No supplier metadata"}</p>
-                    </div>
-                  ),
-                },
-                {
-                  key: "category",
-                  header: (
-                    <InventoryColumnFilter label="Category" className="md:min-w-36">
-                      <select form={filterFormId} name="category" defaultValue={category ?? ""} aria-label="Filter Inventory by category" className={tableFilterClass}>
-                        <option value="">All categories</option>
-                        {inventoryCategories.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-                      </select>
-                    </InventoryColumnFilter>
-                  ),
-                  render: (row) => <Badge tone="sage">{inventoryCategories.find((item) => item.value === row.category)?.label ?? row.category ?? "unclassified"}</Badge>,
-                },
-                {
-                  key: "principal-investigator",
-                  header: (
-                    <InventoryColumnFilter label="PI" className="md:min-w-36">
-                      <select form={filterFormId} name="pi" defaultValue={principalInvestigator ?? ""} aria-label="Filter Inventory by principal investigator" className={tableFilterClass}>
-                        <option value="">All PIs</option>
-                        {piOptions.map((value) => <option key={value} value={value}>{value}</option>)}
-                      </select>
-                    </InventoryColumnFilter>
-                  ),
-                  render: (row) => row.principalInvestigator ?? <span className="text-muted">Unassigned</span>,
-                },
-                {
-                  key: "quantity",
-                  header: (
-                    <InventoryColumnFilter label="Stock" className="md:min-w-36">
-                      <select form={filterFormId} name="flag" defaultValue={flag ?? ""} aria-label="Filter Inventory by stock attention" className={tableFilterClass}>
-                        <option value="">All stock states</option>
-                        <option value="low">Low stock</option>
-                        <option value="depleted">Out of stock</option>
-                        <option value="expired">Expired</option>
-                        <option value="expiring">Expires in 30 days</option>
-                      </select>
-                    </InventoryColumnFilter>
-                  ),
-                  render: (row) => (
-                    <div>
-                      <span className="font-mono">{inventoryQuantityLabel(row)}</span>
-                      {row.lowThreshold == null ? null : <p className="mt-0.5 text-xs text-muted">safety {formatQuantity(row.lowThreshold)} {row.unit}</p>}
-                    </div>
-                  ),
-                },
-                {
-                  key: "identity",
-                  header: "Lot / catalog",
-                  render: (row) => <div className="font-mono text-xs"><p>{row.lotNumber ?? "—"}</p><p className="text-muted">{row.catalogNumber ?? row.casNumber ?? "—"}</p></div>,
-                },
-                {
-                  key: "location",
-                  header: (
-                    <InventoryColumnFilter label="Location" className="md:min-w-40">
-                      <select form={filterFormId} name="location" defaultValue={locationId ?? ""} aria-label="Filter Inventory by location" className={tableFilterClass}>
-                        <option value="">All locations</option>
-                        {locations.map((location) => <option key={location.id} value={location.id}>{location.name}{location.status === "archived" ? " (archived)" : ""}</option>)}
-                      </select>
-                    </InventoryColumnFilter>
-                  ),
-                  render: (row) => <div><p>{row.location?.name ?? "Unassigned"}</p><p className="text-xs text-muted">{row.positionCode ?? "No position"}</p></div>,
-                },
-                {
-                  key: "expiry",
-                  header: (
-                    <InventoryColumnFilter label="Expiry" className="md:min-w-36">
-                      <select form={filterFormId} name="sort" defaultValue={sort} aria-label="Sort Inventory" className={tableFilterClass}>
-                        <option value="updated_desc">Recently updated</option>
-                        <option value="name_asc">Name A–Z</option>
-                        <option value="expiry_asc">Expiry date</option>
-                      </select>
-                    </InventoryColumnFilter>
-                  ),
-                  render: (row) => row.expiryDate?.toLocaleDateString() ?? "—",
-                },
-                {
-                  key: "status",
-                  header: (
-                    <InventoryColumnFilter label="Status" className="md:min-w-36">
-                      <select form={filterFormId} name="status" defaultValue={status ?? ""} aria-label="Filter Inventory by status" className={tableFilterClass}>
-                        <option value="">All statuses</option>
-                        {objectStatusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                      </select>
-                    </InventoryColumnFilter>
-                  ),
-                  render: (row) => <div className="space-y-1.5"><StatusPill status={row.status} /><InventoryRiskBadges flags={row.riskFlags} linkToFilters /></div>,
-                },
-              ]}
-            />
-          </section>
-
-          <aside aria-label="Inventory dashboard" className="divide-y divide-hairline self-start rounded-[var(--ln-radius-panel)] border border-hairline bg-surface xl:sticky xl:top-24">
-            <Metric label="Registered items" value={totalCount} href="/inventory" />
-            <Metric label="Low stock" value={lowCount} href="/inventory?flag=low" tone={lowCount ? "warning" : "neutral"} />
-            <Metric label="Out of stock" value={depletedCount} href="/inventory?flag=depleted" tone={depletedCount ? "danger" : "neutral"} />
-            <Metric label="Expiry attention" value={expiryRiskCount} href="/inventory?sort=expiry_asc" tone={expiryRiskCount ? "warning" : "neutral"} />
-            <Metric label="Open purchases" value={openPurchaseCount} href="/purchases" tone={openPurchaseCount ? "info" : "neutral"} />
-          </aside>
+                ),
+              },
+              {
+                key: "class",
+                header: "Type",
+                render: (row) => row.product?.groupKey ? (
+                  <div>
+                    <p>{row.product.type?.label ?? "Not subdivided"}</p>
+                    <p className="mt-0.5 text-xs text-muted">{groupNames.get(row.product.groupKey)}</p>
+                  </div>
+                ) : <Badge tone="warning">To be classified</Badge>,
+              },
+              {
+                key: "quantity",
+                header: "Stock",
+                render: (row) => (
+                  <div>
+                    <QuantityText quantity={row.currentQuantity} unit={row.unit} recorded={row.quantityRecorded} />
+                    {row.product?.lowThreshold != null ? <p className="mt-0.5 text-xs text-muted"><span>Safety stock</span> <QuantityText quantity={row.product.lowThreshold} unit={row.product.lowThresholdUnit} /></p> : null}
+                  </div>
+                ),
+              },
+              {
+                key: "lot",
+                header: "Lot / expiry",
+                render: (row) => <div className="font-mono text-xs"><p>{row.lotNumber ?? "—"}</p><p className="text-muted">{row.expiryDate?.toISOString().slice(0, 10) ?? "—"}</p></div>,
+              },
+              {
+                key: "location",
+                header: "Location",
+                render: (row) => <div><p>{row.location?.name ?? "Unassigned"}</p>{row.positionCode ? <p className="text-xs text-muted">{row.positionCode}</p> : null}</div>,
+              },
+              {
+                key: "principal-investigator",
+                header: "PI",
+                render: (row) => row.principalInvestigator ?? <span className="text-muted">—</span>,
+              },
+              {
+                key: "status",
+                header: "Attention",
+                render: (row) => row.status === "archived" ? <span className="text-xs text-muted">Archived</span> : <InventoryRiskBadges flags={row.riskFlags} linkToFilters />,
+              },
+            ]}
+          />
         </div>
       </div>
     </AppShell>
-  );
-}
-
-const tableFilterClass = "focus-ring h-8 w-full rounded-[var(--ln-radius-control-sm)] border border-hairline bg-surface px-2 text-xs font-normal normal-case tracking-normal text-ink";
-const filterApplyButtonClass = buttonStyles({ size: "sm", className: "font-medium" });
-const filterClearButtonClass = buttonStyles({ variant: "ghost", size: "sm", className: "font-medium text-muted" });
-
-function InventoryColumnFilter({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) {
-  return (
-    <div className={`normal-case tracking-normal ${className}`}>
-      <span className="block text-xs font-medium text-muted">{label}</span>
-      <div className="mt-1.5 hidden md:block">{children}</div>
-    </div>
-  );
-}
-
-function InventoryMobileFilters({
-  query,
-  status,
-  category,
-  locationId,
-  principalInvestigator,
-  flag,
-  sort,
-  locations,
-  principalInvestigators,
-  activeFilterCount,
-}: {
-  query?: string;
-  status?: string;
-  category?: string;
-  locationId?: string;
-  principalInvestigator?: string;
-  flag?: string;
-  sort: string;
-  locations: Array<{ id: string; name: string; status: string }>;
-  principalInvestigators: string[];
-  activeFilterCount: number;
-}) {
-  return (
-    <FilterPopover count={activeFilterCount}>
-      <form action="/inventory" method="get" className="grid gap-3">
-        <MobileFilterField label="Item">
-          <input name="q" defaultValue={query ?? ""} placeholder="Name, PI, barcode, lot, catalog…" className={tableFilterClass} />
-        </MobileFilterField>
-        <MobileFilterField label="Category">
-          <select name="category" defaultValue={category ?? ""} className={tableFilterClass}>
-            <option value="">All categories</option>
-            {inventoryCategories.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-          </select>
-        </MobileFilterField>
-        <MobileFilterField label="Principal investigator">
-          <select name="pi" defaultValue={principalInvestigator ?? ""} className={tableFilterClass}>
-            <option value="">All PIs</option>
-            {principalInvestigators.map((value) => <option key={value} value={value}>{value}</option>)}
-          </select>
-        </MobileFilterField>
-        <MobileFilterField label="Location">
-          <select name="location" defaultValue={locationId ?? ""} className={tableFilterClass}>
-            <option value="">All locations</option>
-            {locations.map((location) => <option key={location.id} value={location.id}>{location.name}{location.status === "archived" ? " (archived)" : ""}</option>)}
-          </select>
-        </MobileFilterField>
-        <div className="grid grid-cols-2 gap-3">
-          <MobileFilterField label="Stock">
-            <select name="flag" defaultValue={flag ?? ""} className={tableFilterClass}>
-              <option value="">All states</option>
-              <option value="low">Low stock</option>
-              <option value="depleted">Out of stock</option>
-              <option value="expired">Expired</option>
-              <option value="expiring">Expiring</option>
-            </select>
-          </MobileFilterField>
-          <MobileFilterField label="Status">
-            <select name="status" defaultValue={status ?? ""} className={tableFilterClass}>
-              <option value="">All statuses</option>
-              {objectStatusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
-          </MobileFilterField>
-        </div>
-        <MobileFilterField label="Order">
-          <select name="sort" defaultValue={sort} className={tableFilterClass}>
-            <option value="updated_desc">Recently updated</option>
-            <option value="name_asc">Name A–Z</option>
-            <option value="expiry_asc">Expiry date</option>
-          </select>
-        </MobileFilterField>
-        <div className="flex items-center justify-end gap-2 border-t border-hairline pt-3">
-          <Link href="/inventory" className={collectionSecondaryActionClass}><X className="h-3.5 w-3.5" aria-hidden />Clear</Link>
-          <button type="submit" className={collectionPrimaryActionClass}><Filter className="h-3.5 w-3.5" aria-hidden />Apply</button>
-        </div>
-      </form>
-    </FilterPopover>
-  );
-}
-
-function MobileFilterField({ label, children }: { label: string; children: ReactNode }) {
-  return <label className="grid gap-1.5 text-xs font-semibold text-muted"><span>{label}</span>{children}</label>;
-}
-
-function Metric({ label, value, href, tone = "neutral" }: { label: string; value: number; href: string; tone?: "neutral" | "warning" | "danger" | "info" }) {
-  const toneClass = tone === "danger" ? "text-error" : tone === "warning" ? "text-warning" : tone === "info" ? "text-info" : "text-ink";
-  return (
-    <Link href={href} className="focus-ring flex items-baseline justify-between gap-3 px-4 py-3 transition hover:bg-warm">
-      <span className="text-sm text-graphite">{label}</span>
-      <span className={`text-base font-semibold tabular-nums ${toneClass}`}>{value}</span>
-    </Link>
   );
 }

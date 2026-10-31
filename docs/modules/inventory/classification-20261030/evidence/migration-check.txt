@@ -1,0 +1,15 @@
+# Migration 20261030120000_inventory_products over synthetic legacy rows (clone of the formal DB + scratchpad legacy-rows.sql), 2026-10-30
+# item | old category | 大类 | type | product | brand | catalogue | safety stock | unit
+it1|antibody|reagent|antibody|ip99a2fae0dab2df0ddeb2671|BioLegend|100202|10|µL
+it2|antibody|reagent|antibody|ip99a2fae0dab2df0ddeb2671|BioLegend|100202|10|µL
+it3|kit|reagent|kit|ip5d4b0f969afa24d015d8b8b|-|74104|-|-
+it4|chemical|reagent|chemical|ip107d62271af63363be73ffc|-|-|-|-
+it5|instrument_accessory|equipment|accessory|ipf7d7bbc13eb88eb7284de49|-|-|-|-
+it6|biological_sample|(待归类)|-|ip1bb96d07233e595f5e75a34|-|-|-|-
+it7|other|(待归类)|-|ip85f1f135057c45eed242863|-|-|-|-
+it8|consumable|consumable|-|ip3963d596932e63826ce6f45|-|-|2|pack
+it9|reagent|reagent|-|ip10c7d0aa666d34765df1b90|-|-|-|-
+it10|reagent|reagent|-|ip10c7d0aa666d34765df1b90|-|-|-|-
+manual link lnk_m1 (was on it2) ->|inventory_product|ip99a2fae0dab2df0ddeb2671
+products|9
+items|11

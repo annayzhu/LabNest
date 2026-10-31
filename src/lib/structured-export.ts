@@ -7,7 +7,7 @@ import type { SheetData } from "write-excel-file/node";
 import { prisma } from "@/lib/db";
 import { documentMediaToMarkdown } from "@/lib/document-media";
 import { experimentNarrativeFromDocument, experimentExecutionDocument } from "@/lib/experiment-document";
-import { getInventoryRiskFlags } from "@/lib/inventory";
+import { exportedSafetyStock, lotRiskFlags } from "@/lib/inventory";
 import { normalizeProtocolDocument, sectionPlainText as protocolSectionPlainText, type ProtocolDocument } from "@/lib/protocol-document";
 import { documentPlainText, normalizeResearchPlanDocument, normalizeResultDocument, normalizeScientificDocument, reportSections, type ScientificDocument } from "@/lib/scientific-document";
 import { structuredModules, type StructuredFileFormat, type StructuredModuleKey } from "@/lib/structured-modules";
@@ -130,15 +130,18 @@ export async function structuredExportRecords(
     return rows.map(row=>({id:row.id,title:row.title,quantity:row.quantity,unit:row.unit,vendor:row.vendor,actualAmount:row.actualAmount?.toFixed(2),status:row.status,invoiceStatus:row.invoiceStatus,invoiceReference:row.invoiceReference}));
   }
   if (module === "inventory") {
+    const items = await prisma.inventoryItem.findMany({ include: { location: true, product: { select: { groupKey: true, typeId: true, lowThreshold: true, lowThresholdUnit: true } } }, orderBy: { updatedAt: "desc" } });
+    const lotsByProduct = Map.groupBy(items, (item) => item.productId ?? item.id);
     const rows = applyExportSelection(
-      await prisma.inventoryItem.findMany({ include: { location: true }, orderBy: { updatedAt: "desc" } }),
+      items,
       selection,
       (row) => ({
         search: [row.name, row.englishName, row.principalInvestigator, row.barcode, row.aliquotCode, row.lotNumber, row.vendor, row.brand, row.catalogNumber, row.casNumber, row.positionCode, row.location?.name],
-        filters: { status: row.status, category: row.category, location: row.locationId, pi: row.principalInvestigator, flag: getInventoryRiskFlags(row) },
+        // The list filters by 大类 ("none": to be classified) and type, with the product's safety stock.
+        filters: { status: row.status, category: row.category, group: row.product ? row.product.groupKey ?? "none" : undefined, type: row.product?.typeId ?? undefined, location: row.locationId, pi: row.principalInvestigator, flag: lotRiskFlags(row, row.product, lotsByProduct.get(row.productId ?? row.id) ?? []) },
       }),
     );
-    return rows.map((row) => ({ inventoryId: row.id, name: row.name, englishName: row.englishName, category: row.category, brand: row.brand, principalInvestigator: row.principalInvestigator, containerType: row.containerType, barcode: row.barcode, aliquotCode: row.aliquotCode, lotNumber: row.lotNumber, vendor: row.vendor, catalogNumber: row.catalogNumber, casNumber: row.casNumber, managementMode:row.managementMode,currentQuantity: row.quantityRecorded ? row.currentQuantity : null, unit: row.unit, lowThreshold: row.lowThreshold, concentration: row.concentration, location: row.location?.name, positionCode: row.positionCode, expiryDate: row.expiryDate?.toISOString(), storageCondition: row.storageCondition, freezeThawCount: row.freezeThawCount, status: row.status, notes: row.notes }));
+    return rows.map((row) => ({ inventoryId: row.id, name: row.name, englishName: row.englishName, category: row.category, brand: row.brand, principalInvestigator: row.principalInvestigator, containerType: row.containerType, barcode: row.barcode, aliquotCode: row.aliquotCode, lotNumber: row.lotNumber, vendor: row.vendor, catalogNumber: row.catalogNumber, casNumber: row.casNumber, managementMode:row.managementMode,currentQuantity: row.quantityRecorded ? row.currentQuantity : null, unit: row.unit, lowThreshold: exportedSafetyStock(row), concentration: row.concentration, location: row.location?.name, positionCode: row.positionCode, expiryDate: row.expiryDate?.toISOString(), storageCondition: row.storageCondition, freezeThawCount: row.freezeThawCount, status: row.status, notes: row.notes }));
   }
   const rows = applyExportSelection(
     await prisma.report.findMany({ include: { project: true, researchPlan: true }, orderBy: { updatedAt: "desc" } }),

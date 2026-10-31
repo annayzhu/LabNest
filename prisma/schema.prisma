@@ -351,6 +351,7 @@ enum AIProviderType {
   openai_compatible
   dify
   manual_copy_paste
+  chatgpt_subscription
 }
 
 enum ReferenceProviderType {
@@ -1500,15 +1501,31 @@ model AIProvider {
   baseUrl          String?
   apiKeyEncrypted  String?
   defaultModel     String?
+  /// How hard a ChatGPT subscription model reasons (low … max); empty means the model's own default.
+  reasoningEffort  String?
   capabilitiesJson Json           @default("[]")
   enabled          Boolean        @default(false)
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   aisettings       AISettings[] @relation("DefaultProvider")
   visionSettings   AISettings[] @relation("VisionProvider")
+  session          AIProviderSession?
 
   @@index([type])
   @@index([enabled])
+}
+
+/// The rotating sign-in of a ChatGPT plan service. Kept apart from AIProvider so a token refresh never changes the
+/// service's revision, which every running AI request checks.
+model AIProviderSession {
+  providerId      String     @id
+  provider        AIProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  /// Access, refresh and ID tokens with their scopes, encrypted like an API key.
+  tokensEncrypted String
+  expiresAt       DateTime
+  /// The models this account may use, as listed at sign-in: [{ slug, displayName }].
+  modelsJson      Json       @default("[]")
+  updatedAt       DateTime   @updatedAt
 }
 
 model AISettings {

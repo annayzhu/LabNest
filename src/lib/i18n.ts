@@ -3357,17 +3357,12 @@ export const zhUi: Record<string, string> = {
   "Model connections and AI feature settings.": "模型连接与 AI 功能设置。",
   "Cannot read the connection settings; saved settings are unchanged.": "无法读取连接设置，已保存的设置未改变。",
   "Model connections and AI feature settings. Suggestions waiting for you are shown on each entry and experiment.": "模型连接与 AI 功能设置。待确认的建议在各条记录和实验里查看。",
-  "Connection settings": "连接设置",
   "Model service settings saved": "模型服务设置已保存",
   "Configure the server encryption key first to store API keys safely.": "需先配置服务器加密密钥，才能安全保存 API 密钥。",
-  "No model service configured yet. Add one alongside or below.": "尚未配置模型服务。可在右侧或下方添加。",
   "Service enabled": "服务已启用",
   "Service disabled": "服务已停用",
   "Default service URL": "默认服务地址",
   "Manual mode": "手动模式",
-  "Key saved · test the connection by hand": "密钥已保存 · 连接需手动测试",
-  "No key saved yet": "尚未保存密钥",
-  "No API key needed": "无需 API 密钥",
   "Disable service": "停用",
   "Enable service": "启用",
   "New model service": "添加模型服务",
@@ -3406,9 +3401,68 @@ export const zhUi: Record<string, string> = {
   "Fills in the official address and deepseek-flash; for V4 Pro, change the model ID to deepseek-v4-pro.": "填入官方地址和 deepseek-flash；使用 V4 Pro 时将模型 ID 改为 deepseek-v4-pro。",
   "Fills in the official address and deepseek-flash; for V4 Pro, change the model ID to deepseek-v4-pro. DeepSeek cannot read pictures.": "填入官方地址和 deepseek-flash；使用 V4 Pro 时将模型 ID 改为 deepseek-v4-pro。DeepSeek 不能识别图片。",
   "Fills in the compatible-mode address and qwen-plus. To read photos, add another service with the model qwen-vl-max.": "填入兼容模式地址和 qwen-plus。要识别照片，请再添加一个服务，模型填 qwen-vl-max。",
-  "Fills in the compatible address and gemini-2.5-flash, which can also read pictures.": "填入兼容地址和 gemini-2.5-flash，它也能识别图片。",
   "Use 通义千问": "使用通义千问",
-  "Use Gemini": "使用 Gemini",
+  "Use Gemini (free API key)": "使用 Gemini（免费 API key）",
+  "Gemini subscriptions cannot be used in other apps, so this opens Google AI Studio to create a free API key and fills in the compatible address and gemini-2.5-flash, which can also read pictures.": "Gemini 订阅不能在其他应用中使用，因此会打开 Google AI Studio 创建免费 API 密钥，并填入兼容地址和 gemini-2.5-flash，它也能识别图片。",
+  "Sign in with ChatGPT": "用 ChatGPT 订阅登录",
+  "ChatGPT subscription": "ChatGPT 订阅",
+  "Sign in with ChatGPT uses your Plus or Pro plan instead of an API key; usage counts toward the plan’s limits.": "用 ChatGPT 订阅登录会使用你的 Plus 或 Pro 套餐，不需要 API 密钥；用量计入套餐额度。",
+  "To use a ChatGPT subscription, open this page on the computer that runs LabNest and sign in there:": "要使用 ChatGPT 订阅，请在运行 LabNest 的电脑上打开此页面并在那里登录：",
+  "Sign in again": "重新登录",
+  "Uses your ChatGPT plan; no API key.": "使用你的 ChatGPT 套餐，无需 API 密钥。",
+  "The ChatGPT sign-in has ended; sign in again to keep using this service.": "ChatGPT 登录已失效，重新登录后才能继续使用这个服务。",
+  "Sign out of ChatGPT": "退出 ChatGPT",
+  "Model services": "模型服务",
+  "No model service yet. Add one below.": "还没有模型服务，在下方添加。",
+  "Reads pictures": "识别图片",
+  "No key saved": "未保存密钥",
+  "Sign in with a subscription": "用订阅登录",
+  "Add with an API key": "用 API 密钥添加",
+  "Use other service": "其他服务",
+  "Fill in any service yourself and choose its interface type below.": "自己填写任意服务，并在下方选择接口类型。",
+  "AI actions use this service; reading pictures can use another one.": "AI 操作使用这个服务；识别图片可以另选服务。",
+  "Reads pictures of manuals and labels; its model must be able to see.": "用于识别说明书和标签的图片，所选模型需要能看图。",
+  "Sends one short test message, which counts toward the ChatGPT plan’s usage.": "将发送一条简短测试消息，计入 ChatGPT 套餐用量。",
+  "Reasoning effort": "推理强度",
+  "Model default": "模型默认",
+  "No reasoning": "不推理",
+  "Minimal reasoning": "最少",
+  "Low reasoning": "低",
+  "Medium reasoning": "中",
+  "High reasoning": "高",
+  "Extra-high reasoning": "很高",
+  "Maximum reasoning": "最高",
+  "Refresh model list": "更新模型列表",
+  "The ChatGPT model list is up to date.": "ChatGPT 模型列表已更新。",
+  "ChatGPT did not list the account’s models; try again, or sign in again.": "ChatGPT 未返回账号可用的模型；请重试或重新登录。",
+  "Signed in to ChatGPT. When no default AI service was chosen yet, it is now the default.": "已登录 ChatGPT。如果之前没有选择默认 AI 服务，现在它就是默认服务。",
+  "Signed in to ChatGPT, but the account’s models could not be listed; sign in again to choose a model.": "已登录 ChatGPT，但未能读取账号可用的模型；请重新登录后选择模型。",
+  "Signed out of ChatGPT and removed the service.": "已退出 ChatGPT 并删除该服务。",
+  "Removed the service here, but OpenAI did not confirm the sign-out; disconnect LabNest under Apps in ChatGPT settings.": "已在此删除该服务，但 OpenAI 未确认退出；请在 ChatGPT 设置的“应用”中断开 LabNest。",
+  "Sign in with ChatGPT works only on the computer that runs LabNest; open the AI page there.": "用 ChatGPT 订阅登录只能在运行 LabNest 的电脑上进行；请在那台电脑上打开 AI 设置页。",
+  "Sign-in was not completed. You can try again when you are ready.": "登录未完成。准备好后可以再试一次。",
+  "The sign-in did not come back to the page that started it; start it again from the AI page.": "登录没有回到发起它的页面；请从 AI 设置页重新开始。",
+  "ChatGPT did not finish registering LabNest; sign in again.": "ChatGPT 未完成 LabNest 的注册；请重新登录。",
+  "Plan usage was not allowed. Sign in again and tick the box that lets LabNest use your ChatGPT plan.": "未允许使用套餐额度。请重新登录，并勾选允许 LabNest 使用你的 ChatGPT 套餐。",
+  "The ChatGPT identity could not be verified; sign in again.": "无法验证 ChatGPT 身份；请重新登录。",
+  "This sign-in returned a different ChatGPT account. Sign in with the original account, or sign out of it first.": "这次登录的是另一个 ChatGPT 账号。请用原来的账号登录，或先退出原账号。",
+  "LabNest could not reach ChatGPT sign-in; check the server’s network and try again.": "LabNest 无法连接 ChatGPT 登录服务；请检查服务器网络后重试。",
+  "ChatGPT sign-in did not complete; try again.": "ChatGPT 登录未完成；请重试。",
+  "The ChatGPT plan’s usage limit for LabNest is used up. Check Usage in ChatGPT settings; it resets on ChatGPT’s schedule.": "ChatGPT 套餐给 LabNest 的额度已用完。请在 ChatGPT 设置的“用量”中查看；额度按 ChatGPT 的周期恢复。",
+  "This ChatGPT account or workspace cannot use its plan in other apps.": "这个 ChatGPT 账号或工作区不能在其他应用中使用套餐。",
+  "ChatGPT plan sharing does not support part of this request.": "ChatGPT 套餐共享不支持这次请求的部分内容。",
+  "OpenAI has not enabled plan sharing for this LabNest sign-in.": "OpenAI 尚未为这次 LabNest 登录开放套餐共享。",
+  "ChatGPT could not check this account’s plan; sign in to ChatGPT again on the AI page.": "ChatGPT 无法核对这个账号的套餐；请在 AI 设置页重新登录 ChatGPT。",
+  "The ChatGPT account is unavailable for a moment; try again shortly.": "ChatGPT 账号暂时不可用；请稍后重试。",
+  "ChatGPT could not check the plan’s usage; try again shortly.": "ChatGPT 暂时无法核对套餐用量；请稍后重试。",
+  "This model is not available to the ChatGPT account; choose another on the AI page.": "这个 ChatGPT 账号不能使用该模型；请在 AI 设置页选择其他模型。",
+  "Sign in to ChatGPT again on the AI page.": "请在 AI 设置页重新登录 ChatGPT。",
+  "ChatGPT sign-in has expired; sign in again on the AI page.": "ChatGPT 登录已失效；请在 AI 设置页重新登录。",
+  "ChatGPT sent an answer LabNest could not read; try again.": "ChatGPT 返回的内容 LabNest 无法读取；请重试。",
+  "ChatGPT stopped before finishing the answer; try again or shorten the request.": "ChatGPT 在回答完成前停止了；请重试或缩短请求。",
+  "The ChatGPT answer ended before it was complete; try again.": "ChatGPT 的回答没有完整返回；请重试。",
+  "ChatGPT no longer accepts this LabNest registration; sign out of ChatGPT on the AI page and sign in again.": "ChatGPT 不再接受这次 LabNest 注册；请在 AI 设置页退出 ChatGPT 后重新登录。",
+  "LabNest could not renew the ChatGPT sign-in; check the server’s network and try again.": "LabNest 无法续期 ChatGPT 登录；请检查服务器网络后重试。",
   "Service that reads photos": "识别图片用的服务",
   "Upload pictures": "上传图片",
   "Choose pictures": "选择图片",
@@ -3529,8 +3583,7 @@ export const zhUi: Record<string, string> = {
   "No service reads pictures yet: click to see how to set one up": "还没有设置识别图片的服务：点击查看如何设置",
   "Choose a service that can read pictures, such as Qwen-VL, Gemini, GPT-4o or Claude.": "请选择能识别图片的服务，例如通义千问 VL、Gemini、GPT-4o 或 Claude。",
   "A Dify app cannot read pictures here; choose another service.": "Dify 应用在这里不能识别图片，请选择其他服务。",
-  "Same as the default service (OpenAI and Anthropic only)": "与默认服务相同（仅限 OpenAI 和 Anthropic）",
-  "Used to turn pictures of a manual into text. DeepSeek cannot read pictures; choose a service with a vision model, such as Qwen-VL or Gemini.": "用来把说明书的照片转成文字。DeepSeek 不能识别图片，请选择带视觉模型的服务，例如通义千问 VL 或 Gemini。",
+  "Same as the default service (OpenAI, Anthropic and ChatGPT subscription only)": "与默认服务相同（仅限 OpenAI、Anthropic 和 ChatGPT 订阅）",
   "Service name": "服务名称",
   "Such as DeepSeek official": "例如 DeepSeek 官方",
   "Only for you to recognize it; it does not set the provider or protocol.": "仅供自己识别，不决定服务商或协议。",
@@ -3911,7 +3964,7 @@ function translateDynamic(value: string): string {
   if (match) return `开启 AI 还差 ${match[1]} 步`;
   match = value.match(/^Edit model service · ([\s\S]+)$/);
   if (match) return `编辑模型服务 · ${match[1]}`;
-  match = value.match(/^(Official OpenAI API|OpenAI-compatible API|Anthropic API|Dify app|Manual copy and paste) · ([\s\S]+)$/);
+  match = value.match(/^(Official OpenAI API|OpenAI-compatible API|Anthropic API|Dify app|Manual copy and paste|ChatGPT subscription) · ([\s\S]+)$/);
   if (match) return `${zhUi[match[1]]} · ${match[2]}`;
   match = value.match(/^Test succeeded(, settings not saved yet)? · requested model ([\s\S]+?)(?: · returned model ([\s\S]+?)( \(differs from the requested ID; check the service’s mapping\))?|( · the service returned no model ID))( · output truncated)?$/);
   if (match) return `测试成功${match[1] ? "，配置尚未保存" : ""} · 请求模型 ${match[2]}${match[3] ? ` · 返回模型 ${match[3]}${match[4] ? "（与请求 ID 不同，请核对服务端映射）" : ""}` : " · 服务未返回模型 ID"}${match[6] ? " · 输出已截断" : ""}`;
@@ -4144,6 +4197,12 @@ function translateDynamic(value: string): string {
   if (match) return `服务“${match[1]}”已停用。`;
   match = value.match(/^The service “(.+)” has no saved API key yet\.$/);
   if (match) return `服务“${match[1]}”尚未保存 API 密钥。`;
+  match = value.match(/^The default service “(.+)” is not used for pictures automatically; choose it here if its model can read pictures, or choose another service\.$/);
+  if (match) return `默认服务“${match[1]}”不会自动用于识别图片；如果它的模型能看图，请在这里选择它，或选择其他服务。`;
+  match = value.match(/^Sign in to ChatGPT again for “(.+)”\.$/);
+  if (match) return `请为“${match[1]}”重新登录 ChatGPT。`;
+  match = value.match(/^ChatGPT could not finish the answer(?:: ([\s\S]+)|\.)$/);
+  if (match) return match[1] ? `ChatGPT 未能完成回答：${match[1]}` : "ChatGPT 未能完成回答。";
   match = value.match(/^(\d+) cycles$/);
   if (match) return `${match[1]} 个循环`;
   match = value.match(/^Cycles in stage (\d+)$/);

@@ -12,6 +12,10 @@ type Props = {
   providerId?: string; revision?: string; draft?: AIProviderInput;
   enabled?: boolean; disabledReason?: string; epoch?: number;
   validate?: () => boolean; onInvalid?: (field: string) => void;
+  /** What the test spends, when it is not API usage (a ChatGPT plan). */
+  usageNote?: string;
+  /** In a service card's button row: the note becomes the tooltip, and messages take their own line below the row. */
+  inline?: boolean;
 };
 
 /** Both entry points use the same UI/request lifecycle; changing inputs destroys only the test state. */
@@ -21,7 +25,7 @@ export function AiProviderTestButton(props: Props) {
   return <ConnectionTest key={`${props.epoch ?? 0}:${props.revision}:${saved?.revision}:${reason}`} {...props} disabledReason={reason} />;
 }
 
-function ConnectionTest({ providerId, revision, draft, disabledReason, validate, onInvalid }: Props) {
+function ConnectionTest({ providerId, revision, draft, disabledReason, validate, onInvalid, usageNote, inline }: Props) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<AIConnectionResult>();
   const active = useRef(true);
@@ -49,13 +53,16 @@ function ConnectionTest({ providerId, revision, draft, disabledReason, validate,
     }
   }
 
-  return <div className="min-w-0 space-y-1">
-    <Button type="button" size="sm" onClick={test} disabled={busy || Boolean(disabledReason)} title={disabledReason}>
+  const note = usageNote ?? "Sends one short test message, which may cost a little API usage.";
+  // Inline, the messages are flex items of the card's row that wrap to a full-width line after the buttons.
+  const below = inline ? "order-last basis-full" : "";
+  return <div className={inline ? "contents" : "min-w-0 space-y-1"}>
+    <Button type="button" size="sm" onClick={test} disabled={busy || Boolean(disabledReason)} title={disabledReason || (inline ? note : undefined)}>
       <PlugZap className="h-4 w-4" aria-hidden />{busy ? "Testing…" : "Test connection"}
     </Button>
-    {disabledReason ? <p className="text-xs leading-5 text-muted">{disabledReason}</p> : null}
-    <p className="text-xs leading-5 text-muted">Sends one short test message, which may cost a little API usage.</p>
-    {result ? <p role={result.ok ? "status" : "alert"} className={`rounded-[var(--ln-radius-control-lg)] p-3 break-words text-sm leading-6 ${result.ok ? "bg-success-surface text-success" : "bg-error-surface text-error"}`}>
+    {disabledReason ? <p className={`text-xs leading-5 text-muted ${below}`}>{disabledReason}</p> : null}
+    {inline ? null : <p className="text-xs leading-5 text-muted">{note}</p>}
+    {result ? <p role={result.ok ? "status" : "alert"} className={`rounded-[var(--ln-radius-control-lg)] p-3 break-words text-sm leading-6 ${below} ${result.ok ? "bg-success-surface text-success" : "bg-error-surface text-error"}`}>
       {draft && result.ok ? result.message.replace(/([Tt])est succeeded/, "$1est succeeded, settings not saved yet") : result.message}
       {result.latencyMs !== undefined ? ` · ${result.latencyMs} ms` : ""}{result.ok ? " · this test only" : ""}
     </p> : null}

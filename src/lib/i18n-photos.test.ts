@@ -18,6 +18,6 @@ describe('The picture upload in Chinese', () => {
     ['Sending 5 pictures to “通义千问 VL”, one at a time.', '将把 5 张图片发给“通义千问 VL”，每张单独发送。'],
     ['Service that reads photos', '识别图片用的服务'],
     ['Use 通义千问', '使用通义千问'],
-    ['Use Gemini', '使用 Gemini'],
+    ['Use Gemini (free API key)', '使用 Gemini（免费 API key）'],
   ])('%s', (english, chinese) => expect(translateUiText(english, 'zh')).toBe(chinese));
 });

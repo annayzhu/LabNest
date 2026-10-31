@@ -20,12 +20,14 @@ describe('Which service reads pictures', () => {
     expect(result).toMatchObject({ ready: true, providerId: 'eyes', providerName: '通义千问 VL', model: 'qwen-vl-max' });
   });
 
-  it('falls back to the default service only for OpenAI and Anthropic, which read pictures', () => {
+  it('falls back to the default service only for OpenAI, Anthropic and a ChatGPT subscription, which read pictures', () => {
     expect(visionFromSettings(on(record({ type: 'openai', id: 'o' }))).providerId).toBe('o');
     expect(visionFromSettings(on(record({ type: 'anthropic', id: 'a' }))).providerId).toBe('a');
-    const none = visionFromSettings(on(record({ type: 'openai_compatible', name: 'DeepSeek' })));
+    expect(visionFromSettings(on(record({ type: 'chatgpt_subscription', id: 'c', baseUrl: null }))).providerId).toBe('c');
+    const none = visionFromSettings(on(record({ type: 'openai_compatible', name: 'Gemini' })));
     expect(none.ready).toBe(false);
-    expect(none.reason).toMatch(/Choose a service that can read pictures/);
+    expect(none.reason).toBe('The default service “Gemini” is not used for pictures automatically; choose it here if its model can read pictures, or choose another service.');
+    expect(visionFromSettings(on(null)).reason).toMatch(/Choose a service that can read pictures/);
   });
 
   it('says what is missing when the chosen service is not set up, and refuses a Dify app', () => {

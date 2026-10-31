@@ -8,6 +8,7 @@ import {
 } from "./ai";
 import { decryptSecret, isEncryptedSecret } from "./ai-crypto";
 import { createAIGate } from "./ai-gate";
+import { chatGPTAccessToken } from "./chatgpt-auth";
 import { prisma } from "./db";
 import { aiProviderInputSchema, sameProviderTarget } from "./ai-provider-input";
 
@@ -20,6 +21,7 @@ export type AIProviderRecord = {
   baseUrl: string | null;
   apiKeyEncrypted: string | null;
   defaultModel: string | null;
+  reasoningEffort?: string | null;
   capabilitiesJson: unknown;
   enabled: boolean;
 };
@@ -36,10 +38,12 @@ export function providerConfigFromRecord(record: AIProviderRecord, options: { wi
     type: record.type,
     baseUrl: record.baseUrl ?? undefined,
     defaultModel: record.defaultModel ?? undefined,
+    ...(record.type === "chatgpt_subscription" && record.reasoningEffort ? { reasoningEffort: record.reasoningEffort } : {}),
     capabilities,
     enabled: record.enabled,
   };
-  if (options.withSecret && isEncryptedSecret(record.apiKeyEncrypted)) {
+  // A ChatGPT plan service stores its registration there, not a key; its token comes from the sign-in session.
+  if (options.withSecret && record.type !== "chatgpt_subscription" && isEncryptedSecret(record.apiKeyEncrypted)) {
     config.apiKey = decryptSecret(record.apiKeyEncrypted);
   }
   return config;
@@ -85,7 +89,7 @@ export function availabilityFromSettings(settings: AvailabilitySettings): AIAvai
     return { ...base, connected: false, reason: "The default service uses manual copy and paste and makes no network calls." };
   }
   if (!isEncryptedSecret(provider.apiKeyEncrypted)) {
-    return { ...base, connected: false, reason: `The service “${provider.name}” has no saved API key yet.` };
+    return { ...base, connected: false, reason: provider.type === "chatgpt_subscription" ? `Sign in to ChatGPT again for “${provider.name}”.` : `The service “${provider.name}” has no saved API key yet.` };
   }
   if ((provider.type === "openai_compatible" || provider.type === "dify") && !provider.baseUrl?.trim()) {
     return { ...base, connected: false, reason: "Enter the model service address." };
@@ -113,9 +117,11 @@ type VisionSettings = { enabled: boolean; defaultProvider: AIProviderRecord | nu
  */
 export function visionFromSettings(settings: VisionSettings): VisionAvailability {
   if (!settings?.enabled) return { ready: false, reason: "AI is off; existing records stay as they are." };
-  const fallback = settings.defaultProvider && (settings.defaultProvider.type === "openai" || settings.defaultProvider.type === "anthropic") ? settings.defaultProvider : null;
+  const fallback = settings.defaultProvider && ["openai", "anthropic", "chatgpt_subscription"].includes(settings.defaultProvider.type) ? settings.defaultProvider : null;
   const provider = settings.visionProvider ?? fallback;
-  if (!provider) return { ready: false, reason: "Choose a service that can read pictures, such as Qwen-VL, Gemini, GPT-4o or Claude." };
+  if (!provider) return { ready: false, reason: settings.defaultProvider
+    ? `The default service “${settings.defaultProvider.name}” is not used for pictures automatically; choose it here if its model can read pictures, or choose another service.`
+    : "Choose a service that can read pictures, such as Qwen-VL, Gemini, GPT-4o or Claude." };
   if (provider.type === "dify") return { ready: false, providerName: provider.name, reason: "A Dify app cannot read pictures here; choose another service." };
   const connected = availabilityFromSettings({ enabled: true, defaultProvider: provider });
   return connected.connected
@@ -139,7 +145,8 @@ export async function resolveAdapterForProvider(providerId: string, expectedRevi
   try {
     const config = providerConfigFromRecord({ ...record, type: record.type as AIProviderType }, { withSecret: true });
     const gate = createAIGate(settings.updatedAt.toISOString(), { id: record.id, revision: record.updatedAt.toISOString() }, options.signal);
-    return { ok: true, adapter: createAIProviderAdapter(config, { fetchImpl: gate.fetch, ...(options.timeoutMs ? { timeoutMs: options.timeoutMs } : {}) }), config, gate };
+    const accessToken = record.type === "chatgpt_subscription" ? () => chatGPTAccessToken(record.id) : undefined;
+    return { ok: true, adapter: createAIProviderAdapter(config, { fetchImpl: gate.fetch, accessToken, ...(options.timeoutMs ? { timeoutMs: options.timeoutMs } : {}) }), config, gate };
   } catch (error) {
     return { ok: false, status: 500, error: error instanceof Error ? error.message : "Could not load provider credentials." };
   }

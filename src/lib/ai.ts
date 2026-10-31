@@ -4,7 +4,7 @@ import type { ProposedAction } from "./types";
 
 export type AIProviderCapability = "text" | "structured_output" | "vision" | "embeddings" | "local";
 
-export type AIProviderType = "openai" | "anthropic" | "openai_compatible" | "dify" | "manual_copy_paste";
+export type AIProviderType = "openai" | "anthropic" | "openai_compatible" | "dify" | "manual_copy_paste" | "chatgpt_subscription";
 
 export type AIProviderConfig = {
   id: string;
@@ -14,6 +14,8 @@ export type AIProviderConfig = {
   /** Plain-text credential, only present in server memory while a request runs. */
   apiKey?: string;
   defaultModel?: string;
+  /** A ChatGPT subscription model's reasoning effort; absent means the model's default. */
+  reasoningEffort?: string;
   capabilities: AIProviderCapability[];
   enabled: boolean;
 };
@@ -57,6 +59,7 @@ export const allowedProposedActionTypes: ProposedAction["actionType"][] = [
 export const defaultProviderBaseUrls: Partial<Record<AIProviderType, string>> = {
   openai: "https://api.openai.com/v1",
   anthropic: "https://api.anthropic.com/v1",
+  chatgpt_subscription: "https://api.openai.com/v1",
 };
 
 export const providerTypeLabels: Record<AIProviderType, string> = {
@@ -65,9 +68,10 @@ export const providerTypeLabels: Record<AIProviderType, string> = {
   openai_compatible: "OpenAI-compatible API",
   anthropic: "Anthropic API",
   dify: "Dify app",
+  chatgpt_subscription: "ChatGPT subscription",
 };
 
-const connectedProviderTypes: AIProviderType[] = ["openai", "openai_compatible", "anthropic", "dify"];
+const connectedProviderTypes: AIProviderType[] = ["openai", "openai_compatible", "anthropic", "dify", "chatgpt_subscription"];
 
 /** True for provider types that call a model over the network (everything except manual copy-paste). */
 export function isConnectedProviderType(type: string): type is AIProviderType {
@@ -220,6 +224,8 @@ type FetchLike = typeof fetch;
 export type ConnectedProviderOptions = {
   fetchImpl?: FetchLike;
   timeoutMs?: number;
+  /** A ChatGPT plan service's current access token, refreshed by the server when it is about to expire. */
+  accessToken?: () => Promise<string>;
 };
 
 const DEFAULT_TIMEOUT_MS = 60_000;
@@ -285,6 +291,8 @@ function connectionFailure(error: unknown, detail: string): Pick<AIConnectionRes
   let errorCode = "invalid_response", message = "服务返回的内容不符合接口协议，尚未验证模型生成。";
   if (error instanceof AIProviderError && error.code === "timeout") { errorCode = "timeout"; message = "LabNest 服务器请求超时，请稍后手动重试。"; }
   else if (error instanceof AIProviderError && error.code === "network") { errorCode = "network"; message = "LabNest 服务器无法连接该服务，请检查地址与服务器网络。"; }
+  // A ChatGPT plan's own reasons are already worded for people; HTTP status would misread them (401 is not a key).
+  else if (error instanceof AIProviderError && error.code && (error.code === "chatgpt_sign_in" || chatGPTErrorMessages[error.code])) return { errorCode: error.code, httpStatus: status, message: error.message };
   else if (/设置已改变|AI 已关闭|settings changed|AI is off/i.test(detail)) { errorCode = "cancelled"; message = "AI 或服务设置已改变，本次测试已停止。"; }
   else if (status === 402 || /insufficient[_ ](?:quota|balance)|credit balance|余额不足/i.test(detail)) { errorCode = "balance"; message = "账户余额不足，请到服务平台检查。"; }
   else if (status === 401) { errorCode = "authentication"; message = "API 密钥无效或已失效，请检查密钥。"; }
@@ -607,6 +615,122 @@ export class DifyProvider extends ConnectedProvider {
   }
 }
 
+/** ChatGPT plan error codes (Sign in with ChatGPT), as people should read them; anything else keeps its HTTP reading. */
+const chatGPTErrorMessages: Record<string, string> = {
+  subscription_sharing_usage_limit_exceeded: "The ChatGPT plan’s usage limit for LabNest is used up. Check Usage in ChatGPT settings; it resets on ChatGPT’s schedule.",
+  subscription_sharing_user_not_eligible: "This ChatGPT account or workspace cannot use its plan in other apps.",
+  subscription_sharing_unsupported_capability: "ChatGPT plan sharing does not support part of this request.",
+  subscription_sharing_v2_client_not_enabled: "OpenAI has not enabled plan sharing for this LabNest sign-in.",
+  subscription_sharing_invalid_user: "ChatGPT could not check this account’s plan; sign in to ChatGPT again on the AI page.",
+  subscription_sharing_user_unavailable: "The ChatGPT account is unavailable for a moment; try again shortly.",
+  subscription_sharing_usage_unavailable: "ChatGPT could not check the plan’s usage; try again shortly.",
+  model_not_found: "This model is not available to the ChatGPT account; choose another on the AI page.",
+};
+
+/** The one namespace LabNest's tools travel in; the plan's Responses API takes function tools only inside one. */
+const CHATGPT_TOOL_NAMESPACE = "labnest";
+
+type ResponseOutputItem = { type?: string; content?: { type?: string; text?: string }[]; call_id?: string; name?: string; arguments?: unknown };
+
+/**
+ * Reads a streamed Responses answer (server-sent events, already received whole). Only `response.completed` makes it an
+ * answer; a failed, incomplete or cut-off stream is an error, never a partial result.
+ */
+export function readResponseStream(body: string): { text: string; items: ResponseOutputItem[]; model?: string } {
+  let deltas = "", completed = false, model: string | undefined;
+  const items: ResponseOutputItem[] = [];
+  for (const block of body.split(/\r?\n\r?\n/)) {
+    const data = block.split(/\r?\n/).filter(line => line.startsWith("data:")).map(line => line.slice(5).trimStart()).join("\n");
+    if (!data || data === "[DONE]") continue;
+    let event: { type?: string; delta?: unknown; item?: ResponseOutputItem; response?: { model?: unknown; output?: unknown; error?: { code?: string; message?: string } }; error?: { code?: string; message?: string }; code?: string; message?: string };
+    try { event = JSON.parse(data); } catch { throw new AIProviderError("ChatGPT sent an answer LabNest could not read; try again."); }
+    if (event.type === "response.output_text.delta" && typeof event.delta === "string") deltas += event.delta;
+    else if (event.type === "response.output_item.done" && event.item) items.push(event.item);
+    else if (event.type === "response.failed" || event.type === "error") {
+      const error = event.response?.error ?? event.error ?? event;
+      throw new AIProviderError((error.code && chatGPTErrorMessages[error.code]) || `ChatGPT could not finish the answer${error.message ? `: ${error.message}` : "."}`, undefined, error.code);
+    } else if (event.type === "response.incomplete") throw new AIProviderError("ChatGPT stopped before finishing the answer; try again or shorten the request.");
+    else if (event.type === "response.completed") {
+      completed = true;
+      if (typeof event.response?.model === "string") model = event.response.model;
+      if (!items.length && Array.isArray(event.response?.output)) items.push(...event.response.output as ResponseOutputItem[]);
+    }
+    if (deltas.length > AI_LIMITS.responseText) throw new AIProviderError("The model response is too large. Nothing was imported.");
+  }
+  if (!completed) throw new AIProviderError("The ChatGPT answer ended before it was complete; try again.");
+  const text = deltas || items.filter(item => item.type === "message").flatMap(item => item.content ?? []).map(part => part.type === "output_text" && typeof part.text === "string" ? part.text : "").join("");
+  return { text, items, model };
+}
+
+/**
+ * A ChatGPT Plus or Pro plan through Sign in with ChatGPT: the public Responses API with the account's own token,
+ * streamed and not stored, as the plan requires. The server signs in and refreshes; this only asks for the current token.
+ */
+export class ChatGPTSubscriptionProvider extends ConnectedProvider {
+  private readonly accessToken?: () => Promise<string>;
+  private token?: string;
+
+  constructor(config: AIProviderConfig, options: ConnectedProviderOptions = {}) {
+    super(config, options);
+    this.accessToken = options.accessToken;
+  }
+
+  protected safeMessage(message: string): string {
+    return redactSecret(super.safeMessage(message), this.token);
+  }
+
+  async testConnection(): Promise<AIConnectionResult> {
+    return this.testGeneration();
+  }
+
+  private async respond(instructions: string, input: unknown[], tools?: ChatToolSpec[]) {
+    if (!this.accessToken) throw new AIProviderError("Sign in to ChatGPT again on the AI page.", 401);
+    this.token = await this.accessToken();
+    const model = this.requireModel();
+    let response: Response;
+    try {
+      response = await this.request("/responses", {
+        method: "POST",
+        headers: { authorization: `Bearer ${this.token}`, "content-type": "application/json", accept: "text/event-stream" },
+        body: JSON.stringify({
+          model, instructions, input, store: false, stream: true,
+          ...(this.config.reasoningEffort ? { reasoning: { effort: this.config.reasoningEffort } } : {}),
+          ...(tools?.length ? { tools: [{ type: "namespace", name: CHATGPT_TOOL_NAMESPACE, description: "LabNest records and actions", tools: tools.map(tool => ({ type: "function", name: tool.name, description: tool.description, parameters: tool.parameters })) }] } : {}),
+        }),
+      });
+    } catch (error) {
+      const code = error instanceof AIProviderError ? Object.keys(chatGPTErrorMessages).find(key => error.message.includes(key)) : undefined;
+      if (code) throw new AIProviderError(chatGPTErrorMessages[code], (error as AIProviderError).status, code);
+      throw error;
+    }
+    const answer = readResponseStream(await response.text());
+    return { ...answer, model: answer.model ?? model, returnedModel: answer.model };
+  }
+
+  async complete(system: string, user: string) {
+    const { text, model, returnedModel } = await this.respond(system, [{ role: "user", content: user }]);
+    return { text, model, returnedModel };
+  }
+
+  async describeImage(system: string, user: string, image: ImageInput) {
+    const { text, model } = await this.respond(system, [{ role: "user", content: [{ type: "input_text", text: user }, { type: "input_image", image_url: `data:${image.mimeType};base64,${image.base64}` }] }]);
+    if (!text) throw new AIProviderError("The model response did not contain text content.");
+    return { text, model };
+  }
+
+  async chat(system: string, messages: ChatMessage[], tools: ChatToolSpec[]): Promise<ChatTurn> {
+    // A tool call and its result are input items of their own; history is sent whole, since nothing is stored.
+    const input = messages.flatMap((message): unknown[] => message.role === "tool"
+      ? [{ type: "function_call_output", call_id: message.toolCallId, output: message.content }]
+      : message.role === "assistant"
+        ? [...(message.content ? [{ role: "assistant", content: message.content }] : []), ...(message.toolCalls ?? []).map(call => ({ type: "function_call", call_id: call.id, namespace: CHATGPT_TOOL_NAMESPACE, name: call.name, arguments: JSON.stringify(call.arguments) }))]
+        : [{ role: "user", content: message.content }]);
+    const { text, items, model } = await this.respond(system, input, tools);
+    const toolCalls = items.flatMap((item, index) => item.type === "function_call" && item.name ? [{ id: item.call_id || `call-${index}`, name: item.name, arguments: toolArguments(item.arguments) }] : []);
+    return { text, toolCalls, model };
+  }
+}
+
 export function createAIProviderAdapter(config: AIProviderConfig, options: ConnectedProviderOptions = {}): AIProviderAdapter {
   switch (config.type) {
     case "manual_copy_paste":
@@ -618,6 +742,8 @@ export function createAIProviderAdapter(config: AIProviderConfig, options: Conne
       return new AnthropicProvider(config, options);
     case "dify":
       return new DifyProvider(config, options);
+    case "chatgpt_subscription":
+      return new ChatGPTSubscriptionProvider(config, options);
     default: {
       const exhaustive: never = config.type;
       throw new AIProviderError(`Unsupported provider type: ${String(exhaustive)}`);

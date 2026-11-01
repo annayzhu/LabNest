@@ -52,6 +52,7 @@ export function searchPrompt(purpose: string, inputs: Inputs, subQuestions: SubQ
       '你是科研文献检索助手。用 search_papers 工具在已启用的来源里找文献：每次一个英文检索式，可以多次、可以换词，目标是找到“为验证这些子问题，别人做过哪些实验”的论文。',
       `最多选 ${budget.maxPapers} 篇：优先选实验设计清楚、与子问题直接相关的原始研究，综述只在没有更好选择时用。只能选工具返回过的 ref，不要编造。`,
       '搜索时保留完整分子名称及方法词，优先分别检索方法学与候选分子的原始证据。找到足够支持本轮目标的文献即可停止，不必耗尽预算；没有相关结果就返回空 selected。搜索结果带来源与 openAccess 标记：开放获取的可以尝试读全文，其余只能读摘要。',
+      '先检索核心方法，再分别核对候选的直接相关证据；本轮总共最多 8 次查询。连续零命中时记录证据缺口，不反复改写相同组合，也不扩大成无关课题。',
       '最后只输出一个 JSON 对象：{"selected":[{"ref":"r3","why":"为什么选它","subQuestionIds":["q1"]}]}。',
     ].join('\n'),
     task: `${context(purpose, inputs)}\n\n子问题：\n${subQuestions.map(q => `${q.id}. ${q.question}（检索词：${q.keywords.join('、') || '自己决定'}）`).join('\n')}`,
@@ -68,7 +69,9 @@ export function extractPrompt(purpose: string, subQuestions: SubQuestion[], pape
   return {
     system: [
       '你是科研文献阅读助手。只根据给出的论文文本，列出这篇论文为了回答研究者关心的问题而做的实验。不补充文本里没有的内容，不猜测。',
+      '区分两类相关依据：针对当前研究对象的实验证据，以及可用于回答子问题的方法学依据。方法论文明确描述的检测方法、或其他对象原始研究中相关的方法也应提取；不能仅因分子或细胞系不同就返回空数组。purpose 必须说明它只是方法参考，sample 保留论文真实对象，不得把其他对象的结果移植为当前候选已验证。',
       '每个实验写：name（实验名称，如“CCK-8 细胞增殖实验”）、subQuestionIds（它回答哪些子问题的 id）、approach（做法类型，如 qPCR、Western blot、CCK-8、流式、动物成瘤）、purpose（为了验证什么）、readouts（读出指标）、controls（对照）、sample（细胞系、动物模型或样本）、quote（论文原文中逐字摘录的依据，30 字以内，不能改写）。',
+      'subQuestionIds、readouts、controls 必须为字符串数组；文本未说明的 readouts 或 controls 用 []，不得用字符串或 null，也不得补造对照。其他字段均为字符串。',
       '与子问题无关的实验不要列。论文没有相关实验就返回空数组。',
       `文本来源：${basis === 'fulltext' ? '全文的方法和结果部分' : '只有摘要，信息有限，不要推断摘要之外的做法'}。`,
       '只输出一个 JSON 对象：{"experiments":[{...}]}，不要任何解释。',

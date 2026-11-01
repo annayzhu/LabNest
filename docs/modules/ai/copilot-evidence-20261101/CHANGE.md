@@ -18,3 +18,7 @@
 本次只修改研究方案 Copilot，不修改通用编辑器和附件上传流程。使用 labnest-editor-qa 的实际路由、保存回读、原内容保留及响应式检查。既有编辑器的物理设备触控、中文输入法、上传和 Word/PDF 导出未在本次重测。
 
 PubMed 接口依据：[NCBI E-utilities 参数说明](https://www.ncbi.nlm.nih.gov/books/NBK25499/)，ESearch JSON 获取 PMID，EFetch XML 获取元数据与摘要；不将摘要宣称为全文。
+
+## PubMed 请求间隔
+
+真实复测中，多个零命中查询在一秒内连续发出，触发 HTTP 429；失败门控正确暂停，未生成方案。现将进程内 PubMed 请求排队，每次间隔至少 500 ms，429 最多再试两次，仍失败则保留未完成状态。该间隔依据 [NCBI 使用说明](https://www.ncbi.nlm.nih.gov/books/NBK25497/) 的无密钥访问频率要求。回归覆盖并发排队、间隔、恢复与重试上限。

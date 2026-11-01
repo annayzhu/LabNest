@@ -56,14 +56,34 @@ export async function paperText(paper: Paper, fetchText: FetchText, base: string
 export const paperDigest = (paper: Paper, ref: string) => ({ ref, title: paper.title, year: paper.year, venue: paper.venue, openAccess: paper.openAccess, abstract: paper.abstract ? paper.abstract.slice(0, 280) : undefined });
 
 
+// NCBI permits at most three unauthenticated requests per second. Serialize requests
+// across runs in this process, with spacing and bounded backoff for HTTP 429.
+let pubmedQueue: Promise<unknown> = Promise.resolve();
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+function fetchPubMed(url: string, fetchText: FetchText, onNotice?: (text: string) => void): Promise<string> {
+  const request = pubmedQueue.then(async () => {
+    await delay(500);
+    for (let attempt = 0; ; attempt += 1) {
+      try { return await fetchText(url); }
+      catch (error) {
+        if (attempt >= 2 || !(error instanceof Error) || !/returned 429\b/.test(error.message)) throw error;
+        onNotice?.(`PubMed 暂时限流，稍候重试（${attempt + 1}/2）`);
+        await delay(1000 * (attempt + 1));
+      }
+    }
+  });
+  pubmedQueue = request.catch(() => undefined);
+  return request;
+}
+
 /** PubMed metadata and abstracts from NCBI E-utilities; this does not imply full-text access. */
-export async function searchPubMed(query: string, fetchText: FetchText): Promise<Paper[]> {
+export async function searchPubMed(query: string, fetchText: FetchText, onNotice?: (text: string) => void): Promise<Paper[]> {
   const base = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
-  const result = JSON.parse(await fetchText(`${base}/esearch.fcgi?db=pubmed&retmode=json&retmax=10&sort=relevance&tool=LabNest&term=${encodeURIComponent(query)}`)) as { error?: string; esearchresult?: { idlist?: string[]; errorlist?: unknown } };
+  const result = JSON.parse(await fetchPubMed(`${base}/esearch.fcgi?db=pubmed&retmode=json&retmax=10&sort=relevance&tool=LabNest&term=${encodeURIComponent(query)}`, fetchText, onNotice)) as { error?: string; esearchresult?: { idlist?: string[]; errorlist?: unknown } };
   if (result.error || !result.esearchresult?.idlist) throw new Error('PubMed 返回了无效的检索结果');
   const ids = result.esearchresult.idlist.filter(id => /^\d+$/.test(id)).slice(0, 10);
   if (!ids.length) return [];
-  const xml = await fetchText(`${base}/efetch.fcgi?db=pubmed&retmode=xml&tool=LabNest&id=${ids.join(',')}`);
+  const xml = await fetchPubMed(`${base}/efetch.fcgi?db=pubmed&retmode=xml&tool=LabNest&id=${ids.join(',')}`, fetchText, onNotice);
   const document = new DOMParser().parseFromString(xml, 'text/xml');
   if (document.getElementsByTagName('ERROR').length || !document.getElementsByTagName('PubmedArticleSet').length) throw new Error('PubMed 文献详情读取失败');
   return Array.from(document.getElementsByTagName('PubmedArticle')).flatMap(article => {
@@ -98,7 +118,7 @@ export function literatureSearcher(fetchText: FetchText, base: string) {
     if (!allowFallback) throw new Error('Europe PMC 不可用，已暂停检索');
     onNotice?.('使用本轮已启用的 PubMed 备用来源');
     try {
-      const papers = await searchPubMed(query, fetchText);
+      const papers = await searchPubMed(query, fetchText, onNotice);
       onNotice?.(`PubMed：返回 ${papers.length} 篇文献（摘要）`);
       return papers;
     } catch (error) {

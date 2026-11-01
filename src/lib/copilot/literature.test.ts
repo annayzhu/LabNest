@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { literatureSearcher, searchPubMed, paperDigest, paperFromResult, paperText, searchPapers } from './literature';
 
 const xml = `<article><body>
@@ -79,4 +79,26 @@ it('preserves quoted Boolean queries and falls back to an abstract when a full t
   expect(urls).toHaveLength(1);
   expect(urls[0]).toContain('(SRGN OR serglycin) AND "far western"');
   expect(await paperText({ key: 'PMC1', title: 'T', openAccess: true, abstract: 'Original abstract' }, async () => { throw new Error('503'); }, 'https://x', true)).toEqual({ text: 'T\n\nOriginal abstract', basis: 'abstract' });
+});
+
+
+it('spaces concurrent PubMed requests and retries rate limits at most twice', async () => {
+  vi.useFakeTimers();
+  try {
+    const times: number[] = [], notices: string[] = [];
+    let attempts = 0;
+    const fetchText = async () => { times.push(Date.now()); if (++attempts <= 2) throw new Error('eutils.ncbi.nlm.nih.gov returned 429'); return '{"esearchresult":{"idlist":[]}}'; };
+    const pending = Promise.all([searchPubMed('one', fetchText, note => notices.push(note)), searchPubMed('two', fetchText)]);
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(await pending).toEqual([[], []]);
+    expect(attempts).toBe(4);
+    expect(times.slice(1).every((time, index) => time - times[index] >= 500)).toBe(true);
+    expect(notices).toHaveLength(2);
+    let failures = 0;
+    const failed = searchPubMed('three', async () => { failures++; throw new Error('eutils.ncbi.nlm.nih.gov returned 429'); });
+    const assertion = expect(failed).rejects.toThrow('429');
+    await vi.advanceTimersByTimeAsync(5000);
+    await assertion;
+    expect(failures).toBe(3);
+  } finally { vi.useRealTimers(); }
 });

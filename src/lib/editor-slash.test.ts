@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getSchema } from '@tiptap/core';
+import { getSchema, Node } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { EditorState, TextSelection } from '@tiptap/pm/state';
 import type { EditorView } from '@tiptap/pm/view';
@@ -18,6 +18,12 @@ describe('slash command menu', () => {
     expect(slashOpensMenu(view(line('')), 1, '/')).toBe(true);
     expect(slashOpensMenu(view(line('细胞贴壁 ')), 6, '/')).toBe(true);
     expect(slashOpensMenu(view(line('注：以下步骤在冰上操作。')), 13, '、')).toBe(true);
+  });
+
+  it('opens right after a tag, which ends a word as a space does', () => {
+    const tag = getSchema([StarterKit, Node.create({ name: 'tag', group: 'inline', inline: true, atom: true })]);
+    const doc = tag.node('doc', null, [tag.node('paragraph', null, [tag.text('取 '), tag.node('tag')])]);
+    expect(slashOpensMenu(view(EditorState.create({ doc, selection: TextSelection.create(doc, 4) })), 4, '/')).toBe(true);
   });
 
   it('stays closed inside a word, for ratios like 1/2 and while an IME composes', () => {

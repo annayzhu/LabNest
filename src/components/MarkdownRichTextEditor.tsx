@@ -29,6 +29,7 @@ export function MarkdownRichTextEditor({
   const content = useMemo(() => markdownRichTextToTiptap(value), [value]);
   return <CompactRichTextTiptapEditor
     media
+    references
     page
     isLocalEcho={emittedMarkdown === value}
     registerEditor={registerEditor}

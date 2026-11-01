@@ -11,6 +11,8 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { prisma } from "@/lib/db";
 import { ancestorsOf, sampleDeleteBlockers, sampleTypeRef } from "@/lib/samples";
 import { sampleLocationOptions, sampleReferenceCounts } from "@/lib/samples.server";
+import { recordMentions } from "@/lib/record-mentions.server";
+import { RecordMentions } from "@/components/RecordMentions";
 
 export const dynamic = "force-dynamic";
 const secondary = buttonStyles({ size: "md", className: "bg-surface font-medium text-moss hover:bg-warm" });
@@ -36,11 +38,12 @@ export default async function SamplePage({ params }: { params: Promise<{ id: str
     },
   });
   if (!sample) notFound();
-  const [lineage, locations, counts, logs] = await Promise.all([
+  const [lineage, locations, counts, logs, mentions] = await Promise.all([
     prisma.sample.findMany({ select: { id: true, parentId: true, code: true, name: true } }),
     sampleLocationOptions(prisma),
     sampleReferenceCounts(prisma, [id]),
     prisma.activityLog.findMany({ where: { OR: [{ targetType: "sample", targetId: id }, ...(sample.batchId ? [{ targetType: "sample_batch", targetId: sample.batchId }] : [])] }, orderBy: { createdAt: "desc" }, take: 30 }),
+    recordMentions([id]),
   ]);
   const byId = new Map(lineage.map((row) => [row.id, row]));
   const ancestors = ancestorsOf(byId.get(id)!, byId).reverse();
@@ -111,6 +114,7 @@ export default async function SamplePage({ params }: { params: Promise<{ id: str
               ) : !produced.length ? <p className="text-xs text-muted">Not in any experiment yet.</p> : null}
             </CardBody>
           </Card>
+          <RecordMentions mentions={mentions} />
         </div>
 
         {logs.length ? (

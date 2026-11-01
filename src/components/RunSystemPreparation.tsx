@@ -2,9 +2,10 @@
 import { readableError } from '@/lib/form-actions';
 import { RunGroupPreparation } from './RunGroupPreparation';
 import { RunPreparationChecklist } from './RunPreparationChecklist';
-import { preparationChecklist, type PreparationSamples, type PreparationStock } from '@/lib/run-preparation';
+import { preparationChecklist, preparationPlates, type PreparationSamples, type PreparationStock } from '@/lib/run-preparation';
 import { runSampleCount } from '@/lib/experiment-samples';
 import type { PlateAttachment } from './PlateLayoutView';
+import type { PlateLayout } from '@/lib/plate-layout';
 
 import { newClientMutationId } from '@/lib/client-mutation-id';
 
@@ -133,16 +134,18 @@ function RunGroupTable({ experimentId, view, editable, inputGroups }: { experime
   </table>;
 }
 
-export function RunSystemPreparation({ experimentId, view, editable, started, plates = [], stock = [], recorded = [], samples, inputGroups = [], sampleGroupLabels = [] }: {
+export function RunSystemPreparation({ experimentId, view, editable, started, plates = [], documentPlates = [], stock = [], recorded = [], samples, inputGroups = [], sampleGroupLabels = [] }: {
   experimentId: string; view: StructuredRunView; editable: boolean; started: boolean; plates?: PlateAttachment[]; stock?: PreparationStock[]; recorded?: Array<{ source: string }>;
+  /** Plate layouts written in the experiment record ("/板布局"). */
+  documentPlates?: PlateLayout[];
   /** The boxes the experiment's samples come out of; their group names; the experiment's design groups (S13, S15). */
   samples?: PreparationSamples; inputGroups?: Array<string | null>; sampleGroupLabels?: string[];
 }) {
-  const list = useMemo(() => preparationChecklist(view, { plates: plates.map(plate => ({ id: plate.id, name: plate.originalFilename })), stock, recorded, samples }), [view, plates, stock, recorded, samples]);
+  const list = useMemo(() => preparationChecklist(view, { plates: preparationPlates(plates, documentPlates), stock, recorded, samples }), [view, plates, documentPlates, stock, recorded, samples]);
   if (!view.hasSystems) return null;
   const continuation = view.plan.continuation;
   // Samples, their plate layouts and outputs live in 实验设置与样本; the bench only links there.
-  return <RunPreparationChecklist experimentId={experimentId} view={view} list={list} editable={editable} plates={plates} startOpen={list.needsInput && !started}
+  return <RunPreparationChecklist experimentId={experimentId} view={view} list={list} editable={editable} plates={plates} documentPlates={documentPlates} startOpen={list.needsInput && !started}
     footer={editable ? <><RunGroupPreparation experimentId={experimentId} plan={view.plan} editable={editable && !started} suggestedLabels={sampleGroupLabels} /><span className="flex flex-wrap gap-x-4 gap-y-1"><Link className="focus-ring ln-prep-link" href={`/experiments/${experimentId}#section-setup`}>Samples and plate layouts</Link><Link className="focus-ring ln-prep-link" href={`/samples/new?experiment=${experimentId}`}>Register outputs</Link></span></> : null}>
     {continuation ? <div className="ln-prep-continuation"><Link className="text-moss underline" href={`/experiments/${continuation.experimentId}/run`}>View the earlier run and its original records</Link><p>{`Continuing from: ${Object.values(view.steps).find(s => `${s.versionId}:${s.source_ref}` === continuation.startSourceRef)?.title ?? ''}. Operations completed earlier are not copied as completed in this run.`}</p><details><summary>Earlier handling and adopted parameters (read-only history)</summary>{continuation.history.map(s => <div key={s.sourceRef} className="my-3"><strong>{s.title} · {s.completed ? 'Completed earlier' : 'Not completed in the original record'}</strong><p className="whitespace-pre-wrap">{s.description}</p>{Object.entries(s.actualValues).map(([id, v]) => <p key={id}>{`Original actual value: ${v.value} ${v.unit} · ${v.recordedAt}`}</p>)}{s.deviationNote ? <p>{`Original note: ${s.deviationNote}`}</p> : null}</div>)}</details></div> : null}
     <RunGroupTable experimentId={experimentId} view={view} editable={editable} inputGroups={inputGroups} />

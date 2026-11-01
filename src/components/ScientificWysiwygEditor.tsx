@@ -4,6 +4,8 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { useI18n } from "@/components/I18nProvider";
 import { newClientMutationId } from "@/lib/client-mutation-id";
 import { DocumentMediaNode } from "./DocumentMediaNode";
+import { DocumentPlateNode } from "./DocumentPlateNode";
+import { RecordReferenceNode } from "./RecordReference";
 import { chooseFiles, useDocumentMediaUploads } from "./DocumentMediaUploads";
 import { type Editor, type JSONContent } from "@tiptap/core";
 import { EditorContent, NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor, type NodeViewProps } from "@tiptap/react";
@@ -156,6 +158,8 @@ export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSection
       ScientificSection,
       ScientificWidget,
       DocumentMediaNode,
+      DocumentPlateNode,
+      RecordReferenceNode,
       SlashCommandTrigger,
       BlockHandles,
     ],
@@ -181,7 +185,7 @@ export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSection
   return <section className="ln-wysiwyg-editor ln-scientific-wysiwyg-editor">
     <input type="hidden" name="mediaDraftId" value={mediaDraftId} />
     <EditorSurface editor={editor} kinds={checklist ? undefined : ["paragraph", "heading", "subheading", "quote", "bullet", "ordered"]} openCommands={commands.openSearch} insertImage={() => chooseFiles(editor, mediaDraftId, "image/*")}><EditorContent editor={editor} /></EditorSurface>
-    {commands.menu ? <WritingCommandMenu editor={editor} state={commands.menu} draftId={mediaDraftId} keyRef={commands.keyRef} onClose={commands.close} checklist={checklist} inserts={inserts} /> : null}
+    {commands.menu ? <WritingCommandMenu editor={editor} state={commands.menu} draftId={mediaDraftId} keyRef={commands.keyRef} onClose={commands.close} checklist={checklist} inserts={inserts} references /> : null}
     {actionsHostId ? <DocumentAttachmentsButton editor={editor} hostId={actionsHostId} /> : null}
   </section>;
 }

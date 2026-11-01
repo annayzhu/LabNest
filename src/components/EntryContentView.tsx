@@ -8,8 +8,12 @@ import { LABNEST_COLOR_TOKEN_SOURCE, parseLabNestColorToken } from "@/lib/rich-t
 import { LABNEST_FONT_FAMILY_TOKEN_SOURCE, parseLabNestFontFamilyToken, parseRichTextFontFamilyLine, richTextFontFamilyCss } from "@/lib/rich-text-font-family";
 import { LABNEST_FONT_SIZE_TOKEN_SOURCE, parseLabNestFontSizeToken } from "@/lib/rich-text-font-size";
 import { parseRichTextLineHeightLine } from "@/lib/rich-text-line-height";
+import { plateLayoutFromMarkdown } from "@/lib/plate-layout";
+import { parseRecordReferenceLink, RECORD_REFERENCE_LINK_SOURCE } from "@/lib/record-references";
+import { PlateLayoutGrid } from "./PlateLayoutGrid";
+import { RecordReferenceLink } from "./RecordReference";
 
-const inlinePattern = new RegExp(`(${LABNEST_FONT_SIZE_TOKEN_SOURCE}|${LABNEST_COLOR_TOKEN_SOURCE}|\\*\\*(?:(?!\\*\\*)[^\\n])+\\*\\*|~~[^~\\n]+~~|\\+\\+[^+\\n]+\\+\\+|\`[^\`\\n]+\`|\\*[^*\\n]+\\*|\\[[^\\]\\n]+\\]\\(https?:\\/\\/[^)\\n]+\\))`, "g");
+const inlinePattern = new RegExp(`(${LABNEST_FONT_SIZE_TOKEN_SOURCE}|${LABNEST_COLOR_TOKEN_SOURCE}|\\*\\*(?:(?!\\*\\*)[^\\n])+\\*\\*|~~[^~\\n]+~~|\\+\\+[^+\\n]+\\+\\+|\`[^\`\\n]+\`|\\*[^*\\n]+\\*|${RECORD_REFERENCE_LINK_SOURCE}|\\[[^\\]\\n]+\\]\\(https?:\\/\\/[^)\\n]+\\))`, "g");
 
 function inlineContent(text: string): ReactNode[] {
   const fontParts = text.split(new RegExp(`(${LABNEST_FONT_FAMILY_TOKEN_SOURCE})`, "g")).filter(Boolean);
@@ -32,6 +36,8 @@ function inlineContent(text: string): ReactNode[] {
     if (part.startsWith("++") && part.endsWith("++")) return <u key={key} className="decoration-moss/60 underline-offset-2">{inlineContent(part.slice(2, -2))}</u>;
     if (part.startsWith("`") && part.endsWith("`")) return <code key={key} className="rounded bg-stone px-1.5 py-0.5 font-mono text-[0.9em] text-ink">{part.slice(1, -1)}</code>;
     if (part.startsWith("*") && part.endsWith("*")) return <em key={key}>{inlineContent(part.slice(1, -1))}</em>;
+    const reference = parseRecordReferenceLink(part);
+    if (reference) return <RecordReferenceLink key={key} {...reference} />;
     const link = part.match(/^\[([^\]]+)\]\((https?:\/\/[^)]+)\)$/);
     if (link) return <a key={key} href={link[2]} target="_blank" rel="noreferrer" className="font-medium text-moss underline underline-offset-2">{inlineContent(link[1])}</a>;
     return part;
@@ -48,6 +54,8 @@ export function EntryContentView({ markdown, compact = false }: { markdown: stri
         if(table)return <ScientificTableView key={`${table.id}-${index}`} block={table}/>;
         const media = documentMediaFromMarkdown(rawLine);
         if (media) return <DocumentMediaView key={`${media.id}-${index}`} block={media} />;
+        const plate = plateLayoutFromMarkdown(rawLine);
+        if (plate) return <div key={`${plate.id}-${index}`} className="ln-document-plate is-readonly"><PlateLayoutGrid layout={plate} /></div>;
         const layout = parseParagraphLayoutLine(rawLine);
         const parsedLine = parseRichTextLineHeightLine(layout.content);
         const parsedFontFamily = parseRichTextFontFamilyLine(parsedLine.content);

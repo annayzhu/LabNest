@@ -9,9 +9,9 @@ import {
   addExperimentSamples, assignExperimentGroups, moveExperimentSample, removeExperimentSample, saveExperimentSampleGroups, setExperimentSampleGroup,
   setExperimentSampleUse, type ExperimentSampleState,
 } from "@/app/experiments/[id]/sample-actions";
-import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
 import { useI18n } from "@/components/I18nProvider";
-import { parsePlateLayouts, PlateLayoutView, type PlateAttachment } from "@/components/PlateLayoutView";
+import { PlateLayoutView, type PlateAttachment } from "@/components/PlateLayoutView";
+import { plateLayoutsFromPlannerBackup, type PlateLayout } from "@/lib/plate-layout";
 import { formInlineInputClass } from "@/components/forms";
 import { Button, buttonStyles } from "@/components/ui/Button";
 import { useModalDialog } from "@/components/ui/ModalDialogProvider";
@@ -32,9 +32,13 @@ const iconButton = "focus-ring inline-flex h-6 w-6 items-center justify-center r
  * 实验设置与样本 (S11–S14): the samples this experiment takes and produces, their design groups, what was taken from each,
  * and the plate layouts they were laid out on. Locked records only show it.
  */
-export function ExperimentSamples({ experimentId, editable, inputs, outputs, groups, plates, types, locations }: {
+export function ExperimentSamples({ experimentId, editable, inputs, outputs, groups, plates, recordPlates = [], unlisted = [], types, locations }: {
   experimentId: string; editable: boolean; inputs: ExperimentSampleRow[]; outputs: ExperimentSampleRow[];
-  groups: Array<{ id: string; label: string }>; plates: PlateAttachment[]; types: Option[]; locations: Option[];
+  groups: Array<{ id: string; label: string }>; types: Option[]; locations: Option[];
+  /** Planner files attached before plates were written in the record; still shown, no longer added here (Q257). */
+  plates: PlateAttachment[];
+  /** The record's own plate layouts ("/板布局"), and samples it names that are not among the experiment's samples (Q254). */
+  recordPlates?: PlateLayout[]; unlisted?: Array<{ id: string; code: string; name: string }>;
 }) {
   const { t } = useI18n();
   const dialog = useModalDialog();
@@ -43,20 +47,21 @@ export function ExperimentSamples({ experimentId, editable, inputs, outputs, gro
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [pending, startTransition] = useTransition();
   const [notice, setNotice] = useState<string | null>(null);
-  const [wells, setWells] = useState<Map<string, string[]>>(new Map());
+  const [attachedPlates, setAttachedPlates] = useState<PlateLayout[]>([]);
   const groupName = useMemo(() => new Map(groups.map((group) => [group.id, group.label])), [groups]);
   const layoutIds = plates.filter((plate) => !plate.mimeType.startsWith("image/")).map((plate) => plate.id).join(",");
   const inputSamples = useMemo(() => inputs.map((row) => ({ id: row.sampleId, code: row.code, name: row.name })), [inputs]);
 
-  // Which wells of the attached planner layouts each input sits in (S14). The planner is given the inputs, and an
-  // output often shares its input's name, so only the inputs are matched.
+  // Which wells each input sits in (S14): the record's plate layouts, and planner files attached earlier. The planner is
+  // given the inputs, and an output often shares its input's name, so only the inputs are matched.
   useEffect(() => {
     let cancelled = false;
-    if (!layoutIds || !inputSamples.length) return;
-    Promise.all(layoutIds.split(",").map((id) => fetch(`/api/attachments/${id}`).then((response) => response.json()).then(parsePlateLayouts).catch(() => [])))
-      .then((parsed) => { if (!cancelled) setWells(wellsBySample(parsed.flat(), inputSamples)); });
+    if (!layoutIds) return;
+    Promise.all(layoutIds.split(",").map((id) => fetch(`/api/attachments/${id}`).then((response) => response.json()).then((raw) => plateLayoutsFromPlannerBackup(raw, () => id)).catch(() => [])))
+      .then((parsed) => { if (!cancelled) setAttachedPlates(parsed.flat()); });
     return () => { cancelled = true; };
-  }, [layoutIds, inputSamples]);
+  }, [layoutIds]);
+  const wells = useMemo(() => wellsBySample([...recordPlates, ...attachedPlates].map((plate) => ({ name: plate.name, wells: plate.wells })), inputSamples), [recordPlates, attachedPlates, inputSamples]);
 
   const act = (work: () => Promise<ExperimentSampleState>, after?: () => void) => startTransition(async () => {
     const result = await work();
@@ -85,16 +90,22 @@ export function ExperimentSamples({ experimentId, editable, inputs, outputs, gro
       </div>
       {notice ? <p role="status" className="whitespace-pre-wrap text-xs text-moss">{notice}</p> : null}
 
+      {editable && unlisted.length ? (
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface px-2 py-1.5 text-sm print:hidden">
+          <span className="text-graphite">{t("Named in the record but not added")}</span>
+          <span className="record-identifier text-xs" data-i18n-ignore>{unlisted.map((sample) => sample.code).join("、")}</span>
+          <Button type="button" size="sm" variant="secondary" className="ml-auto" disabled={pending} onClick={() => act(() => addExperimentSamples({ experimentId, sampleIds: unlisted.map((sample) => sample.id) }))}>Add as samples used</Button>
+        </p>
+      ) : null}
       {panel === "choose" ? <ChoosePanel types={types} locations={locations} pending={pending} onAdd={(input) => act(() => addExperimentSamples({ experimentId, ...input }))} /> : null}
       {panel === "groups" ? <GroupsPanel key={groups.map((group) => `${group.id}:${group.label}`).join("|")} groups={groups} pending={pending} onSave={(list) => act(() => saveExperimentSampleGroups({ experimentId, groups: list }), () => setPanel(null))} onPaste={(text) => act(() => assignExperimentGroups({ experimentId, text }))} /> : null}
       {panel === "plates" ? (
         <div className="space-y-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-3 text-sm print:hidden">
-          <p className="text-xs text-muted">The plate planner opens with this experiment’s samples, grouped and in order. Back up the project there and attach the file here; wells that name a sample show beside it.</p>
+          <p className="text-xs text-muted">Plate layouts are written in the experiment record: type “/” and choose Plate layout. The planners below open with this experiment’s samples, grouped and in order. Their Excel exports go into the record with File attachment; a free plate planner project backup goes into a plate with Import a backup. Wells that hold a sample show beside it.</p>
           <div className="flex flex-wrap gap-2">
             <Link href={`/tools/qpcr-plate-layout?experiment=${experimentId}`} className={buttonStyles({ size: "sm", variant: "secondary" })}>qPCR plate planner</Link>
             <Link href={`/tools/cnv-plate-layout?experiment=${experimentId}`} className={buttonStyles({ size: "sm", variant: "ghost" })}>CNV plate planner</Link>
           </div>
-          <AttachmentUploadForm targetType="experiment" targetId={experimentId} hideTargetFields fileLabel="Plate layout file" accept=".json,.svg,image/*" linkType="plate_layout" />
         </div>
       ) : null}
 

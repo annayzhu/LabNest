@@ -1,0 +1,59 @@
+/* Sample and stock tags ("/样本", "/库存物品") and the card they open. */
+.ln-record-ref { display: inline-flex; align-items: baseline; gap: 0.2em; max-width: 100%; padding: 0 0.32em; border-radius: var(--ln-radius-control-sm); background: var(--action-surface); color: var(--ink); line-height: 1.45; white-space: normal; overflow-wrap: anywhere; text-decoration: none; }
+.ln-record-ref svg { flex: none; align-self: center; width: 0.95em; height: 0.95em; color: var(--moss); }
+.ln-record-ref[data-kind="product"], .ln-record-ref[data-kind="lot"] { background: color-mix(in srgb, var(--info, #526d73) 12%, var(--surface)); }
+.ln-record-ref[data-kind="product"] svg, .ln-record-ref[data-kind="lot"] svg { color: var(--info, #526d73); }
+.ln-record-ref[data-missing] { background: var(--warm); color: var(--muted); text-decoration: line-through; }
+.ln-record-ref[data-missing] svg { color: var(--muted); }
+.ln-record-ref-link { text-decoration: none; border-radius: var(--ln-radius-control-sm); }
+.ln-record-ref-link:hover .ln-record-ref { background: color-mix(in srgb, var(--moss) 16%, var(--surface)); }
+.ln-record-ref-node { cursor: default; }
+.ln-record-ref-node[data-selected] .ln-record-ref { outline: 2px solid var(--action-border, var(--moss)); outline-offset: 1px; }
+.ln-record-ref-card { position: fixed; z-index: 75; display: grid; gap: 0.2rem; width: min(17rem, calc(100vw - 16px)); padding: 0.65rem 0.75rem; background: var(--surface); color: var(--graphite); border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel); box-shadow: var(--shadow-soft), 0 2px 6px rgba(32, 40, 37, 0.06); font: var(--ln-control-font-size-xs)/1.5 var(--font-ui); }
+.ln-record-ref-card strong { color: var(--ink); font-size: var(--ln-control-font-size-md); font-weight: 600; }
+.ln-record-ref-card p { margin: 0; }
+.ln-record-ref-card p > span:first-child:not(:only-child) { color: var(--muted); }
+.ln-record-ref-renamed, .ln-record-ref-gone { color: var(--warning); }
+.ln-record-ref-card a { display: inline-flex; align-items: center; gap: 0.25rem; justify-self: start; margin-top: 0.25rem; color: var(--moss); font-weight: 600; }
+.ln-record-ref-card a svg { width: 0.85rem; height: 0.85rem; }
+@media print {
+  .ln-record-ref { padding: 0; background: none; }
+  .ln-record-ref svg { display: none; }
+}
+
+/* The picker "/样本" and "/库存物品" open in place of the "/" menu; a bottom sheet on a phone. */
+.ln-reference-picker { position: fixed; z-index: 70; display: flex; flex-direction: column; width: min(26rem, calc(100vw - 16px)); max-height: min(30rem, 70vh); overflow: hidden; background: var(--surface); color: var(--graphite); border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel); box-shadow: var(--shadow-soft), 0 2px 6px rgba(32, 40, 37, 0.06); font: var(--ln-control-font-size-md)/1.45 var(--font-ui); }
+.ln-reference-picker[data-sheet] { left: 0; right: 0; bottom: 0; width: 100%; max-height: 75vh; border-radius: var(--ln-radius-panel) var(--ln-radius-panel) 0 0; padding-bottom: env(safe-area-inset-bottom); }
+.ln-reference-picker-search { display: flex; align-items: center; gap: 0.4rem; margin: 0.5rem 0.5rem 0.25rem; padding: 0 0.55rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: var(--warm); }
+.ln-reference-picker-search svg { flex: none; width: 15px; height: 15px; color: var(--muted); }
+.ln-reference-picker-search input { flex: 1; min-width: 0; height: var(--ln-control-height-sm); border: 0 !important; background: transparent; font: inherit; outline: none; }
+.ln-reference-picker-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.75rem; padding: 0 0.6rem 0.25rem; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
+.ln-reference-picker-filters select { height: 1.75rem; padding: 0 0.35rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-sm); background: var(--surface); font: inherit; color: var(--graphite); }
+.ln-reference-picker-filters label { display: inline-flex; align-items: center; gap: 0.3rem; }
+.ln-reference-picker-list { flex: 1; min-height: 4rem; overflow: auto; padding: 0.25rem; }
+.ln-reference-row { display: flex; align-items: stretch; gap: 0.15rem; border-radius: var(--ln-radius-control-md); }
+.ln-reference-row[aria-selected="true"] { background: var(--action-surface); }
+.ln-reference-row[data-nested] { margin-left: 1.6rem; }
+.ln-reference-check { flex: none; align-self: center; display: inline-flex; align-items: center; justify-content: center; width: 1.15rem; height: 1.15rem; margin-left: 0.35rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-sm); background: var(--surface); color: var(--moss); }
+.ln-reference-check[aria-checked="true"] { border-color: var(--moss); background: color-mix(in srgb, var(--moss) 14%, var(--surface)); }
+.ln-reference-check svg { width: 0.8rem; height: 0.8rem; }
+.ln-reference-choice { flex: 1; min-width: 0; display: grid; grid-template-columns: 1.1rem minmax(0, 1fr); align-items: start; gap: 0.5rem; padding: 0.3rem 0.45rem; text-align: left; border-radius: var(--ln-radius-control-md); }
+.ln-reference-choice > svg { width: 15px; height: 15px; margin-top: 0.15rem; color: var(--muted); }
+.ln-reference-choice > span:last-child { display: grid; min-width: 0; }
+.ln-reference-choice strong { font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.ln-reference-code { font-family: var(--font-data); font-weight: 600; }
+.ln-reference-choice small { display: flex; flex-wrap: wrap; gap: 0 0.5rem; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
+.ln-reference-choice small em { font-style: normal; color: var(--warning); }
+.ln-reference-lot-mark { width: 0.55rem; height: 0.55rem; margin: 0.45rem 0 0 0.3rem; border-left: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); }
+.ln-reference-picker-foot { display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; border-top: 1px solid var(--hairline); background: var(--warm); }
+.ln-reference-picker-foot .ln-insert-keys { flex: 1; border: 0; }
+.ln-reference-picker-foot button { margin: 0.35rem 0; padding: 0.15rem 0.6rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: var(--surface); font-size: var(--ln-control-font-size-xs); }
+.ln-reference-picker-foot button:last-child { margin-right: 0.5rem; }
+.ln-reference-picker-foot button.is-primary { border-color: var(--moss); background: var(--moss); color: var(--surface); font-weight: 600; }
+.ln-reference-picker .ln-insert-empty a { color: var(--moss); text-decoration: underline; }
+@media (pointer: coarse) {
+  .ln-reference-picker-search input { height: 2.75rem; }
+  .ln-reference-choice { min-height: 2.75rem; }
+  .ln-reference-check { width: 1.5rem; height: 1.5rem; }
+  .ln-reference-picker-foot button { min-height: 2.5rem; }
+}

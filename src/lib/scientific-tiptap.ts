@@ -9,10 +9,13 @@ import { LABNEST_FONT_FAMILY_TOKEN_SOURCE, parseLabNestFontFamilyToken, parseRic
 import { LABNEST_FONT_SIZE_TOKEN_SOURCE, parseLabNestFontSizeToken, isRichTextFontSizePt } from "@/lib/rich-text-font-size";
 import { parseRichTextLineHeightLine, richTextLineHeightPrefix } from "@/lib/rich-text-line-height";
 import { persistedTableFromTiptap, tiptapTableRows } from "@/lib/tiptap-table-serialization";
+import { parseRecordReferenceLink, RECORD_REFERENCE_LINK_SOURCE, recordReferenceMarkdown, type RecordReferenceKind } from "@/lib/record-references";
+import { plateLayoutFromMarkdown, plateLayoutSchema, plateLayoutToMarkdown } from "@/lib/plate-layout";
 
 type TiptapMark = NonNullable<JSONContent["marks"]>[number];
 
-const inlinePattern = new RegExp(`(${LABNEST_FONT_SIZE_TOKEN_SOURCE}|${LABNEST_COLOR_TOKEN_SOURCE}|\\*\\*[^*\\n]+\\*\\*|~~[^~\\n]+~~|\\+\\+[^+\\n]+\\+\\+|\`[^\`\\n]+\`|\\*[^*\\n]+\\*|\\[[^\\]\\n]+\\]\\(https?:\\/\\/[^)\\n]+\\))`, "g");
+const inlinePattern = new RegExp(`(${LABNEST_FONT_SIZE_TOKEN_SOURCE}|${LABNEST_COLOR_TOKEN_SOURCE}|\\*\\*[^*\\n]+\\*\\*|~~[^~\\n]+~~|\\+\\+[^+\\n]+\\+\\+|\`[^\`\\n]+\`|\\*[^*\\n]+\\*|${RECORD_REFERENCE_LINK_SOURCE}|\\[[^\\]\\n]+\\]\\(https?:\\/\\/[^)\\n]+\\))`, "g");
+const referenceKinds = new Set<RecordReferenceKind>(["sample", "product", "lot"]);
 
 function uniqueId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -48,6 +51,9 @@ function inlineMarkdownToTiptap(value: string, inheritedMarks?: TiptapMark[]): J
     if (part.startsWith("++") && part.endsWith("++")) return inlineMarkdownToTiptap(part.slice(2, -2), mergeMarks(inheritedMarks, { type: "underline" })) ?? [];
     if (part.startsWith("`") && part.endsWith("`")) return [{ type: "text", text: part.slice(1, -1), marks: mergeMarks(inheritedMarks, { type: "code" }) }];
     if (part.startsWith("*") && part.endsWith("*")) return inlineMarkdownToTiptap(part.slice(1, -1), mergeMarks(inheritedMarks, { type: "italic" })) ?? [];
+    // A sample or stock reference is a tag of its own and carries no formatting.
+    const reference = parseRecordReferenceLink(part);
+    if (reference) return [{ type: "recordReference", attrs: reference }];
     const link = part.match(/^\[([^\]]+)\]\((https?:\/\/[^)]+)\)$/);
     if (link) return inlineMarkdownToTiptap(link[1], mergeMarks(inheritedMarks, { type: "link", attrs: { href: link[2] } })) ?? [];
     return part ? [{ type: "text", text: part, marks: inheritedMarks?.length ? inheritedMarks : undefined }] : [];
@@ -89,6 +95,8 @@ function markdownToTiptap(value: string, blockId: string): JSONContent[] {
     if(table){nodes.push(tableToTiptap(table));index+=1;continue;}
     const media = documentMediaFromMarkdown(lines[index]);
     if (media) { nodes.push({ type: "documentMedia", attrs: { block: media } }); index += 1; continue; }
+    const plate = plateLayoutFromMarkdown(lines[index]);
+    if (plate) { nodes.push({ type: "documentPlate", attrs: { block: plate } }); index += 1; continue; }
     const layout = parseParagraphLayoutLine(lines[index]);
     const parsedLine = parseRichTextLineHeightLine(layout.content);
     const parsedFontFamily = parseRichTextFontFamilyLine(parsedLine.content);
@@ -167,12 +175,19 @@ function plainText(node: JSONContent | undefined): string {
   if (!node) return "";
   if (node.type === "hardBreak") return "\n";
   if (node.type === "text") return node.text ?? "";
+  if (node.type === "recordReference") return String(node.attrs?.label ?? "");
   return (node.content ?? []).map(plainText).join("");
+}
+
+function referenceMarkdown(node: JSONContent) {
+  const { kind, id, label } = node.attrs ?? {};
+  return referenceKinds.has(kind) && typeof id === "string" && id ? recordReferenceMarkdown({ kind, id, label: String(label ?? "") }) : String(label ?? "");
 }
 
 function inlineTiptapToMarkdown(content: JSONContent[] | undefined): string {
   return (content ?? []).map((node) => {
     if (node.type === "hardBreak") return "\n";
+    if (node.type === "recordReference") return referenceMarkdown(node);
     if (node.type !== "text") return inlineTiptapToMarkdown(node.content);
     let value = node.text ?? "";
     const marks = node.marks ?? [];
@@ -211,6 +226,11 @@ function tiptapNodesToMarkdown(nodes: JSONContent[]): string {
     if (node.type === "documentMedia") {
       const media = documentMediaSchema.safeParse(node.attrs?.block);
       if (media.success) lines.push(documentMediaToMarkdown(media.data));
+      continue;
+    }
+    if (node.type === "documentPlate") {
+      const plate = plateLayoutSchema.safeParse(node.attrs?.block);
+      if (plate.success) lines.push(plateLayoutToMarkdown(plate.data));
       continue;
     }
     if (node.type === "bulletList" || node.type === "orderedList" || node.type === "taskList") {
@@ -276,7 +296,8 @@ function sectionBlocks(section: JSONContent): ScientificContentBlock[] {
       continue;
     }
     if (node.type === "heading" && (nodeIdentity.type === "heading" || !nodeIdentity.id)) {
-      const formatted = Boolean(typographyPrefix(node)) || (node.content ?? []).some(child => child.marks?.length);
+      // A plain heading keeps only its text; one with a sample or stock tag keeps the tag as Markdown.
+      const formatted = Boolean(typographyPrefix(node)) || (node.content ?? []).some(child => child.marks?.length || child.type === "recordReference");
       blocks.push(formatted
         ? { id: nodeIdentity.id ?? uniqueId("heading"), type: "text", text: tiptapNodesToMarkdown([node]) }
         : { id: nodeIdentity.id ?? uniqueId("heading"), type: "heading", text: plainText(node) });

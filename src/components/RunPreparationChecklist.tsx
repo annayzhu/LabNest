@@ -6,6 +6,8 @@ import { readableError } from '@/lib/form-actions';
 import { preparationKindLabels, preparationProgress, type PreparationChecklist, type PreparationItem, type PreparationKind, type PreparationState } from '@/lib/run-preparation';
 import type { StructuredRunView } from '@/lib/structured-run';
 import { PlateLayoutView, type PlateAttachment } from './PlateLayoutView';
+import { PlateLayoutGrid } from './PlateLayoutGrid';
+import type { PlateLayout } from '@/lib/plate-layout';
 import './run-bench.css';
 
 /** The bar's short names for what is listed: "Materials 4 · Mix cards 2". */
@@ -16,8 +18,8 @@ const kindCounts: Record<PreparationKind, string> = { sample: 'Samples', materia
  * needs attention, and what to have ready. Ticks are a bench aid saved per item without touching progress; the list itself
  * is derived, never stored, so it follows every change. It opens by itself only while something must be entered first.
  */
-export function RunPreparationChecklist({ experimentId, view, list, editable, plates = [], startOpen, children, footer }: {
-  experimentId: string; view: StructuredRunView; list: PreparationChecklist; editable: boolean; plates?: PlateAttachment[]; startOpen: boolean; children?: ReactNode; footer?: ReactNode;
+export function RunPreparationChecklist({ experimentId, view, list, editable, plates = [], documentPlates = [], startOpen, children, footer }: {
+  experimentId: string; view: StructuredRunView; list: PreparationChecklist; editable: boolean; plates?: PlateAttachment[]; documentPlates?: PlateLayout[]; startOpen: boolean; children?: ReactNode; footer?: ReactNode;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(startOpen);
@@ -51,7 +53,7 @@ export function RunPreparationChecklist({ experimentId, view, list, editable, pl
       {kinds.length ? <div className="ln-prep-modules">{kinds.map(kind => <section key={kind} className="ln-prep-group" aria-label={preparationKindLabels[kind]}>
         <h4>{preparationKindLabels[kind]}</h4>
         <ul>{list.items.filter(item => item.kind === kind).map(item => <ChecklistItem key={item.key} item={item} state={ticks[item.key]} editable={editable && !pending} onChange={patch => write(item.key, patch)}>
-          {kind === 'plate' ? <PlateLayoutView attachment={plates.find(plate => `plate:${plate.id}` === item.key)!} /> : null}
+          {kind === 'plate' ? <PlateItem itemKey={item.key} plates={plates} documentPlates={documentPlates} /> : null}
         </ChecklistItem>)}</ul>
       </section>)}</div> : <p className="ln-prep-empty">Materials, mix cards, plates and equipment to have ready are listed here once the run quantities are filled in.</p>}
       {footer ? <div className="ln-prep-footer">{footer}</div> : null}
@@ -78,4 +80,12 @@ function ChecklistItem({ item, state, editable, onChange, children }: { item: Pr
     {noteOpen ? <input className="ln-prep-note-input" autoFocus value={draft} placeholder="Note, e.g. lot number or where it is" aria-label={`Note for ${item.label}`} onChange={event => setDraft(event.target.value)} onBlur={saveNote} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); saveNote(); } if (event.key === 'Escape') { event.preventDefault(); setNoteOpen(false); } }} /> : null}
     {children}
   </li>;
+}
+
+/** A plate to have ready: the layout written in the record, or the planner file attached before plates could be written there. */
+function PlateItem({ itemKey, plates, documentPlates }: { itemKey: string; plates: PlateAttachment[]; documentPlates: PlateLayout[] }) {
+  const layout = documentPlates.find(plate => `plate:layout-${plate.id}` === itemKey);
+  if (layout) return <PlateLayoutGrid layout={layout} caption={false} />;
+  const attachment = plates.find(plate => `plate:${plate.id}` === itemKey);
+  return attachment ? <PlateLayoutView attachment={attachment} /> : null;
 }

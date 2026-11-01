@@ -4,6 +4,8 @@ import { stripLabNestFontFamilyMarkup } from "./rich-text-font-family";
 import { stripLabNestFontSizeMarkup } from "./rich-text-font-size";
 import { stripLabNestLineHeightMarkup } from "./rich-text-line-height";
 import { collectDocumentMedia, documentMediaAttachmentId, documentMediaFromMarkdown } from "./document-media";
+import { plateLayoutFromMarkdown, plateLayoutPlainText } from "./plate-layout";
+import { stripRecordReferenceLinks } from "./record-references";
 
 export const ENTRY_CONTENT_SCHEMA_VERSION = 1;
 export const ENTRY_MARKDOWN_FORMAT = "labnest-markdown-v1";
@@ -128,8 +130,8 @@ export function getOrderedAttachmentIds(value: unknown) {
 }
 
 export function plainTextFromEntryMarkdown(markdown: string): string {
-  const searchable = markdown.split("\n").map(line => { const table=scientificTableFromMarkdown(line);if(table)return table.rows.map(row=>row.map(plainTextFromEntryMarkdown).join(" ")).join("\n"); const media = documentMediaFromMarkdown(line); return media ? [media.filename, media.caption].filter(Boolean).join(" ") : line; }).join("\n");
-  return stripLabNestFontFamilyMarkup(stripLabNestLineHeightMarkup(stripLabNestFontSizeMarkup(stripParagraphLayoutMarkup(searchable))))
+  const searchable = markdown.split("\n").map(line => { const table=scientificTableFromMarkdown(line);if(table)return table.rows.map(row=>row.map(plainTextFromEntryMarkdown).join(" ")).join("\n"); const media = documentMediaFromMarkdown(line); if (media) return [media.filename, media.caption].filter(Boolean).join(" "); const plate = plateLayoutFromMarkdown(line); return plate ? plateLayoutPlainText(plate) : line; }).join("\n");
+  return stripRecordReferenceLinks(stripLabNestFontFamilyMarkup(stripLabNestLineHeightMarkup(stripLabNestFontSizeMarkup(stripParagraphLayoutMarkup(searchable)))))
     .replace(/```[\s\S]*?```/g, (block) => block.replaceAll("```", ""))
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/\[([^\]]+)\]\((?:https?:\/\/)[^)]+\)/g, "$1")

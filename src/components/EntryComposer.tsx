@@ -38,6 +38,7 @@ import type { DocumentOutlineItem } from "@/lib/document-outline";
 import { experimentStatusOptions, recordStatusOptions } from "@/lib/status-options";
 import { enqueueMobileMutation } from "@/lib/mobile-mutation-queue";
 import { keyboardHeld, releaseKeyboard } from "@/lib/keep-keyboard";
+import { ReferenceScope } from "@/components/ReferencePicker";
 
 export type EntryComposerProject = { id: string; name: string };
 export type EntryComposerResearchPlan = { id: string; title: string; code?: string; projectId: string; projectName: string };
@@ -409,6 +410,7 @@ export function EntryComposer({
   }
 
   return (
+    <ReferenceScope.Provider value={{ experimentId: fields.experimentId || undefined }}>
     <form inert={isSubmitting} aria-busy={isSubmitting} onSubmit={submit} className="space-y-5">
       <input id={cameraInputId} className="sr-only" disabled={isSubmitting} type="file" accept="image/*" capture="environment" onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
       {captureMode ? (
@@ -625,6 +627,7 @@ export function EntryComposer({
         </Button>
       </div>
     </form>
+    </ReferenceScope.Provider>
   );
 }
 

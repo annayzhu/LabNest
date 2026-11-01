@@ -7,6 +7,8 @@ import { parseRichTextFontSizePt } from "@/lib/rich-text-font-size";
 import { documentMediaFromMarkdown, documentMediaSchema } from "@/lib/document-media";
 import { DocumentMediaView } from "./DocumentMediaView";
 import { ChipText } from "./protocol/ChipText";
+import { RecordReferenceLink } from "./RecordReference";
+import { parseRecordReferenceLink } from "@/lib/record-references";
 
 function safeHref(value: unknown) {
   if (typeof value !== "string") return undefined;
@@ -19,6 +21,7 @@ function renderNode(node: JSONContent, key: string): ReactNode {
     return media.success ? <DocumentMediaView key={key} block={media.data} /> : null;
   }
   if (node.type === "hardBreak") return <br key={key} />;
+  if (node.type === "recordReference") return typeof node.attrs?.id === "string" ? <RecordReferenceLink key={key} kind={node.attrs.kind} id={node.attrs.id} label={String(node.attrs.label ?? "")} /> : null;
   // Protocol parameter chips are stored as references in text; a protocol view supplies how they read.
   let content: ReactNode = node.text !== undefined ? <ChipText text={node.text} /> : node.content?.map((child, index) => renderNode(child, `${key}-${index}`)) ?? null;
 
@@ -56,6 +59,8 @@ function renderNode(node: JSONContent, key: string): ReactNode {
 export function TiptapCellContentView({ content, fallback }: { content?: JSONContent[] | null; fallback: string }) {
   return content ? <>{content.map((node, index) => renderNode(node, `cell-${index}`))}</> : <>{fallback.split("\n").map((line, index) => {
     const media = documentMediaFromMarkdown(line);
-    return media ? <DocumentMediaView key={index} block={media} /> : <span key={index}>{index ? "\n" : ""}<ChipText text={line} /></span>;
+    if (media) return <DocumentMediaView key={index} block={media} />;
+    const reference = parseRecordReferenceLink(line.trim());
+    return <span key={index}>{index ? "\n" : ""}{reference ? <RecordReferenceLink {...reference} /> : <ChipText text={line} />}</span>;
   })}</>;
 }

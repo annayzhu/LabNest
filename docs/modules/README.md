@@ -9,6 +9,7 @@
 | 计算器与孔板 | [计算器版本及功能批次](calculator/README.md) |
 | 库存 | [分类、产品层与完整的增删改（2026-10-30）](inventory/classification-20261030/PLAN.md) · [批量操作、重复检查与产品合并（2026-10-30）](inventory/bulk-duplicates-20261030/PLAN.md) · [AI 识别入库（2026-10-30）](inventory/ai-import-20261030/PLAN.md) · [主页（2026-10-31）](inventory/home-20261031/PLAN.md) · [序列并入产品（2026-10-31）](inventory/sequence-merge-20261031/PLAN.md) · [手机入口、编辑合一、流水与整体 UI（2026-10-31）](inventory/refine-20261031/PLAN.md) |
 | 样本 | [独立模块、实验产出与外部样本库预留（2026-10-31）](samples/20261031/PLAN.md) · [外部样本库接口契约](samples/20261031/SAMPLE-BANK-CONTRACT.md) · [外部样本库入库（2026-10-31）](samples/sample-bank-20261031/PLAN.md) |
+| 导入 | [导入预览：逐条补充、修改、删除，改好后一起保存（2026-10-31）](import/preview-edit-20261031/PLAN.md) |
 | 富文本编辑器 | [修复规格](editor-repair/SPEC.md) · [验收](editor-repair/ACCEPTANCE.md) · [复查](editor-repair/REVIEW.md) |
 | 外观与主题 | [外观基础方案与证据目录](appearance/foundation/) |
 | Tools 接入 | [2026-10-20 入口验证](tools-entrypoints-20261020/VERIFICATION.md) · [部署说明](../operations/tools-deployment.md) |

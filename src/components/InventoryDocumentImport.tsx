@@ -1,6 +1,6 @@
 "use client";
 
-import { FileUp, LoaderCircle, Sparkles, X } from "lucide-react";
+import { FileUp, LoaderCircle, Plus, Sparkles, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { importInventoryDraft, readInventoryDocuments } from "@/app/inventory/import/actions";
@@ -15,6 +15,8 @@ type Service = { ready: boolean; reason?: string };
 type Line = DraftLine & { location: string; exactId: string };
 
 const cell = `${formInlineInputClass} h-8 min-w-0 px-2 text-sm`;
+// A line typed in by hand, for stock the reading missed (Q223).
+const blankLine: Line = { name: "", brand: "", catalogNumber: "", packSize: "", quantity: "", unit: "", lotNumber: "", expiryDate: "", productId: "", candidates: [], location: "", exactId: "" };
 
 /**
  * Invoices, delivery notes, labels (pictures or PDFs) or pasted text read into a draft of arriving stock. Every line
@@ -161,6 +163,9 @@ export function InventoryDocumentImport({ source, pictures, text, locations }: {
               </table>
             </div>
           ) : <p className="text-sm text-muted">No items were read.</p>}
+          <Button type="button" size="sm" variant="ghost" onClick={() => setDraft({ ...draft, lines: [...draft.lines, { ...blankLine }] })}>
+            <Plus className="h-3.5 w-3.5" aria-hidden />Add a line
+          </Button>
           <div className="flex flex-wrap items-center justify-end gap-3 border-t border-hairline pt-3">
             <p className="mr-auto text-xs text-muted">Each line arrives as stock with a receive movement. A line without a chosen product finds one by brand and catalogue number, or becomes a new product to classify.</p>
             <Button type="button" variant="primary" disabled={!draft.lines.length || Boolean(busy)} onClick={submit}>

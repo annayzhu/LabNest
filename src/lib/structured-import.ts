@@ -31,10 +31,15 @@ import { structuredModules, type StructuredModuleKey } from "@/lib/structured-mo
 import { parseTags } from "@/lib/tags";
 import { decideProtocolImportState, separateLegacyImportWarnings, type ProtocolImportDecision } from "@/lib/protocol-import-state";
 import { matchesImportConfirmation } from "@/lib/structured-import-confirmation";
+import { editableImportValues, type ImportRowOrigin } from "@/lib/structured-import-edits";
 
 export type StructuredImportRowPreview = {
   index: number;
+  /** The file row it comes from, with the fields changed in the preview, or the row added there. */
+  origin: ImportRowOrigin;
   values: Record<string, string>;
+  /** The full values of the fields the preview can edit, by key (`values` is shortened for reading). */
+  fields: Record<string, string>;
   errors: string[];
   warnings: string[];
   protocolDecision?: ProtocolImportDecision;
@@ -51,6 +56,8 @@ export type StructuredImportPreview = {
   rows: StructuredImportRowPreview[];
   canImport: boolean;
   confirmationToken?: string;
+  /** Choices the app loads for a field (inventory types, units and storage locations), for the preview's edit form. */
+  choices?: Record<string, string[]>;
 };
 
 type ProjectData = { kind: "projects"; name: string; description?: string; status: "active" | "paused" | "completed" | "archived"; tags: string[] };
@@ -233,6 +240,20 @@ function previewValues(module: StructuredModuleKey, record: Record<string, unkno
   return Object.fromEntries(structuredModules[module].fields
     .filter((field) => record[field.key] !== undefined && record[field.key] !== "")
     .map((field) => [field.label, displayValue(record[field.key])]));
+}
+
+/**
+ * A purchase row's problem in the words of the other import checks, naming the column as the template does. An empty
+ * required column is already reported as “X is required.”.
+ */
+function purchaseProblem(path: PropertyKey[], message: string, record: Record<string, unknown>): string[] {
+  const field = structuredModules.purchases.fields.find((candidate) => candidate.key === path[0]);
+  if (!field) return [`${path.map(String).join(".")}: ${message}`];
+  if (field.required && !optionalText(record[field.key])) return [];
+  if (field.allowedValues) return [`${field.label} must be one of: ${field.allowedValues.join(", ")}.`];
+  if (field.key === "quantity") return [`${field.label} must be a number greater than 0.`];
+  if (field.key === "actualAmount") return [`${field.label} must be an amount with at most two decimals.`];
+  return [`${field.label}: ${message}`];
 }
 
 function parseJsonValue(value: unknown) {
@@ -442,7 +463,7 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
 
     if (parsed.module === "purchases") {
       const candidate=purchaseInput.safeParse({title:record.title,quantity:Number(record.quantity),unit:record.unit,vendor:optionalText(record.vendor),actualAmount:optionalText(record.actualAmount),status:optionalText(record.status),invoiceStatus:optionalText(record.invoiceStatus),invoiceReference:optionalText(record.invoiceReference),clientMutationId:"00000000-0000-4000-8000-000000000000"});
-      if(!candidate.success)errors.push(...candidate.error.issues.map(issue=>`${issue.path.join(".")}: ${issue.message}`));
+      if(!candidate.success)errors.push(...candidate.error.issues.flatMap(issue=>purchaseProblem(issue.path,issue.message,record)));
       else { const {clientMutationId:_,...purchase}=candidate.data;const recordKind=enumValue(record.recordKind,["purchase","quote"] as const,"purchase","Record kind",errors);const quotedAmount=optionalText(record.quotedAmount)?numberValue(record.quotedAmount,"Quoted amount",errors):undefined;if(quotedAmount!==undefined&&quotedAmount<0)errors.push("Quoted amount cannot be negative.");data={kind:"purchases",...purchase,recordKind,quotedAmount}; }
     }
     if (parsed.module === "inventory") {
@@ -500,7 +521,7 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
     }
 
     if (!errors.length && data) prepared.push({ index, data });
-    previewRows.push({ index: index + 1, values: previewValues(parsed.module, record), errors: [...new Set(errors)], warnings: [...new Set(warnings)], ...(data?.kind === "protocols" ? { protocolDecision: data.importDecision } : {}) });
+    previewRows.push({ index: index + 1, origin: parsed.origins?.[index] ?? { row: index + 1, changed: [] }, values: previewValues(parsed.module, record), fields: editableImportValues(parsed.module, record), errors: [...new Set(errors)], warnings: [...new Set(warnings)], ...(data?.kind === "protocols" ? { protocolDecision: data.importDecision } : {}) });
   }
 
   const preview: StructuredImportPreview = {
@@ -515,6 +536,14 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
     canImport: !globalErrors.length && previewRows.every((row) => !row.errors.length) && prepared.length === previewRows.length,
   };
   return { preview, prepared };
+}
+
+/** A record changed or added in the preview says so in its import log (Q220): its file row and the fields changed, or that it was added. */
+function previewNote(parsed: ParsedStructuredFile, index: number): Record<string, string> {
+  const origin = parsed.origins?.[index];
+  if (!origin) return {};
+  if ("added" in origin) return { previewAdded: String(origin.added) };
+  return { sourceRow: String(origin.row), ...(origin.changed.length ? { previewChanged: origin.changed.join(", ") } : {}) };
 }
 
 function recordStatusForReview(reviewStage: ProtocolData["reviewStage"]) {
@@ -547,16 +576,17 @@ export async function commitStructuredImport(
     let quoteInquiryId:string|undefined;
     for (const row of validation.prepared) {
       const data = resolveImportedMedia(row.data, importedMediaIds);
+      const rowMetadata = { ...sourceMetadata, ...previewNote(parsed, row.index) };
       if (data.kind === "projects") {
         const record = await tx.project.create({ data: { name: data.name, description: data.description, status: data.status, tags: data.tags } });
-        await tx.activityLog.create({ data: { action: "structured_import", targetType: "project", targetId: record.id, metadataJson: sourceMetadata } });
+        await tx.activityLog.create({ data: { action: "structured_import", targetType: "project", targetId: record.id, metadataJson: rowMetadata } });
         createdTargets.push({ targetType: "project", targetId: record.id, href: `/projects/${record.id}` });
       }
       if (data.kind === "research-plans") {
         const code = data.code ?? await reserveRecordCode(tx, "researchPlan");
         const record = await tx.researchPlan.create({ data: { projectId: data.projectId, code, title: data.title, objective: data.objective, hypothesis: data.hypothesis, rationale: data.rationale, design: data.design, status: data.status, tags: data.tags, contentJson: data.contentJson, protocols: data.protocolIds.length ? { create: data.protocolIds.map((protocolId) => ({ protocolId, isPrimary: protocolId === data.primaryProtocolId })) } : undefined } });
         await associateDocumentMedia(tx, data.contentJson, "research_plan", record.id);
-        await tx.activityLog.create({ data: { action: "structured_import", targetType: "research_plan", targetId: record.id, metadataJson: { ...sourceMetadata, code } } });
+        await tx.activityLog.create({ data: { action: "structured_import", targetType: "research_plan", targetId: record.id, metadataJson: { ...rowMetadata, code } } });
         createdTargets.push({ targetType: "research_plan", targetId: record.id, href: `/research-plans/${record.id}` });
       }
       if (data.kind === "protocols") {
@@ -573,14 +603,14 @@ export async function commitStructuredImport(
           action: "structured_import", targetType: "protocol", targetId: record.id,
           // No authenticated user resolver exists here. Never accept an actor from the upload.
           actorUserId: null,
-          metadataJson: { ...sourceMetadata, protocolVersionId: record.versions[0].id, rowIndex: row.index + 1, actorResolution: "unidentified", protocolImport: { decision, legacyIssues: legacy.history, confirmation: "preview_confirmed", sourceAttachmentId: attachmentId } } as Prisma.InputJsonValue,
+          metadataJson: { ...rowMetadata, protocolVersionId: record.versions[0].id, rowIndex: row.index + 1, actorResolution: "unidentified", protocolImport: { decision, legacyIssues: legacy.history, confirmation: "preview_confirmed", sourceAttachmentId: attachmentId } } as Prisma.InputJsonValue,
         } });
         await associateDocumentMedia(tx, importedDocument, "protocol_version", record.versions[0].id);
         createdTargets.push({ targetType: "protocol", targetId: record.id, href: `/protocols/${record.id}` });
       }
       if (data.kind === "experiments") {
         const record = await createExperimentWithProtocolSnapshotInTransaction(tx, data.input);
-        await tx.activityLog.create({ data: { action: "structured_import", targetType: "experiment", targetId: record.id, metadataJson: sourceMetadata } });
+        await tx.activityLog.create({ data: { action: "structured_import", targetType: "experiment", targetId: record.id, metadataJson: rowMetadata } });
         createdTargets.push({ targetType: "experiment", targetId: record.id, href: `/experiments/${record.id}` });
       }
       if (data.kind === "results") {
@@ -591,7 +621,7 @@ export async function commitStructuredImport(
           recordStatus: data.recordStatus,
           sourceType: data.sourceType,
           qualityStatus: data.qualityStatus,
-          origin: { kind: "structured_import", sourceMetadata },
+          origin: { kind: "structured_import", sourceMetadata: rowMetadata },
           templateKey: data.templateKey,
           templateProtocolVersionId: data.protocolVersionId,
           templateInstanceKey: data.templateInstanceKey,
@@ -609,14 +639,14 @@ export async function commitStructuredImport(
       }
       if(data.kind==="purchases"&&data.recordKind==="quote"){
         if(!quoteInquiryId){const inquiry=await tx.procurementInquiry.create({data:{title:parsed.fileName,sourceType:"excel",importedFileName:parsed.fileName}});quoteInquiryId=inquiry.id;}
-        const quote=await tx.procurementQuoteLine.create({data:{inquiryId:quoteInquiryId,productName:data.title,supplierName:data.vendor,quantity:data.quantity,packageUnit:data.unit,amountInclTax:data.quotedAmount,metadataJson:sourceMetadata}});
+        const quote=await tx.procurementQuoteLine.create({data:{inquiryId:quoteInquiryId,productName:data.title,supplierName:data.vendor,quantity:data.quantity,packageUnit:data.unit,amountInclTax:data.quotedAmount,metadataJson:rowMetadata}});
         createdTargets.push({targetType:"procurement_quote_line",targetId:quote.id,href:"/purchases"});
       }
       if(data.kind==="purchases"&&data.recordKind==="purchase"){
         const {kind:_,recordKind:__,quotedAmount:___,...fields}=data;
         const record=await tx.purchaseRequest.create({data:fields});
         if(fields.status==="received")await tx.purchaseReceipt.create({data:{purchaseId:record.id,quantity:fields.quantity,clientMutationId:`import:${parsed.checksum}:${row.index}`}});
-        await tx.activityLog.create({data:{action:"structured_import",targetType:"purchase",targetId:record.id,metadataJson:sourceMetadata}});
+        await tx.activityLog.create({data:{action:"structured_import",targetType:"purchase",targetId:record.id,metadataJson:rowMetadata}});
         createdTargets.push({targetType:"purchase",targetId:record.id,href:`/purchases/${record.id}`});
       }
       if (data.kind === "inventory" && data.inventoryId) {
@@ -643,13 +673,13 @@ export async function commitStructuredImport(
         const record = await tx.inventoryItem.create({ data: { ...lotIdentity(product), productId: product.id, principalInvestigator: data.principalInvestigator, containerType: data.containerType, barcode: data.barcode, aliquotCode: data.aliquotCode, lotNumber: data.lotNumber, vendor: data.vendor, managementMode:data.managementMode,quantityRecorded:data.quantityRecorded,currentQuantity: data.currentQuantity, unit: data.unit, lowThreshold: data.lowThreshold, locationId: data.locationId, positionCode: data.positionCode, expiryDate: data.expiryDate, storageCondition: data.storageCondition, freezeThawCount: data.freezeThawCount, status: data.status, notes: data.notes } });
         if(data.managementMode==="package"&&data.currentQuantity>0)await tx.inventoryContainer.createMany({data:Array.from({length:data.currentQuantity},()=>({inventoryItemId:record.id,location:data.positionCode}))});
         if (data.quantityRecorded && data.currentQuantity !== 0) await tx.inventoryTransaction.create({ data: { inventoryItemId: record.id, type: data.importMode === "arrival" ? "receive" : "adjust", quantityChange: data.currentQuantity, unit: data.unit, toLocationId: data.locationId, notes: `${data.importMode === "arrival" ? "Arrival" : "Opening balance; no inferred prior movements"}: ${parsed.fileName}.` } });
-        await tx.activityLog.create({ data: { action: "structured_import", targetType: "inventory_item", targetId: record.id, metadataJson: sourceMetadata } });
+        await tx.activityLog.create({ data: { action: "structured_import", targetType: "inventory_item", targetId: record.id, metadataJson: rowMetadata } });
         createdTargets.push({ targetType: "inventory_item", targetId: record.id, href: `/inventory/${record.id}` });
       }
       if (data.kind === "reports") {
         const record = await tx.report.create({ data: { projectId: data.projectId, researchPlanId: data.researchPlanId, title: data.title, status: data.status, periodStart: data.periodStart, periodEnd: data.periodEnd, tags: data.tags, contentJson: data.contentJson, sourceSnapshotJson: data.collected.snapshot, sources: data.collected.sources.length ? { create: data.collected.sources.map((source) => ({ sourceType: source.sourceType, sourceId: source.sourceId, titleSnapshot: source.titleSnapshot, versionSnapshot: source.versionSnapshot, hrefSnapshot: source.hrefSnapshot, metadataJson: source.metadataJson ?? {}, order: source.order, resultId: source.resultId })) } : undefined } });
         await associateDocumentMedia(tx, data.contentJson, "report", record.id);
-        await tx.activityLog.create({ data: { action: "structured_import", targetType: "report", targetId: record.id, metadataJson: sourceMetadata } });
+        await tx.activityLog.create({ data: { action: "structured_import", targetType: "report", targetId: record.id, metadataJson: rowMetadata } });
         createdTargets.push({ targetType: "report", targetId: record.id, href: `/reports/${record.id}` });
       }
     }

@@ -8,7 +8,8 @@ function signature(payload: string) {
   return createHmac("sha256", process.env.LABNEST_AI_ENCRYPTION_KEY || fallbackSecret).update(payload).digest("hex");
 }
 function binding(parsed: ParsedStructuredFile, expiresAt: number) {
-  return JSON.stringify({ module: parsed.module, format: parsed.format, fileName: parsed.fileName, checksum: parsed.checksum, decisions: parsed.protocolDecisions, mapping: parsed.mapping, expiresAt });
+  // The preview's edits are part of what was checked, so changing them after the preview needs a new one.
+  return JSON.stringify({ module: parsed.module, format: parsed.format, fileName: parsed.fileName, checksum: parsed.checksum, decisions: parsed.protocolDecisions, mapping: parsed.mapping, edits: parsed.edits ?? null, expiresAt });
 }
 export function createImportConfirmation(parsed: ParsedStructuredFile) {
   const expiresAt = Date.now() + 30 * 60 * 1000;

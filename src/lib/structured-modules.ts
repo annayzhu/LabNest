@@ -165,8 +165,8 @@ export const structuredModules: Record<StructuredModuleKey, StructuredModuleDefi
       { key: "primaryProtocolCode", label: "First Protocol code", aliases: ["protocol", "protocolCode", "primaryProtocolCode", "主要实验规程"], description: "Optional. Leave blank for a fully custom Experiment." },
       { key: "protocolVersion", label: "Protocol version", example: "0.1" },
       { key: "supportingProtocolCodes", label: "Supporting Protocol codes" },
-      { key: "researchPlanName", label: "研究计划名称" },
-      { key: "methodSources", label: "方法来源与版本" },
+      { key: "researchPlanName", label: "Research Plan name", aliases: ["研究计划名称"] },
+      { key: "methodSources", label: "Method sources & versions", aliases: ["方法来源与版本"] },
       { key: "purpose", label: "Purpose" },
       // Everything below lands in a section of the Experiment document; the
       // Experiment table keeps no per-section narrative columns.
@@ -220,17 +220,18 @@ export const structuredModules: Record<StructuredModuleKey, StructuredModuleDefi
   },
   purchases: {
     key:"purchases",singular:"Purchase",title:"Purchases",importFormats:["csv","xlsx","json"],exportFormats:["csv","xlsx","json"],
+    // English labels with their Chinese in i18n, like the other modules; the old Chinese headers stay as aliases.
     fields:[
-      {key:"recordKind",label:"记录用途",allowedValues:["purchase","quote"],example:"purchase"},
-      {key:"quotedAmount",label:"报价总金额",description:"Quote only; never treated as actual purchase amount."},
-      {key:"title",label:"物料名称",required:true,aliases:["名称","productName"],example:"Replace with purchase title"},
-      {key:"quantity",label:"数量",required:true,example:1},
-      {key:"unit",label:"单位",required:true,example:"box"},
-      {key:"vendor",label:"供应商"},
-      {key:"actualAmount",label:"实际总金额",description:"CNY; blank means unknown, not zero."},
-      {key:"status",label:"购买状态",allowedValues:["planned","ordered","received"],example:"ordered"},
-      {key:"invoiceStatus",label:"发票状态",allowedValues:["pending","available","not_required"],example:"pending"},
-      {key:"invoiceReference",label:"发票编号"},
+      {key:"recordKind",label:"Purchase or quote",aliases:["记录用途"],allowedValues:["purchase","quote"],optionLabels:{purchase:"Actual purchase",quote:"Price quote"},example:"purchase"},
+      {key:"quotedAmount",label:"Quoted total",aliases:["报价总金额"],description:"Quote only; never treated as actual purchase amount."},
+      {key:"title",label:"Item name",required:true,aliases:["物料名称","名称","productName"],example:"Replace with purchase title"},
+      {key:"quantity",label:"Quantity",required:true,aliases:["数量"],example:1},
+      {key:"unit",label:"Unit",required:true,aliases:["单位"],example:"box"},
+      {key:"vendor",label:"Vendor",aliases:["供应商"]},
+      {key:"actualAmount",label:"Actual total",aliases:["实际总金额"],description:"CNY; blank means unknown, not zero."},
+      {key:"status",label:"Purchase status",aliases:["购买状态"],allowedValues:["planned","ordered","received"],optionLabels:{planned:"Planned",ordered:"Ordered",received:"Received"},example:"ordered"},
+      {key:"invoiceStatus",label:"Invoice status",aliases:["发票状态"],allowedValues:["pending","available","not_required"],optionLabels:{pending:"Invoice to follow",available:"Invoice in hand",not_required:"No invoice needed"},example:"pending"},
+      {key:"invoiceReference",label:"Invoice number",aliases:["发票编号"]},
     ],
   },
   inventory: {

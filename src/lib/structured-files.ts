@@ -24,6 +24,7 @@ import {
   structuredModules,
 } from "./structured-modules";
 import { bilingual, choiceValue, columnHeader, hasChoices, headerNames, sampleValue, templateChoices } from "./structured-template";
+import { hasImportEdits, tableImportFormats, type ImportRowEdits, type ImportRowOrigin } from "./structured-import-edits";
 
 export type StructuredColumnMapping = { source: string; target?: string; targetLabel?: string };
 export type ParsedStructuredFile = {
@@ -36,6 +37,9 @@ export type ParsedStructuredFile = {
   warnings: string[];
   protocolDecisions?: ProtocolImportDecision[];
   embeddedImages?: DocxEmbeddedImage[];
+  /** Set once preview edits are laid over the file: where each record comes from, and the edits themselves. */
+  origins?: ImportRowOrigin[];
+  edits?: ImportRowEdits;
 };
 
 export type StructuredTemplate = {
@@ -265,6 +269,43 @@ export async function parseStructuredFile(file: File, module: StructuredModuleKe
   }
   const protocolDecisions = module === "protocols" ? mapped.records.map((record) => decideProtocolImportState({ fileName: file.name, availability: record.availability, reviewStage: record.reviewStage, compareFilename: format === "docx" })) : undefined;
   return { module, format, fileName: file.name, checksum, records: mapped.records, mapping: mapped.mapping, warnings: [...new Set(warnings)], protocolDecisions, embeddedImages: embedded?.images };
+}
+
+/**
+ * The file's records with the preview's edits laid over them: changed values replace the file's (an empty value clears
+ * it), left-out rows drop out and added rows follow the file's. The file and its checksum stay as they were.
+ */
+export function applyImportEdits(parsed: ParsedStructuredFile, edits: ImportRowEdits): ParsedStructuredFile {
+  if (!hasImportEdits(edits)) return parsed;
+  const fields = new Map(structuredModules[parsed.module].fields.map((field) => [field.key, field]));
+  const lay = (record: Record<string, unknown>, values: Record<string, string>) => {
+    const next = { ...record };
+    for (const [key, text] of Object.entries(values)) {
+      const field = fields.get(key)!;
+      if (text) next[key] = hasChoices(field) ? choiceValue(field, text) : text;
+      else delete next[key];
+    }
+    return next;
+  };
+  if ([...edits.removed, ...Object.keys(edits.changed).map(Number)].some((row) => row > parsed.records.length)) throw new Error("The preview changes do not match this file. Preview it again.");
+  if (edits.added.length && !tableImportFormats.includes(parsed.format)) throw new Error("Records can be added only to a table file.");
+  const records: Record<string, unknown>[] = [];
+  const origins: ImportRowOrigin[] = [];
+  parsed.records.forEach((record, index) => {
+    const row = index + 1;
+    if (edits.removed.includes(row)) return;
+    const changed = edits.changed[row] ?? {};
+    records.push(lay(record, changed));
+    origins.push({ row, changed: Object.keys(changed) });
+  });
+  edits.added.forEach((values, index) => {
+    records.push(lay({}, values));
+    origins.push({ added: index + 1 });
+  });
+  if (!records.length) throw new Error("Every record was removed; there is nothing left to import.");
+  if (records.length > 500) throw new Error("A single structured import is limited to 500 records.");
+  const protocolDecisions = parsed.module === "protocols" ? records.map((record) => decideProtocolImportState({ fileName: parsed.fileName, availability: record.availability, reviewStage: record.reviewStage, compareFilename: parsed.format === "docx" })) : undefined;
+  return { ...parsed, records, origins, edits, protocolDecisions };
 }
 
 function templateSample(module: StructuredModuleKey) {

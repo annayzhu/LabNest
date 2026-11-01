@@ -1,3 +1,4 @@
+import { importZh, translateImportDynamic } from "./i18n-import";
 import { inventoryZh, translateInventoryDynamic } from "./i18n-inventory";
 import { samplesZh, translateSamplesDynamic } from "./i18n-samples";
 
@@ -661,7 +662,6 @@ export const zhUi: Record<string, string> = {
   "Choose a structured format": "选择结构化格式",
   "Upload and preview": "上传并预览",
   "Structured source file": "结构化源文件",
-  "Preview mapping": "预览字段映射",
   "Confirm import": "确认导入",
   "Template": "模板",
   "Ready": "可以导入",
@@ -669,14 +669,9 @@ export const zhUi: Record<string, string> = {
   "Ready to import": "可以导入",
   "Import status": "导入状态",
   "Records ready": "可导入记录",
-  "Fields recognized": "已识别字段",
   "Warnings / errors": "警告 / 错误",
-  "Field recognition details": "字段识别详情",
-  "Source column": "源文件列名",
   "Not imported": "不导入",
-  "Core fields": "核心字段",
   "Document sections": "正文内容",
-  "Advanced raw/system fields": "高级原始/系统字段",
   "not imported": "不导入",
   "Choose an export format": "选择导出格式",
   "1. Choose what to export": "1. 选择导出范围",
@@ -692,7 +687,6 @@ export const zhUi: Record<string, string> = {
   "Spreadsheet for review, collaboration, and controlled bulk editing.": "用于审核、协作和受控批量编辑的电子表格。",
   "Flat table for analysis software and data pipelines.": "适用于分析软件和数据管线的扁平数据表。",
   "Maximum 25 MB and 500 records. LabNest revalidates the original file at confirmation and keeps it with a SHA-256 checksum.": "最大 25 MB、500 条记录。确认导入时 LabNest 会重新校验原文件，并连同 SHA-256 校验值一起保留。",
-  "Imported scientific records are validated again and the original source is linked to every created record. Template placeholders and ambiguous relationships are blocked.": "导入时会再次验证科研记录，并将原始来源关联到每条新记录；模板占位符和歧义关系会被阻止。",
   "Choose an import file first.": "请先选择导入文件。",
   "The file could not be previewed.": "无法预览该文件。",
   "The import could not be completed.": "无法完成导入。",
@@ -3662,6 +3656,7 @@ export const zhUi: Record<string, string> = {
   "Response too large; abandoned": "响应过大，已放弃",
   "Pasted text has no source to fetch": "粘贴的原文没有可抓取的来源",
   "This source is not turned on now": "这个来源现在没有开启",
+  ...importZh,
   ...inventoryZh,
 };
 
@@ -4424,16 +4419,8 @@ function translateDynamic(value: string): string {
   if (match) return `全部${zhUi[match[1]] ?? match[1]}`;
   match = value.match(/^(Import|Export) (Projects|Research Plans|Protocols|Experiments|Results|Inventory|Reports|Sequences)$/);
   if (match) return `${match[1] === "Import" ? "导入" : "导出"}${zhUi[match[2]] ?? match[2]}`;
-  match = value.match(/^Import check · (\d+) records?$/);
-  if (match) return `导入检查 · ${match[1]} 条记录`;
-  match = value.match(/^(\d+) mapped · (\d+) ignored$/);
-  if (match) return `已识别 ${match[1]} 个 · 忽略 ${match[2]} 个`;
   match = value.match(/^Record (\d+)$/);
   if (match) return `记录 ${match[1]}`;
-  match = value.match(/^Advanced raw\/system fields · (\d+)$/);
-  if (match) return `高级原始/系统字段 · ${match[1]} 个`;
-  match = value.match(/^Mapping preview · (\d+) records?$/);
-  if (match) return `字段映射预览 · ${match[1]} 条记录`;
   match = value.match(/^Selected records \((\d+)\)$/);
   if (match) return `所选记录（${match[1]}）`;
   match = value.match(/^Every (.+) in LabNest\. This is never selected implicitly when filters are active\.$/);
@@ -4458,13 +4445,14 @@ function translateDynamic(value: string): string {
   return value;
 }
 
-export function translateUiText(input: string, locale: AppLocale) {
+export function translateUiText(input: string, locale: AppLocale): string {
   if (locale === "en" || !input) return input;
   const leading = input.match(/^\s*/)?.[0] ?? "";
   const trailing = input.match(/\s*$/)?.[0] ?? "";
   const value = input.trim();
   if (!value) return input;
-  const dynamic = zhUi[value] ?? translateDynamic(value);
+  // Import checks come before the general patterns, which would otherwise take “Line 3: …” for a “key: value” list.
+  const dynamic: string = zhUi[value] ?? translateImportDynamic(value, (text) => translateUiText(text, "zh")) ?? translateDynamic(value);
   // Sample messages come last, so their general patterns never take over text another module already translates.
   const translated = dynamic === value ? translateSamplesDynamic(value) ?? translateInventoryDynamic(value) ?? value : dynamic;
   return translated === value ? input : `${leading}${translated}${trailing}`;

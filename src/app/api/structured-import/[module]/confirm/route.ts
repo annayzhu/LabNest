@@ -1,7 +1,8 @@
 import { revalidatePath } from "next/cache";
 import { cleanupPreparedAttachmentFiles, prepareAttachmentFile, writePreparedAttachmentFiles } from "@/lib/attachment-files";
 import { prisma } from "@/lib/db";
-import { parseStructuredFile, parseColumnOverrides } from "@/lib/structured-files";
+import { applyImportEdits, parseStructuredFile, parseColumnOverrides } from "@/lib/structured-files";
+import { importEditsSummary, parseImportEdits } from "@/lib/structured-import-edits";
 import { commitStructuredImport, validateStructuredImport } from "@/lib/structured-import";
 import { isStructuredModuleKey } from "@/lib/structured-modules";
 import { matchesImportConfirmation } from "@/lib/structured-import-confirmation";
@@ -20,9 +21,10 @@ export async function POST(request: Request, context: { params: Promise<{ module
   let attachmentId: string | undefined;
   let preparedFile: Awaited<ReturnType<typeof prepareAttachmentFile>> | undefined;
   try {
-    const parsed = await parseStructuredFile(file, module, ["inventory","purchases"].includes(module)?parseColumnOverrides(formData.get("mapping")):{});
+    const parsed = applyImportEdits(await parseStructuredFile(file, module, parseColumnOverrides(formData.get("mapping"))), parseImportEdits(formData.get("edits"), module));
     if (!expectedChecksum || parsed.checksum !== expectedChecksum) return Response.json({ error: "The selected file changed after preview. Preview it again before importing." }, { status: 409 });
-    if (["protocols","purchases","inventory"].includes(module) && !matchesImportConfirmation(parsed, confirmationToken)) return Response.json({ errorCode: "IMPORT_CONFIRMATION_CHANGED", error: "The file, filename or import decision changed, or the preview expired. Preview it again before importing." }, { status: 409 });
+    // What is imported is what was previewed: the same file, column choices and edits.
+    if (!matchesImportConfirmation(parsed, confirmationToken)) return Response.json({ errorCode: "IMPORT_CONFIRMATION_CHANGED", error: "The file, filename or import decision changed, or the preview expired. Preview it again before importing." }, { status: 409 });
     const validation = await validateStructuredImport(parsed);
     if (!validation.preview.canImport) return Response.json({ error: "The import no longer passes validation.", preview: validation.preview }, { status: 422 });
 
@@ -35,7 +37,7 @@ export async function POST(request: Request, context: { params: Promise<{ module
       size: preparedFile.size,
       storagePath: preparedFile.storagePath,
       sha256: preparedFile.sha256,
-      metadataJson: { ...preparedFile.metadataJson, importModule: module, importFormat: parsed.format },
+      metadataJson: { ...preparedFile.metadataJson, importModule: module, importFormat: parsed.format, ...(parsed.edits ? { previewEdits: importEditsSummary(parsed.edits) } : {}) },
     } });
     attachmentId = attachment.id;
     const result = await commitStructuredImport(parsed, validation, attachment.id, confirmationToken);

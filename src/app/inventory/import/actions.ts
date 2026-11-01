@@ -97,7 +97,7 @@ export async function importInventoryDraft(formData: FormData): Promise<{ href?:
     };
     const validation = await validateStructuredImport(parsed);
     if (!validation.preview.canImport) {
-      return { problems: [...validation.preview.errors, ...validation.preview.rows.flatMap((row) => row.errors.map((error) => `${row.index}: ${error}`))] };
+      return { problems: [...validation.preview.errors, ...validation.preview.rows.flatMap((row) => row.errors.map((error) => `Line ${row.index}: ${error}`))] };
     }
     for (const file of sources) prepared.push(await prepareAttachmentFile(file));
     await writePreparedAttachmentFiles(prepared);

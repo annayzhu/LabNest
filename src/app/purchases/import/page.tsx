@@ -4,7 +4,7 @@ import { StructuredImportWorkspace } from "@/components/StructuredImportWorkspac
 export default function Page() {
   return (
     <AppShell>
-      <PageHeader title="导入实际购买" />
+      <PageHeader title="Import purchases" />
       <StructuredImportWorkspace module="purchases" />
     </AppShell>
   );

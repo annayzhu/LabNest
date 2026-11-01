@@ -16,6 +16,8 @@ import { localeCookieName, resolveAppLocale, translateUiText } from "@/lib/i18n"
 import { ExperimentStatus } from "@/generated/prisma/enums";
 import { remainingStepTimerSeconds } from "@/lib/step-timer";
 import { runProgressFromSource } from "@/lib/structured-run";
+import { addDays as addLabDays, labClock, labDayKey, labInstant } from "@/lib/experiment-schedule";
+import { scheduledBlocks, type ScheduledBlockSummary } from "@/lib/experiment-schedule.server";
 import {
   calendarDateKey,
   calendarMonthKey,
@@ -152,6 +154,16 @@ export default async function OverviewPage({
     }),
   ]);
 
+  // 日程段 (Q270): today, and the month, read as blocks for experiments that have a schedule.
+  const todayLabDay = labDayKey(today);
+  const [todayBlocks, monthBlocks, scheduledExperimentRows] = await Promise.all([
+    scheduledBlocks({ from: new Date(labInstant(todayLabDay, 0)), to: new Date(labInstant(addLabDays(todayLabDay, 1), 0)) }),
+    scheduledBlocks({ from: calendarStart, to: calendarEnd }, { anyStatus: true }),
+    prisma.experimentScheduleBlock.findMany({ where: { experimentId: { in: todayExperiments.map((experiment) => experiment.id) } }, distinct: ["experimentId"], select: { experimentId: true } }),
+  ]);
+  const scheduledExperiments = new Set(scheduledExperimentRows.map((row) => row.experimentId));
+  const monthScheduled = new Set(monthBlocks.map((block) => block.experimentId));
+  const blockHref = (block: ScheduledBlockSummary) => block.kind === "steps" && block.firstOpenStepId ? `/experiments/${block.experimentId}/run#step-${block.firstOpenStepId}` : `/experiments/${block.experimentId}/schedule`;
   const calendarActivities: OverviewCalendarActivity[] = [
     ...calendarEntries.map((entry) => ({
       id: `entry-${entry.id}`,
@@ -166,7 +178,7 @@ export default async function OverviewPage({
       context: entry.researchPlan?.title ?? entry.project?.name ?? undefined,
       summary: entry.body || undefined,
     })),
-    ...calendarExperiments.map((experiment) => ({
+    ...calendarExperiments.filter((experiment) => !monthScheduled.has(experiment.id)).map((experiment) => ({
       id: `experiment-${experiment.id}`,
       kind: "experiment" as const,
       title: experiment.title,
@@ -176,6 +188,17 @@ export default async function OverviewPage({
       status: experiment.status,
       context: experiment.researchPlan?.title ?? experiment.project?.name ?? undefined,
       summary: experiment.purpose ?? undefined,
+    })),
+    ...monthBlocks.map((block) => ({
+      id: `block-${block.id}`,
+      kind: "experiment" as const,
+      title: block.title,
+      dateKey: labDayKey(block.startAt),
+      startsAt: block.startAt,
+      ...(block.allDay ? {} : { timeLabel: labClock(block.startAt) }),
+      href: blockHref(block),
+      status: block.state === "done" ? "completed" : block.experimentStatus,
+      context: `${block.runCode} · ${block.experimentTitle}`,
     })),
   ].sort((left, right) => left.startsAt.localeCompare(right.startsAt));
   const viewMonthKey = calendarMonthKey(viewMonth);
@@ -229,8 +252,19 @@ export default async function OverviewPage({
     <span className="min-w-0 flex-1"><span className="block font-semibold">Enter run mode</span><span className="block text-xs opacity-80">Work with a tablet, phone and Apple Watch together</span></span>
     <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
   </Link>;
-  const scheduledToday = todayExperiments.filter((experiment) => calendarDateKey(experiment.date) === todayKey);
-  const todayPlanRows = scheduledToday.length ? scheduledToday.map((experiment) => (
+  // An experiment with a schedule shows its blocks for today; one without keeps its single day.
+  const scheduledToday = todayExperiments.filter((experiment) => calendarDateKey(experiment.date) === todayKey && !scheduledExperiments.has(experiment.id));
+  const todayBlockRows = todayBlocks.map((block) => (
+              <Link key={`block-${block.id}`} href={blockHref(block)} className="focus-ring flex min-h-14 items-center gap-3 px-4 py-3">
+                <span className="flex h-9 min-w-12 shrink-0 items-center justify-center rounded-full bg-warm px-2 font-mono text-xs font-medium text-moss" data-i18n-ignore>{block.allDay ? (locale === "zh" ? "全天" : "All day") : labClock(block.startAt)}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="line-clamp-2 block text-sm font-semibold leading-5 text-ink">{block.title}</span>
+                  <span className="mt-1 block truncate text-xs text-muted" data-i18n-ignore>{block.runCode} · {block.experimentTitle}</span>
+                </span>
+                {block.state === "done" ? <span className="shrink-0 text-xs font-medium text-muted">Done</span> : <ArrowRight className="h-4 w-4 shrink-0 text-muted" aria-hidden />}
+              </Link>
+            ));
+  const todayPlanRows = scheduledToday.length || todayBlockRows.length ? [...todayBlockRows, ...scheduledToday.map((experiment) => (
               <Link key={experiment.id} href={`/experiments/${experiment.id}/run`} className="focus-ring flex min-h-14 items-center gap-3 px-4 py-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-warm text-moss"><FlaskConical className="h-4 w-4" aria-hidden /></span>
                 <span className="min-w-0 flex-1">
@@ -239,14 +273,17 @@ export default async function OverviewPage({
                 </span>
                 <ArrowRight className="h-4 w-4 shrink-0 text-muted" aria-hidden />
               </Link>
-            )) : (
+            ))] : (
               <p className="px-4 py-5 text-sm leading-6 text-muted">Nothing is scheduled for today.</p>
             );
+  // On the phone: today's blocks, then experiments without a schedule, and a running one between its blocks.
+  const mobileExperiments = todayExperiments.filter((experiment) => !scheduledExperiments.has(experiment.id) || (experiment.status === "running" && !todayBlocks.some((block) => block.experimentId === experiment.id)));
+  const mobileBlocks = todayBlocks.map((block) => ({ id: block.id, href: blockHref(block), title: block.title, runCode: block.runCode, experimentTitle: block.experimentTitle, clock: block.allDay ? null : labClock(block.startAt), done: block.state === "done", running: block.experimentStatus === "running" }));
 
   return (
     <AppShell>
       <BackupAlert />
-      {!mobileCalendarOpen ? <MobileToday experiments={todayExperiments} today={today} monthKey={viewMonthKey} initialSelectedDateKey={initialSelectedDateKey} activities={calendarActivities} locale={locale} /> : <section className="bench-mobile space-y-3 lg:hidden">
+      {!mobileCalendarOpen ? <MobileToday experiments={mobileExperiments} blocks={mobileBlocks} today={today} monthKey={viewMonthKey} initialSelectedDateKey={initialSelectedDateKey} activities={calendarActivities} locale={locale} /> : <section className="bench-mobile space-y-3 lg:hidden">
         <Link href="/" className="focus-ring inline-flex min-h-11 items-center gap-2 px-2 text-sm font-semibold text-moss">
           <ArrowRight className="h-4 w-4 rotate-180" aria-hidden />Back to Today
         </Link>

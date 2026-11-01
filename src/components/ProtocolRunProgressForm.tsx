@@ -26,6 +26,7 @@ import type { ProtocolContentBlock } from '@/lib/protocol-document';
 import './protocol/protocol.css';
 import './run-bench.css';
 import { experimentStepGroupHeading } from "@/lib/experiment-planning";
+import { scheduleDayLabel } from "@/lib/experiment-schedule";
 import { useQueuedRunRecords } from "./useQueuedRunRecords";
 import { enqueueMobileMutation, runQueueContext } from "@/lib/mobile-mutation-queue";
 
@@ -53,12 +54,17 @@ type RunStep = {
   timerPausedAt: Date | null;
 };
 
+/** A day of the run's schedule; `title` only when the block was given its own name (the steps below already say which Protocol). */
+export type RunScheduleBlock = { id: string; dayIndex: number; dayKey: string; clock: string | null; title: string | null; stepIds: string[] };
+
 const initialState: ProtocolRunProgressState = {};
 const secondaryButton = buttonStyles({ size: "lg", className: "bg-surface font-medium text-moss hover:bg-warm disabled:cursor-wait disabled:opacity-50" });
 const primaryButton = buttonStyles({ variant: "primary", size: "lg", className: "font-medium disabled:cursor-wait disabled:opacity-50" });
 const fieldClass = `${formTextareaClass} bg-surface`;
 
-export function ProtocolRunProgressForm({ experimentId, status, steps, editable, evidenceByStep, frozenReferences, frozenReferenceTitles, protocolBased=false, structured, chipContexts = {}, consumption = [], stock = [], bench = false }: {
+export function ProtocolRunProgressForm({ experimentId, status, steps, editable, evidenceByStep, frozenReferences, frozenReferenceTitles, protocolBased=false, structured, chipContexts = {}, consumption = [], stock = [], bench = false, schedule }: {
+  /** 日程段 (Q263): the days the steps are planned on; the current day's block stays open, the others fold away. */
+  schedule?: { blocks: RunScheduleBlock[] };
   /** Materials this run used and not yet recorded: completing the run first asks whether to deduct them. */
   consumption?: ConsumptionLine[];
   stock?: ConsumptionStock[];
@@ -129,6 +135,28 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   const unavailable = (id: string) => Boolean(pendingCompletions.has(id) || structured?.steps[id]?.blocked || structured?.plan.skips[id] || structured?.steps[id]?.actualFields.some(f => f.required && !structured.plan.actualValues[id]?.[f.id] && !queued.some(item => item.actionType === "step.record" && item.state !== "conflict" && item.payload.experimentStepId === id && item.payload.intent === "actual" && item.payload.values[f.id])));
   const hasSteps = steps.length > 0;
   const currentStep = steps.find((step) => !completedIds.has(step.id));
+  const blockOf = useMemo(() => new Map((schedule?.blocks ?? []).flatMap(block => block.stepIds.map(id => [id, block] as const))), [schedule]);
+  const currentBlockId = currentStep ? blockOf.get(currentStep.id)?.id : undefined;
+  const [openBlocks, setOpenBlocks] = useState<ReadonlySet<string>>(() => new Set());
+  const blockOpen = (id: string) => id === currentBlockId || openBlocks.has(id);
+  const blockLabel = (block: RunScheduleBlock) => `${scheduleDayLabel(block.dayIndex, block.dayKey, zh)}${block.clock ? ` ${block.clock}` : ""}${block.title ? ` · ${block.title}` : ""}`;
+  // A step linked from Today or the schedule opens its day.
+  useEffect(() => {
+    const open = () => { const block = blockOf.get(decodeURIComponent(window.location.hash.replace(/^#step-/, ""))); if (block) setOpenBlocks(current => new Set([...current, block.id])); };
+    const frame = requestAnimationFrame(open);
+    window.addEventListener("hashchange", open);
+    return () => { cancelAnimationFrame(frame); window.removeEventListener("hashchange", open); };
+  }, [blockOf]);
+  const blockHead = (block: RunScheduleBlock) => {
+    const done = block.stepIds.filter(id => completedIds.has(id)).length;
+    const current = block.id === currentBlockId, open = blockOpen(block.id);
+    return <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-sm ${current ? "bg-action-surface text-moss" : "bg-warm/50 text-graphite"}`} data-schedule-block={block.id}>
+      <span className="font-semibold" data-i18n-ignore>{blockLabel(block)}</span>
+      <span className="font-mono text-xs text-muted" data-i18n-ignore>{done}/{block.stepIds.length}</span>
+      {current ? <span className="text-xs font-semibold">{zh ? "当前" : "Now"}</span> : <button type="button" className="focus-ring ml-auto min-h-9 rounded px-2 text-xs font-medium text-moss" aria-expanded={open} onClick={() => setOpenBlocks(currentSet => { const next = new Set(currentSet); if (next.has(block.id)) next.delete(block.id); else next.add(block.id); return next; })}>{open ? (zh ? "收起" : "Fold") : (zh ? "展开" : "Show steps")}</button>}
+    </div>;
+  };
+  const startsBlock = (list: RunStep[], index: number) => { const block = blockOf.get(list[index].id); return block && (index === 0 || blockOf.get(list[index - 1].id)?.id !== block.id) ? block : undefined; };
   useEffect(()=>{const restore=()=>{const id=decodeURIComponent(window.location.hash.replace(/^#step-/,''));if(steps.some(step=>step.id===id))setSelectedStepId(id);};const frame=requestAnimationFrame(restore);window.addEventListener('hashchange',restore);return()=>{cancelAnimationFrame(frame);window.removeEventListener('hashchange',restore);};},[steps,setSelectedStepId]);
   const [allStepsOpen, setAllStepsOpen] = useState(false);
   const [offlineStatus, setOfflineStatus] = useState("");
@@ -261,9 +289,11 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
       <header><strong>{zh ? "步骤" : "Steps"}</strong><small>{requiredCompleted}/{requiredSteps.length}{remaining ? ` · ${remaining} ${zh ? "步待做" : "remaining"}` : ` · ${zh ? "全部完成" : "all done"}`}</small></header>
       <ol>{groups.map(group => <Fragment key={`rail-${group.key}`}>
         {groups.length > 1 ? <li><span className="ln-bench-group">{experimentStepGroupHeading(group.title).title}</span></li> : null}
-        {group.steps.map(step => { const index = steps.findIndex(item => item.id === step.id); return <li key={`rail-${step.id}`} className={completedIds.has(step.id) ? "is-done" : undefined}>
+        {group.steps.map((step, stepIndex) => { const index = steps.findIndex(item => item.id === step.id); const block = startsBlock(group.steps, stepIndex); return <Fragment key={`rail-${step.id}`}>
+          {block ? <li><span className="ln-bench-group" data-i18n-ignore>{blockLabel(block)}</span></li> : null}
+          <li className={completedIds.has(step.id) ? "is-done" : undefined}>
           <button type="button" aria-current={selectedStep?.id === step.id ? "step" : undefined} onClick={() => setSelectedStepId(step.id)}><span className="ln-bench-number" aria-hidden>{completedIds.has(step.id) ? "✓" : index + 1}</span><span>{step.title}</span></button>
-        </li>; })}
+        </li></Fragment>; })}
       </Fragment>)}</ol>
       <footer><a className="focus-ring" href="#run-preparation">{zh ? "准备清单" : "Preparation"}</a><a className="focus-ring" href="#result-recording">{zh ? "实验结果" : "Results"}</a></footer>
     </aside> : null}
@@ -281,6 +311,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
       {draftNotice?<p role="status" className="text-xs text-warning">{draftNotice}</p>:null}
       {selectedStep ? (
         <div className="p-4">
+          {blockOf.get(selectedStep.id) ? <p className="text-xs font-medium text-moss" data-i18n-ignore>{blockLabel(blockOf.get(selectedStep.id)!)}</p> : null}
           {groups.length>1 ? <p className="text-xs text-muted">{experimentStepGroupHeading(selectedStep.groupTitle).title}</p> : null}
           <RunStepNotes blocks={selectedStep.richContent?.notesBefore} className="mb-3" />
           <div className="flex items-start justify-between gap-3">{selectedStep.richContent?.derivedTitle ? <p className="mt-1 font-mono text-xs text-muted">{completedIds.has(selectedStep.id)?"✓ ":""}{zh ? `第 ${selectedStepIndex + 1} 步` : `Step ${selectedStepIndex + 1}`}{stepTag(selectedStep.id)}</p> : <h3 className="mt-1 text-base font-semibold leading-6 text-ink">{completedIds.has(selectedStep.id)?"✓ ":""}{selectedStep.title}{stepTag(selectedStep.id)}</h3>}{originalButton(selectedStep)}</div>
@@ -385,7 +416,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
               <span className="min-w-0"><strong id={`run-group-${group.key}`} className="block text-sm font-semibold text-ink">{group.order + 1}. {heading.title}</strong><span className="mt-0.5 block text-xs text-muted">{heading.detail ? `${heading.detail} · ` : ""}Whole block · {groupCompleted}/{group.steps.length} steps checked</span></span>
             </label>
             <div className="divide-y divide-hairline">
-              {group.steps.map((step) => <Fragment key={step.id}>{step.richContent?.notesBefore?.length ? <div className="px-4 py-3"><RunStepNotes blocks={step.richContent.notesBefore} /></div> : null}<div id={`step-${step.id}`} className="grid gap-3 px-4 py-4 md:grid-cols-[minmax(0,1fr)_minmax(220px,0.45fr)]">
+              {group.steps.map((step, stepIndex) => { const block = startsBlock(group.steps, stepIndex); const folded = Boolean(blockOf.get(step.id)) && !blockOpen(blockOf.get(step.id)!.id); return <Fragment key={step.id}>{block ? blockHead(block) : null}<div hidden={folded} className="divide-y divide-hairline">{step.richContent?.notesBefore?.length ? <div className="px-4 py-3"><RunStepNotes blocks={step.richContent.notesBefore} /></div> : null}<div id={`step-${step.id}`} className="grid gap-3 px-4 py-4 md:grid-cols-[minmax(0,1fr)_minmax(220px,0.45fr)]">
                 <div className="min-w-0">
                 <label className="flex min-w-0 cursor-pointer items-start gap-3">
                   <input type="checkbox" name="completedStepIds" value={step.id} checked={completedIds.has(step.id)} onChange={(event) => setStep(step.id, event.target.checked)} disabled={!editable || pending || unavailable(step.id)} className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]" />
@@ -402,7 +433,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
                   {originalButton(step)}
                   {step.allowsDeviation ? <><label><span className={formLabelClass}>Deviation or incident</span><textarea name={`deviation:${step.id}`} value={draftFields[`deviation:${step.id}`] ?? step.deviationNote ?? ""} onChange={e => setDraftFields(current => ({ ...current, [`deviation:${step.id}`]: e.target.value }))} disabled={!editable || pending} placeholder="Only record what differed from the planned method" className={`${fieldClass} min-h-20 resize-y`} /></label></> : <p className="rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-xs text-muted">Deviation recording is disabled by the locked Protocol step.</p>}
                 </div>
-              </div>{step.richContent?.notesAfter?.length ? <div className="px-4 py-3"><RunStepNotes blocks={step.richContent.notesAfter} /></div> : null}</Fragment>)}
+              </div>{step.richContent?.notesAfter?.length ? <div className="px-4 py-3"><RunStepNotes blocks={step.richContent.notesAfter} /></div> : null}</div></Fragment>; })}
             </div>
           </section>;
         })}

@@ -4,6 +4,7 @@ import { experimentExecutionDocument } from "@/lib/experiment-document";
 import { ExecutionRecordPreview } from "./ExecutionRecordPreview";
 import { ExecutionRecordBlocks, ExecutionRecordProvider } from "./ExecutionRecordSteps";
 import { isRecordLocked } from "@/lib/record-lifecycle";
+import { labDate } from "@/lib/lab-time";
 import { newClientMutationId } from "@/lib/client-mutation-id";
 import { runProgressFromSource, structuredRunView } from '@/lib/structured-run';
 import { useActionState, useState } from "react";
@@ -55,7 +56,8 @@ export function ExperimentForm({ intro, action, plans, protocolVersions = [], in
   const [selectedIds, setSelectedIds] = useState(initialSelectedIds);
   const [title, setTitle] = useState(initial.title ?? "");
   const [runCodeSuffix, setRunCodeSuffix] = useState(initial.suggestedCodeSuffix ?? "");
-  const [date, setDate] = useState(initial.date ?? new Date().toISOString().slice(0, 10));
+  // Today on the lab clock, not in UTC (Q269): late in the evening a new experiment still starts today.
+  const [date, setDate] = useState(initial.date ?? labDate(new Date()));
   // Follows the saved status (a step checked on this page may start the run) until the author picks one.
   const [statusChoice, setStatus] = useState<string | null>(null);
   const status = statusChoice ?? initial.status ?? "planned";
@@ -120,7 +122,7 @@ export function ExperimentForm({ intro, action, plans, protocolVersions = [], in
     <section className="border-b border-hairline py-3">
       <input type="hidden" name="title" value={title} />
       <div className="grid gap-3">
-      <label><span className={formLabelClass}>Planned date</span><input required name="date" type="date" value={date} onChange={(event) => setDate(event.target.value)} className={formInputClass} /></label>
+      <label><span className={formLabelClass}>Start date</span><input required name="date" type="date" value={date} onChange={(event) => setDate(event.target.value)} className={formInputClass} /></label>
       </div>
     </section>
     <Disclosure title="Purpose" summary={purpose.trim() || "One line: what this run should establish"} defaultOpen={Boolean(purpose.trim())}>

@@ -5,6 +5,28 @@ import { prisma } from "@/lib/db";
 import { reserveRecordCode } from "@/lib/record-codes";
 import { associateDocumentMedia } from "@/lib/document-media.server";
 import type { Prisma } from "@/generated/prisma/client";
+import { addDays, daysBetween, defaultWorkHours, labDayKey, labInstant, nextWorkMoment } from "@/lib/experiment-schedule";
+import { experimentDateOf } from "@/lib/experiment-schedule.server";
+
+/**
+ * The schedule comes along as a plan (Q269): the same days and clock times, starting on the next working day, nothing
+ * ticked off. A custom step's reference is its row, so it follows the copied row; a Protocol step's reference stays.
+ */
+async function copySchedule(tx: Prisma.TransactionClient, sourceId: string, copyId: string, stepIds: Map<string, string>) {
+  const blocks = await tx.experimentScheduleBlock.findMany({ where: { experimentId: sourceId }, orderBy: { startAt: "asc" } });
+  if (!blocks.length) return;
+  const startDay = labDayKey(nextWorkMoment(labInstant(addDays(labDayKey(new Date()), 1), defaultWorkHours.start)));
+  const shift = daysBetween(labDayKey(blocks[0].startAt), startDay) * 86_400_000;
+  const ids = new Map(blocks.map(block => [block.id, randomUUID()]));
+  const refOf = (ref: string) => stepIds.get(ref) ?? ref;
+  await tx.experimentScheduleBlock.createMany({ data: blocks.map(block => ({
+    id: ids.get(block.id)!, experimentId: copyId, kind: block.kind, title: block.title, stepRefs: block.stepRefs.map(refOf), startAt: new Date(block.startAt.getTime() + shift),
+    allDay: block.allDay, estimatedMinutes: block.estimatedMinutes, afterBlockId: block.afterBlockId ? ids.get(block.afterBlockId) ?? null : null,
+    minGapMinutes: block.minGapMinutes, maxGapMinutes: block.maxGapMinutes, gapSource: block.gapSource?.replace(/^(step|overnight):(.+)$/, (_, kind: string, ref: string) => `${kind}:${refOf(ref)}`) ?? null,
+    note: block.note, doneAt: null,
+  })) });
+  await tx.experiment.update({ where: { id: copyId }, data: { date: experimentDateOf(startDay) } });
+}
 
 /** Copy the saved plan and locked method, never the execution or consumption history. */
 export async function copyExperiment(sourceId: string, raw: unknown) {
@@ -37,6 +59,7 @@ export async function copyExperiment(sourceId: string, raw: unknown) {
     const groupIds = new Map(source.sampleGroups.map(group => [group.id, randomUUID()]));
     if (groupIds.size) await tx.experimentSampleGroup.createMany({ data: source.sampleGroups.map(group => ({ id: groupIds.get(group.id)!, experimentId: id, label: group.label, sortOrder: group.sortOrder })) });
     if (source.samples.length) await tx.experimentSample.createMany({ data: source.samples.map(link => ({ experimentId: id, sampleId: link.sampleId, role: "input" as const, groupId: link.groupId ? groupIds.get(link.groupId) ?? null : null, sortOrder: link.sortOrder })) });
+    await copySchedule(tx, sourceId, id, stepIds);
     await associateDocumentMedia(tx, [copy.contentJson,copy.protocolSnapshotJson], "experiment",id);
     await tx.activityLog.create({ data: { action: "copy", targetType: "experiment", targetId: id, metadataJson: { sourceId, sourceRunCode: source.runCode, executionReset: true } } });
     return copy;

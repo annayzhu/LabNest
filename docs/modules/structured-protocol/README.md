@@ -9,6 +9,7 @@
 | 验收记录 | [ACCEPTANCE](20261014/ACCEPTANCE.md) |
 | 后续编辑体验与功能调整 | [20261014-redesign 目录](20261014-redesign/) |
 | 后续计划 | [PLAN](20261014-redesign/PLAN.md) · [ROADMAP](20261014-redesign/ROADMAP.md) |
+| 多日实验排程与日历同步 | [2026-11-01 设计稿（Q259–Q270）](multi-day-schedule-20261101/PLAN.md) |
 
 两个批次及各自证据分开保存。任务书中的待办、代码中已经完成的行为和真机验证结论，需要分别判断。
 

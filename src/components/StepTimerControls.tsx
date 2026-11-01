@@ -58,10 +58,10 @@ export function StepTimerControls({ experimentId, step, compact=false, execution
     startTransition(() => formAction(formData));
   }
 
-  return <>{compact?<button type="button" aria-expanded={expanded} onClick={toggleExpanded} className="flex min-h-11 items-center justify-center gap-1 rounded-lg border border-hairline px-2 text-sm text-moss"><Timer className="h-4 w-4" aria-hidden/>{locale==="zh"?"计时器":"Timer"}{configured?<span className="font-mono text-xs">{formatStepTimer(remaining)}</span>:null}</button>:null}<section hidden={compact&&!expanded} aria-label="Step timer" className="col-span-2 rounded-[var(--ln-radius-panel-inner)] border border-info/30 bg-info-surface p-3">
+  return <>{compact?<button type="button" aria-expanded={expanded} onClick={toggleExpanded} className="flex min-h-11 items-center justify-center gap-1 rounded-lg border border-hairline px-2 text-sm text-moss"><Timer className="h-4 w-4" aria-hidden/>{locale==="zh"?"计时器":"Timer"}{configured?<span className="font-mono text-xs">{formatStepTimer(remaining, locale==="zh")}</span>:null}</button>:null}<section hidden={compact&&!expanded} aria-label="Step timer" className="col-span-2 rounded-[var(--ln-radius-panel-inner)] border border-info/30 bg-info-surface p-3">
     <div className="flex items-center justify-between gap-3">
       <span className="flex items-center gap-2 text-sm font-semibold text-ink"><Timer className="h-4 w-4 text-info" aria-hidden />Step timer</span>
-      <span className="font-mono text-xl font-semibold tabular-nums text-ink" aria-live="off">{formatStepTimer(remaining)}</span>
+      <span className="font-mono text-xl font-semibold tabular-nums text-ink" aria-live="off">{formatStepTimer(remaining, locale==="zh")}</span>
     </div>
     <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2">
       {!configured ? <label className="min-w-0"><span className="sr-only">Timer duration in minutes</span><input value={durationMinutes} onChange={(event) => setDurationMinutes(event.target.value)} type="number" min="0.1" max="1440" step="0.1" className="focus-ring h-11 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 text-sm text-ink" aria-label="Timer duration in minutes" /></label> : <span className="flex min-h-11 items-center text-xs text-muted">{Math.round(durationSeconds / 60)} min preset</span>}

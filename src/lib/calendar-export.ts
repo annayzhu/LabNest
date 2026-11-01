@@ -1,14 +1,20 @@
-import { addDays, format } from "date-fns";
 import { ExperimentStatus, RecordLifecycleStatus } from "@/generated/prisma/enums";
-import { calendarDateKey } from "@/lib/overview-calendar";
+import { addDays, labDayKey, labInstant } from "@/lib/experiment-schedule";
 
 export type CalendarEvent = {
   id: string;
   title: string;
+  /** The day of an all-day event. */
   date: Date;
   runCode: string;
   planTitle?: string;
   url: string;
+  /** A 日程段 (Q267): its own UID, a start time when it has one (else all day on `date`), its length and revision. */
+  uid?: string;
+  startAt?: Date;
+  minutes?: number;
+  sequence?: number;
+  details?: string[];
 };
 
 const openStatuses = [ExperimentStatus.planned, ExperimentStatus.running];
@@ -22,11 +28,13 @@ export function isExportableExperiment(experiment: { status: string; recordStatu
 }
 
 /**
- * An iCalendar file (RFC 5545) with one all-day event per experiment: the planned-date form takes a
- * day, not a time. The day is read on the lab clock, so a phone in another timezone keeps it. Each
- * event keeps the experiment's id as its UID, so calendars that honour UIDs update instead of adding.
+ * An iCalendar file (RFC 5545): one all-day event per experiment without a schedule, and one event per 日程段 of an
+ * experiment with one (Q267) — timed when the block has a start time. Days are read on the lab clock, so a phone in
+ * another timezone keeps them; timed events are written in UTC. Each event keeps a stable UID (the experiment's or the
+ * block's), so calendars that honour UIDs update instead of adding. `remindStart` adds a reminder 15 minutes before a
+ * timed block.
  */
-export function buildCalendar(events: CalendarEvent[], { name, remind, now = new Date() }: { name: string; remind: boolean; now?: Date }) {
+export function buildCalendar(events: CalendarEvent[], { name, remind, remindStart = false, now = new Date() }: { name: string; remind: boolean; remindStart?: boolean; now?: Date }) {
   const stamp = utcStamp(now);
   const lines = [
     "BEGIN:VCALENDAR",
@@ -37,31 +45,27 @@ export function buildCalendar(events: CalendarEvent[], { name, remind, now = new
     `X-WR-CALNAME:${escapeText(name)}`,
   ];
   for (const event of events) {
-    const day = dayStart(event.date);
-    const notes = [event.runCode, event.planTitle, event.url].filter(Boolean).join("\n");
-    lines.push(
-      "BEGIN:VEVENT",
-      `UID:experiment-${event.id}@labnest`,
-      `DTSTAMP:${stamp}`,
-      `DTSTART;VALUE=DATE:${format(day, "yyyyMMdd")}`,
-      `DTEND;VALUE=DATE:${format(addDays(day, 1), "yyyyMMdd")}`,
-      `SUMMARY:${escapeText(event.title)}`,
-      `DESCRIPTION:${escapeText(notes)}`,
-      `URL:${event.url}`,
-      "TRANSP:TRANSPARENT",
-    );
-    // An all-day event starts at local midnight, so four hours before is 20:00 the evening before.
-    if (remind) lines.push("BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${escapeText(event.title)}`, "TRIGGER:-PT4H", "END:VALARM");
+    const notes = [event.runCode, event.planTitle, ...(event.details ?? []), event.url].filter(Boolean).join("\n");
+    const day = labDayKey(event.startAt ?? event.date);
+    lines.push("BEGIN:VEVENT", `UID:${event.uid ?? `experiment-${event.id}`}@labnest`, `DTSTAMP:${stamp}`);
+    if (event.sequence !== undefined) lines.push(`SEQUENCE:${event.sequence}`);
+    if (event.startAt) {
+      const end = new Date(event.startAt.getTime() + (event.minutes ?? 30) * 60_000);
+      lines.push(`DTSTART:${utcStamp(event.startAt)}`, `DTEND:${utcStamp(end)}`);
+    } else lines.push(`DTSTART;VALUE=DATE:${compactDay(day)}`, `DTEND;VALUE=DATE:${compactDay(addDays(day, 1))}`);
+    lines.push(`SUMMARY:${escapeText(event.title)}`, `DESCRIPTION:${escapeText(notes)}`, `URL:${event.url}`, `TRANSP:${event.startAt ? "OPAQUE" : "TRANSPARENT"}`);
+    // An all-day event starts at local midnight, so four hours before is 20:00 the evening before; a timed one is
+    // reminded at 20:00 the evening before on the lab clock.
+    const evening = event.startAt ? `TRIGGER;VALUE=DATE-TIME:${utcStamp(new Date(labInstant(addDays(day, -1), 20 * 60)))}` : "TRIGGER:-PT4H";
+    if (remind) lines.push("BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${escapeText(event.title)}`, evening, "END:VALARM");
+    if (remindStart && event.startAt) lines.push("BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${escapeText(event.title)}`, "TRIGGER:-PT15M", "END:VALARM");
     lines.push("END:VEVENT");
   }
   lines.push("END:VCALENDAR");
   return lines.map(fold).join("\r\n") + "\r\n";
 }
 
-function dayStart(date: Date) {
-  const [year, month, day] = calendarDateKey(date).split("-").map(Number);
-  return new Date(year, month - 1, day);
-}
+const compactDay = (dayKey: string) => dayKey.replace(/-/g, "");
 
 function utcStamp(date: Date) {
   return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");

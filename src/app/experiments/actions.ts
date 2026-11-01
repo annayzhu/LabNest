@@ -13,6 +13,7 @@ import { prisma } from "@/lib/db";
 import { associateDocumentMedia } from "@/lib/document-media.server";
 import { experimentSearchText } from "@/lib/experiment-document";
 import { assignExperimentResearchPlan, createExperimentWithProtocolSnapshot } from "@/lib/experiments";
+import { shiftScheduleToDate } from "@/lib/experiment-schedule.server";
 import { orderedUniqueIds, parseCustomExperimentSteps } from "@/lib/experiment-planning";
 import { recordCodeFromSuffix } from "@/lib/record-codes";
 import { freezeEntrySources } from "@/lib/entry-assignment.server";
@@ -118,6 +119,8 @@ export async function updateExperiment(
       assertDocumentSaveVersion(formData, fresh);
       if (data.parsed.researchPlanId) await assignExperimentResearchPlan(tx, fresh, data.parsed.researchPlanId);
       if (isRecordLocked(data.parsed.recordStatus)) await freezeEntrySources(tx, "experiment", current.id);
+      // The start date is the schedule's first day (Q263): changing it moves every block by whole days.
+      await shiftScheduleToDate(tx, fresh, data.parsed.date);
       await tx.experiment.update({ where: { id: current.id }, data: {
         title: data.parsed.title, date: data.parsed.date, status: data.parsed.status, recordStatus: data.parsed.recordStatus,
         purpose: data.purpose, tags: data.tags, contentJson: data.contentJson, searchText: data.searchText,

@@ -2,6 +2,7 @@ import { importZh, translateImportDynamic } from "./i18n-import";
 import { inventoryZh, translateInventoryDynamic } from "./i18n-inventory";
 import { samplesZh, translateSamplesDynamic } from "./i18n-samples";
 import { referencesZh } from "./i18n-references";
+import { scheduleZh, translateScheduleDynamic } from "./i18n-schedule";
 
 export type AppLocale = "en" | "zh";
 
@@ -49,6 +50,7 @@ export const protocolLabelsZh: Record<string, string> = {
 export const zhUi: Record<string, string> = {
   ...samplesZh,
   ...referencesZh,
+  ...scheduleZh,
   "The page is still loading; try again.": "正文还在加载，请稍后再试。",
   "Verification": "验证",
   "Backup": "备份",
@@ -4458,6 +4460,6 @@ export function translateUiText(input: string, locale: AppLocale): string {
   // Import checks come before the general patterns, which would otherwise take “Line 3: …” for a “key: value” list.
   const dynamic: string = zhUi[value] ?? translateImportDynamic(value, (text) => translateUiText(text, "zh")) ?? translateDynamic(value);
   // Sample messages come last, so their general patterns never take over text another module already translates.
-  const translated = dynamic === value ? translateSamplesDynamic(value) ?? translateInventoryDynamic(value) ?? value : dynamic;
+  const translated = dynamic === value ? translateSamplesDynamic(value) ?? translateInventoryDynamic(value) ?? translateScheduleDynamic(value) ?? value : dynamic;
   return translated === value ? input : `${leading}${translated}${trailing}`;
 }

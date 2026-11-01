@@ -31,6 +31,8 @@ import { isRecordLocked } from "@/lib/record-lifecycle";
 import { samplesByBox } from "@/lib/samples";
 import { sampleLocationOptions } from "@/lib/samples.server";
 import { documentPlateLayouts, experimentSections, normalizeScientificDocument } from "@/lib/scientific-document";
+import { daysBetween, labClock, labDayKey, sortBlocks } from "@/lib/experiment-schedule";
+import { blockView, scheduleSteps } from "@/lib/experiment-schedule.server";
 
 
 export const dynamic = "force-dynamic";
@@ -55,6 +57,7 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
         results: { orderBy: { updatedAt: "desc" }, take: 8 },
         samples: { where: { role: "input" }, orderBy: { sortOrder: "asc" }, select: { group: { select: { label: true } }, sample: { select: { locationId: true, position: true } } } },
         sampleGroups: { orderBy: { sortOrder: "asc" }, select: { label: true } },
+        scheduleBlocks: true,
       },
     }),
     prisma.attachmentLink.findMany({
@@ -112,6 +115,14 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
   const boxLabels = experiment.samples.length ? new Map((await sampleLocationOptions(prisma)).map(location => [location.id, location.label])) : new Map<string, string>();
   const samplePrep = samplesByBox(experiment.samples.map(link => ({ locationLabel: link.sample.locationId ? boxLabels.get(link.sample.locationId) ?? null : null, position: link.sample.position })));
   const recordedUses = experiment.materialUses.map(row => ({ source: row.source }));
+  // 日程段 (Q263): the run reads as days, each block's steps under its day; the blocks of other days fold away.
+  const scheduleRows = sortBlocks(experiment.scheduleBlocks.map(blockView));
+  const scheduleStepMap = new Map(scheduleSteps(experiment).map(step => [step.ref, step]));
+  const firstScheduleDay = scheduleRows[0] ? labDayKey(scheduleRows[0].startAt) : undefined;
+  const schedule = firstScheduleDay && scheduleRows.some(block => block.kind === "steps") ? { blocks: scheduleRows.filter(block => block.kind === "steps").map(block => ({
+    id: block.id, dayIndex: daysBetween(firstScheduleDay, labDayKey(block.startAt)) + 1, dayKey: labDayKey(block.startAt), clock: block.allDay ? null : labClock(block.startAt),
+    title: block.title?.trim() || null, stepIds: block.stepRefs.flatMap(ref => scheduleStepMap.get(ref)?.stepIds ?? []),
+  })) } : undefined;
   const resultRecording = buildExperimentResultRecording(experiment.protocolVersions.map((link) => ({
     protocolVersionId: link.protocolVersionId,
     protocolCode: link.protocolVersion.protocol.humanCode,
@@ -182,6 +193,7 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
           evidenceByStep={evidenceByStep}
           consumption={consumption.filter(line => !consumptionRecorded(line, experiment.materialUses))}
           stock={inventoryItems.map(item => ({ id: item.id, name: item.name, managementMode: item.managementMode, lotNumber: item.lotNumber }))}
+          schedule={schedule}
         />
         {Object.values(structured.steps).some(step => step.applicability === 'not-applicable') ? <details className="rounded border border-hairline p-3" data-not-applicable><summary>Show other systems’ content (not applicable, not counted in this run’s progress)</summary>{Object.values(structured.steps).filter(step => step.applicability === 'not-applicable').map(step => <section key={`${step.versionId}:${step.source_ref}`} className="mt-3"><h3>{step.title} · not applicable</h3>{step.content_blocks?.map(block => <ProtocolContentBlockView key={block.id} block={block} executionContext/>)}</section>)}</details> : null}
 

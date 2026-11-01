@@ -6,9 +6,12 @@ import type { AppLocale } from "@/lib/i18n";
 import { calendarDateKey, type OverviewCalendarActivity } from "@/lib/overview-calendar";
 
 type Experiment = { id: string; title: string; runCode: string; status: string; date: Date };
+/** One of today's 日程段 (Q270), linked to its first open step. */
+type TodayBlock = { id: string; href: string; title: string; runCode: string; experimentTitle: string; clock: string | null; done: boolean; running: boolean };
 
-export function MobileToday({ experiments, today, monthKey, initialSelectedDateKey, activities, locale }: {
+export function MobileToday({ experiments, blocks = [], today, monthKey, initialSelectedDateKey, activities, locale }: {
   experiments: Experiment[];
+  blocks?: TodayBlock[];
   today: Date;
   monthKey: string;
   initialSelectedDateKey: string;
@@ -25,8 +28,10 @@ export function MobileToday({ experiments, today, monthKey, initialSelectedDateK
   ];
   const ordered = [...experiments].sort((a, b) =>
     Number(b.status === "running") - Number(a.status === "running") || a.date.getTime() - b.date.getTime());
-  const running = experiments.filter((experiment) => experiment.status === "running").length;
-  const planned = experiments.length - running;
+  // Running experiments, whether listed whole or by today's blocks; planned work still to start today.
+  const running = new Set([...experiments.filter((experiment) => experiment.status === "running").map((experiment) => experiment.runCode), ...blocks.filter((block) => block.running).map((block) => block.runCode)]).size;
+  const planned = experiments.filter((experiment) => experiment.status !== "running").length + blocks.filter((block) => !block.running && !block.done).length;
+  const count = ordered.length + blocks.length;
   const dateLabel = today.toLocaleDateString(zh ? "zh-CN" : "en-US", { month: "long", day: "numeric", weekday: "long" });
 
   return <section className="bench-mobile space-y-6 lg:hidden">
@@ -69,10 +74,23 @@ export function MobileToday({ experiments, today, monthKey, initialSelectedDateK
     <section aria-labelledby="mobile-today-title">
       <div className="mb-2 flex items-baseline justify-between gap-3">
         <h2 id="mobile-today-title" className="text-base font-semibold text-ink">{zh ? "今日实验" : "Today’s experiments"}</h2>
-        <span className="font-mono text-xs text-muted" data-i18n-ignore>{zh ? `${ordered.length} 项` : `${ordered.length} ${ordered.length === 1 ? "item" : "items"}`}</span>
+        <span className="font-mono text-xs text-muted" data-i18n-ignore>{zh ? `${count} 项` : `${count} ${count === 1 ? "item" : "items"}`}</span>
       </div>
       <div className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
-        {ordered.length ? <ul className="divide-y divide-hairline">
+        {count ? <ul className="divide-y divide-hairline">
+          {blocks.map((block) => <li key={`block-${block.id}`}>
+            <Link href={block.href} className="focus-ring flex min-h-[4.5rem] items-center gap-3 px-4 py-3 transition-colors active:bg-warm">
+              <span className={`flex h-9 min-w-12 shrink-0 items-center justify-center rounded-full px-2 font-mono text-xs font-medium ${block.running && !block.done ? "bg-action text-warm" : "bg-action-surface text-moss"}`} data-i18n-ignore>{block.clock ?? (zh ? "全天" : "All day")}</span>
+              <span className="min-w-0 flex-1">
+                <span className="line-clamp-2 block text-sm font-semibold leading-5 text-ink">{block.title}</span>
+                <span className="mt-1 block truncate text-xs text-muted" data-i18n-ignore>{block.runCode} · {block.experimentTitle}</span>
+              </span>
+              <span className={`flex h-8 shrink-0 items-center gap-1 rounded-full px-3 text-xs font-semibold ${block.done ? "text-muted" : "border border-action-border text-moss"}`}>
+                {block.done ? (zh ? "已完成" : "Done") : (zh ? "去做" : "Open")}
+                {block.done ? null : <ArrowRight className="h-3.5 w-3.5" aria-hidden />}
+              </span>
+            </Link>
+          </li>)}
           {ordered.map((experiment) => {
             const isRunning = experiment.status === "running";
             return <li key={experiment.id}>

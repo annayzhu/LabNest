@@ -29,14 +29,16 @@ function ExportDialog({ scope, onClose }: { scope: string; onClose: () => void }
   const titleId = useId();
   const dialogRef = useRef<HTMLElement>(null);
   const [remind, setRemind] = useState(true);
+  const [remindStart, setRemindStart] = useState(false);
   const [count, setCount] = useState<number | null>(null);
+  const [events, setEvents] = useState(0);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let live = true;
     fetch(`/api/calendar/export?${scope}&count=1`, { cache: "no-store" })
       .then((response) => response.ok ? response.json() : Promise.reject())
-      .then((data: { count: number }) => { if (live) setCount(data.count); })
+      .then((data: { count: number; events?: number }) => { if (live) { setCount(data.count); setEvents(data.events ?? data.count); } })
       .catch(() => { if (live) setFailed(true); });
     return () => { live = false; };
   }, [scope]);
@@ -49,14 +51,17 @@ function ExportDialog({ scope, onClose }: { scope: string; onClose: () => void }
     return () => { window.removeEventListener("keydown", onKeyDown); trigger?.focus(); };
   }, [onClose]);
 
-  const href = `/api/calendar/export?${scope}${remind ? "" : "&remind=0"}`;
+  const href = `/api/calendar/export?${scope}${remind ? "" : "&remind=0"}${remindStart ? "&start=1" : ""}${zh ? "" : "&lang=en"}`;
+  // Q267: an experiment with a schedule becomes one event per block; one without stays a single all-day event.
   const summary = failed
     ? t("Could not read the planned experiments. Try again.")
     : count === null
       ? t("Counting planned experiments…")
       : count === 0
         ? t("No planned experiments to export.")
-        : zh ? `将导出 ${count} 个待做实验，每个实验为当天的全天事件。` : `${count} planned ${count === 1 ? "experiment" : "experiments"} will be added as all-day events.`;
+        : events === count
+          ? zh ? `将导出 ${count} 个待做实验，每个实验为当天的全天事件。` : `${count} planned ${count === 1 ? "experiment" : "experiments"} will be added as all-day events.`
+          : zh ? `将导出 ${count} 个待做实验的 ${events} 个事件：有日程的实验每段一个事件，其余为当天的全天事件。` : `${events} events from ${count} planned ${count === 1 ? "experiment" : "experiments"}: one per schedule block, and an all-day event for an experiment without a schedule.`;
 
   return <div className="ln-modal-layer fixed inset-0 z-[90] grid place-items-center p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <div className="ln-modal-backdrop pointer-events-none absolute inset-0 bg-ink/35 backdrop-blur-[2px]" aria-hidden />
@@ -71,6 +76,10 @@ function ExportDialog({ scope, onClose }: { scope: string; onClose: () => void }
           <input type="checkbox" checked={remind} onChange={(event) => setRemind(event.target.checked)} className="h-4 w-4 accent-[var(--action)]" />
           {t("Remind me at 20:00 the evening before")}
         </label>
+        {events !== (count ?? 0) ? <label className="flex min-h-11 items-center gap-2.5 text-ink">
+          <input type="checkbox" checked={remindStart} onChange={(event) => setRemindStart(event.target.checked)} className="h-4 w-4 accent-[var(--action)]" />
+          {t("Remind me 15 minutes before a block with a time")}
+        </label> : null}
         <p className="text-xs leading-5 text-muted">{t("On iPhone, open the file and tap Add All. Later changes in LabNest do not reach the calendar: export again after a change, and delete the old events if they appear twice.")}</p>
         <div className="flex justify-end gap-2 border-t border-hairline pt-3">
           <button type="button" onClick={onClose} className="focus-ring inline-flex h-9 items-center rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-3 text-sm font-medium text-graphite hover:border-border-strong hover:text-ink">{t("Cancel")}</button>

@@ -498,6 +498,7 @@ model Experiment {
   results               Result[]
   entries               Entry[]
   protocolVersions      ExperimentProtocolVersion[]
+  scheduleBlocks        ExperimentScheduleBlock[]
 
   @@index([status])
   @@index([recordStatus])
@@ -505,6 +506,37 @@ model Experiment {
   @@index([projectId])
   @@index([researchPlanId])
   @@index([primaryProtocolVersionId])
+}
+
+/// 日程段 (Q259–Q270): one day's stretch of an experiment's steps, or an item that is not in a Protocol (复苏细胞、送测序…).
+/// The first block's day is the experiment's `date`; an experiment without blocks is one block on that day.
+model ExperimentScheduleBlock {
+  id               String     @id @default(cuid())
+  experimentId     String
+  experiment       Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  /// steps | task
+  kind             String     @default("steps")
+  /// Empty: shown as "<Protocol> · steps a–b".
+  title            String?
+  /// The steps it covers by their stable reference (`protocolStepRef`, or the step id of a custom step); group copies follow.
+  stepRefs         String[]   @default([])
+  startAt          DateTime
+  allDay           Boolean    @default(false)
+  estimatedMinutes Int?
+  /// The block it waits for, and how long after that block ends it may start. Null bounds are open.
+  afterBlockId     String?
+  minGapMinutes    Int?
+  maxGapMinutes    Int?
+  /// Where the gap came from: "step:<ref>", "overnight:<ref>" or "manual".
+  gapSource        String?
+  note             String?
+  /// Items only: ticked off.
+  doneAt           DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@index([experimentId, startAt])
+  @@index([startAt])
 }
 
 model ExperimentProtocolVersion {

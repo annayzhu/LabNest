@@ -129,7 +129,7 @@ function TypeRow({ type, types, onEdit }: { type: ManagedType; types: ManagedTyp
           {!type.enabled ? <span className="ml-2 text-xs text-muted">Disabled</span> : null}
         </span>
         <span className="hidden min-w-0 truncate text-xs text-graphite md:block">{type.fields.length ? type.fields.map((field, index) => <span key={field.key}>{index ? " · " : ""}<span>{field.label}</span></span>) : <span className="text-muted">No fields</span>}</span>
-        <span className="hidden text-xs text-muted md:block"><span>{managementModeLabels[type.defaults.managementMode]}</span>{type.defaults.unit ? <> · <span className="font-mono">{type.defaults.unit}</span></> : null}</span>
+        <span className="hidden text-xs text-muted md:block"><span>{managementModeLabels[type.defaults.managementMode]}</span>{type.defaults.unit ? <> · <span>{type.defaults.unit}</span></> : null}</span>
         <span className="hidden text-right text-xs tabular-nums text-graphite md:block">{type.products}</span>
         <span className="flex justify-end gap-0.5">
           <button type="button" onClick={onEdit} aria-label="Edit type" title="Edit type" className={iconButton}><Pencil className="h-4 w-4" aria-hidden /></button>

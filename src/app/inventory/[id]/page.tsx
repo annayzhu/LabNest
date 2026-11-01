@@ -14,7 +14,7 @@ import { ReverseMovementButton } from "@/components/ReverseMovementButton";
 import { Badge, StatusPill } from "@/components/ui/Badge";
 import { buttonStyles } from "@/components/ui/Button";
 import { DataTable } from "@/components/ui/DataTable";
-import { Fact, Panel, QuantityText, Row, SideSection } from "@/components/InventoryDetail";
+import { Panel, QuantityText, Row, SideSection } from "@/components/InventoryDetail";
 import { ExperimentStatus, PurchaseStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import {
@@ -101,12 +101,26 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
           />
         </div>
 
-        <section aria-label="Stock summary" className="grid grid-cols-2 divide-x divide-y divide-hairline overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface md:grid-cols-4 md:divide-y-0">
-          <Fact label="Current stock" value={<QuantityText quantity={item.currentQuantity} unit={item.unit} recorded={item.quantityRecorded} />} detail={product?.lowThreshold != null ? <><span>Safety stock</span> <QuantityText quantity={product.lowThreshold} unit={product.lowThresholdUnit} /></> : <span>No safety stock</span>} />
-          <Fact label="Location" value={item.location ? paths.get(item.location.id) ?? item.location.name : "Unassigned"} detail={item.positionCode ?? temperatureLabel(item.location?.temperature) ?? "—"} />
-          <Fact label="Expiry" value={<span className="font-mono">{item.expiryDate?.toISOString().slice(0, 10) ?? "—"}</span>} detail={<span>{managementModeLabels[item.managementMode] ?? item.managementMode}</span>} />
-          <Fact label="Attention" value={item.status === "archived" ? <span className="text-sm text-muted">Archived</span> : riskFlags.length || sdsMissing ? <div className="flex flex-wrap gap-1.5"><InventoryRiskBadges flags={riskFlags} />{sdsMissing ? <Badge tone="danger">SDS missing</Badge> : null}</div> : <span className="text-sm text-muted">Nothing needs attention</span>} detail={item.status === "active" && (riskFlags.includes("low") || riskFlags.includes("depleted")) ? <AdviceText advice={advice} item={item} /> : null} />
-        </section>
+        {/* One line instead of four tiles (Q198): how much, where, until when; attention only when something needs it. */}
+        <div className="-mt-2 space-y-1.5">
+          <p className="flex flex-wrap items-baseline gap-x-2 text-sm text-graphite">
+            <span className="font-medium text-ink"><QuantityText quantity={item.currentQuantity} unit={item.unit} recorded={item.quantityRecorded} /></span>
+            {product?.lowThreshold != null ? <span className="text-muted"><span>Safety stock</span> <QuantityText quantity={product.lowThreshold} unit={product.lowThresholdUnit} /></span> : null}
+            <span aria-hidden className="text-muted">·</span>
+            <span>{item.location ? paths.get(item.location.id) ?? item.location.name : "Unassigned"}{item.positionCode ? ` · ${item.positionCode}` : ""}</span>
+            {temperatureLabel(item.location?.temperature) ? <span className="text-muted">{temperatureLabel(item.location?.temperature)}</span> : null}
+            {item.expiryDate ? <><span aria-hidden className="text-muted">·</span><span><span>Expires</span> <span className="tabular-nums">{item.expiryDate.toISOString().slice(0, 10)}</span></span></> : null}
+            <span aria-hidden className="text-muted">·</span>
+            <span className="text-muted">{managementModeLabels[item.managementMode] ?? item.managementMode}</span>
+          </p>
+          {item.status === "archived" || riskFlags.length || sdsMissing ? (
+            <div className="flex flex-wrap items-center gap-2 text-sm text-graphite">
+              {item.status === "archived" ? <Badge tone="neutral">Archived</Badge> : <InventoryRiskBadges flags={riskFlags} />}
+              {sdsMissing ? <Badge tone="danger">SDS missing</Badge> : null}
+              {item.status === "active" && (riskFlags.includes("low") || riskFlags.includes("depleted")) ? <span className="text-muted"><AdviceText advice={advice} item={item} /></span> : null}
+            </div>
+          ) : null}
+        </div>
 
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="min-w-0 space-y-4">
@@ -139,7 +153,8 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
                 columns={[
                   { key: "date", header: "Date", render: (row) => <span className="whitespace-nowrap text-xs tabular-nums">{labDateTime(row.createdAt)}{row.deviceCreatedAt ? <span className="block text-muted">{labDate(row.deviceCreatedAt)}</span> : null}</span> },
                   { key: "type", header: "Movement", render: (row) => <div className="space-y-1"><StatusPill status={row.entry.label ?? row.type} />{row.reversedBy ? <p className="text-xs text-muted">Reversed</p> : null}{row.reverses ? <p className="whitespace-nowrap text-xs text-muted"><span>Reverses</span> <span className="tabular-nums">{labDate(row.reverses.createdAt)}</span></p> : null}</div> },
-                  { key: "change", header: "Change", render: (row) => row.quantityChange === 0 ? <span className="text-muted">—</span> : <span className={`whitespace-nowrap font-semibold ${row.reversedBy ? "text-muted line-through" : row.quantityChange < 0 ? "text-error" : "text-success"}`}><span className="tabular-nums">{row.quantityChange > 0 ? "+" : ""}{formatStockQuantity(row.quantityChange, row.unit)}</span> <span>{row.unit}</span></span> },
+                  // The sign says in or out; quantities are not colored or bold (Q198).
+                  { key: "change", header: "Change", numeric: true, render: (row) => row.quantityChange === 0 ? <span className="text-muted">—</span> : <span className={`whitespace-nowrap ${row.reversedBy ? "text-muted line-through" : "text-ink"}`}><span className="tabular-nums">{row.quantityChange > 0 ? "+" : "−"}{formatStockQuantity(Math.abs(row.quantityChange), row.unit)}</span> <span>{row.unit}</span></span> },
                   ...(shown.handler ? [{ key: "handler", header: "Handled by", render: (row: (typeof ledger)[number]) => row.entry.handler ?? "—" }] : []),
                   ...(shown.link ? [{ key: "source", header: "Link", render: (row: (typeof ledger)[number]) => row.experiment ? <Link href={`/experiments/${row.experiment.id}`} className="text-moss hover:underline">{row.experiment.runCode}</Link> : row.purchase ? <span>{row.purchase.title}</span> : "—" }] : []),
                   ...(shown.note ? [{ key: "notes", header: "Note", render: (row: (typeof ledger)[number]) => <LedgerNote row={row} from={place(row.fromLocation)} to={place(row.toLocation)} /> }] : []),
@@ -156,7 +171,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
                   columns={[
                     { key: "name", header: "Item", render: (row) => <Link className="font-semibold text-moss" href={`/inventory/${row.id}`}>{row.name}</Link> },
                     { key: "code", header: "Aliquot", render: (row) => <span className="record-identifier text-xs">{row.aliquotCode ?? "—"}</span> },
-                    { key: "quantity", header: "Stock", render: (row) => <QuantityText quantity={row.currentQuantity} unit={row.unit} recorded={row.quantityRecorded} /> },
+                    { key: "quantity", header: "Stock", numeric: true, render: (row) => <QuantityText quantity={row.currentQuantity} unit={row.unit} recorded={row.quantityRecorded} /> },
                   ]}
                 />
               </Panel>
@@ -178,7 +193,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
             </SideSection>
             {[item.lotNumber, item.expiryDate, item.containerType, item.barcode, item.aliquotCode, item.parentInventoryItem].some(Boolean) ? <SideSection title="This lot">
               <Row label="Lot number" value={item.lotNumber} mono />
-              <Row label="Expiry date" value={item.expiryDate?.toISOString().slice(0, 10)} mono />
+              <Row label="Expiry date" value={item.expiryDate?.toISOString().slice(0, 10)} />
               <Row label="Container type" value={item.containerType} />
               <Row label="Barcode" value={item.barcode} mono />
               <Row label="Aliquot code" value={item.aliquotCode} mono />

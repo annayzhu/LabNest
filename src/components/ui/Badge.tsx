@@ -12,8 +12,9 @@ const toneClass: Record<StatusTone, string> = {
   sage: "bg-sage-surface text-moss border-hairline",
 };
 
+// A status reads as one word: it never breaks across lines in a narrow column.
 const badgeClass =
-  "inline-flex min-h-6 items-center rounded-[var(--ln-radius-control-sm)] border px-2 py-0.5 text-xs font-medium leading-5 tracking-[-0.005em]";
+  "inline-flex min-h-6 items-center whitespace-nowrap rounded-[var(--ln-radius-control-sm)] border px-2 py-0.5 text-xs font-medium leading-5 tracking-[-0.005em]";
 
 export function Badge({
   children,

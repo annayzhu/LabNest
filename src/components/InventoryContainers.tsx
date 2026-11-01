@@ -192,7 +192,8 @@ export function InventoryContainers({ itemId, unit, containers, observationUnits
 
       {batch && count("warehouse") ? <InventoryBatchIssue itemId={itemId} placesList={placesList} available={containers.filter((c) => c.state === "warehouse").map((c) => c.id)} /> : null}
 
-      <ul className="divide-y divide-hairline rounded-[var(--ln-radius-panel-inner)] border border-hairline">
+      {/* Rows divided by hairlines, not a box inside the panel (Q198). */}
+      <ul className="divide-y divide-hairline border-y border-hairline">
         {containers.length ? containers.map((c, index) => {
           const kit = kitComponents.length ? status(c) : null;
           const reading = c.observations[0];
@@ -286,7 +287,7 @@ export function InventoryContainers({ itemId, unit, containers, observationUnits
               ) : null}
             </li>
           );
-        }) : <li className="px-3 py-4 text-sm text-muted"><span>No containers yet.</span> <span>Add the ones in store, counted in</span> <span className="font-mono">{unit}</span>.</li>}
+        }) : <li className="px-3 py-4 text-sm text-muted"><span>No containers yet.</span> <span>Add the ones in store, counted in</span> <span>{unit}</span>.</li>}
       </ul>
     </div>
   );

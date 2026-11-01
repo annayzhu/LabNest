@@ -167,6 +167,7 @@ export default async function InventoryListPage({ searchParams }: { searchParams
               {
                 key: "quantity",
                 header: "Stock",
+                numeric: true,
                 render: (row) => (
                   <div>
                     <QuantityText quantity={row.currentQuantity} unit={row.unit} recorded={row.quantityRecorded} />
@@ -177,7 +178,7 @@ export default async function InventoryListPage({ searchParams }: { searchParams
               {
                 key: "lot",
                 header: "Lot / expiry",
-                render: (row) => <div className="font-mono text-xs"><p>{row.lotNumber ?? "—"}</p><p className="text-muted">{row.expiryDate?.toISOString().slice(0, 10) ?? "—"}</p></div>,
+                render: (row) => <div className="text-xs"><p className="font-mono">{row.lotNumber ?? "—"}</p><p className="tabular-nums text-muted">{row.expiryDate?.toISOString().slice(0, 10) ?? "—"}</p></div>,
               },
               {
                 key: "location",
@@ -187,6 +188,7 @@ export default async function InventoryListPage({ searchParams }: { searchParams
               {
                 key: "principal-investigator",
                 header: "PI",
+                empty: (row) => !row.principalInvestigator,
                 render: (row) => row.principalInvestigator ?? <span className="text-muted">—</span>,
               },
               {

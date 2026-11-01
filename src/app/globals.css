@@ -118,7 +118,7 @@ html[data-labnest-mode="dark"] {
   --ln-control-padding-x-lg: 1rem; /* 主要按钮左右内边距。 */
   --ln-ui-body-font-size: 13px; /* 工作界面正文与说明文字字号；不影响 A4 文档。 */
   --ln-ui-nav-font-size: 13px; /* 桌面侧栏与紧凑导航字号。 */
-  --ln-ui-section-title-font-size: 16px; /* 卡片和工作区 section 标题字号。 */
+  --ln-ui-section-title-font-size: 14px; /* 卡片和工作区 section 标题：14px 半粗，比页面标题低两级（Q198）。 */
   --ln-ui-label-font-size: 12px; /* 表单标签与低层级标题字号。 */
   --ln-ui-table-font-size: 12px; /* 共享数据表正文低于侧栏导航，避免内容反客为主。 */
   --ln-ui-search-font-size: 13px; /* 顶部全局搜索字号。 */
@@ -157,7 +157,7 @@ html[data-labnest-mode="dark"] {
   --ln-list-table-radius: var(--ln-radius-panel); /* 列表表格外框圆角。 */
   --ln-list-table-border-color: color-mix(in srgb, var(--hairline) 88%, var(--surface)); /* 列表表格外框和行边框颜色。 */
   --ln-list-table-shadow: none; /* 列表表格保持平面层级，减少视觉重量。 */
-  --ln-list-table-head-bg: color-mix(in srgb, var(--stone) 46%, var(--surface)); /* 列表表头背景色。 */
+  --ln-list-table-head-bg: transparent; /* 表头不铺底色：12px 浅色字和下面一条细线已经够分开（Q198）。 */
   --ln-list-table-head-font-size: 12px; /* 列表表头字号。 */
   --ln-list-table-head-line-height: 1.35; /* 列表表头行高。 */
   --ln-list-table-head-padding-x: 1rem; /* 列表表头左右内边距。 */
@@ -1315,7 +1315,7 @@ details > summary:active { transform: scale(0.985); }
 
 .ln-data-table th {
   border-bottom: 1px solid var(--ln-list-table-row-border-color);
-  font-weight: 600;
+  font-weight: 500;
   line-height: var(--ln-list-table-head-line-height) !important;
   padding: var(--ln-list-table-head-padding-y) var(--ln-list-table-head-padding-x) !important;
   vertical-align: middle;
@@ -1360,6 +1360,12 @@ details > summary:active { transform: scale(0.985); }
   height: 1rem;
   margin: 0.1rem auto 0;
   width: 1rem;
+}
+
+/* Quantities and other numbers line up on the right, in the interface font with even-width figures (Q198). */
+.ln-data-table .ln-data-table-number {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .ln-data-table-empty-cell {
@@ -5199,7 +5205,7 @@ button.focus-ring:active { filter: brightness(.96); }
 .document-execution-step { font-size: 11pt; line-height: 1.6; margin-block: 4pt; }
 .document-execution-step[data-execution-role="confirmation"] { padding-inline-start: 1.5em; font-size: 10pt; }
 @media (max-width: 767px) {
-  :root { --ln-ui-h3-size:14px; --ln-ui-section-title-font-size:16px; }
+  :root { --ln-ui-h3-size:14px; --ln-ui-section-title-font-size:14px; }
   :root { --ln-ui-h1-leading:28px; }
   [data-run-step-content] { font-size:14px; line-height:22px; }
   form input:not([type="checkbox"]):not([type="radio"]), form textarea, form select { font-size:max(16px,1em); }
@@ -5208,7 +5214,7 @@ button.focus-ring:active { filter: brightness(.96); }
 :root {
   --ln-ui-h1-weight:600; --ln-ui-h2-weight:600; --ln-ui-h3-weight:600;
   --ln-ui-body-weight:400; --ln-ui-caption-weight:400; --ln-ui-label-weight:500; --ln-ui-button-weight:500;
-  --ln-ui-h1-leading:32px; --ln-ui-h2-leading:26px; --ln-ui-h3-leading:22px;
+  --ln-ui-h1-leading:32px; --ln-ui-h2-leading:22px; --ln-ui-h3-leading:22px;
   --ln-ui-title-gap:var(--ln-space-3); --ln-ui-label-gap:var(--ln-space-1);
   --ln-ui-label-leading:18px; --ln-ui-button-leading:18px;
   --ln-control-font-size-sm:13px; --ln-control-font-size-lg:13px;
@@ -5229,7 +5235,7 @@ html[data-labnest-ui-scale="comfortable"] { --ln-control-font-size-sm:14px; --ln
 }
 :root { --ln-execution-indent:16px; }
 .document-execution-step[data-execution-role="confirmation"] { padding-inline-start:var(--ln-execution-indent); }
-@media(max-width:767px) { :root { --ln-ui-h1-leading:28px; --ln-ui-h2-leading:24px; --ln-execution-indent:12px; } }
+@media(max-width:767px) { :root { --ln-ui-h1-leading:28px; --ln-ui-h2-leading:22px; --ln-execution-indent:12px; } }
 
 .ln-ui-label { font-weight:var(--ln-ui-label-weight); line-height:var(--ln-ui-label-leading); }
 .ln-ui-caption { font-size:var(--ln-ui-caption-size); line-height:var(--ln-ui-caption-leading); font-weight:var(--ln-ui-caption-weight); }
@@ -5260,3 +5266,31 @@ main.embedded-tool-workspace { padding: 0 !important; }
 @media (pointer: coarse) {
   .ln-protocol-tiptap.ln-compact-rich-tiptap { font-size: max(16px, var(--ln-rich-text-editor-font-size)); }
 }
+
+/* Every file input reads as a quiet secondary button with the chosen name beside it (Q198); ui/FilePicker.tsx replaces
+   the browser's own label where a page can. */
+input[type="file"] {
+  color: var(--muted);
+  font-size: var(--ln-control-font-size-sm);
+}
+
+input[type="file"]::file-selector-button {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--ln-radius-control-md);
+  color: var(--graphite);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 500;
+  height: var(--ln-control-height-sm);
+  margin-inline-end: 0.625rem;
+  padding: 0 var(--ln-control-padding-x-sm);
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background: var(--warm);
+  border-color: var(--border-strong);
+  color: var(--ink);
+}
+

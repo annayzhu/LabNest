@@ -18,6 +18,10 @@ export type TableColumn<T> = {
   className?: string;
   width?: number | string;
   minWidth?: number;
+  /** Quantities and other numbers: right-aligned, even-width figures. */
+  numeric?: boolean;
+  /** When a row has nothing in this column; a column empty in every row is left out. */
+  empty?: (row: T) => boolean;
 };
 
 function columnWidth(width: number | string | undefined) {
@@ -26,7 +30,7 @@ function columnWidth(width: number | string | undefined) {
 }
 
 export function DataTable<T>({
-  columns,
+  columns: allColumns,
   rows,
   getRowKey,
   className,
@@ -47,6 +51,9 @@ export function DataTable<T>({
     actions?: ReactNode;
   };
 }) {
+  const columns = allColumns
+    .filter((column) => !column.empty || !rows.length || !rows.every(column.empty))
+    .map((column) => column.numeric ? { ...column, className: cn(column.className, "ln-data-table-number") } : column);
   const table = (
     <ResizableTableFrame storageKey={`datatable:${columns.map((column) => column.key).join("|")}`} className={cn("ln-data-table-frame w-full min-w-0 max-w-full [contain:inline-size]", className)}>
       <div className="w-full min-w-0 max-w-full overflow-x-auto editorial-scrollbar">

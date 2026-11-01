@@ -85,7 +85,7 @@ export function InventoryTransactionForm({
         <span className={formLabelClass}>Amount</span>
         <span className="relative block">
           <input required type="number" min={step} step={step} name="quantity" className={`${formInputClass} pr-12`} />
-          <span className="pointer-events-none absolute bottom-0 right-3 flex h-[var(--ln-control-height-lg)] items-center font-mono text-xs text-muted">{unit}</span>
+          <span className="pointer-events-none absolute bottom-0 right-3 flex h-[var(--ln-control-height-lg)] items-center text-xs text-muted">{unit}</span>
         </span>
       </label>
       <label>

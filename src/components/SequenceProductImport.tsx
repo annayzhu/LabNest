@@ -7,6 +7,7 @@ import { importSequenceProducts } from "@/app/inventory/import/sequence-actions"
 import { useI18n } from "@/components/I18nProvider";
 import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
+import { FilePicker } from "@/components/ui/FilePicker";
 import { sequenceKinds } from "@/lib/product-sequences";
 import { parseSpreadsheetClipboard } from "@/lib/result-dataset-paste";
 import { parseFasta } from "@/lib/sequence";
@@ -93,10 +94,10 @@ export function SequenceProductImport() {
           <span className={formLabelClass}>Rows copied from Excel</span>
           <textarea value={text} onChange={(event) => { setText(event.target.value); setFasta(null); setResult(null); }} rows={6} spellCheck={false} className={`${formTextareaClass} font-mono text-sm`} placeholder={"Name\tForward\tReverse\nhGAPDH\tAAGGTCATCCCTGAGCTGAA\tTGACAAAGTGGTCGTTGAGG"} />
         </label>
-        <label className="block">
+        <div>
           <span className={formLabelClass}>Or a file: FASTA, CSV, TSV or XLSX</span>
-          <input type="file" accept=".fa,.fasta,.fna,.faa,.txt,.csv,.tsv,.xlsx" onChange={(event) => { void read(event.target.files?.[0]); event.target.value = ""; }} className={`${formInputClass} py-1.5`} />
-        </label>
+          <FilePicker accept=".fa,.fasta,.fna,.faa,.txt,.csv,.tsv,.xlsx" onFiles={(files) => void read(files[0])} />
+        </div>
       </section>
 
       {preview ? (

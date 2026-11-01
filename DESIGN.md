@@ -139,7 +139,7 @@ The palette is quiet and cool; white and near-white surfaces carry most of the i
 
 ### Neutral
 
-- **Lab Paper:** Use paper as the page canvas, surface for cards, and warm or stone for subtle input, table-header, hover, and nested-panel separation.
+- **Lab Paper:** Use paper as the page canvas, surface for cards, and warm or stone for subtle input and hover fills. Table headers carry no fill.
 - **Ink Stack:** Use ink for titles and results, graphite for working copy, muted for metadata, and disabled only for unavailable controls.
 - **Hairline Structure:** Hairline is the default divider and card border; border-strong is reserved for hover or stronger separation.
 
@@ -169,7 +169,7 @@ Typography is user-configurable by role from Settings. Interface text, document 
 **Body Font:** System sans for product UI; the document-body role for A4 reading
 **Label/Mono Font:** IBM Plex Mono with technical monospace fallbacks
 
-**Character:** The workspace is sans throughout; serif belongs to the record, so `font-serif` resolves to the document heading font only inside the A4 paper. Monospace is reserved for values, units, method versions, timestamps, and other exact data.
+**Character:** The workspace is sans throughout; serif belongs to the record, so `font-serif` resolves to the document heading font only inside the A4 paper. Dates, times and quantities use the interface font with even-width figures (`tabular-nums`). Monospace is reserved for codes people copy or match character by character (catalogue numbers, barcodes, CAS, lot and container codes) and for sequences.
 
 **Label case.** Interface labels and section titles use normal case; uppercase with letter-spacing is reserved for the A4 record's own typography (kickers, facts, captions) and calendar weekday initials. A section never carries a small label above a heading that says the same thing.
 
@@ -181,8 +181,8 @@ Typography is user-configurable by role from Settings. Interface text, document 
 - **Title:** Medium-weight serif for the catalog introduction; card headings use a compact semibold sans-serif style.
 - **Body:** Regular sans-serif for descriptions and instructions, normally at the body token or the smaller label scale.
 - **Label:** Medium sans-serif for fields, controls, and section-level microcopy.
-- **Data:** Monospace for numeric results and provenance metadata; units may be smaller but remain adjacent to their values.
-- **Working page title:** Repeated operational pages use a compact 17px desktop / 14px mobile title token; reserve the 24px display token for true module identity or editorial reading surfaces.
+- **Data:** Even-width figures in the interface font for quantities, dates and times; units stay adjacent to their values.
+- **Working page title:** 20px semibold (`--ln-page-title-size`, compact scale); section and card titles are 14px semibold (`--ln-ui-section-title-font-size`), two steps below it.
 
 ### Interface size
 
@@ -190,7 +190,7 @@ Settings exposes Compact, Standard, and Comfortable interface scales. Compact is
 
 ### Named Rules
 
-**The Data Is Data Rule.** Do not use monospace decoratively; use it only where fixed-width scanning improves scientific interpretation or provenance.
+**The Data Is Data Rule.** Do not use monospace decoratively; use it only for codes and sequences, where comparing character by character matters. Numbers line up through tabular figures, not a code font.
 
 **The Active Label Rule.** Selected navigation items, document tabs, filters, and palette choices emphasize the label in the primary (moss) family, with only a low-dose tint or a thin underline or leading bar behind it. Do not rely on a large rounded color block as the primary selected-state signal.
 
@@ -236,8 +236,9 @@ A sparkle button in the top bar, filled with the second color when AI is ready a
 
 ### Cards / Containers
 
+- **One level:** A page has one level of bordered containers. Inside a panel, rows are divided by hairlines, never by another bordered box; a table inside a panel reaches its border. Summary rows of stat tiles are not used: a detail page states its few key facts in one line under the title, and attention gets its own line only when something needs it.
 - **Corner Style:** Gently rounded outer panel with tighter inner wells.
-- **Background:** White at the panel level; near-white fills separate inputs, upload zones, result summaries, and table headers.
+- **Background:** White at the panel level; near-white fills separate inputs, upload zones and result summaries.
 - **Shadow Strategy:** None for static Calculator cards.
 - **Border:** Hairline outer border and lighter internal dividers.
 - **Internal Padding:** 16px by default, with 12px for compact shortcut groups.
@@ -247,6 +248,14 @@ A sparkle button in the top bar, filled with the second color when AI is ready a
 - **Style:** 40px controls, 6px corners, hairline border, near-white fill, explicit label, and unit aligned opposite the label.
 - **Focus:** Border changes to the primary color; standalone controls also use the shared focus outline and halo.
 - **Error / Disabled:** Errors use the semantic error pair and `role="alert"`; disabled actions remain visible with reduced opacity.
+
+### Tables
+
+`ui/DataTable.tsx` is the one table. Headers are 12px muted labels at weight 500 on no fill, with a hairline below; rows are divided by hairlines. A `numeric` column aligns right with even-width figures. A column given `empty` is left out when every row is empty, so a table never shows a column of dashes. Quantity changes read by their sign (+/−) in plain ink, never bold red and green; color in a table is for status that asks for attention.
+
+### File Uploads
+
+A file input is a quiet secondary button that names what was chosen (`ui/FilePicker.tsx`), never the browser's own "Choose File / No file chosen", which ignores the interface language. Inputs not yet moved to it get the same button look from a global `::file-selector-button` style.
 
 ### Few Questions per Panel
 

@@ -109,7 +109,7 @@ export default async function InventoryProductPage({ params }: { params: Promise
                 emptyMessage="No stock of this product yet."
                 columns={[
                   { key: "lot", header: "Lot", render: (row) => <div><Link href={`/inventory/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.lotNumber ?? row.aliquotCode ?? <><span>No lot number</span><span className="font-normal text-muted">{" · "}{`Registered ${labDate(row.createdAt).slice(5)}`}</span></>}</Link>{row.vendor ? <p className="mt-0.5 text-xs text-muted">{row.vendor}</p> : null}</div> },
-                  { key: "stock", header: "Stock", render: (row) => <QuantityText quantity={row.currentQuantity} unit={row.unit} recorded={row.quantityRecorded} /> },
+                  { key: "stock", header: "Stock", numeric: true, render: (row) => <QuantityText quantity={row.currentQuantity} unit={row.unit} recorded={row.quantityRecorded} /> },
                   { key: "expiry", header: "Expiry", render: (row) => <span className="text-xs tabular-nums">{row.expiryDate?.toISOString().slice(0, 10) ?? "—"}</span> },
                   { key: "location", header: "Location", render: (row) => <div><p>{row.location?.name ?? "Unassigned"}</p>{row.positionCode ? <p className="text-xs text-muted">{row.positionCode}</p> : null}</div> },
                   ...(flagged.some((row) => row.status === "archived" || row.flags.length) ? [{ key: "attention", header: "Attention", render: (row: (typeof flagged)[number]) => row.status === "archived" ? <span className="text-xs text-muted">Archived</span> : <InventoryRiskBadges flags={row.flags} /> }] : []),

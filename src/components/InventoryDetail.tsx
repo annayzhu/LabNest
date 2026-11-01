@@ -62,5 +62,5 @@ export function UsedUpCheckbox({ className, checked, onChange, disabled }: { cla
 /** An amount with its unit as separate text, so the unit reads in Chinese; stock never counted says so. */
 export function QuantityText({ quantity, unit, recorded = true }: { quantity: number; unit: string | null; recorded?: boolean }) {
   if (!recorded) return <span className="text-muted">Quantity not recorded</span>;
-  return <span><span className="font-mono">{formatStockQuantity(quantity, unit)}</span> <span>{unit}</span></span>;
+  return <span className="whitespace-nowrap"><span className="tabular-nums">{formatStockQuantity(quantity, unit)}</span> <span>{unit}</span></span>;
 }

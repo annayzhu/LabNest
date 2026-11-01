@@ -7,7 +7,7 @@ import { copilotReadiness, prepareStep } from './deps.server';
 
 vi.mock('../db', () => ({ prisma: { aISettings: { findUnique: vi.fn() } } }));
 vi.mock('../ai-server', () => ({ resolveConnectedAdapter: vi.fn() }));
-vi.mock('../method-sources/index.server', () => ({ enabledAdapters: vi.fn(), europePmcBase: 'https://example.test' }));
+vi.mock('../method-sources/index.server', () => ({ enabledAdapters: vi.fn(), fetchLimited: vi.fn(), europePmcBase: 'https://example.test' }));
 
 const config: AIProviderConfig = { id: 'synthetic-chatgpt', name: 'Synthetic ChatGPT subscription', type: 'chatgpt_subscription', defaultModel: 'test-model', capabilities: ['text'], enabled: true };
 

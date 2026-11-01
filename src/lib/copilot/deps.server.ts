@@ -3,7 +3,7 @@ import { prisma } from '../db';
 import { enabledAdapters, europePmcBase, fetchLimited } from '../method-sources/index.server';
 import { normalizeResearchPlanDocument } from '../scientific-document';
 import type { EngineDeps } from './engine';
-import { paperText, searchPapers } from './literature';
+import { paperText, literatureSearcher } from './literature';
 
 /** Services whose adapters implement chat with tools, including the signed-in ChatGPT subscription. */
 export const supportsTools = (type: string) => type === 'openai' || type === 'anthropic' || type === 'openai_compatible' || type === 'chatgpt_subscription';
@@ -25,13 +25,14 @@ export async function prepareStep(planId: string) {
   const { adapter, config, gate } = resolved;
   if (!adapter.chat || !adapter.complete || !supportsTools(config.type)) throw new Error(`模型服务“${config.name}”不能按工具调用的方式工作：请在 AI 设置里换一个 ChatGPT 订阅、DeepSeek、OpenAI、Anthropic、通义千问或 Gemini 的服务作为默认服务`);
   if (!(await enabledAdapters()).some(item => item.id === 'europe_pmc')) throw new Error('Europe PMC 检索没有开启：请先在“按目标设计”页的检索设置里打开外部方法检索并勾选 Europe PMC');
+  const search = literatureSearcher(fetchLimited, europePmcBase);
   const deps: EngineDeps = {
     now: () => new Date(),
     chat: (system, messages, tools) => adapter.chat!(system, messages, tools),
     complete: (system, user) => adapter.complete!(system, user),
-    searchPapers: async query => {
-      const papers = await searchPapers(query, fetchLimited, europePmcBase);
-      await prisma.activityLog.create({ data: { action: 'copilot_literature_search', targetType: 'research_plan', targetId: planId, metadataJson: { source: 'europe_pmc', query: query.slice(0, 200), results: papers.length } } });
+    searchPapers: async (query, fallbackToPubMed, onNotice) => {
+      const papers = await search(query, fallbackToPubMed, onNotice);
+      await prisma.activityLog.create({ data: { action: 'copilot_literature_search', targetType: 'research_plan', targetId: planId, metadataJson: { source: papers[0]?.source ?? 'europe_pmc', query: query.slice(0, 200), results: papers.length } } });
       return papers;
     },
     paperText: (paper, useFullText) => paperText(paper, fetchLimited, europePmcBase, useFullText),

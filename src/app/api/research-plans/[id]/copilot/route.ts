@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 const start = z.object({
   purpose: z.string().trim().min(1),
   inputs: z.object({ sample: z.string().optional(), model: z.string().optional(), conditions: z.string().optional(), mode: z.enum(["new", "adjust"]).optional() }).strict().optional(),
-  budget: z.object({ maxPapers: z.number().int().optional(), maxFullText: z.number().int().optional() }).strict().optional(),
+  budget: z.object({ fallbackToPubMed: z.boolean().optional(), maxPapers: z.number().int().optional(), maxFullText: z.number().int().optional() }).strict().optional(),
   autoContinue: z.boolean().optional(),
 }).strict();
 

@@ -8,7 +8,7 @@ import { methodSourceIds, type MethodHit, type MethodSourceAdapter, type MethodS
 /** Only these hosts are ever contacted, and only when the user searches or fetches. */
 /** Browser checks may point Europe PMC at a local stand-in; a production build never does. */
 export const europePmcBase = process.env.NODE_ENV !== 'production' && process.env.LABNEST_EUROPE_PMC_BASE ? process.env.LABNEST_EUROPE_PMC_BASE : `https://${europePmcHost}`;
-const allowedHosts = new Set([protocolsIoHost, europePmcHost, new URL(europePmcBase).hostname]);
+const allowedHosts = new Set(['eutils.ncbi.nlm.nih.gov', protocolsIoHost, europePmcHost, new URL(europePmcBase).hostname]);
 const timeoutMs = 15_000, maxBytes = 2_000_000;
 
 export async function fetchLimited(url: string, init?: RequestInit) {
@@ -17,7 +17,7 @@ export async function fetchLimited(url: string, init?: RequestInit) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(url, { ...init, signal: controller.signal, headers: { 'User-Agent': 'LabNest method search (self-hosted lab notebook)', ...(init?.headers as Record<string, string> | undefined) } });
+    const response = await fetch(url, { ...init, redirect: 'error', signal: controller.signal, headers: { 'User-Agent': 'LabNest method search (self-hosted lab notebook)', ...(init?.headers as Record<string, string> | undefined) } });
     if (!response.ok) throw new Error(`${host} returned ${response.status}`);
     const length = Number(response.headers.get('content-length') ?? 0);
     if (length > maxBytes) throw new Error('Response too large; abandoned');

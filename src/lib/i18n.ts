@@ -3546,6 +3546,7 @@ export const zhUi: Record<string, string> = {
   "Searching Europe PMC is off. Turn on outside method search and tick Europe PMC in the search settings of": "Europe PMC 检索没有开启。请在下面页面的检索设置里打开外部方法检索并勾选 Europe PMC：",
   "Start": "开始",
   "Stages": "阶段",
+  "Confirm the research question": "确认研究问题",
   "Split the question": "拆科学问题",
   "Find papers": "查文献",
   "Read the experiments": "读论文里的实验",

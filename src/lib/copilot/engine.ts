@@ -1,6 +1,6 @@
 import { runAgent, type AgentModel, type AgentTool } from './agent';
 import { paperDigest } from './literature';
-import { checkDesign, designPrompt, extractPrompt, parseDesign, parseExtraction, parseSelection, parseSubQuestions, searchPrompt, splitPrompt } from './stages';
+import { checkDesign, clarificationPrompt, parseClarification, designPrompt, extractPrompt, parseDesign, parseExtraction, parseSelection, parseSubQuestions, searchPrompt, splitPrompt } from './stages';
 import { buildSuggestions } from './suggestions';
 import { copilotLimits, MAX_LOG_EVENTS, type CopilotEvent, type CopilotRunView, type CopilotStage, type Paper } from './types';
 
@@ -8,13 +8,13 @@ import { copilotLimits, MAX_LOG_EVENTS, type CopilotEvent, type CopilotRunView, 
 export type EngineDeps = {
   complete: (system: string, user: string) => Promise<{ text: string; model?: string }>;
   chat: AgentModel;
-  searchPapers: (query: string) => Promise<Paper[]>;
+  searchPapers: (query: string, fallbackToPubMed?: boolean, onNotice?: (text: string) => void) => Promise<Paper[]>;
   paperText: (paper: Paper, useFullText: boolean) => Promise<{ text: string; basis: 'fulltext' | 'abstract' }>;
   planContext: () => Promise<string>;
   now: () => Date;
 };
 
-const nextStage: Record<CopilotStage, CopilotStage | undefined> = { split: 'search', search: 'extract', extract: 'design', design: 'write', write: undefined };
+const nextStage: Record<CopilotStage, CopilotStage | undefined> = { clarify: 'split', split: 'search', search: 'extract', extract: 'design', design: 'write', write: undefined };
 
 /**
  * One step of a run: the whole stage for splitting, searching, designing and writing, one paper for reading. The run
@@ -50,7 +50,22 @@ export async function runUnit(input: CopilotRunView, deps: EngineDeps): Promise<
   run.status = 'ready';
   const validIds = new Set((state.subQuestions ?? []).map(question => question.id));
 
-  if (run.stage === 'split') {
+  const requireEvidence = () => {
+    if (!state.extractions?.some(item => item.experiments.some(experiment => experiment.verified && experiment.subQuestionIds.some(id => validIds.has(id))))) {
+      throw new Error('未取得可核对的相关文献摘录，已暂停。请检查检索词或来源后重试，暂不生成方案。');
+    }
+  };
+  try {
+  if (run.stage === 'clarify') {
+    if (!state.clarification) {
+      log('stage', '正在核对术语、研究对象和样本');
+      const prompt = clarificationPrompt(run.purpose, run.inputs);
+      state.clarification = await structured(prompt.system, prompt.user, parseClarification);
+    }
+    // Only the author-confirmation endpoint advances this stage, never the model.
+    run.status = 'paused';
+    log('note', '请确认研究信息后再开始检索；待定项会保留在方案中。');
+  } else if (run.stage === 'split') {
     log('stage', 'Splitting the purpose into questions');
     const prompt = splitPrompt(run.purpose, run.inputs);
     const tools: AgentTool[] = [{ name: 'read_plan_context', description: '读取这份研究方案和它所在项目里已有的内容：目标、假设、设计、已有结果和实验的标题。', parameters: { type: 'object', properties: {} }, run: () => deps.planContext() }];
@@ -63,11 +78,11 @@ export async function runUnit(input: CopilotRunView, deps: EngineDeps): Promise<
     log('stage', 'Searching the literature');
     const found = new Map<string, { ref: string; paper: Paper }>();
     const tools: AgentTool[] = [{
-      name: 'search_papers', description: '在 Europe PMC 里按英文检索式找论文，返回每篇的 ref、标题、年份、期刊、是否开放获取和摘要开头。', parameters: { type: 'object', properties: { query: { type: 'string', description: '英文检索式，如 "CHMP2A knockdown esophageal squamous cell carcinoma"' } }, required: ['query'] },
+      name: 'search_papers', stopOnError: true, description: '按英文检索式找论文，Europe PMC 失败时按用户设置换到 PubMed，返回每篇的 ref、标题、年份、期刊、是否开放获取和摘要开头。', parameters: { type: 'object', properties: { query: { type: 'string', description: '英文检索式，如 "CHMP2A knockdown esophageal squamous cell carcinoma"' } }, required: ['query'] },
       run: async args => {
         const query = typeof args.query === 'string' ? args.query.trim() : '';
         if (!query) return 'Error: query is empty';
-        const papers = await deps.searchPapers(query);
+        const papers = await deps.searchPapers(query, run.budget.fallbackToPubMed, text => log('note', text));
         for (const paper of papers) if (!found.has(paper.key)) found.set(paper.key, { ref: `r${found.size + 1}`, paper });
         return JSON.stringify(papers.map(paper => paperDigest(paper, found.get(paper.key)!.ref)));
       },
@@ -76,10 +91,10 @@ export async function runUnit(input: CopilotRunView, deps: EngineDeps): Promise<
     const result = await runAgent({ model: counted.chat, system: prompt.system, task: prompt.task, tools, maxSteps: copilotLimits.maxToolSteps, onEvent: event => log(event.kind, event.text) });
     const byRef = new Map([...found.values()].map(item => [item.ref, item.paper]));
     let selection: ReturnType<typeof parseSelection> = [];
-    try { selection = parseSelection(result.text); } catch { log('note', 'The model did not name the papers it chose; the first results were taken'); }
+    try { selection = parseSelection(result.text); } catch { throw new Error('无法读取模型选择的文献，已暂停，请重试检索。'); }
     const chosen: Paper[] = [];
     for (const pick of selection) { const paper = byRef.get(pick.ref); if (paper && !chosen.some(item => item.key === paper.key)) chosen.push({ ...paper, why: pick.why, subQuestionIds: pick.subQuestionIds.filter(id => validIds.has(id)) }); }
-    if (!chosen.length) chosen.push(...[...found.values()].map(item => item.paper));
+    if (!chosen.length) throw new Error(found.size ? '检索返回了文献，但未选出相关来源。请调整问题或检索词后重试。' : '检索成功但没有找到文献。请调整问题或检索词后重试，暂不生成方案。');
     state.papers = chosen.slice(0, run.budget.maxPapers);
     state.extractIndex = 0; state.extractions = [];
     log('model', `${state.papers.length} papers chosen of ${found.size} found`);
@@ -87,7 +102,7 @@ export async function runUnit(input: CopilotRunView, deps: EngineDeps): Promise<
   } else if (run.stage === 'extract') {
     const papers = state.papers ?? [], index = state.extractIndex ?? 0;
     state.extractions ??= [];
-    if (index >= papers.length) { finish('extract'); }
+    if (index >= papers.length) { requireEvidence(); finish('extract'); }
     else {
       const paper = papers[index];
       const fullTextSoFar = state.extractions.filter(item => item.basis === 'fulltext').length;
@@ -104,19 +119,27 @@ export async function runUnit(input: CopilotRunView, deps: EngineDeps): Promise<
         log('error', `Paper ${index + 1} could not be read: ${error instanceof Error ? error.message.slice(0, 160) : 'unknown error'}`);
       }
       state.extractIndex = index + 1;
-      if (state.extractIndex >= papers.length) finish('extract');
+      if (state.extractIndex >= papers.length) { requireEvidence(); finish('extract'); }
     }
   } else if (run.stage === 'design') {
+    requireEvidence();
     log('stage', 'Combining into a design');
     const prompt = designPrompt(run.purpose, run.inputs, state.subQuestions ?? [], state.papers ?? [], state.extractions ?? []);
     const design = await structured(prompt.system, prompt.user, parseDesign);
     state.design = checkDesign(design, state.papers ?? [], state.extractions ?? [], validIds);
+    if (!state.design.items.some(item => item.experiments.length)) throw new Error('没有生成可用的实验设计，请重试本阶段。');
     log('model', `${state.design.items.reduce((count, item) => count + item.experiments.length, 0)} experiments in the design`);
     finish('design');
   } else {
+    if (!state.design?.items.some(item => item.experiments.length)) throw new Error('没有可写入的方案，已暂停');
     log('stage', 'Writing suggestions');
     run.suggestions = buildSuggestions(run.id, state.design ?? { summary: '', items: [], gaps: [] }, state.subQuestions ?? [], state.papers ?? [], deps.now().toISOString().slice(0, 10));
     finish('write');
+  }
+  } catch (error) {
+    run.status = 'failed';
+    run.error = error instanceof Error ? error.message.slice(0, 500) : '本阶段未完成，请重试';
+    log('error', run.error);
   }
   return run;
 }

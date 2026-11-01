@@ -97,9 +97,9 @@ describe('Checking a design against what was read', () => {
 
 describe('What a run may spend', () => {
   it('keeps the budget inside the limits and estimates the model calls from it', () => {
-    expect(clampBudget({ maxPapers: 99, maxFullText: 50 })).toEqual({ maxPapers: 20, maxFullText: 8 });
-    expect(clampBudget({ maxPapers: 0, maxFullText: -3 })).toEqual({ maxPapers: 1, maxFullText: 0 });
-    expect(clampBudget()).toEqual({ maxPapers: 20, maxFullText: 8 });
-    expect(estimateModelCalls({ maxPapers: 20, maxFullText: 8 })).toBe(32);
+    expect(clampBudget({ maxPapers: 99, maxFullText: 50 })).toEqual({ fallbackToPubMed: false, maxPapers: 20, maxFullText: 8 });
+    expect(clampBudget({ maxPapers: 0, maxFullText: -3 })).toEqual({ fallbackToPubMed: false, maxPapers: 1, maxFullText: 0 });
+    expect(clampBudget()).toEqual({ fallbackToPubMed: false, maxPapers: 20, maxFullText: 8 });
+    expect(estimateModelCalls({ maxPapers: 20, maxFullText: 8 })).toBe(33);
   });
 });

@@ -5,7 +5,7 @@ import { editRun, listRuns, removeRun } from "@/lib/copilot/runs.server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const edit = z.object({ subQuestions: z.unknown().optional(), removePaperKeys: z.array(z.string()).max(40).optional(), autoContinue: z.boolean().optional(), resume: z.boolean().optional() }).strict();
+const edit = z.object({ clarification: z.unknown().optional(), subQuestions: z.unknown().optional(), removePaperKeys: z.array(z.string()).max(40).optional(), autoContinue: z.boolean().optional(), resume: z.boolean().optional() }).strict();
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string; runId: string }> }) {
   const { id, runId } = await params;

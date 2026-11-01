@@ -9,7 +9,7 @@ const start = z.object({
   projectId: z.string().min(1),
   purpose: z.string().trim().min(1),
   inputs: z.object({ sample: z.string().optional(), conditions: z.string().optional() }).strict().optional(),
-  budget: z.object({ maxPapers: z.number().int().optional(), maxFullText: z.number().int().optional() }).strict().optional(),
+  budget: z.object({ fallbackToPubMed: z.boolean().optional(), maxPapers: z.number().int().optional(), maxFullText: z.number().int().optional() }).strict().optional(),
   autoContinue: z.boolean().optional(),
 }).strict();
 

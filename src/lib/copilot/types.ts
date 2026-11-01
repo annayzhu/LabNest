@@ -1,24 +1,33 @@
 import { z } from 'zod';
 
 /**
- * 研究方案 Copilot: from a research purpose to a design of experiments, in five stages. Each stage's result is kept on
+ * 研究方案 Copilot: from a research purpose to a design of experiments, with an author confirmation followed by five stages. Each stage's result is kept on
  * the run, so the author can stop between stages, change what the next stage reads, and see how every line came about.
  */
-export const copilotStages = ['split', 'search', 'extract', 'design', 'write'] as const;
+export const copilotStages = ['clarify', 'split', 'search', 'extract', 'design', 'write'] as const;
 export type CopilotStage = typeof copilotStages[number];
 export const stageLabels: Record<CopilotStage, string> = {
-  split: 'Split the question', search: 'Find papers', extract: 'Read the experiments', design: 'Combine into a design', write: 'Write suggestions',
+  clarify: 'Confirm the research question', split: 'Split the question', search: 'Find papers', extract: 'Read the experiments', design: 'Combine into a design', write: 'Write suggestions',
 };
 
 /** What one run may spend: papers read, full texts read, and the model's tool steps while it searches. */
 export const copilotLimits = { maxPapers: 20, maxFullText: 8, maxToolSteps: 8 } as const;
-export type CopilotBudget = { maxPapers: number; maxFullText: number };
+export type CopilotBudget = { maxPapers: number; maxFullText: number; fallbackToPubMed?: boolean };
+export const clarificationSchema = z.object({
+  method: z.string().trim().min(2).max(200),
+  subject: z.string().trim().min(2).max(400),
+  sample: z.string().trim().min(2).max(400),
+  objective: z.string().trim().min(2).max(500),
+});
+export type Clarification = z.infer<typeof clarificationSchema>;
+
 export const clampBudget = (input: Partial<CopilotBudget> = {}): CopilotBudget => ({
+  fallbackToPubMed: input.fallbackToPubMed === true,
   maxPapers: Math.min(copilotLimits.maxPapers, Math.max(1, Math.round(input.maxPapers ?? copilotLimits.maxPapers))),
   maxFullText: Math.min(copilotLimits.maxFullText, Math.max(0, Math.round(input.maxFullText ?? copilotLimits.maxFullText))),
 });
 /** About how many times the model is called: splitting (with a look at the plan), the search, one per paper, the design. */
-export const estimateModelCalls = (budget: CopilotBudget) => 2 + (copilotLimits.maxToolSteps + 1) + budget.maxPapers + 1;
+export const estimateModelCalls = (budget: CopilotBudget) => 3 + (copilotLimits.maxToolSteps + 1) + budget.maxPapers + 1;
 
 export const subQuestionSchema = z.object({
   id: z.string().trim().min(1).max(12),
@@ -33,7 +42,7 @@ export type SubQuestion = z.infer<typeof subQuestionSchema>;
 export type Paper = {
   /** "PMC123456" for an open-access paper, "MED:12345678" otherwise: stable across searches. */
   key: string; title: string; authors?: string; year?: string; venue?: string; url?: string; doi?: string;
-  openAccess: boolean; abstract?: string;
+  openAccess: boolean; abstract?: string; source?: 'europe_pmc' | 'pubmed';
   /** Why the model picked it, and for which sub-questions. */
   why?: string; subQuestionIds?: string[];
   /** What was read: the Methods and Results of the full text, or only the abstract. */
@@ -56,6 +65,8 @@ export type ExtractedExperiment = z.infer<typeof extractionItem> & { verified: b
 export type PaperExtraction = { paperKey: string; basis: 'fulltext' | 'abstract'; experiments: ExtractedExperiment[]; error?: string };
 
 const designExperiment = z.object({
+  comparison: z.string().trim().max(500).optional(),
+  decisionCriteria: z.array(z.string().trim().min(1).max(300)).max(8).optional(),
   name: z.string().trim().min(2).max(160),
   purpose: z.string().trim().max(400).default(''),
   approach: z.string().trim().max(160).default(''),
@@ -75,8 +86,10 @@ export type DesignExperiment = z.infer<typeof designExperiment> & { verified: bo
 export type Design = { summary: string; items: { subQuestionId: string; experiments: DesignExperiment[] }[]; gaps: string[] };
 
 /** A change the Copilot proposes. Nothing is written until the author adopts it. */
+export type PlanBlocks = { type: 'heading' | 'text'; text: string }[];
+export type PlanSectionDraft = { key: 'design' | 'material_methods' | 'acceptance_criteria' | 'constraints'; title: string; blocks: PlanBlocks };
 export type Suggestion =
-  | { id: string; kind: 'design'; title: string; status: SuggestionStatus; blocks: { type: 'heading' | 'text'; text: string }[] }
+  | { id: string; kind: 'design'; title: string; status: SuggestionStatus; sections?: PlanSectionDraft[]; blocks: { type: 'heading' | 'text'; text: string }[] }
   | { id: string; kind: 'references'; title: string; status: SuggestionStatus; blocks: { type: 'heading' | 'text'; text: string }[] }
   | { id: string; kind: 'experiment'; title: string; status: SuggestionStatus; experimentName: string; note?: string; purpose?: string; verified: boolean; adoptedExperimentId?: string };
 export type SuggestionStatus = 'pending' | 'adopted' | 'ignored';
@@ -87,6 +100,7 @@ export type RunStatus = 'ready' | 'working' | 'paused' | 'done' | 'failed';
 
 /** Everything a stage has produced so far. */
 export type CopilotState = {
+  clarification?: Clarification & { questions: string[]; confirmedAt?: string };
   subQuestions?: SubQuestion[];
   papers?: Paper[];
   /** How far the reading of papers has come, and what it found. */
@@ -98,7 +112,7 @@ export type CopilotState = {
 };
 
 /** What the author told the run. `mode` is whether the plan is new or already written and the run adjusts it. */
-export type CopilotInputs = { sample?: string; model?: string; conditions?: string; mode?: 'new' | 'adjust' };
+export type CopilotInputs = { sample?: string; model?: string; conditions?: string; method?: string; subject?: string; objective?: string; mode?: 'new' | 'adjust' };
 
 export type CopilotRunView = {
   id: string; researchPlanId: string; purpose: string; inputs: CopilotInputs;

@@ -28,20 +28,24 @@ describe('A design as suggestions', () => {
 
   it('writes the design under each sub-question, cites papers by number and flags what is 未核实', () => {
     const card = suggestions.find(item => item.kind === 'design');
-    expect(card?.kind === 'design' && card.blocks.map(block => block.text)).toEqual([
-      'Copilot 实验设计（2026-10-20）', '先验证表型，再找通路。',
-      'q1：A 基因是否促进增殖', '【必做】CCK-8 增殖；验证：看增殖是否变化；做法：CCK-8；读出：OD450；对照：空载体；依据：[1]',
-      'q2：通过哪条通路', '【可选】Western 验证通路；做法：Western blot；依据：[2][1]；注意：抗体要验证（未核实：依据只来自摘要，请核对原文）',
-      '文献没有覆盖、需要自己决定的地方', '动物模型要自己决定',
-    ]);
+    if (card?.kind !== 'design') throw new Error('Missing design');
+    expect(card.sections?.map(section => section.key)).toEqual(['design', 'material_methods', 'acceptance_criteria', 'constraints']);
+    const text = card.blocks.map(block => block.text).join('\n');
+    expect(text).toContain('q1：A 基因是否促进增殖');
+    expect(text).toContain('目的：看增殖是否变化');
+    expect(text).toContain('读出：OD450');
+    expect(text).toContain('对照：空载体');
+    expect(text).toContain('来源：[1]');
+    expect(text).toContain('证据限制：依据只来自摘要，请核对原文');
+    expect(card.sections?.find(section => section.key === 'acceptance_criteria')?.blocks.map(block => block.text).join('')).toContain('待研究者补充');
   });
 
   it('lists only the papers the design cites, in citation order', () => {
     const card = suggestions.find(item => item.kind === 'references');
     expect(card?.kind === 'references' && card.blocks.map(block => block.text)).toEqual([
-      '文献（Copilot 检索，Europe PMC，2026-10-20）',
-      '[1] Li X, Wang Y. Gene A drives growth. Cancer Res. 2021 PMC1 https://europepmc.org/article/PMC/PMC1',
-      '[2] Pathway B. 2019',
+      '文献（Copilot 检索，2026-10-20）',
+      '[1] Li X, Wang Y. Gene A drives growth. Cancer Res. 2021 PMC1 https://europepmc.org/article/PMC/PMC1 · 来源：Europe PMC · 仅摘要或待核对全文',
+      '[2] Pathway B. 2019 · 来源：Europe PMC · 仅摘要或待核对全文',
     ]);
   });
 
@@ -57,7 +61,22 @@ describe('Adopting a design into the plan', () => {
     const document = createScientificDocument(researchPlanSections);
     document.sections.find(section => section.key === 'design')!.blocks.push({ id: 'mine', type: 'text', text: '我写的' });
     const next = appendBlocks(document, 'design', [{ type: 'heading', text: '标题' }, { type: 'text', text: '正文' }], 'run1');
-    expect(next.sections.find(section => section.key === 'design')!.blocks.map(block => [block.id, 'text' in block ? block.text : ''])).toEqual([['mine', '我写的'], ['copilot-run1-1', '标题'], ['copilot-run1-2', '正文']]);
+    expect(next.sections.find(section => section.key === 'design')!.blocks.map(block => [block.id, 'text' in block ? block.text : ''])).toEqual([['mine', '我写的'], ['copilot-run1-design-1', '标题'], ['copilot-run1-design-2', '正文']]);
     expect(document.sections.find(section => section.key === 'design')!.blocks).toHaveLength(1);
   });
+});
+
+
+it('fills all proposed sections without changing existing content or media and with globally distinct ids', () => {
+  const document = createScientificDocument(researchPlanSections);
+  document.sections[0].blocks.push({ id: 'original', type: 'text', text: '原始内容' });
+  const card = buildSuggestions('run', design, subQuestions, papers, '2026-11-01')[0];
+  if (card.kind !== 'design') throw new Error('Missing design');
+  let after = document;
+  for (const section of card.sections!) after = appendBlocks(after, section.key, section.blocks, 'run');
+  expect(after.sections[0].blocks[0]).toEqual(document.sections[0].blocks[0]);
+  expect(after.sections.slice(0, 4).every(section => section.blocks.length > 0)).toBe(true);
+  const ids = after.sections.flatMap(section => section.blocks.map(block => block.id));
+  expect(new Set(ids).size).toBe(ids.length);
+  expect(document.sections[1].blocks).toEqual([]);
 });

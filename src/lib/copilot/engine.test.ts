@@ -113,3 +113,55 @@ describe('A Copilot run, step by step', () => {
     expect(run.log.some(event => event.kind === 'note' && /asked again/.test(event.text))).toBe(true);
   });
 });
+
+
+describe('Copilot evidence gates', () => {
+  it('stops at search when the literature service fails and preserves calls and errors', async () => {
+    const { deps } = fakeDeps();
+    deps.searchPapers = async () => { throw new Error('Both literature sources failed'); };
+    const run = await runUnit(start({ stage: 'search', state: { done: ['split'] } }), deps);
+    expect(run.status).toBe('failed');
+    expect(run.stage).toBe('search');
+    expect(run.state.done).toEqual(['split']);
+    expect(run.modelCalls).toBe(1);
+    expect(run.error).toContain('Both literature sources failed');
+    expect(run.suggestions).toEqual([]);
+  });
+  it('does not call an empty successful search complete', async () => {
+    const { deps } = fakeDeps();
+    deps.searchPapers = async () => [];
+    const run = await runUnit(start({ stage: 'search', state: { done: ['split'] } }), deps);
+    expect(run.status).toBe('failed');
+    expect(run.state.done).not.toContain('search');
+  });
+  it('does not generate a design without any verified source excerpt', async () => {
+    const { deps, completions } = fakeDeps();
+    const run = await runUnit(start({ stage: 'design', state: { done: ['split'], papers: [], extractions: [] } }), deps);
+    expect(run.status).toBe('failed');
+    expect(run.state.design).toBeUndefined();
+    expect(completions).toEqual([]);
+  });
+});
+
+
+it('always pauses for author confirmation before any search, including repeated advance requests', async () => {
+  const { deps, searches } = fakeDeps();
+  let calls = 0;
+  deps.complete = async () => { calls++; return { text: JSON.stringify({ method: 'ligation blot，含义待确认', subject: 'SRGN 与候选分子待确认', sample: '待定', objective: '验证结合', questions: ['是否指 ligand blot？'] }) }; };
+  const first = await runUnit(start({ stage: 'clarify' }), deps);
+  const second = await runUnit(first, deps);
+  expect(first.status).toBe('paused');
+  expect(second.stage).toBe('clarify');
+  expect(second.state.done).toEqual([]);
+  expect(calls).toBe(1);
+  expect(searches).toEqual([]);
+});
+it('keeps extract incomplete when every paper failed', async () => {
+  const { deps } = fakeDeps();
+  deps.paperText = async () => { throw new Error('unavailable'); };
+  const run = await runUnit(start({ stage: 'extract', state: { done: ['split', 'search'], papers: [papers[0]], extractIndex: 0 } }), deps);
+  expect(run.status).toBe('failed');
+  expect(run.stage).toBe('extract');
+  expect(run.state.done).not.toContain('extract');
+  expect(run.state.extractions?.[0].error).toBe('unavailable');
+});

@@ -4,7 +4,7 @@ import { normalizeResearchPlanDocument } from '../scientific-document';
 import { reserveRecordCode } from '../record-codes';
 import { runUnit, type EngineDeps } from './engine';
 import { appendBlocks } from './suggestions';
-import { clampBudget, copilotStages, MAX_LOG_EVENTS, planTitleFromPurpose, subQuestionSchema, type CopilotBudget, type CopilotEvent, type CopilotRunView, type CopilotState, type CopilotStage, type RunStatus, type Suggestion } from './types';
+import { clarificationSchema, clampBudget, copilotStages, MAX_LOG_EVENTS, planTitleFromPurpose, subQuestionSchema, type CopilotBudget, type CopilotEvent, type CopilotRunView, type CopilotState, type CopilotStage, type RunStatus, type Suggestion } from './types';
 
 type Row = Prisma.ResearchPlanCopilotRunGetPayload<Record<string, never>>;
 const json = (value: unknown) => JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
@@ -38,7 +38,7 @@ export async function createRun(planId: string, input: { purpose: string; inputs
   if (purpose.length > 1500) throw new Error('The research purpose is too long (1500 characters at most)');
   if (!await prisma.researchPlan.findUnique({ where: { id: planId }, select: { id: true } })) throw new Error('Research plan not found');
   const inputs = Object.fromEntries(Object.entries(input.inputs ?? {}).map(([key, value]) => [key, String(value ?? '').trim().slice(0, 400)]).filter(([key, value]) => value && (key !== 'mode' || value === 'new' || value === 'adjust')));
-  return viewOf(await prisma.researchPlanCopilotRun.create({ data: { researchPlanId: planId, purpose, inputsJson: json(inputs), budgetJson: json(clampBudget(input.budget)), autoContinue: input.autoContinue ?? true } }));
+  return viewOf(await prisma.researchPlanCopilotRun.create({ data: { researchPlanId: planId, stage: 'clarify', purpose, inputsJson: json(inputs), budgetJson: json(clampBudget(input.budget)), autoContinue: input.autoContinue ?? true } }));
 }
 
 /** A draft plan named from the purpose, in the project, with a run ready to start on it: what "new plan with the Copilot" opens. */
@@ -74,7 +74,7 @@ export async function advanceRun(planId: string, runId: string, prepare: () => P
     await assertAllowed();
     return viewOf(await prisma.researchPlanCopilotRun.update({ where: { id: runId }, data: {
       status: after.status, stage: after.stage, stateJson: json(after.state), logJson: json(after.log.slice(-MAX_LOG_EVENTS)), suggestionsJson: json(after.suggestions),
-      provider, model: after.model ?? null, modelCalls: after.modelCalls, error: null,
+      provider, model: after.model ?? null, modelCalls: after.modelCalls, error: after.error ?? null,
     } }));
   } catch (error) {
     const message = error instanceof Error ? error.message.slice(0, 400) : 'The step failed';
@@ -84,11 +84,20 @@ export async function advanceRun(planId: string, runId: string, prepare: () => P
 }
 
 /** What the author may change between steps: the questions, the papers to read, whether to stop between stages; and resuming. */
-export async function editRun(planId: string, runId: string, patch: { subQuestions?: unknown; removePaperKeys?: string[]; autoContinue?: boolean; resume?: boolean }) {
+export async function editRun(planId: string, runId: string, patch: { clarification?: unknown; subQuestions?: unknown; removePaperKeys?: string[]; autoContinue?: boolean; resume?: boolean }) {
   const row = await loadRow(planId, runId);
   if (row.status === 'working') throw new Error('A step is running; wait for it to finish');
   const view = viewOf(row);
   const state = view.state;
+  if (patch.clarification !== undefined) {
+    if (view.stage !== 'clarify' || !state.clarification) throw new Error('请先完成研究信息核对');
+    const confirmed = clarificationSchema.parse(patch.clarification);
+    state.clarification = { ...confirmed, questions: state.clarification.questions, confirmedAt: new Date().toISOString() };
+    state.done = ['clarify'];
+    return viewOf(await prisma.researchPlanCopilotRun.update({ where: { id: runId }, data: { inputsJson: json({ ...view.inputs, ...confirmed }), stateJson: json(state), stage: 'split', status: 'ready', error: null } }));
+  }
+  if (patch.resume && view.stage === 'clarify') throw new Error('请先确认术语和研究对象');
+  if (patch.resume && view.status === 'failed' && view.stage === 'extract') { state.extractIndex = 0; state.extractions = []; }
   if (patch.subQuestions !== undefined) {
     if (!state.subQuestions) throw new Error('The questions are not made yet');
     const questions = (subQuestionSchema.array().min(1).max(8)).parse(patch.subQuestions);
@@ -132,7 +141,10 @@ export async function decideCopilotSuggestion(planId: string, runId: string, sug
         experimentId = experiment.id;
         suggestion.adoptedExperimentId = experiment.id;
       } else {
-        const document = appendBlocks(normalizeResearchPlanDocument(plan.contentJson, plan.design), suggestion.kind === 'design' ? 'design' : 'references', suggestion.blocks, runId);
+        let document = normalizeResearchPlanDocument(plan.contentJson, plan.design);
+        if (suggestion.kind === 'design' && suggestion.sections?.length) {
+          for (const section of suggestion.sections) document = appendBlocks(document, section.key, section.blocks, runId);
+        } else document = appendBlocks(document, suggestion.kind === 'design' ? 'design' : 'references', suggestion.blocks, runId);
         await tx.researchPlan.update({ where: { id: planId }, data: { contentJson: json(document) } });
       }
     }

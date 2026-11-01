@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { paperDigest, paperFromResult, paperText, searchPapers } from './literature';
+import { literatureSearcher, searchPubMed, paperDigest, paperFromResult, paperText, searchPapers } from './literature';
 
 const xml = `<article><body>
 <sec><title>Introduction</title><p>Background text.</p></sec>
@@ -45,4 +45,38 @@ describe('Papers from Europe PMC', () => {
   it('shows the agent a short digest to pick from', () => {
     expect(paperDigest({ key: 'PMC1', title: 'T', year: '2020', openAccess: true, abstract: 'x'.repeat(500) }, 'r3')).toMatchObject({ ref: 'r3', openAccess: true, abstract: 'x'.repeat(280) });
   });
+});
+
+
+const pubmedXml = '<PubmedArticleSet><PubmedArticle><MedlineCitation><PMID>123</PMID><Article><ArticleTitle>A binding study</ArticleTitle><Journal><Title>Methods</Title><JournalIssue><PubDate><Year>2024</Year></PubDate></JournalIssue></Journal><Abstract><AbstractText Label="RESULTS">Binding was tested.</AbstractText></Abstract><AuthorList><Author><LastName>Li</LastName><Initials>X</Initials></Author></AuthorList></Article></MedlineCitation><PubmedData><ArticleIdList><ArticleId IdType="doi">10.123/x</ArticleId></ArticleIdList></PubmedData></PubmedArticle></PubmedArticleSet>';
+it('switches once to PubMed and keeps actual provenance and abstracts', async () => {
+  const urls: string[] = [], notices: string[] = [];
+  const search = literatureSearcher(async url => {
+    urls.push(url);
+    if (url.includes('europepmc')) throw new Error('503');
+    return url.includes('esearch') ? JSON.stringify({ esearchresult: { idlist: ['123'] } }) : pubmedXml;
+  }, 'https://www.ebi.ac.uk');
+  const papers = await search('SRGN AND LRP1', true, note => notices.push(note));
+  await search('far-Western', true);
+  expect(urls.filter(url => url.includes('europepmc'))).toHaveLength(1);
+  expect(papers[0]).toMatchObject({ key: 'MED:123', source: 'pubmed', title: 'A binding study', authors: 'Li X', year: '2024', abstract: 'RESULTS: Binding was tested.', openAccess: false, doi: '10.123/x' });
+  expect(notices.join(' ')).toContain('Europe PMC 检索失败');
+  expect(notices.join(' ')).toContain('PubMed：返回 1');
+});
+it('does not contact PubMed without the per-run setting, and fails when both sources fail', async () => {
+  const urls: string[] = [];
+  const search = literatureSearcher(async url => { urls.push(url); throw new Error('offline'); }, 'https://www.ebi.ac.uk');
+  await expect(search('binding')).rejects.toThrow('未启用 PubMed');
+  expect(urls).toHaveLength(1);
+  await expect(search('binding', true)).rejects.toThrow('均未能完成检索');
+});
+it('rejects malformed PubMed responses instead of calling them empty results', async () => {
+  await expect(searchPubMed('binding', async () => '{}')).rejects.toThrow('无效');
+});
+it('preserves quoted Boolean queries and falls back to an abstract when a full text cannot be read', async () => {
+  const urls: string[] = [];
+  await searchPapers('(SRGN OR serglycin) AND "far western"', async url => { urls.push(decodeURIComponent(url)); return '{"resultList":{"result":[]}}'; }, 'https://x');
+  expect(urls).toHaveLength(1);
+  expect(urls[0]).toContain('(SRGN OR serglycin) AND "far western"');
+  expect(await paperText({ key: 'PMC1', title: 'T', openAccess: true, abstract: 'Original abstract' }, async () => { throw new Error('503'); }, 'https://x', true)).toEqual({ text: 'T\n\nOriginal abstract', basis: 'abstract' });
 });

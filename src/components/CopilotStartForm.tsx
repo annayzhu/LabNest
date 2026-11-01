@@ -16,8 +16,8 @@ export type CopilotStartValues = { purpose: string; inputs: { sample: string; co
  */
 export function CopilotStartForm({ readiness, mode, busy, lead, onStart }: { readiness: CopilotReadiness; mode: 'new' | 'adjust'; busy: boolean; lead?: ReactNode; onStart: (values: CopilotStartValues) => void }) {
   const { t } = useI18n();
-  const [form, setForm] = useState({ purpose: '', sample: '', conditions: '', maxPapers: Number(copilotLimits.maxPapers), maxFullText: Number(copilotLimits.maxFullText), stepwise: false });
-  const budget = clampBudget({ maxPapers: form.maxPapers, maxFullText: form.maxFullText });
+  const [form, setForm] = useState({ purpose: '', sample: '', conditions: '', maxPapers: Number(copilotLimits.maxPapers), maxFullText: Number(copilotLimits.maxFullText), stepwise: false, fallbackToPubMed: true });
+  const budget = clampBudget({ maxPapers: form.maxPapers, maxFullText: form.maxFullText, fallbackToPubMed: form.fallbackToPubMed });
   const blocked = !readiness.toolsOk ? 'tools' : !readiness.europePmc ? 'literature' : undefined;
   const ready = form.purpose.trim().length >= 4 && !blocked && !busy;
   return <form className="ln-copilot-form" aria-label="Start a Copilot run" onSubmit={event => { event.preventDefault(); if (ready) onStart({ purpose: form.purpose, inputs: { sample: form.sample, conditions: form.conditions }, budget, autoContinue: !form.stepwise }); }}>
@@ -32,13 +32,14 @@ export function CopilotStartForm({ readiness, mode, busy, lead, onStart }: { rea
         <label>Of them, full texts<input type="number" min={0} max={copilotLimits.maxFullText} value={form.maxFullText} onChange={event => setForm({ ...form, maxFullText: Number(event.target.value) })} /></label>
       </div>
       <label className="ln-copilot-check"><input type="checkbox" checked={form.stepwise} onChange={event => setForm({ ...form, stepwise: event.target.checked })} />Stop after each stage so I can look</label>
+      <label className="ln-copilot-check"><input type="checkbox" checked={form.fallbackToPubMed} onChange={event => setForm({ ...form, fallbackToPubMed: event.target.checked })} />Europe PMC 失败时使用 PubMed 备用检索（会发送研究关键词）</label>
     </details>
     {blocked === 'tools' ? <p role="status" className="ln-copilot-warn">The default AI service cannot work with tools. Choose a ChatGPT subscription, DeepSeek, OpenAI, Anthropic, Qwen or Gemini as the default service in AI settings.</p> : null}
     {blocked === 'literature' ? <p role="status" className="ln-copilot-warn">Searching Europe PMC is off. Turn on outside method search and tick Europe PMC in the search settings of <Link href="/protocols/design" className="underline">Design from a goal</Link></p> : null}
     <div className="ln-copilot-footer">
       {lead}
       <AiButton type="submit" disabled={!ready}><Bot className="h-4 w-4" aria-hidden />Start</AiButton>
-      <p className="ln-copilot-note">{t(`Starting sends your purpose and its keywords to the AI service and Europe PMC, about ${estimateModelCalls(budget)} model calls. You can stop at any time.`)}</p>
+      <p className="ln-copilot-note">先核对术语、研究对象与样本，确认后才开始检索。{form.fallbackToPubMed ? '本轮已开启 PubMed 备用来源。' : ''} {t(`Starting sends your purpose and its keywords to the AI service and Europe PMC, about ${estimateModelCalls(budget)} model calls. You can stop at any time.`)}</p>
     </div>
   </form>;
 }

@@ -1,7 +1,7 @@
 import type { ChatMessage, ChatToolSpec, ChatTurn } from '../ai-chat';
 
 /** A tool the agent may call: what it is for, the arguments it takes, and what it does with them. */
-export type AgentTool = ChatToolSpec & { run: (args: Record<string, unknown>) => Promise<string> };
+export type AgentTool = ChatToolSpec & { stopOnError?: boolean; run: (args: Record<string, unknown>) => Promise<string> };
 export type AgentModel = (system: string, messages: ChatMessage[], tools: ChatToolSpec[]) => Promise<ChatTurn>;
 export type AgentEvent = { kind: 'tool' | 'model' | 'note'; text: string };
 
@@ -11,7 +11,7 @@ const summarize = (args: Record<string, unknown>) => JSON.stringify(args).slice(
 /**
  * The model decides which tools to call and in what order; each result goes back to it until it answers without asking
  * for another tool. After `maxSteps` rounds of tool calls it is told to answer with what it has, so a run always ends.
- * A failing tool does not stop the run: the model is told what went wrong and may try something else.
+ * Tools may require the stage to stop on failure; other failures are returned to the model for correction.
  */
 export async function runAgent(input: { model: AgentModel; system: string; task: string; tools: AgentTool[]; maxSteps: number; onEvent?: (event: AgentEvent) => void }) {
   const specs: ChatToolSpec[] = input.tools.map(({ name, description, parameters }) => ({ name, description, parameters }));
@@ -28,7 +28,7 @@ export async function runAgent(input: { model: AgentModel; system: string; task:
       let content: string;
       if (!tool) content = `Error: there is no tool named ${call.name}`;
       else try { content = (await tool.run(call.arguments)).slice(0, MAX_TOOL_OUTPUT); }
-      catch (error) { content = `Error: ${error instanceof Error ? error.message : 'the tool failed'}`; input.onEvent?.({ kind: 'note', text: `${call.name} failed: ${content}` }); }
+      catch (error) { if (tool.stopOnError) throw error; content = `Error: ${error instanceof Error ? error.message : 'the tool failed'}`; input.onEvent?.({ kind: 'note', text: `${call.name} failed: ${content}` }); }
       messages.push({ role: 'tool', toolCallId: call.id, name: call.name, content });
     }
   }

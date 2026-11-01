@@ -3,7 +3,7 @@ import { Bot, Check, Circle, Loader2, Square, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { copilotStages, stageLabels, type CopilotRunView, type Suggestion } from '@/lib/copilot/types';
+import { copilotStages, stageLabels, type Clarification, type CopilotRunView, type Suggestion } from '@/lib/copilot/types';
 import { AiButton } from './AiAssistant';
 import { CopilotStartForm, type CopilotReadiness, type CopilotStartValues } from './CopilotStartForm';
 import { useI18n } from './I18nProvider';
@@ -18,7 +18,7 @@ async function call<T>(path: string, method: 'GET' | 'POST' | 'PATCH' | 'DELETE'
 }
 
 /**
- * Copilot for a research plan: from a research purpose to a design of experiments in five stages. It works like an
+ * Copilot for a research plan: from a research purpose to a design of experiments after confirming the research question. It works like an
  * agent (it decides what to look up), but writes nothing into the plan: every change is a suggestion the author adopts.
  */
 export function ResearchPlanCopilot({ planId, initialRuns, readiness, startOpen, mode, autoStartRunId }: { planId: string; initialRuns: CopilotRunView[]; readiness: CopilotReadiness; startOpen: boolean; mode: 'new' | 'adjust'; autoStartRunId?: string }) {
@@ -54,8 +54,8 @@ export function ResearchPlanCopilot({ planId, initialRuns, readiness, startOpen,
   }
   async function edit(patch: object) {
     if (!run) return;
-    try { setRun((await call<{ run: CopilotRunView }>(`${base}/runs/${run.id}`, 'PATCH', patch)).run); setError(undefined); }
-    catch (failure) { setError(failure instanceof Error ? failure.message : 'The change was not saved'); }
+    try { setRun((await call<{ run: CopilotRunView }>(`${base}/runs/${run.id}`, 'PATCH', patch)).run); setError(undefined); return true; }
+    catch (failure) { setError(failure instanceof Error ? failure.message : 'The change was not saved'); return false; }
   }
   async function decide(suggestion: Suggestion, decision: 'adopt' | 'ignore') {
     if (!run) return;
@@ -87,19 +87,21 @@ export function ResearchPlanCopilot({ planId, initialRuns, readiness, startOpen,
     <div className="ln-copilot-body">
       {!run ? <CopilotStartForm readiness={readiness} mode={mode} busy={driving} onStart={values => { void begin(values); }} /> : <>
         <p className="ln-copilot-purpose"><strong>Purpose</strong> {run.purpose}</p>
-        <ol className="ln-copilot-stages" aria-label="Stages">{copilotStages.map(stage => {
+        <ol className="ln-copilot-stages" aria-label="Stages">{copilotStages.filter(stage => stage !== 'clarify' || state?.clarification || run.stage === 'clarify').map(stage => {
           const finished = state?.done.includes(stage), current = run.stage === stage && run.status !== 'done';
           return <li key={stage} data-state={finished ? 'done' : current ? 'current' : 'todo'}>{finished ? <Check className="h-3.5 w-3.5" aria-hidden /> : current && (driving || run.status === 'working') ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <Circle className="h-3.5 w-3.5" aria-hidden />}{stageLabels[stage]}</li>;
         })}</ol>
         <div className="ln-copilot-controls">
           {driving ? <Button type="button" onClick={() => { stop.current = true; }}><Square className="h-4 w-4" aria-hidden />Stop after this step</Button> : null}
-          {idle && run.status === 'paused' ? <AiButton type="button" onClick={() => { void edit({ resume: true }).then(() => drive(run.id)); }}>Continue with the next stage</AiButton> : null}
+          {idle && run.status === 'paused' && run.stage !== 'clarify' ? <AiButton type="button" onClick={() => { void edit({ resume: true }).then(saved => { if (saved) void drive(run.id); }); }}>Continue with the next stage</AiButton> : null}
           {idle && run.status === 'ready' ? <AiButton type="button" onClick={() => { void drive(run.id); }}>Continue</AiButton> : null}
-          {idle && run.status === 'failed' ? <AiButton type="button" onClick={() => { void edit({ resume: true }).then(() => drive(run.id)); }}>Try this step again</AiButton> : null}
+          {idle && run.status === 'failed' ? <AiButton type="button" onClick={() => { if (run.stage === 'clarify') void drive(run.id); else void edit({ resume: true }).then(saved => { if (saved) void drive(run.id); }); }}>Try this step again</AiButton> : null}
           {idle ? <Button type="button" variant="ghost" onClick={() => { void clear(); }}><Trash2 className="h-4 w-4" aria-hidden />Remove this run</Button> : null}
           <span className="ln-design-note">{`Model calls so far: ${run.modelCalls}${run.model ? ` · ${run.model}` : ''}`}</span>
         </div>
         {run.error ? <p role="alert" className="text-sm text-error">{run.error}</p> : null}
+        {run.status === 'failed' ? <p role="status" className="ln-copilot-warn">本阶段未完成，后续阶段没有执行。</p> : null}
+        {state?.clarification ? <ClarificationForm key={run.id + (state.clarification.confirmedAt ?? '')} value={state.clarification} busy={!idle} onConfirm={async value => { if (await edit({ clarification: value })) void drive(run.id); }} /> : null}
         {state?.subQuestions ? <details className="ln-copilot-part" open><summary>{`Questions (${state.subQuestions.length})`}</summary>
           <ol>{state.subQuestions.map(question => <li key={question.id}>
             <input aria-label={`Question ${question.id}`} defaultValue={question.question} disabled={!idle} onBlur={event => { const text = event.target.value.trim(); if (text && text !== question.question) void edit({ subQuestions: state.subQuestions!.map(item => item.id === question.id ? { ...item, question: text } : item) }); }} />
@@ -107,7 +109,7 @@ export function ResearchPlanCopilot({ planId, initialRuns, readiness, startOpen,
           </li>)}</ol></details> : null}
         {state?.papers ? <details className="ln-copilot-part"><summary>{`Papers (${state.papers.length})`}</summary>
           <ul>{state.papers.map(paper => <li key={paper.key}>
-            <span>{paper.url ? <a href={paper.url} target="_blank" rel="noreferrer" className="underline">{paper.title}</a> : paper.title}<span className="ln-design-note">{[paper.authors?.split(',')[0], paper.year, paper.venue].filter(Boolean).join(' · ')}{paper.openAccess ? <span className="ln-copilot-badge">open access</span> : null}{paper.basis ? <span className="ln-copilot-badge">{paper.basis === 'fulltext' ? 'read: full text' : 'read: abstract only'}</span> : null}</span>{paper.why ? <span className="ln-design-note">{paper.why}</span> : null}</span>
+            <span>{paper.url ? <a href={paper.url} target="_blank" rel="noreferrer" className="underline">{paper.title}</a> : paper.title}<span className="ln-design-note">{[paper.authors?.split(',')[0], paper.year, paper.venue].filter(Boolean).join(' · ')}<span className="ln-copilot-badge">{paper.source === 'pubmed' ? 'PubMed' : 'Europe PMC'}</span>{paper.openAccess ? <span className="ln-copilot-badge">open access</span> : null}{paper.basis ? <span className="ln-copilot-badge">{paper.basis === 'fulltext' ? 'read: full text' : 'read: abstract only'}</span> : null}</span>{paper.why ? <span className="ln-design-note">{paper.why}</span> : null}</span>
             {idle && (state.extractIndex ?? 0) === 0 ? <button type="button" className="ln-copilot-x focus-ring" aria-label={`Do not read ${paper.title}`} onClick={() => { void edit({ removePaperKeys: [paper.key] }); }}>×</button> : null}
           </li>)}</ul></details> : null}
         {state?.extractions?.length ? <details className="ln-copilot-part"><summary>{`Experiments found in the papers (${state.extractions.reduce((total, item) => total + item.experiments.length, 0)})`}</summary>
@@ -119,13 +121,13 @@ export function ResearchPlanCopilot({ planId, initialRuns, readiness, startOpen,
         {state?.design ? <details className="ln-copilot-part"><summary>Design</summary>
           {state.design.summary ? <p>{state.design.summary}</p> : null}
           {state.design.items.map(item => <div key={item.subQuestionId}><p className="ln-copilot-q">{`${item.subQuestionId}：${state.subQuestions?.find(question => question.id === item.subQuestionId)?.question ?? ''}`}</p>
-            <ul>{item.experiments.map(experiment => <li key={experiment.name}><span><strong><span className={`ln-copilot-badge${experiment.priority === 'must' ? ' is-must' : ''}`}>{experiment.priority === 'must' ? 'Must' : 'Optional'}</span>{experiment.name}</strong>{experiment.purpose ? <span className="ln-design-note">{experiment.purpose}</span> : null}{experiment.verified ? null : <span className="ln-design-note"><span className="ln-copilot-badge is-warn">Unverified</span>{experiment.problem}</span>}</span></li>)}</ul></div>)}</details> : null}
+            <ul>{item.experiments.map(experiment => <li key={experiment.name}><span><strong><span className={`ln-copilot-badge${experiment.priority === 'must' ? ' is-must' : ''}`}>{experiment.priority === 'must' ? 'Must' : 'Optional'}</span>{experiment.name}</strong>{experiment.purpose ? <span className="ln-design-note">{experiment.purpose}</span> : null}{experiment.comparison ? <span className="ln-design-note">比较：{experiment.comparison}</span> : null}<span className="ln-design-note">方法：{experiment.approach || '待定'}；读出：{experiment.readouts.join('、') || '待定'}；对照：{experiment.controls.join('、') || '待定'}</span>{experiment.decisionCriteria?.map((text, index) => <span className="ln-design-note" key={index}>判定：{text}</span>)}{experiment.verified ? null : <span className="ln-design-note"><span className="ln-copilot-badge is-warn">Unverified</span>{experiment.problem}</span>}</span></li>)}</ul></div>)}</details> : null}
         {run.suggestions.length ? <section className="ln-copilot-suggestions" aria-label="Suggestions">
           <h3>Suggestions</h3>
           <p className="ln-design-note">Nothing is written into the plan until you adopt it.</p>
           <ul>{run.suggestions.map(suggestion => <li key={suggestion.id} data-status={suggestion.status}>
             <div><strong>{suggestion.title}</strong>
-              {suggestion.kind === 'experiment' ? <span className="ln-design-note">{suggestion.note}{suggestion.verified ? null : <span className="ln-copilot-badge is-warn">Unverified</span>}</span> : <details><summary>Preview</summary>{suggestion.blocks.map((block, index) => block.type === 'heading' ? <p key={index} className="ln-copilot-q">{block.text}</p> : <p key={index} className="ln-design-note">{block.text}</p>)}</details>}
+              {suggestion.kind === 'experiment' ? <span className="ln-design-note">{suggestion.note}{suggestion.verified ? null : <span className="ln-copilot-badge is-warn">Unverified</span>}</span> : <details><summary>Preview</summary>{(suggestion.kind === 'design' && suggestion.sections ? suggestion.sections : [{ key: suggestion.kind, title: '', blocks: suggestion.blocks }]).map(section => <section key={section.key}>{section.title ? <h4>填入：{section.title}</h4> : null}{section.blocks.map((block, index) => block.type === 'heading' ? <p key={index} className="ln-copilot-q">{block.text}</p> : <p key={index} className="ln-design-note">{block.text}</p>)}</section>)}</details>}
             </div>
             {suggestion.status === 'pending' ? <span className="ln-copilot-decide"><Button type="button" size="sm" onClick={() => { void decide(suggestion, 'adopt'); }}>Adopt</Button><Button type="button" size="sm" variant="ghost" onClick={() => { void decide(suggestion, 'ignore'); }}>Ignore</Button></span>
               : <span className="ln-design-note"><span>{suggestion.status === 'adopted' ? 'Adopted' : 'Ignored'}</span>{suggestion.kind === 'experiment' && suggestion.adoptedExperimentId ? <Link href={`/experiments/${suggestion.adoptedExperimentId}`} className="ml-2 underline">Open experiment</Link> : null}</span>}
@@ -136,4 +138,17 @@ export function ResearchPlanCopilot({ planId, initialRuns, readiness, startOpen,
       {error ? <p role="alert" className="text-sm text-error">{error}</p> : null}
     </div>
   </details>;
+}
+
+
+function ClarificationForm({ value, busy, onConfirm }: { value: Clarification & { questions: string[]; confirmedAt?: string }; busy: boolean; onConfirm: (value: Clarification) => Promise<void> }) {
+  const [draft, setDraft] = useState<Clarification>({ method: value.method, subject: value.subject, sample: value.sample, objective: value.objective });
+  const fields = [['method', '方法与术语'], ['subject', '研究对象与候选分子'], ['sample', '样本与模型'], ['objective', '本轮目标']] as const;
+  if (value.confirmedAt) return <details className="ln-copilot-part"><summary>已确认的研究信息</summary>{fields.map(([key, label]) => <p key={key}><strong>{label}：</strong>{value[key]}</p>)}</details>;
+  return <form className="ln-copilot-form ln-copilot-part" onSubmit={event => { event.preventDefault(); void onConfirm(draft); }}>
+    <h3>先确认研究信息</h3><p className="ln-design-note">下面是 AI 的理解，请核对术语和对象。尚未确定的内容请写“待定”，不会自动补成已知条件。</p>
+    {value.questions.length ? <ul>{value.questions.map((question, index) => <li key={index}>{question}</li>)}</ul> : null}
+    {fields.map(([key, label]) => <label key={key}>{label}<textarea required minLength={2} maxLength={key === 'method' ? 200 : key === 'objective' ? 500 : 400} rows={2} value={draft[key]} disabled={busy} onChange={event => setDraft({ ...draft, [key]: event.target.value })} /></label>)}
+    <AiButton type="submit" disabled={busy || fields.some(([key]) => draft[key].trim().length < 2)}>确认信息，开始文献检索</AiButton>
+  </form>;
 }

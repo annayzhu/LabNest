@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { Database, Grid3x3, Tags, TestTube2, type LucideIcon } from "lucide-react";
-import { cn } from "@/lib/cn";
+import { Database, Grid3x3, Tags, TestTube2 } from "lucide-react";
+import { SectionTabs } from "@/components/SectionTabs";
 import { prisma } from "@/lib/db";
 
 const sections = [
@@ -8,7 +7,7 @@ const sections = [
   { key: "boxes", href: "/samples/boxes", label: "Boxes", icon: Grid3x3 },
   { key: "types", href: "/samples/types", label: "Types", icon: Tags },
   { key: "bank", href: "/samples/bank", label: "External sample bank", icon: Database },
-] as const satisfies readonly { key: string; href: string; label: string; icon: LucideIcon }[];
+] as const;
 
 /**
  * The samples pages, one row under the page title, each with how many records it lists; the same tab bar as inventory's.
@@ -23,26 +22,6 @@ export async function SampleNav({ current }: { current: (typeof sections)[number
     prisma.sampleBankConnection.count({ where: { enabled: true } }),
   ]);
   const counts = { samples, boxes, types, bank };
-  return (
-    <nav aria-label="Sample sections" className="editorial-scrollbar flex gap-1 overflow-x-auto border-b border-hairline">
-      {sections.filter(({ key }) => key !== "bank" || banksOn || current === "bank").map(({ key, href, label, icon: Icon }) => {
-        const active = key === current;
-        return (
-          <Link
-            key={key}
-            href={href}
-            aria-current={active ? "page" : undefined}
-            className={cn(
-              "focus-ring -mb-px inline-flex h-10 shrink-0 items-center gap-2 border-b-2 px-3 text-sm font-medium transition-colors",
-              active ? "border-moss bg-sage-surface/60 text-moss" : "border-transparent text-graphite hover:bg-warm hover:text-ink",
-            )}
-          >
-            <Icon className="h-4 w-4" aria-hidden />
-            <span>{label}</span>
-            <span className={cn("rounded-full px-1.5 text-xs font-semibold leading-5 tabular-nums", active ? "bg-surface text-moss" : "bg-stone text-muted")}>{counts[key]}</span>
-          </Link>
-        );
-      })}
-    </nav>
-  );
+  const shown = sections.filter(({ key }) => key !== "bank" || banksOn || current === "bank");
+  return <SectionTabs name="Sample sections" current={current} tabs={shown.map((section) => ({ ...section, count: counts[section.key] }))} />;
 }

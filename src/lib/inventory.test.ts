@@ -214,7 +214,6 @@ describe("low-stock advice by 大类 (Q142)", () => {
     ["consumable", "purchase"],
     ["equipment", "purchase"],
     ["biological", "expand"],
-    ["sample", "remaining"],
     [null, "purchase"],
   ] as const)("%s → %s", (group, advice) => {
     expect(lowStockAdvice(group)).toBe(advice);

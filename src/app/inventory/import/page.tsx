@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { ClipboardPaste, Dna, ReceiptText, Sheet } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { InventoryDocumentImport } from "@/components/InventoryDocumentImport";
-import { inventoryTabClass } from "@/components/InventoryNav";
 import { PageHeader } from "@/components/PageHeader";
+import { SectionTabs } from "@/components/SectionTabs";
 import { SequenceProductImport } from "@/components/SequenceProductImport";
 import { StructuredImportWorkspace } from "@/components/StructuredImportWorkspace";
 import { readAISettings } from "@/lib/ai-settings";
@@ -34,14 +33,7 @@ export default async function InventoryImportPage({ searchParams }: { searchPara
       <div className="space-y-4">
         <PageHeader title="Import Inventory" />
         <div className="space-y-2">
-          <nav aria-label="Import source" className="editorial-scrollbar flex gap-1 overflow-x-auto border-b border-hairline">
-            {sources.map(({ key, label, icon: Icon }) => (
-              <Link key={key} href={`/inventory/import?source=${key}`} aria-current={key === source.key ? "page" : undefined} className={inventoryTabClass(key === source.key)}>
-                <Icon className="h-4 w-4" aria-hidden />
-                <span>{label}</span>
-              </Link>
-            ))}
-          </nav>
+          <SectionTabs name="Import source" current={source.key} tabs={sources.map(({ key, label, icon }) => ({ key, href: `/inventory/import?source=${key}`, label, icon }))} />
           <p className="text-sm text-graphite">{source.help}</p>
         </div>
         {source.key === "table"

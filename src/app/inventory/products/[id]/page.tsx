@@ -25,7 +25,7 @@ import { deleteInventoryProduct, setInventoryProductArchived } from "../actions"
 
 export const dynamic = "force-dynamic";
 
-const adviceText = { purchase: "Reorder this product", expand: "Grow it again from its glycerol stock or seed bank", remaining: "A sample cannot be replaced" } as const;
+const adviceText = { purchase: "Reorder this product", expand: "Grow it again from its glycerol stock or seed bank" } as const;
 
 export default async function InventoryProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

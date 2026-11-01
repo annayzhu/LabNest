@@ -969,8 +969,6 @@ export const zhUi: Record<string, string> = {
   "Reorder": "补货",
   "Reorder this product": "需要补货",
   "Grow it again from its glycerol stock or seed bank": "从甘油菌或种子库重新扩增",
-  "A sample cannot be replaced": "样本无法补充",
-  "A sample cannot be replaced; left:": "样本无法补充，剩余：",
   "No safety stock": "未设安全库存",
   "Set a safety stock to add up lots": "设置安全库存后合计各批次",
   "No stock matches this view.": "没有符合条件的库存。",

@@ -94,9 +94,9 @@ export function exportedSafetyStock(lot: { unit: string; lowThreshold: number | 
   return lot.product.lowThreshold != null && sameUnit(lot.product.lowThresholdUnit, lot.unit) ? lot.product.lowThreshold : null;
 }
 
-/** What low stock asks for, by 大类. Biological material is grown again from its own stock; a sample cannot be replaced. */
-export function lowStockAdvice(groupKey: string | null | undefined): "purchase" | "expand" | "remaining" {
-  return groupKey === "biological" ? "expand" : groupKey === "sample" ? "remaining" : "purchase";
+/** What low stock asks for, by 大类: biological material is grown again from its own stock, the rest is bought. */
+export function lowStockAdvice(groupKey: string | null | undefined): "purchase" | "expand" {
+  return groupKey === "biological" ? "expand" : "purchase";
 }
 
 export const managementModeLabels: Record<string, string> = { information: "Record only", package: "By container", precise: "Precise use" };

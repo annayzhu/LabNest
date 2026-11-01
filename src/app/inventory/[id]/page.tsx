@@ -240,8 +240,7 @@ function LedgerNote({ row, from, to }: { row: { entry: ReturnType<typeof ledgerE
   );
 }
 
-function AdviceText({ advice, item }: { advice: "purchase" | "expand" | "remaining"; item: { id: string; currentQuantity: number; unit: string } }) {
+function AdviceText({ advice, item }: { advice: ReturnType<typeof lowStockAdvice>; item: { id: string } }) {
   if (advice === "expand") return <span>Grow it again from its glycerol stock or seed bank</span>;
-  if (advice === "remaining") return <span><span>A sample cannot be replaced; left:</span> <QuantityText quantity={item.currentQuantity} unit={item.unit} /></span>;
   return <Link href={`/purchases/new?inventory=${item.id}`} className="text-moss underline">Reorder</Link>;
 }

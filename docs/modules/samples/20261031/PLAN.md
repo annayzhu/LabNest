@@ -233,7 +233,7 @@
 ### 3.2 与库存会话的协调
 
 - 这些库存文件只改了与样本有关的行，库存会话未提交的改动没有碰到这些行：`inventory-types.ts`（去掉 sample 大类）、`inventory-location-lifecycle.ts` 及其测试、`inventory/locations/actions.ts`、`inventory/locations/page.tsx`、`InventoryLocationManager.tsx`、`inventory-products.server.ts`、`inventory.ts`（去掉 sample-event 名词）、`actions.lifecycle.test.ts`、`bulk-actions.test.ts`。
-- `inventory.ts` 的 `lowStockAdvice` 仍有 `"sample"` 分支和 `inventory/[id]/page.tsx` 的 “remaining” 文案，现在不会再走到；为减少冲突没改，留给库存会话一并清理。
+- `inventory.ts` 的 `lowStockAdvice` 仍有 `"sample"` 分支和 `inventory/[id]/page.tsx` 的 “remaining” 文案，现在不会再走到；为减少冲突没改，留给库存会话一并清理。2026-11-01 已删除。
 - 共享组件只用不改样式；`ScientificDocumentView` 加了可选的 `sectionLeading`，不影响其他调用。
 - `i18n.ts` 只加三处：文件头的 import、`zhUi` 开头的展开、`translateUiText` 里的兜底调用；另把库存删除阻挡项的“样本事件”句式换成“N 个样本”，准备清单计数句式加了“样本”。
 
@@ -288,7 +288,7 @@
 
 - 用户在 3003 验收通过（`fe174693`）。
 - 随后按用户要求，样本模块的「样本 / 盒子 / 类型」标签栏改成与 3002（库存会话预览）的库存标签栏一致：每个标签带图标和条数（样本数、在用库位数、样本类型数），选中的标签有浅绿底色和下边线；详情页先显示标签栏，再是「← 样本」返回链接和标题；新建页与库存的“登记库存”一样不显示标签栏。截图已重拍。
-- 库存的标签栏（`InventoryNav`）在库存会话未提交的改动里，本分支没有动它；`SampleNav` 照抄了同样的结构和样式。两者以后可以合成一个共用组件，留给统一 UI 时处理。
+- 库存的标签栏（`InventoryNav`）在库存会话未提交的改动里，本分支没有动它；`SampleNav` 照抄了同样的结构和样式。两者以后可以合成一个共用组件，留给统一 UI 时处理。2026-11-01 已合成 `SectionTabs`，库存导入页的来源标签也改用它。
 
 ## 6. 发布（2026-10-31）
 

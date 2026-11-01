@@ -1,0 +1,216 @@
+/* Settings: a pinned section list beside one narrow column of cards; each card is a stack of rows (label left, control right). */
+.settings-page {
+  --settings-sticky-top: var(--ln-app-topbar-height);
+  --settings-column: 47.5rem;
+  --settings-card-pad: 1.25rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.settings-layout {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.settings-content {
+  display: grid;
+  gap: 2rem;
+  min-width: 0;
+  width: 100%;
+  max-width: var(--settings-column);
+  margin-inline: auto;
+}
+
+/* Section list: a sideways strip under the top bar until there is room for a column. */
+.settings-nav {
+  position: sticky;
+  top: var(--settings-sticky-top);
+  z-index: 20;
+  display: flex;
+  gap: 0.25rem;
+  margin-inline: -1rem;
+  padding: 0.4rem 1rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--hairline);
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.settings-nav::-webkit-scrollbar { display: none; }
+
+.settings-nav-link {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.5rem;
+  padding: 0 0.9rem;
+  border-radius: 999px;
+  color: var(--graphite);
+  font-size: 14px;
+  white-space: nowrap;
+  transition: background-color 130ms ease, color 130ms ease;
+}
+
+.settings-nav-link svg { width: 1.05rem; height: 1.05rem; flex: 0 0 auto; color: var(--muted); }
+.settings-nav-link:hover { background: var(--stone); color: var(--ink); }
+.settings-nav-link[aria-current="location"] { background: var(--action-surface); color: var(--moss); font-weight: 600; }
+.settings-nav-link[aria-current="location"] svg { color: var(--moss); }
+.settings-nav-external .settings-nav-arrow { width: 0.85rem; height: 0.85rem; margin-left: auto; }
+
+@media (min-width: 1200px) {
+  .settings-layout {
+    grid-template-columns: 13rem minmax(0, var(--settings-column));
+    justify-content: center;
+    gap: 2.5rem;
+    align-items: start;
+  }
+  .settings-content { margin-inline: 0; }
+  .settings-nav {
+    top: calc(var(--settings-sticky-top) + 1rem);
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    background: none;
+    backdrop-filter: none;
+  }
+  .settings-nav-link { border-radius: 0 999px 999px 0; padding-left: 1.1rem; }
+  .settings-nav-external { margin-top: 0.5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-nav-link { transition: none; }
+}
+
+/* Sections: title above, content in a quiet card. */
+.settings-content > .ln-section,
+.settings-content > [id] > .ln-section {
+  border: 0;
+}
+
+.settings-content > [id] {
+  scroll-margin-top: calc(var(--settings-sticky-top) + var(--settings-nav-height, 3.5rem) + 1rem);
+}
+
+/* Appearance's anchor sits inside its card; leave room for the title above. */
+.settings-content #appearance { scroll-margin-top: calc(var(--settings-sticky-top) + var(--settings-nav-height, 3.5rem) + 3.25rem); }
+
+@media (min-width: 1200px) {
+  .settings-content > [id] { scroll-margin-top: calc(var(--settings-sticky-top) + 1.25rem); }
+  .settings-content #appearance { scroll-margin-top: calc(var(--settings-sticky-top) + 3.5rem); }
+}
+
+.settings-content > .ln-section > :first-child,
+.settings-content > [id] > .ln-section > :first-child {
+  min-height: 0;
+  padding: 0 0.25rem 0.6rem;
+  border: 0;
+}
+
+.settings-content > .ln-section > :nth-child(2),
+.settings-content > [id] > .ln-section > :nth-child(2) {
+  padding: 1rem var(--settings-card-pad);
+  border: 1px solid var(--hairline);
+  border-radius: var(--ln-radius-panel);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(32, 35, 44, 0.04);
+}
+
+/* One level of bordered boxes (DESIGN.md): a table inside a card reaches its edges, and the preview sits on a fill. */
+.settings-content .ln-data-table-frame { width: calc(100% + 2 * var(--settings-card-pad)); max-width: none; margin-inline: calc(-1 * var(--settings-card-pad)); border: 0; border-radius: 0; box-shadow: none; }
+.settings-content > .ln-section > :nth-child(2):has(> .ln-data-table-frame:only-child) { padding-block: 0; overflow: hidden; }
+.settings-content .backup-list { width: calc(100% + 2 * var(--settings-card-pad)); margin-inline: calc(-1 * var(--settings-card-pad)); }
+.settings-content .backup-list :is(th, td):first-child { padding-left: var(--settings-card-pad); }
+.settings-content .backup-list :is(th, td):last-child { padding-right: var(--settings-card-pad); }
+.settings-content .appearance-preview { border: 0; box-shadow: none; background: var(--paper); }
+
+/* Rows. A floated legend is laid out like any other element, so a fieldset can be a row too. */
+.settings-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 1.5rem;
+  row-gap: 0.25rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0.85rem 0;
+  border: 0;
+}
+
+.settings-row > legend {
+  float: left;
+  grid-column: 1;
+  margin: 0;
+  padding: 0;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.settings-row > p { grid-column: 1; margin: 0; }
+.settings-row > .settings-row-control { grid-column: 2; grid-row: 1; justify-self: end; }
+.settings-row:has(> legend):has(> p) > .settings-row-control { grid-row: 1 / span 2; }
+.settings-row-stack { grid-template-columns: minmax(0, 1fr); row-gap: 0.7rem; }
+.settings-row-stack > * { grid-column: 1; }
+
+.settings-subrows { display: grid; }
+.settings-subrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 15rem);
+  align-items: center;
+  column-gap: 1.5rem;
+  padding: 0.35rem 0;
+  font-size: 14px;
+}
+
+/* Appearance: rows divided by hairlines, the live preview last. */
+.settings-content #appearance > p:first-child { margin: 0; padding-bottom: 0.85rem; border-bottom: 1px solid var(--hairline); }
+.settings-content .appearance-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+.settings-content .appearance-controls { display: grid; gap: 0; }
+.settings-content .appearance-controls > * + * { border-top: 1px solid var(--hairline); }
+.settings-content .appearance-preview { position: static; }
+
+/* Typography: one row per writing role. */
+.settings-content .typography-role-grid { grid-template-columns: minmax(0, 1fr); gap: 0; }
+.settings-content .typography-role-field {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 15rem);
+  align-items: center;
+  column-gap: 1.5rem;
+  padding: 0.6rem 0;
+}
+.settings-content .typography-role-field + .typography-role-field { border-top: 1px solid var(--hairline); }
+.settings-content .typography-role-label,
+.settings-content .typography-role-note { grid-column: 1; }
+.settings-content .typography-role-field > :last-child { grid-column: 2; grid-row: 1 / span 2; }
+
+/* Backup facts as rows. */
+.settings-content .backup-facts { grid-template-columns: minmax(0, 1fr); gap: 0; }
+.settings-content .backup-facts > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  column-gap: 1.5rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.settings-content .backup-facts dt { font-size: 14px; color: var(--ink); }
+.settings-content .backup-facts dd { margin: 0; text-align: right; color: var(--graphite); }
+
+@media (max-width: 640px) {
+  .settings-row,
+  .settings-subrow,
+  .settings-content .typography-role-field,
+  .settings-content .backup-facts > div { grid-template-columns: minmax(0, 1fr); }
+  .settings-row > .settings-row-control,
+  .settings-row:has(> legend):has(> p) > .settings-row-control,
+  .settings-content .typography-role-field > :last-child { grid-column: 1; grid-row: auto; justify-self: start; }
+  .settings-row > p { order: 1; }
+  .settings-row > .settings-row-control { order: 2; margin-top: 0.35rem; }
+  .settings-content .backup-facts dd { text-align: left; }
+  .settings-page { --settings-card-pad: 1rem; }
+  .settings-content > .ln-section > :nth-child(2),
+  .settings-content > [id] > .ln-section > :nth-child(2) { padding: 0.75rem var(--settings-card-pad); }
+}

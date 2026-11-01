@@ -11,7 +11,7 @@
 | 样本 | [独立模块、实验产出与外部样本库预留（2026-10-31）](samples/20261031/PLAN.md) · [外部样本库接口契约](samples/20261031/SAMPLE-BANK-CONTRACT.md) · [外部样本库入库（2026-10-31）](samples/sample-bank-20261031/PLAN.md) |
 | 导入 | [导入预览：逐条补充、修改、删除，改好后一起保存（2026-10-31）](import/preview-edit-20261031/PLAN.md) |
 | 富文本编辑器 | [修复规格](editor-repair/SPEC.md) · [验收](editor-repair/ACCEPTANCE.md) · [复查](editor-repair/REVIEW.md) |
-| 外观与主题 | [外观基础方案与证据目录](appearance/foundation/) |
+| 外观与主题 | [外观基础方案与证据目录](appearance/foundation/) · [后十套配色提亮与 Chrome 式设置页（2026-10-31）](appearance/palette-refresh-20261031/PLAN.md) |
 | Tools 接入 | [2026-10-20 入口验证](tools-entrypoints-20261020/VERIFICATION.md) · [部署说明](../operations/tools-deployment.md) |
 | Visualization Studio 连接 | [可视化相关记录](visualization/README.md) |
 

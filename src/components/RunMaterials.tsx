@@ -17,6 +17,8 @@ type Row = {
   unit: string;
   source: string;
   inventoryItemId: string | null;
+  /** The stock as it is named now; the record keeps the name it was saved with (Q191). */
+  inventoryItem?: { name: string } | null;
   containerId: string | null;
   status: string;
   error: string | null;
@@ -192,7 +194,10 @@ export function RunMaterials({
           <tbody>
             {rows.map((row) => (
               <tr key={row.id} className="border-t border-hairline">
-                <td data-label={t("Reagent or consumable")} className="p-2">{row.name}</td>
+                <td data-label={t("Reagent or consumable")} className="p-2">
+                  {row.inventoryItem?.name ?? row.name}
+                  {row.inventoryItem && row.inventoryItem.name !== row.name ? <span className="block text-xs text-muted"><span>Recorded as</span> {row.name}</span> : null}
+                </td>
                 <td data-label={t("Expected use")} className="p-2 text-right tabular-nums">
                   {row.expected ?? "not recorded"} {row.unit}
                 </td>
@@ -305,7 +310,7 @@ export function RunMaterials({
               {`Review ${selection.length} selected deductions`}
             </Button>
           ) : null}
-          {review ? <div className="mt-3 border-t border-hairline py-3"><p>Only the selected amounts below are deducted; saving a record never deducts stock.</p><ul>{rows.filter(r=>selection.includes(r.id)).map(r=><li key={r.id}>{`${r.name} — deduct ${r.actual ?? 'not confirmed'} ${r.unit}${adjustment(r)}`}</li>)}</ul><Button type="button" disabled={busy || !selection.length} onClick={async()=>{await confirm();setReview(false);setSelection([]);}}>Deduct the selected items</Button><Button type="button" onClick={()=>setReview(false)}>Cancel</Button></div> : null}
+          {review ? <div className="mt-3 border-t border-hairline py-3"><p>Only the selected amounts below are deducted; saving a record never deducts stock.</p><ul>{rows.filter(r=>selection.includes(r.id)).map(r=><li key={r.id}>{`${r.inventoryItem?.name ?? r.name} — deduct ${r.actual ?? 'not confirmed'} ${r.unit}${adjustment(r)}`}</li>)}</ul><Button type="button" disabled={busy || !selection.length} onClick={async()=>{await confirm();setReview(false);setSelection([]);}}>Deduct the selected items</Button><Button type="button" onClick={()=>setReview(false)}>Cancel</Button></div> : null}
         </>
       ) : null}
       {status && !dialogActive ? (

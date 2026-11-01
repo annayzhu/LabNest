@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
@@ -22,6 +23,8 @@ export const containerCommand = z.object({
   componentId: z.string().min(1).optional(),
   componentState: z.enum(["present", "used_up", "missing"]).optional(),
   componentLocation: z.string().trim().max(240).optional(),
+  /** With a take-out: the container was used up right away, so it is marked empty after it is taken out. */
+  usedUp: z.boolean().optional(),
 });
 
 export async function readInventoryContainers(inventoryItemId: string) {
@@ -243,6 +246,8 @@ export async function applyContainerCommand(tx: Prisma.TransactionClient, invent
       },
     },
   });
+  // The take-out stays in the ledger as usual; emptying a container already out of the store changes no count.
+  if (input.action === "issue" && input.usedUp) await applyContainerCommand(tx, inventoryItemId, { action: "empty", containerId: bottle.id, clientMutationId: randomUUID(), performedBy: input.performedBy });
   return event;
 }
 

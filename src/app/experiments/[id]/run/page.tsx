@@ -44,7 +44,7 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
     prisma.experiment.findUnique({
       where: { id },
       include: {
-        materialUses: {orderBy:{createdAt:"asc"}},
+        materialUses: {orderBy:{createdAt:"asc"}, include:{inventoryItem:{select:{name:true}}}},
         project: true,
         researchPlan: true,
         primaryProtocolVersion: { include: { protocol: true } },

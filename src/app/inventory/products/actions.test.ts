@@ -1,4 +1,6 @@
 import { beforeEach, expect, it, vi } from "vitest";
+import { prisma } from "@/lib/db";
+import { saveProductForm } from "@/lib/inventory-product-form.server";
 import { deleteInventoryProduct, updateInventoryProduct } from "./actions";
 
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
@@ -65,6 +67,12 @@ it("writes a renamed product's identity onto every one of its lots, and only its
   await expect(updateInventoryProduct({}, form({ id: "p1", name: "Anti-human CD3", brand: "BioLegend", catalogNumber: "300438", typeId: "t-ab" }))).rejects.toThrow("redirect /inventory/products/p1");
   expect(db.lots.filter((lot) => lot.productId === "p1").map((lot) => [lot.name, lot.catalogNumber])).toEqual([["Anti-human CD3", "300438"], ["Anti-human CD3", "300438"]]);
   expect(db.lots.find((lot) => lot.id === "c")?.name).toBe("PBS");
+});
+
+it("renames a product from a lot's edit page, which sends its fields prefixed product. (Q191, Q192)", async () => {
+  await prisma.$transaction((tx) => saveProductForm(tx, form({ "product.id": "p1", "product.name": "Anti-human CD3", "product.typeId": "t-ab", name: "not the product", notes: "a note on the lot" }), "product."));
+  expect(db.lots.filter((lot) => lot.productId === "p1").map((lot) => lot.name)).toEqual(["Anti-human CD3", "Anti-human CD3"]);
+  expect(db.products.get("p1")).toMatchObject({ name: "Anti-human CD3", notes: null });
 });
 
 it("refuses a highly toxic level while a lot is not recorded precisely (Q143)", async () => {

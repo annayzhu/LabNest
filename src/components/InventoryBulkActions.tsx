@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { applyProductBulk, applyStockBulk, previewProductBulk, previewStockBulk } from "@/app/inventory/bulk-actions";
 import { useI18n } from "@/components/I18nProvider";
+import { UsedUpCheckbox } from "@/components/InventoryDetail";
 import { formInlineInputClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
 import { useModalDialog } from "@/components/ui/ModalDialogProvider";
@@ -44,7 +45,7 @@ export function InventoryBulkActions({ kind, locations = [], classes = [] }: {
   const [count, setCount] = useState(0);
   const [mode, setMode] = useState<Mode | null>(null);
   const [value, setValue] = useState("");
-  const [takeOut, setTakeOut] = useState({ count: "1", holder: "", place: "" });
+  const [takeOut, setTakeOut] = useState({ count: "1", holder: "", place: "", usedUp: false });
   const [busy, setBusy] = useState(false);
   const colon = locale === "zh" ? "：" : ": ";
 
@@ -72,7 +73,7 @@ export function InventoryBulkActions({ kind, locations = [], classes = [] }: {
     return lines.join("\n");
   }
 
-  async function run(action: string, params: Record<string, string | number | null> = {}) {
+  async function run(action: string, params: Record<string, string | number | boolean | null> = {}) {
     const ids = checked().map((box) => box.value);
     if (!ids.length || busy) return;
     setBusy(true);
@@ -124,7 +125,7 @@ export function InventoryBulkActions({ kind, locations = [], classes = [] }: {
     if (mode === "pi") return run("pi", { principalInvestigator: value.trim() || null });
     if (mode === "takeOut") {
       if (!takeOut.holder.trim()) return dialog.alert({ title: t("Not changed"), description: t("Enter who takes them.") });
-      return run("takeOut", { count: Math.max(1, Math.floor(Number(takeOut.count)) || 1), holder: takeOut.holder.trim(), place: takeOut.place.trim() });
+      return run("takeOut", { count: Math.max(1, Math.floor(Number(takeOut.count)) || 1), holder: takeOut.holder.trim(), place: takeOut.place.trim(), usedUp: takeOut.usedUp });
     }
     if (mode === "classify") {
       const [scope, key] = value.split(":");
@@ -141,6 +142,7 @@ export function InventoryBulkActions({ kind, locations = [], classes = [] }: {
         <input aria-label="Recipient" required value={takeOut.holder} maxLength={120} placeholder="Recipient" onChange={(event) => setTakeOut({ ...takeOut, holder: event.target.value })} onKeyDown={applyOnEnter} className={fieldClass} />
         <input aria-label="Put at (optional)" list="bulk-take-out-places" value={takeOut.place} maxLength={240} placeholder="Put at (optional)" onChange={(event) => setTakeOut({ ...takeOut, place: event.target.value })} onKeyDown={applyOnEnter} className={fieldClass} />
         <datalist id="bulk-take-out-places">{locations.map((option) => <option key={option.value} value={option.label} />)}</datalist>
+        <UsedUpCheckbox className="shrink-0 whitespace-nowrap" checked={takeOut.usedUp} onChange={(usedUp) => setTakeOut({ ...takeOut, usedUp })} />
       </> : mode === "pi" ? (
         <input aria-label="New PI" value={value} maxLength={120} placeholder="Zhang Lab" onChange={(event) => setValue(event.target.value)} onKeyDown={applyOnEnter} className={fieldClass} />
       ) : (

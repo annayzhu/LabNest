@@ -1,27 +1,29 @@
 import Link from "next/link";
+import { ClipboardPaste, Dna, ReceiptText, Sheet } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { InventoryDocumentImport } from "@/components/InventoryDocumentImport";
+import { inventoryTabClass } from "@/components/InventoryNav";
 import { PageHeader } from "@/components/PageHeader";
 import { SequenceProductImport } from "@/components/SequenceProductImport";
 import { StructuredImportWorkspace } from "@/components/StructuredImportWorkspace";
 import { readAISettings } from "@/lib/ai-settings";
-import { cn } from "@/lib/cn";
 import { prisma } from "@/lib/db";
 import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
 
 export const dynamic = "force-dynamic";
 
+// Each source is a tab like the inventory sections above it, with a line under the row saying what it takes (Q197).
 const sources = [
-  { key: "table", label: "Spreadsheet" },
-  { key: "documents", label: "Invoice, delivery note or label" },
-  { key: "text", label: "Pasted text" },
-  { key: "sequences", label: "Sequences" },
+  { key: "table", label: "Spreadsheet", icon: Sheet, help: "An Excel or CSV sheet, one lot per row. Download the template, or let AI match your columns." },
+  { key: "documents", label: "Invoices, delivery notes, labels", icon: ReceiptText, help: "Photos or PDFs of invoices, delivery notes or labels. AI reads a draft; you check every line before anything is imported." },
+  { key: "text", label: "Paste text", icon: ClipboardPaste, help: "Text from an order, invoice or email. AI reads a draft; you check every line before anything is imported." },
+  { key: "sequences", label: "Sequences", icon: Dna, help: "Primer pairs, siRNA duplexes or single sequences, pasted from a sheet or read from FASTA. Each becomes a product." },
 ] as const;
 
 /** One place to bring stock in: a spreadsheet, documents read by AI, or pasted text; all end in the inventory import. */
 export default async function InventoryImportPage({ searchParams }: { searchParams?: PageSearchParams }) {
   const requested = firstSearchParam(searchParams ? await searchParams : undefined, "source");
-  const source = sources.find((entry) => entry.key === requested)?.key ?? "table";
+  const source = sources.find((entry) => entry.key === requested) ?? sources[0];
   const [{ availability: text, vision: pictures }, locations] = await Promise.all([
     readAISettings(),
     prisma.inventoryLocation.findMany({ where: { status: "active" }, select: { name: true }, orderBy: { name: "asc" } }),
@@ -31,18 +33,21 @@ export default async function InventoryImportPage({ searchParams }: { searchPara
     <AppShell>
       <div className="space-y-4">
         <PageHeader title="Import Inventory" />
-        <nav aria-label="Import source" className="flex gap-5 overflow-x-auto border-b border-hairline">
-          {sources.map((entry) => (
-            <Link key={entry.key} href={`/inventory/import?source=${entry.key}`} aria-current={entry.key === source ? "page" : undefined}
-              className={cn("focus-ring -mb-px shrink-0 border-b-2 pb-2 pt-1 text-[13px] font-medium transition-colors", entry.key === source ? "border-moss text-moss" : "border-transparent text-muted hover:text-ink")}>
-              {entry.label}
-            </Link>
-          ))}
-        </nav>
-        {source === "table"
+        <div className="space-y-2">
+          <nav aria-label="Import source" className="editorial-scrollbar flex gap-1 overflow-x-auto border-b border-hairline">
+            {sources.map(({ key, label, icon: Icon }) => (
+              <Link key={key} href={`/inventory/import?source=${key}`} aria-current={key === source.key ? "page" : undefined} className={inventoryTabClass(key === source.key)}>
+                <Icon className="h-4 w-4" aria-hidden />
+                <span>{label}</span>
+              </Link>
+            ))}
+          </nav>
+          <p className="text-sm text-graphite">{source.help}</p>
+        </div>
+        {source.key === "table"
           ? <StructuredImportWorkspace module="inventory" columnHelper={{ ready: text.connected, reason: text.reason }} />
-          : source === "sequences" ? <SequenceProductImport />
-          : <InventoryDocumentImport source={source} pictures={{ ready: pictures.ready, reason: pictures.reason }} text={{ ready: text.connected, reason: text.reason }} locations={locations.map((location) => location.name)} />}
+          : source.key === "sequences" ? <SequenceProductImport />
+          : <InventoryDocumentImport source={source.key} pictures={{ ready: pictures.ready, reason: pictures.reason }} text={{ ready: text.connected, reason: text.reason }} locations={locations.map((location) => location.name)} />}
       </div>
     </AppShell>
   );

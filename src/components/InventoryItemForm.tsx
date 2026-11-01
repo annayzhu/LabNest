@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { QuantityInput } from "./QuantityInput";
 import { useActionState, useMemo, useState } from "react";
+import { useI18n } from "@/components/I18nProvider";
 import { QuantityText } from "@/components/InventoryDetail";
+import { ProductFields, type EntityOption, type ProductInitial, type ProductTypeOption } from "@/components/InventoryProductForm";
 import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
 import { Disclosure } from "@/components/ui/Disclosure";
@@ -49,17 +51,26 @@ const modeOptions = [
   { value: "precise", label: "Precise use" },
 ];
 
-/** Stock is a lot of a product: choose the product (or type a new one), then how much and where; the rest is folded away. */
-export function InventoryItemForm({ action, locations, products, types, groups, initial = {} }: {
+/**
+ * Stock is a lot of a product: choose the product (or type a new one), then how much and where; the rest is folded
+ * away. Editing a lot of a product shows that product's own fields first, saved for all its lots, so name, type and
+ * the rest are changed in one place (Q192); moving the lot to another product is the secondary way.
+ */
+export function InventoryItemForm({ action, locations, products, types, groups, initial = {}, product: owner }: {
   action: FormAction;
   locations: LocationOption[];
   products: ProductOption[];
-  types: TypeOption[];
+  types: ProductTypeOption[];
   groups: GroupOption[];
   initial?: InventoryItemInitial;
+  /** The lot's product as its own form starts, when an existing lot is edited. */
+  product?: { initial: ProductInitial; entities: EntityOption[]; lots: number };
 }) {
+  const { t } = useI18n();
   const [state, formAction, pending] = useActionState(action, initialState);
   const [productId, setProductId] = useState(initial.productId ?? (initial.id ? NEW_PRODUCT : ""));
+  const [moving, setMoving] = useState(false);
+  const editsProduct = !!owner && !moving && productId === owner.initial.id;
   const [newTypeId, setNewTypeId] = useState("");
   const product = products.find((entry) => entry.id === productId);
   const type = types.find((entry) => entry.id === (product ? product.typeId : newTypeId));
@@ -101,7 +112,15 @@ export function InventoryItemForm({ action, locations, products, types, groups, 
       {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
       <input type="hidden" name="productId" value={productId === NEW_PRODUCT ? "" : productId} />
 
+      {editsProduct ? <>
+        <SectionTitle title="Product" note={owner.lots > 1 ? t(`Changes here apply to all ${owner.lots} lots of this product.`) : undefined}>
+          <button type="button" onClick={() => setMoving(true)} className="focus-ring text-xs font-medium text-moss hover:underline">Move to another product…</button>
+        </SectionTitle>
+        <ProductFields types={types} groups={groups} entities={owner.entities} initial={owner.initial} prefix="product." />
+        <SectionTitle title="This lot" />
+      </> : (
       <section className="grid gap-4 border-b border-hairline p-4 md:grid-cols-2 xl:grid-cols-3">
+        {moving ? <p className="flex flex-wrap items-baseline gap-x-3 text-sm text-graphite md:col-span-2 xl:col-span-3"><span>Choose the product this lot belongs to; its own product stays as it is.</span><button type="button" onClick={() => { setMoving(false); setProductId(owner!.initial.id!); }} className="focus-ring text-xs font-medium text-moss hover:underline">Keep its product</button></p> : null}
         <label className="md:col-span-2 xl:col-span-1">
           <span className={formLabelClass}>Product *</span>
           <select required aria-label="Product" value={productId} onChange={(event) => { setProductId(event.target.value); adoptDefaults(products.find((entry) => entry.id === event.target.value)?.typeId); }} className={formInputClass}>
@@ -149,6 +168,7 @@ export function InventoryItemForm({ action, locations, products, types, groups, 
         </> : null}
         {product && !initial.id ? <ProductLots lots={product.lots} locations={locations} /> : null}
       </section>
+      )}
 
       {initial.quantityRecorded === false ? (
         <fieldset className="grid gap-4 border-b border-hairline p-4 sm:grid-cols-3">
@@ -229,6 +249,17 @@ export function InventoryItemForm({ action, locations, products, types, groups, 
         </Button>
       </div>
     </form>
+  );
+}
+
+/** A heading between the form's parts, with a note and an action on the right. */
+function SectionTitle({ title, note, children }: { title: string; note?: string; children?: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-hairline bg-warm/50 px-4 py-2.5">
+      <h2 className="text-sm font-semibold text-ink">{title}</h2>
+      {note ? <p className="text-xs text-muted">{note}</p> : null}
+      {children ? <span className="ml-auto">{children}</span> : null}
+    </div>
   );
 }
 

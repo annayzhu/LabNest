@@ -46,6 +46,19 @@ export function Row({ label, value, mono = false }: { label: string; value: Reac
   );
 }
 
+/**
+ * 已用完 on a take-out form (Q196): what is taken out is marked empty at once. Unticked, it stays with the recipient
+ * until someone marks it used up or returns it; using it in an experiment is never required.
+ */
+export function UsedUpCheckbox({ className, checked, onChange, disabled }: { className?: string; checked?: boolean; onChange?: (checked: boolean) => void; disabled?: boolean }) {
+  return (
+    <label className={`inline-flex min-h-8 items-center gap-2 text-sm text-graphite ${className ?? ""}`}>
+      <input type="checkbox" name="usedUp" checked={checked} disabled={disabled} onChange={onChange ? (event) => onChange(event.target.checked) : undefined} className="h-4 w-4 accent-[var(--action)]" />
+      <span>Already used up</span>
+    </label>
+  );
+}
+
 /** An amount with its unit as separate text, so the unit reads in Chinese; stock never counted says so. */
 export function QuantityText({ quantity, unit, recorded = true }: { quantity: number; unit: string | null; recorded?: boolean }) {
   if (!recorded) return <span className="text-muted">Quantity not recorded</span>;

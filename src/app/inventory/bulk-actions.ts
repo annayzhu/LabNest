@@ -24,6 +24,7 @@ const stockInput = z.object({
   count: z.number().int().min(1).max(100).default(1),
   holder: z.string().trim().max(120).optional(),
   place: z.string().trim().max(240).optional(),
+  usedUp: z.boolean().optional(),
   confirmation: z.string().optional(),
 });
 const productInput = z.object({
@@ -105,7 +106,7 @@ export async function applyStockBulk(raw: unknown): Promise<BulkState> {
       if (input.action === "takeOut") {
         for (const item of items.filter((entry) => changed.includes(entry.id))) {
           for (const container of item.containers.slice(0, input.count)) {
-            await applyContainerCommand(tx, item.id, { action: "issue", containerId: container.id, clientMutationId: randomUUID(), holder: input.holder, location: input.place || undefined });
+            await applyContainerCommand(tx, item.id, { action: "issue", containerId: container.id, clientMutationId: randomUUID(), holder: input.holder, location: input.place || undefined, usedUp: input.usedUp });
           }
         }
       }
@@ -113,7 +114,7 @@ export async function applyStockBulk(raw: unknown): Promise<BulkState> {
         for (const id of idsWith(plan, "delete")) await deleteStockItem(tx, id);
         await tx.inventoryItem.updateMany({ where: { id: { in: idsWith(plan, "archive") } }, data: { status: "archived" } });
       }
-      await tx.activityLog.create({ data: { action: `bulk_${input.action}`, targetType: "inventory_item_bulk", targetId: randomUUID(), metadataJson: { locationId: input.locationId ?? null, principalInvestigator: input.principalInvestigator ?? null, ...(input.action === "takeOut" ? { count: input.count, holder: input.holder, place: input.place ?? null } : {}), entries: plan } } });
+      await tx.activityLog.create({ data: { action: `bulk_${input.action}`, targetType: "inventory_item_bulk", targetId: randomUUID(), metadataJson: { locationId: input.locationId ?? null, principalInvestigator: input.principalInvestigator ?? null, ...(input.action === "takeOut" ? { count: input.count, holder: input.holder, place: input.place ?? null, usedUp: input.usedUp ?? false } : {}), entries: plan } } });
       return plan;
     });
     revalidatePath("/inventory");

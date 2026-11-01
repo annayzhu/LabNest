@@ -111,7 +111,7 @@ try {
             // The bar is Home · Search · Run mode · ＋; ＋ writes a note on the experiment in progress.
             const nav = page.getByRole("navigation", { name: "Mobile navigation" });
             assert.deepEqual(await nav.locator("a, button").allTextContents(), ["Home", "Search", "Run mode", "New"]);
-            await nav.getByRole("button", { name: "New quick capture" }).click();
+            await nav.getByRole("button", { name: "Quick note" }).click();
             await page.waitForURL("**/entries/new?mode=capture&experiment=active");
             await page.getByRole("heading", { name: "Quick capture", exact: true }).waitFor();
             // Every other module is in the drawer behind ☰, named as in #109; ＋ is not repeated there.

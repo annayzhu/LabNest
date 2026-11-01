@@ -55,7 +55,7 @@ try {
   await syncDialog.getByRole("button", { name: "确认丢弃" }).click();
   await syncDialog.waitFor({ state: "hidden" });
   await page.getByRole("heading", { name: "Today’s experiments" }).waitFor();
-  await mobileNav.getByRole("button", { name: "New quick capture" }).click();
+  await mobileNav.getByRole("button", { name: "Quick note" }).click();
   await page.getByRole("heading", { name: "Quick capture" }).waitFor();
   // ＋ lands in the note's editor, ready to type.
   await page.waitForFunction(() => document.activeElement?.getAttribute("contenteditable") === "true");

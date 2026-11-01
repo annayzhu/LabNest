@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { formActionErrorMessage } from "@/lib/form-actions";
-import { addInventoryContainers } from "@/lib/inventory-containers";
+import { addInventoryContainers, commandInventoryContainer } from "@/lib/inventory-containers";
 import type { StockSearch } from "@/lib/inventory-search";
 import { findStock } from "@/lib/inventory-search.server";
 
@@ -19,5 +20,35 @@ export async function receiveContainers(lotId: string, input: { count: number; p
     return { error: formActionErrorMessage(error, "The containers could not be added.") };
   }
   revalidatePath(`/inventory/${lotId}`);
+  return {};
+}
+
+const settleInput = z.object({
+  itemId: z.string().min(1),
+  containerId: z.string().min(1),
+  action: z.enum(["empty", "return", "transfer"]),
+  holder: z.string().trim().max(120).optional(),
+  place: z.string().trim().max(240).optional(),
+  clientMutationId: z.string().uuid(),
+});
+
+/** 用完, 归还 or 转交 for a container someone has, from the home's in-use list (Q196). */
+export async function settleHeldContainer(raw: unknown): Promise<{ error?: string }> {
+  let itemId: string;
+  try {
+    const input = settleInput.parse(raw);
+    itemId = input.itemId;
+    await commandInventoryContainer(input.itemId, {
+      action: input.action,
+      containerId: input.containerId,
+      clientMutationId: input.clientMutationId,
+      ...(input.holder ? { holder: input.holder } : {}),
+      ...(input.place ? { location: input.place } : {}),
+    });
+  } catch (error) {
+    return { error: formActionErrorMessage(error, "The container could not be changed.") };
+  }
+  revalidatePath("/inventory");
+  revalidatePath(`/inventory/${itemId}`);
   return {};
 }

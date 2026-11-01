@@ -17,7 +17,7 @@ import {
   Lightbulb,
   PanelLeftClose,
   PanelLeftOpen,
-  Plus,
+  PenLine,
   Search,
   Settings,
   TabletSmartphone,
@@ -181,7 +181,7 @@ export function Sidebar() {
   );
 }
 
-/** ＋ writes a quick note on the experiment in progress; the page resolves "active". */
+/** 速记 writes a quick note on the experiment in progress; the page resolves "active". */
 const quickNoteHref = "/entries/new?mode=capture&experiment=active";
 
 function mobileNavItemClass(current: boolean) {
@@ -191,7 +191,10 @@ function mobileNavItemClass(current: boolean) {
   );
 }
 
-/** A phone's bar, Notion-style: Home · Search · Run mode · ＋. Every other module is in the drawer behind ☰. */
+/**
+ * A phone's bar, Notion-style: Home · Search · Run mode · 速记. Every other module is in the drawer behind ☰. The last
+ * one is named 速记, not 新建, so it does not read as a new record of whatever page is open (Q189).
+ */
 export function MobileBottomNav() {
   const pathname = usePathname();
   const router = useRouter();
@@ -223,13 +226,12 @@ export function MobileBottomNav() {
       })}
       <button
         type="button"
-        aria-label="New quick capture"
         // The keyboard can only open inside the tap; the note's editor takes it over once the page has changed.
         onClick={() => { holdKeyboard(); router.push(quickNoteHref); }}
         className={mobileNavItemClass(false)}
       >
-        <Plus className="h-4 w-4 shrink-0" aria-hidden />
-        <span className="whitespace-nowrap">New</span>
+        <PenLine className="h-4 w-4 shrink-0" aria-hidden />
+        <span className="whitespace-nowrap">Quick note</span>
       </button>
     </nav>
   );
@@ -237,7 +239,7 @@ export function MobileBottomNav() {
 
 /**
  * The drawer behind ☰: the computer's sidebar plus the record timeline. Home and Search are already in the bar. As in #109,
- * on a phone the timeline is "Record history" and Entries is "All entries", so neither reads as the quick capture (＋).
+ * on a phone the timeline is "Record history" and Entries is "All entries", so neither reads as the quick note (速记).
  */
 const drawerItems = (zh: boolean) => [
   { href: "/records", label: zh ? "记录历史" : "Record history", icon: History },

@@ -81,3 +81,18 @@ export function locationPaths(locations: { id: string; name: string; parentLocat
     return [location.id, names.join(" / ")];
   }));
 }
+
+/** A location and every location inside it, at any depth: a fridge with its shelves and the boxes on them. */
+export function locationWithin(locations: { id: string; parentLocationId: string | null }[], id: string) {
+  const within = new Set([id]);
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const location of locations) {
+      if (location.parentLocationId && within.has(location.parentLocationId) && !within.has(location.id)) {
+        within.add(location.id);
+        grew = true;
+      }
+    }
+  }
+  return [...within];
+}

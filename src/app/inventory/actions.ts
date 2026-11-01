@@ -7,6 +7,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
 import { assertPrecision, controlledUseProblem, isStrictlyControlled, movementChange, movementReversalProblem } from "@/lib/inventory";
+import { saveProductForm } from "@/lib/inventory-product-form.server";
 import { deleteStockItem, linkInventoryProduct, lotIdentity, stockItemBlockers } from "@/lib/inventory-products.server";
 
 type Tx = Prisma.TransactionClient;
@@ -170,6 +171,7 @@ async function persistInventoryItemUpdate(formData: FormData) {
   const parsed = parseInventoryItem(formData);
   const id = optionalText(formData.get("id"));
   if (!id) throw new Error("Inventory item ID is required.");
+  let productId: string | undefined;
 
   await prisma.$transaction(async (tx) => {
     const current = await tx.inventoryItem.findUnique({ where: { id } });
@@ -254,25 +256,33 @@ async function persistInventoryItemUpdate(formData: FormData) {
         },
       },
     });
+    // The product's own fields, edited on this page too (Q192), are saved after the lot so that writing the product's
+    // name to all its lots does not trip this lot's check for concurrent changes.
+    const edited = optionalText(formData.get("product.id"));
+    if (edited) {
+      if (edited !== product?.id) throw new Error("This lot belongs to another product now. Refresh and try again.");
+      productId = await saveProductForm(tx, formData, "product.");
+    }
   });
 
-  return id;
+  return { id, productId };
 }
 
 export async function updateInventoryItem(
   _previousState: FormActionState,
   formData: FormData,
 ): Promise<FormActionState> {
-  let itemId: string;
+  let saved: Awaited<ReturnType<typeof persistInventoryItemUpdate>>;
   try {
-    itemId = await persistInventoryItemUpdate(formData);
+    saved = await persistInventoryItemUpdate(formData);
   } catch (error) {
     return { error: formActionErrorMessage(error, "The Inventory Item could not be saved.", "This aliquot code is already in use.") };
   }
   revalidatePath("/inventory");
   revalidatePath("/inventory/products");
-  revalidatePath(`/inventory/${itemId}`);
-  redirect(`/inventory/${itemId}`);
+  if (saved.productId) revalidatePath(`/inventory/products/${saved.productId}`);
+  revalidatePath(`/inventory/${saved.id}`);
+  redirect(`/inventory/${saved.id}`);
 }
 
 const idOf = (formData: FormData) => z.string().trim().min(1, "Inventory item ID is required.").parse(formData.get("id"));

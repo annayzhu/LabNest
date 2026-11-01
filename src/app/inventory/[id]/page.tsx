@@ -21,9 +21,11 @@ import {
   controlLevelName, formatStockQuantity, inventoryNoteText, isStrictlyControlled, lotRiskFlags, lowStockAdvice, managementModeLabels,
   movementReversalProblem, observationUnits, productDocumentKindNames,
 } from "@/lib/inventory";
+import { ledgerEntry } from "@/lib/inventory-ledger";
 import { locationPaths, temperatureLabel } from "@/lib/inventory-location-lifecycle";
 import { stockItemBlockers } from "@/lib/inventory-products.server";
 import { inventoryGroupName, inventoryTypeFields } from "@/lib/inventory-types";
+import { labDate, labDateTime } from "@/lib/lab-time";
 import { deleteInventoryItem, recordInventoryTransaction, setInventoryItemArchived } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -41,8 +43,8 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
       childInventoryItems: { select: { id: true, name: true, aliquotCode: true, currentQuantity: true, unit: true, quantityRecorded: true } },
       transactions: {
         include: {
-          fromLocation: { select: { name: true } },
-          toLocation: { select: { name: true } },
+          fromLocation: { select: { id: true, name: true } },
+          toLocation: { select: { id: true, name: true } },
           experiment: { select: { id: true, runCode: true, title: true, project: { select: { name: true } } } },
           purchase: { select: { id: true, title: true } },
           materialUse: { select: { id: true } },
@@ -73,6 +75,12 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
   const transactionAction = recordInventoryTransaction.bind(null, item.id);
   const sdsMissing = strict && !documents.some((document) => document.linkType === "sds");
   const secondary = buttonStyles({ variant: "secondary", size: "md", className: "bg-surface font-medium text-moss" });
+  // A container's movement shares its mutation key with the container event that says who had it and where it went.
+  const events = new Map(item.containers.flatMap((container) => container.events).flatMap((event) => event.clientMutationId ? [[event.clientMutationId, event] as const] : []));
+  const ledger = item.transactions.map((row) => ({ ...row, entry: ledgerEntry(row, row.clientMutationId ? events.get(row.clientMutationId) : null), reversible: !movementReversalProblem(row, item) }));
+  const place = (location: { id: string; name: string } | null) => location ? paths.get(location.id) ?? location.name : null;
+  // Columns nobody filled in are left out (Q195).
+  const shown = { handler: ledger.some((row) => row.entry.handler), link: ledger.some((row) => row.experiment || row.purchase), note: ledger.some((row) => row.entry.put || row.entry.label === "Moved" || row.entry.note), reverse: ledger.some((row) => row.reversible) };
 
   return (
     <AppShell>
@@ -125,17 +133,17 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
 
             <Panel title="Movement ledger" flush>
               <DataTable
-                rows={item.transactions}
+                rows={ledger}
                 getRowKey={(row) => row.id}
                 emptyMessage="No stock movements have been recorded."
                 columns={[
-                  { key: "date", header: "Date", render: (row) => <span className="whitespace-nowrap font-mono text-xs">{row.createdAt.toISOString().slice(0, 16).replace("T", " ")}{row.deviceCreatedAt ? <span className="block text-muted">{row.deviceCreatedAt.toISOString().slice(0, 10)}</span> : null}</span> },
-                  { key: "type", header: "Movement", render: (row) => <div className="space-y-1"><StatusPill status={row.type} />{row.reversedBy ? <p className="text-xs text-muted">Reversed</p> : null}{row.reverses ? <p className="whitespace-nowrap text-xs text-muted"><span>Reverses</span> <span className="font-mono">{row.reverses.createdAt.toISOString().slice(0, 10)}</span></p> : null}</div> },
-                  { key: "change", header: "Change", render: (row) => <span className={`whitespace-nowrap font-semibold ${row.reversedBy ? "text-muted line-through" : row.quantityChange < 0 ? "text-error" : "text-success"}`}><span className="font-mono">{row.quantityChange > 0 ? "+" : ""}{formatStockQuantity(row.quantityChange, row.unit)}</span> <span>{row.unit}</span></span> },
-                  { key: "handler", header: "Handled by", render: (row) => row.performedBy ?? "—" },
-                  { key: "source", header: "Link", render: (row) => row.experiment ? <Link href={`/experiments/${row.experiment.id}`} className="text-moss hover:underline">{row.experiment.runCode}</Link> : row.purchase ? <span>{row.purchase.title}</span> : "—" },
-                  { key: "notes", header: "Note", render: (row) => <span className="text-xs">{inventoryNoteText(row.notes, row.experiment) ?? "—"}</span> },
-                  { key: "reverse", header: <span className="sr-only">Reverse</span>, render: (row) => movementReversalProblem(row, item) ? null : <ReverseMovementButton id={row.id} /> },
+                  { key: "date", header: "Date", render: (row) => <span className="whitespace-nowrap text-xs tabular-nums">{labDateTime(row.createdAt)}{row.deviceCreatedAt ? <span className="block text-muted">{labDate(row.deviceCreatedAt)}</span> : null}</span> },
+                  { key: "type", header: "Movement", render: (row) => <div className="space-y-1"><StatusPill status={row.entry.label ?? row.type} />{row.reversedBy ? <p className="text-xs text-muted">Reversed</p> : null}{row.reverses ? <p className="whitespace-nowrap text-xs text-muted"><span>Reverses</span> <span className="tabular-nums">{labDate(row.reverses.createdAt)}</span></p> : null}</div> },
+                  { key: "change", header: "Change", render: (row) => row.quantityChange === 0 ? <span className="text-muted">—</span> : <span className={`whitespace-nowrap font-semibold ${row.reversedBy ? "text-muted line-through" : row.quantityChange < 0 ? "text-error" : "text-success"}`}><span className="tabular-nums">{row.quantityChange > 0 ? "+" : ""}{formatStockQuantity(row.quantityChange, row.unit)}</span> <span>{row.unit}</span></span> },
+                  ...(shown.handler ? [{ key: "handler", header: "Handled by", render: (row: (typeof ledger)[number]) => row.entry.handler ?? "—" }] : []),
+                  ...(shown.link ? [{ key: "source", header: "Link", render: (row: (typeof ledger)[number]) => row.experiment ? <Link href={`/experiments/${row.experiment.id}`} className="text-moss hover:underline">{row.experiment.runCode}</Link> : row.purchase ? <span>{row.purchase.title}</span> : "—" }] : []),
+                  ...(shown.note ? [{ key: "notes", header: "Note", render: (row: (typeof ledger)[number]) => <LedgerNote row={row} from={place(row.fromLocation)} to={place(row.toLocation)} /> }] : []),
+                  ...(shown.reverse ? [{ key: "reverse", header: <span className="sr-only">Reverse</span>, render: (row: (typeof ledger)[number]) => row.reversible ? <ReverseMovementButton id={row.id} /> : null }] : []),
                 ]}
               />
             </Panel>
@@ -200,6 +208,20 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
         </div>
       </div>
     </AppShell>
+  );
+}
+
+/** Where a container was put, where a moved lot went, and what someone wrote; the system's own notes are left out. */
+function LedgerNote({ row, from, to }: { row: { entry: ReturnType<typeof ledgerEntry>; experiment: { id: string; runCode: string } | null }; from: string | null; to: string | null }) {
+  const { entry } = row;
+  const note = inventoryNoteText(entry.note, row.experiment);
+  return (
+    <span className="text-xs">
+      {entry.put ? <span className="block"><span>{entry.put.back ? "Put back at" : "Put at"}</span> <span>{entry.put.place}</span></span> : null}
+      {entry.label === "Moved" ? <span className="block"><span>{from ?? "Unassigned"}</span> → <span>{to ?? "Unassigned"}</span></span> : null}
+      {note ? <span className="block">{note}</span> : null}
+      {!entry.put && entry.label !== "Moved" && !note ? <span className="text-muted">—</span> : null}
+    </span>
   );
 }
 

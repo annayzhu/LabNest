@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { FileText, Wand2 } from "lucide-react";
-import { useActionState } from "react";
+import { FileText, Paperclip, Wand2 } from "lucide-react";
+import { useActionState, useState } from "react";
 import { addProductDocument, setProductDocumentKind } from "@/app/inventory/products/actions";
 import { formInlineInputClass } from "@/components/forms";
 import type { FormActionState } from "@/lib/form-actions";
 import { AttachmentDeleteButton } from "./AttachmentDeleteButton";
-import { Button } from "./ui/Button";
+import { Button, buttonStyles } from "./ui/Button";
 import { productDocumentKindNames, productDocumentKinds } from "@/lib/inventory";
 
 export type ProductDocument = { attachmentId: string; linkId: string; filename: string; size: number; kind: string };
@@ -17,7 +17,12 @@ const selectClass = formInlineInputClass.replace("w-full", "w-auto");
  * A product's manual, SDS and kit manual, seen by every lot. A kit manual opens in 整理说明书 to become a Protocol.
  */
 export function InventoryDocuments({ productId, documents, manualQuery }: { productId: string; documents: ProductDocument[]; manualQuery: string }) {
-  const [addState, add, adding] = useActionState(addProductDocument.bind(null, productId), {} as FormActionState);
+  const [file, setFile] = useState<File | null>(null);
+  const [addState, add, adding] = useActionState(async (previous: FormActionState, data: FormData) => {
+    const result = await addProductDocument(productId, previous, data);
+    if (result.success) setFile(null);
+    return result;
+  }, {} as FormActionState);
   const [kindState, setKind] = useActionState(setProductDocumentKind, {} as FormActionState);
 
   return (
@@ -45,8 +50,13 @@ export function InventoryDocuments({ productId, documents, manualQuery }: { prod
         <select name="kind" aria-label="Document kind" defaultValue="product_manual" className={`${selectClass} h-8 text-xs`}>
           {productDocumentKinds.map((kind) => <option key={kind} value={kind}>{productDocumentKindNames[kind]}</option>)}
         </select>
-        <input name="file" type="file" accept=".pdf,.doc,.docx,.txt,.md" required aria-label="Document file" className="min-w-0 flex-1 text-xs" />
-        <Button type="submit" size="sm" disabled={adding} aria-busy={adding}>{adding ? "Adding…" : "Add document"}</Button>
+        {/* A button in place of the browser's own "Choose File", with the chosen file's name on it (Q193). */}
+        <label className={buttonStyles({ size: "sm", className: "min-w-0 max-w-full cursor-pointer focus-within:ring-2 focus-within:ring-[var(--action)]" })}>
+          <Paperclip className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          <span className="truncate">{file ? file.name : "Choose a file"}</span>
+          <input name="file" type="file" accept=".pdf,.doc,.docx,.txt,.md" required aria-label="Document file" onChange={(event) => setFile(event.target.files?.[0] ?? null)} className="sr-only" />
+        </label>
+        <Button type="submit" size="sm" variant={file ? "primary" : "secondary"} disabled={adding || !file} aria-busy={adding}>{adding ? "Adding…" : "Add document"}</Button>
       </form>
       {addState.error || kindState.error ? <p role="alert" className="text-xs text-error">{addState.error ?? kindState.error}</p> : null}
       {addState.success ? <p role="status" className="text-xs text-success">{addState.success}</p> : null}

@@ -3,7 +3,7 @@
 import { Camera, ChevronRight, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { useI18n } from "@/components/I18nProvider";
 import { readInventoryBarcode } from "@/lib/inventory-barcode";
 import { formatStockQuantity, type InventoryRiskFlag } from "@/lib/inventory";
@@ -14,9 +14,11 @@ type MobileInventoryItem = {
   riskFlags: InventoryRiskFlag[];
 };
 
-export function MobileInventoryBench({ items, totalCount, query, filters, riskCounts }: {
+export function MobileInventoryBench({ items, totalCount, query, filters, riskCounts, scope }: {
   items: MobileInventoryItem[]; totalCount: number; query?: string;
   filters: Record<string, string | undefined>; riskCounts: Record<InventoryRiskFlag, number>;
+  /** The location the list is filtered to, shown under the title. */
+  scope?: ReactNode;
 }) {
   const router = useRouter();
   const zh = useI18n().locale === "zh";
@@ -56,6 +58,7 @@ export function MobileInventoryBench({ items, totalCount, query, filters, riskCo
       <div className="min-w-0"><h1 className="page-header-title text-ink">{zh ? "库存清单" : "Stock list"}</h1></div>
       <Link href="/inventory/new" className="focus-ring inline-flex min-h-11 items-center gap-1 text-sm text-moss"><Plus className="h-4 w-4" aria-hidden />{zh ? "新增物料" : "Add material"}</Link>
     </header>
+    {scope}
     <div>
       <form action="/inventory/list" className="space-y-3">
         {Object.entries(filters).filter(([key, value]) => key !== "flag" && value).map(([key, value]) => <input key={key} type="hidden" name={key} value={value} />)}

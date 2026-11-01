@@ -1,3 +1,4 @@
+import { inventoryZh, translateInventoryDynamic } from "./i18n-inventory";
 import { samplesZh, translateSamplesDynamic } from "./i18n-samples";
 
 export type AppLocale = "en" | "zh";
@@ -3661,6 +3662,7 @@ export const zhUi: Record<string, string> = {
   "Response too large; abandoned": "响应过大，已放弃",
   "Pasted text has no source to fetch": "粘贴的原文没有可抓取的来源",
   "This source is not turned on now": "这个来源现在没有开启",
+  ...inventoryZh,
 };
 
 // Run preparation (run-preparation.ts) names a step "Step 2", or "PRT-100003 step 2" when the run has several Protocols;
@@ -4464,6 +4466,6 @@ export function translateUiText(input: string, locale: AppLocale) {
   if (!value) return input;
   const dynamic = zhUi[value] ?? translateDynamic(value);
   // Sample messages come last, so their general patterns never take over text another module already translates.
-  const translated = dynamic === value ? translateSamplesDynamic(value) ?? value : dynamic;
+  const translated = dynamic === value ? translateSamplesDynamic(value) ?? translateInventoryDynamic(value) ?? value : dynamic;
   return translated === value ? input : `${leading}${translated}${trailing}`;
 }

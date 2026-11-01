@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inventoryLocationDeleteBlockers, inventoryLocationReferenceSummary, locationPaths, locationTemperature, readLocationTemperature, temperatureLabel } from "./inventory-location-lifecycle";
+import { inventoryLocationDeleteBlockers, inventoryLocationReferenceSummary, locationPaths, locationTemperature, locationWithin, readLocationTemperature, temperatureLabel } from "./inventory-location-lifecycle";
 
 describe("inventory location lifecycle", () => {
   it("allows permanent deletion only when the location is unreferenced", () => {
@@ -51,5 +51,17 @@ describe("location paths", () => {
     expect(paths.get("box")).toBe("16F fridge / Shelf 2 / Box A");
     expect(paths.get("fridge")).toBe("16F fridge");
     expect(paths.get("x")).toBe("Y / X");
+  });
+
+  it("finds every place inside a location, however deep, and nothing beside it (Q194)", () => {
+    const places = [
+      { id: "fridge", parentLocationId: null },
+      { id: "shelf", parentLocationId: "fridge" },
+      { id: "box", parentLocationId: "shelf" },
+      { id: "bench", parentLocationId: null },
+    ];
+    expect(locationWithin(places, "fridge").sort()).toEqual(["box", "fridge", "shelf"]);
+    expect(locationWithin(places, "shelf").sort()).toEqual(["box", "shelf"]);
+    expect(locationWithin(places, "bench")).toEqual(["bench"]);
   });
 });

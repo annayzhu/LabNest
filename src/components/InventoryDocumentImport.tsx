@@ -2,10 +2,11 @@
 
 import { FileUp, LoaderCircle, Sparkles, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { importInventoryDraft, readInventoryDocuments } from "@/app/inventory/import/actions";
 import { formInlineInputClass, formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
+import { takeHandedPhotos } from "@/lib/inventory-photo-handoff";
 import type { DraftLine } from "@/lib/inventory-recognition.server";
 import { isPdf } from "@/lib/inventory-recognition";
 import { shrinkPhotoFile } from "@/lib/photo-resize";
@@ -32,25 +33,33 @@ export function InventoryDocumentImport({ source, pictures, text, locations }: {
   const blocked = (needsPictures && !pictures.ready) || (needsText && !text.ready);
   const reasons = [...new Set([needsPictures && !pictures.ready ? pictures.reason : undefined, needsText && !text.ready ? text.reason : undefined].filter(Boolean))];
 
-  async function choose(list: FileList | null) {
+  async function choose(list: Iterable<File>) {
+    // Pictures go up as JPEG of at most 2000 px, the size the reading service takes.
+    const chosen = await Promise.all([...list].slice(0, 10).map(async (file) => isPdf(file) ? file : shrinkPhotoFile(file)));
     setDraft(undefined);
     setProblems([]);
-    // Pictures go up as JPEG of at most 2000 px, the size the reading service takes.
-    const chosen = await Promise.all([...(list ?? [])].slice(0, 10).map(async (file) => isPdf(file) ? file : shrinkPhotoFile(file)));
     setFiles(chosen);
+    return chosen;
   }
 
-  function sources() {
+  // Photos handed over from the inventory home are read at once: choosing them there already said what to do.
+  useEffect(() => {
+    const handed = takeHandedPhotos();
+    if (handed.length) setTimeout(() => { void choose(handed).then((chosen) => { if (pictures.ready) void read(chosen); }); }, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on arrival
+  }, []);
+
+  function sources(chosen = files) {
     const data = new FormData();
     if (source === "text") data.set("text", pasted);
-    else files.forEach((file) => data.append("file", file));
+    else chosen.forEach((file) => data.append("file", file));
     return data;
   }
 
-  async function read() {
+  async function read(chosen = files) {
     setBusy("read");
     setProblems([]);
-    const reading = await readInventoryDocuments(sources());
+    const reading = await readInventoryDocuments(sources(chosen));
     setBusy(undefined);
     if (reading.error) { setProblems([reading.error]); return; }
     setProblems(reading.warnings);
@@ -87,7 +96,9 @@ export function InventoryDocumentImport({ source, pictures, text, locations }: {
         {source === "documents" ? (
           <label className="block">
             <span className={formLabelClass}>Invoices, delivery notes or labels (pictures or PDF, up to 10)</span>
-            <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,application/pdf" onChange={(event) => void choose(event.target.files)} className={`${formInputClass} py-1.5`} />
+            <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,application/pdf" onChange={(event) => void choose(event.target.files ?? [])} className={`${formInputClass} py-1.5`} />
+            {/* Photos handed over from the inventory home never pass through the input, so the names are listed here. */}
+            {files.length ? <span className="mt-1 block truncate text-xs text-muted">{files.map((file) => file.name).join(" · ")}</span> : null}
           </label>
         ) : (
           <label className="block">
@@ -96,7 +107,7 @@ export function InventoryDocumentImport({ source, pictures, text, locations }: {
           </label>
         )}
         <div className="flex flex-wrap items-center gap-3">
-          <Button type="button" variant={blocked ? "ai-off" : "ai"} disabled={blocked || Boolean(busy) || (source === "text" ? !pasted.trim() : !files.length)} onClick={read}>
+          <Button type="button" variant={blocked ? "ai-off" : "ai"} disabled={blocked || Boolean(busy) || (source === "text" ? !pasted.trim() : !files.length)} onClick={() => void read()}>
             {busy === "read" ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden /> : <Sparkles className="h-4 w-4" aria-hidden />}{busy === "read" ? "Reading…" : "Read with AI"}
           </Button>
           <span className="text-sm text-graphite">{reasons.length ? reasons.join(" ") : "Pictures go to the service that reads pictures; PDF text and pasted text to the default service."}</span>

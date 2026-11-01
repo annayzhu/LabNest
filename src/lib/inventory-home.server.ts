@@ -3,17 +3,21 @@ import { prisma } from "./db";
 import { isStrictlyControlled, lotRiskFlags, type InventoryRiskFlag } from "./inventory";
 import { duplicateOverview } from "./inventory-products.server";
 import { inventoryGroupName } from "./inventory-types";
+import { labDate } from "./lab-time";
 
-// The inventory home's side of things: what needs attention and the categories to browse (Q182, Q183).
+// The inventory home's side of things: what needs attention, the categories to browse and what people have taken
+// out (Q182, Q183, Q196).
 
 export type InventoryAlert = { label: string; value: number; href: string; tone: "danger" | "warning" | "info" };
 export type InventoryCategory = { key: string; name: string; href: string; count: number; types: { id: string; label: string; href: string; count: number }[] };
+export type HeldContainer = { id: string; itemId: string; name: string; lotNumber: string | null; label: string | null; holder: string; place: string | null; since: string };
 
 /** What needs attention, each as a count that opens the stock or product list filtered to it. */
 export async function inventoryAlerts(now = new Date()): Promise<InventoryAlert[]> {
   const [lots, inUse, openPurchases, strictProducts, duplicates] = await Promise.all([
     prisma.inventoryItem.findMany({ where: { status: "active" }, select: { id: true, productId: true, currentQuantity: true, unit: true, quantityRecorded: true, status: true, lowThreshold: true, expiryDate: true, product: { select: { lowThreshold: true, lowThresholdUnit: true } } } }),
-    prisma.inventoryItem.count({ where: { status: "active", containers: { some: { state: "held" } } } }),
+    // Containers, as the in-use list it opens counts them.
+    prisma.inventoryContainer.count({ where: { state: "held", inventoryItem: { status: "active" } } }),
     prisma.purchaseRequest.count({ where: { status: { in: [PurchaseStatus.planned, PurchaseStatus.ordered, PurchaseStatus.received] } } }),
     prisma.inventoryProduct.findMany({ where: { controlLevels: { hasSome: ["highly_toxic", "precursor"] } }, select: { id: true, controlLevels: true } }),
     duplicateOverview(prisma),
@@ -28,7 +32,7 @@ export async function inventoryAlerts(now = new Date()): Promise<InventoryAlert[
     { label: "Out of stock", value: count("depleted"), href: "/inventory/list?flag=depleted", tone: "danger" },
     { label: "Expired", value: count("expired"), href: "/inventory/list?flag=expired", tone: "danger" },
     { label: "Expires in 30 days", value: count("expiring"), href: "/inventory/list?flag=expiring", tone: "warning" },
-    { label: "In use", value: inUse, href: "/inventory/list?flag=held", tone: "info" },
+    { label: "In use", value: inUse, href: "/inventory#in-use", tone: "info" },
     { label: "SDS missing", value: strict.filter((product) => !sds.some((link) => link.targetId === product.id)).length, href: "/inventory/products?flag=sds", tone: "danger" },
     { label: "Possible duplicates", value: duplicates.productPairs.length + duplicates.lotGroups.length, href: "/inventory/products/duplicates", tone: "warning" },
     { label: "Open purchases", value: openPurchases, href: "/purchases", tone: "info" },
@@ -61,4 +65,31 @@ export async function inventoryCategories(): Promise<{ groups: InventoryCategory
     }),
     unclassified: lots.filter((lot) => !lot.product?.groupKey).length,
   };
+}
+
+/** Containers out of the store with someone, newest first, with the Beijing day they were taken out or handed over. */
+export async function heldContainers(): Promise<HeldContainer[]> {
+  const containers = await prisma.inventoryContainer.findMany({
+    where: { state: "held", inventoryItem: { status: "active" } },
+    select: {
+      id: true,
+      label: true,
+      holder: true,
+      location: true,
+      updatedAt: true,
+      inventoryItem: { select: { id: true, name: true, lotNumber: true } },
+      events: { where: { action: { in: ["issue", "transfer"] } }, orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+  return containers.map((container) => ({
+    id: container.id,
+    itemId: container.inventoryItem.id,
+    name: container.inventoryItem.name,
+    lotNumber: container.inventoryItem.lotNumber,
+    label: container.label,
+    holder: container.holder ?? "",
+    place: container.location,
+    since: labDate(container.events[0]?.createdAt ?? container.updatedAt),
+  }));
 }

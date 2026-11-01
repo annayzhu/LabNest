@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { newClientMutationId } from "@/lib/client-mutation-id";
 import { kitBoxStatus, type KitComponentStates } from "@/lib/inventory";
+import { labDateTime } from "@/lib/lab-time";
 import { InventoryBatchIssue } from "./InventoryBatchIssue";
+import { UsedUpCheckbox } from "./InventoryDetail";
 import { useI18n } from "./I18nProvider";
 import { QuantityInput } from "./QuantityInput";
 import { formInputClass, formLabelClass, preventImplicitEnterSubmit } from "./forms";
@@ -102,6 +104,7 @@ export function InventoryContainers({ itemId, unit, containers, observationUnits
         } : {}),
         ...(action === "component" ? { componentId: draft.componentId ?? kitComponents[0]?.id, componentState: draft.componentState ?? "missing", ...(draft.componentLocation ? { componentLocation: draft.componentLocation } : {}) } : {}),
         ...(draft.performedBy ? { performedBy: draft.performedBy } : {}),
+        ...(action === "issue" && draft.usedUp === "true" ? { usedUp: true } : {}),
       });
       setMutationKey(null);
       setMessage("Saved");
@@ -212,11 +215,11 @@ export function InventoryContainers({ itemId, unit, containers, observationUnits
                   <span>{stateLabels[c.state] ?? c.state}</span>
                   {c.holder ? <span> · {c.holder}</span> : null}
                   {c.location ? <span> · {c.location}</span> : null}
-                  {c.openedAt ? <span> · <span>Opened</span> <span className="font-mono text-xs">{c.openedAt.slice(0, 10)}</span></span> : null}
+                  {c.openedAt ? <span> · <span>Opened</span> <span className="tabular-nums">{c.openedAt.slice(0, 10)}</span></span> : null}
                   {kit && !kit.complete ? <span className="text-warning"> · <span>Incomplete</span> · {kit.unavailable.map((entry) => entry.name).join(" / ")}</span> : null}
                 </span>
                 <span className="ml-auto shrink-0 whitespace-nowrap text-right text-xs text-muted">
-                  {reading ? <><span>{reading.quality === "estimated" ? "Approx." : "Measured"}</span> <span className="font-mono">{reading.remaining} {reading.unit}</span></> : <span>No reading</span>}
+                  {reading ? <><span>{reading.quality === "estimated" ? "Approx." : "Measured"}</span> <span className="tabular-nums">{reading.remaining} {reading.unit}</span></> : <span>No reading</span>}
                 </span>
               </button>
 
@@ -232,6 +235,7 @@ export function InventoryContainers({ itemId, unit, containers, observationUnits
                       </label>
                       {action === "issue" || action === "transfer" ? field("holder", "Recipient", "text", true) : null}
                       {action === "issue" || action === "transfer" || action === "return" ? field("location", "Put at (optional)") : null}
+                      {action === "issue" ? <UsedUpCheckbox className="sm:col-span-3" checked={draft.usedUp === "true"} onChange={(checked) => change("usedUp", String(checked))} /> : null}
                       {action === "edit" ? <>{field("label", "Container number")}{field("location", "Place")}</> : null}
                       {action === "open" ? field("openedAt", "Opened on", "date", true) : null}
                       {action === "observe" ? <>
@@ -264,10 +268,10 @@ export function InventoryContainers({ itemId, unit, containers, observationUnits
                   <details>
                     <summary className="focus-ring cursor-pointer py-1 text-xs font-medium text-muted">History</summary>
                     <ul className="mt-1 space-y-1 text-xs text-graphite">
-                      {bottle.events.map((e) => <li key={e.id}><span className="font-mono">{e.createdAt.slice(0, 16).replace("T", " ")}</span> · <span>{actionLabels[e.action] ?? e.action}</span> · {e.performedBy ?? "—"}</li>)}
+                      {bottle.events.map((e) => <li key={e.id}><span className="tabular-nums">{labDateTime(e.createdAt)}</span> · <span>{actionLabels[e.action] ?? e.action}</span> · {e.performedBy ?? "—"}</li>)}
                       {bottle.observations.map((o) => (
                         <li key={o.id} className="flex items-center gap-2">
-                          <span><span className="font-mono">{o.createdAt.slice(0, 16).replace("T", " ")}</span> · <span>{o.quality === "estimated" ? "Estimated" : "Measured"}</span> <span className="font-mono">{o.remaining} {o.unit}</span> · {o.performedBy}</span>
+                          <span><span className="tabular-nums">{labDateTime(o.createdAt)}</span> · <span>{o.quality === "estimated" ? "Estimated" : "Measured"}</span> <span className="tabular-nums">{o.remaining} {o.unit}</span> · {o.performedBy}</span>
                           <button type="button" disabled={busy} onClick={() => remove({ action: "delete_observation", observationId: o.id }, "Delete this reading?")} aria-label="Delete reading" title="Delete reading" className="focus-ring inline-flex h-6 w-6 items-center justify-center rounded-[var(--ln-radius-control-sm)] text-muted hover:bg-error-surface hover:text-error"><Trash2 className="h-3.5 w-3.5" aria-hidden /></button>
                         </li>
                       ))}

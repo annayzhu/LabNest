@@ -1,14 +1,15 @@
 "use client";
 
-import { Camera, LoaderCircle, MapPin, PackageMinus, PackagePlus, Search, X } from "lucide-react";
+import { Camera, Images, LoaderCircle, MapPin, PackageMinus, PackagePlus, PenLine, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { recordInventoryTransaction } from "@/app/inventory/actions";
 import { applyStockBulk } from "@/app/inventory/bulk-actions";
 import { receiveContainers, searchStock } from "@/app/inventory/home-actions";
+import { useAiStatus } from "@/components/AiAssistant";
 import { useI18n } from "@/components/I18nProvider";
-import { QuantityText } from "@/components/InventoryDetail";
+import { QuantityText, UsedUpCheckbox } from "@/components/InventoryDetail";
 import { InventoryRiskBadges } from "@/components/InventoryRiskBadges";
 import { formInputClass, formLabelClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
@@ -17,6 +18,7 @@ import { cn } from "@/lib/cn";
 import { formatStockQuantity, quantityStep } from "@/lib/inventory";
 import { readInventoryBarcode } from "@/lib/inventory-barcode";
 import type { InventoryAlert } from "@/lib/inventory-home.server";
+import { handOverPhotos } from "@/lib/inventory-photo-handoff";
 import type { RowLot, StockRow, StockSearch } from "@/lib/inventory-search";
 
 type Direction = "out" | "in";
@@ -25,7 +27,8 @@ const usable = (row: StockRow) => row.lots.filter((lot) => lot.quantityRecorded 
 
 /**
  * The inventory home (Q180–Q184): one search that answers as you type, a scan of a label, what needs attention, and
- * take-out or receipt right in the row. With nothing typed the rows are the stock used most recently.
+ * take-out or receipt right in the row. With nothing typed the rows are the stock used most recently. A phone also
+ * gets two large entries above the search (Q190): register stock, and a take-out mode where a tap on a row takes it out.
  */
 export function InventoryHome({ initial, alerts, places }: { initial: StockSearch; alerts: InventoryAlert[]; places: string[] }) {
   const router = useRouter();
@@ -37,6 +40,8 @@ export function InventoryHome({ initial, alerts, places }: { initial: StockSearc
   const [moving, setMoving] = useState<{ key: string; direction: Direction } | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [scan, setScan] = useState("");
+  const [registering, setRegistering] = useState(false);
+  const [takingOut, setTakingOut] = useState(false);
   const latest = useRef(0);
   // Only typing triggers the delayed search: the first rows came with the page, and a scanned code is searched at once.
   const typed = useRef(false);
@@ -75,12 +80,26 @@ export function InventoryHome({ initial, alerts, places }: { initial: StockSearc
     setDone(null);
   }
 
+  // In take-out mode a row is picked to take it out, where it would otherwise open.
+  function pick(row: StockRow) {
+    if (takingOut && usable(row).length) { setDone(null); setMoving({ key: row.key, direction: "out" }); }
+    else router.push(row.href);
+  }
+
   function keys(event: React.KeyboardEvent<HTMLInputElement>) {
     const rows = result.rows;
     if (event.key === "ArrowDown") { event.preventDefault(); setActive((index) => Math.min(index + 1, rows.length - 1)); }
     if (event.key === "ArrowUp") { event.preventDefault(); setActive((index) => Math.max(index - 1, 0)); }
-    if (event.key === "Enter" && rows[active]) { event.preventDefault(); router.push(rows[active].href); }
+    if (event.key === "Enter" && rows[active]) { event.preventDefault(); pick(rows[active]); }
     if (event.key === "Escape" && query) { event.preventDefault(); type(""); }
+  }
+
+  function startTakingOut() {
+    setRegistering(false);
+    setTakingOut(true);
+    setScan("");
+    // Inside the tap, so a phone opens its keyboard.
+    input.current?.focus();
   }
 
   async function scanImage(file?: File) {
@@ -91,8 +110,9 @@ export function InventoryHome({ initial, alerts, places }: { initial: StockSearc
       typed.current = false;
       setQuery(code);
       const found = await run(code);
-      // A code that names exactly one lot opens it; anything else shows the matches to choose from.
+      // A code that names exactly one lot opens it (or its take-out); anything else shows the matches to choose from.
       const exact = found.rows.filter((row) => row.exact);
+      if (exact.length === 1 && takingOut) { setScan(""); pick(exact[0]); return; }
       if (exact.length === 1) { router.push(`/inventory/${exact[0].focusLotId}`); return; }
       setScan(found.rows.length ? t("Code read. Choose the stock below.") : t("No stock has this code."));
     } catch {
@@ -110,6 +130,18 @@ export function InventoryHome({ initial, alerts, places }: { initial: StockSearc
 
   return (
     <div className="min-w-0 space-y-3">
+      <div className="space-y-2 lg:hidden">
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" aria-expanded={registering} onClick={() => { setRegistering(!registering); setTakingOut(false); }} className={entryClass(registering)}>
+            <PackagePlus className="h-5 w-5" aria-hidden />Register stock
+          </button>
+          <button type="button" aria-pressed={takingOut} onClick={() => takingOut ? setTakingOut(false) : startTakingOut()} className={entryClass(takingOut)}>
+            <PackageMinus className="h-5 w-5" aria-hidden />Take out
+          </button>
+        </div>
+        {registering ? <RegisterChoices /> : null}
+      </div>
+
       <div className="flex gap-2">
         <label className="relative min-w-0 flex-1">
           <span className="sr-only">Search stock</span>
@@ -133,7 +165,8 @@ export function InventoryHome({ initial, alerts, places }: { initial: StockSearc
         </button>
         <input ref={camera} type="file" accept="image/*" capture="environment" className="sr-only" tabIndex={-1} aria-hidden onChange={(event) => { void scanImage(event.target.files?.[0]); event.target.value = ""; }} />
       </div>
-      {scan ? <p role="status" aria-live="polite" className="text-sm text-graphite">{scan}</p> : null}
+      {scan ? <p role="status" aria-live="polite" className="text-sm text-graphite">{scan}</p>
+        : takingOut ? <p role="status" className="flex items-center justify-between gap-3 text-sm text-graphite"><span>Search or scan, then tap the stock to take it out.</span><button type="button" onClick={() => setTakingOut(false)} className="focus-ring shrink-0 font-medium text-moss">Done</button></p> : null}
 
       {alerts.length ? (
         <nav aria-label="Needs attention" className="flex flex-wrap items-center gap-2">
@@ -160,6 +193,7 @@ export function InventoryHome({ initial, alerts, places }: { initial: StockSearc
                 active={!!search && index === active}
                 moving={moving?.key === row.key ? moving.direction : null}
                 done={done === row.key}
+                onPick={takingOut ? () => pick(row) : undefined}
                 onMove={(direction) => { setDone(null); setMoving(moving?.key === row.key && moving.direction === direction ? null : { key: row.key, direction }); }}
                 onMoved={() => moved(row.key)}
               />
@@ -182,23 +216,27 @@ export function InventoryHome({ initial, alerts, places }: { initial: StockSearc
   );
 }
 
-function StockRowItem({ row, active, moving, done, onMove, onMoved }: {
+function StockRowItem({ row, active, moving, done, onPick, onMove, onMoved }: {
   row: StockRow;
   active: boolean;
   moving: Direction | null;
   done: boolean;
+  /** Set in take-out mode: the whole row takes the stock out instead of opening it. */
+  onPick?: () => void;
   onMove: (direction: Direction) => void;
   onMoved: () => void;
 }) {
   const { t } = useI18n();
   const canMove = usable(row).length > 0;
+  const Summary = onPick ? "button" : "div";
   return (
     <li className={cn("px-4 py-3 transition-colors", active && "bg-warm/70")}>
       <div className="flex flex-wrap items-start gap-x-4 gap-y-2 sm:flex-nowrap">
-        <div className="min-w-0 flex-1">
+        <Summary {...(onPick ? { type: "button" as const, onClick: onPick, "aria-expanded": moving === "out" } : {})} className={cn("min-w-0 flex-1", onPick && "focus-ring -m-1 rounded-[var(--ln-radius-control-md)] p-1 text-left")}>
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <Link href={row.href} className="font-semibold text-ink hover:text-moss">{row.name}</Link>
+            {onPick ? <span className="font-semibold text-ink">{row.name}</span> : <Link href={row.href} className="font-semibold text-ink hover:text-moss">{row.name}</Link>}
             {row.kind ? <span className="text-xs text-muted">{row.kind}</span> : null}
+            {onPick && !canMove ? <span className="text-xs text-muted">Opens its page</span> : null}
           </div>
           {row.detail ? <p className="mt-0.5 truncate text-xs text-muted">{row.detail}</p> : null}
           <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-graphite">
@@ -213,9 +251,9 @@ function StockRowItem({ row, active, moving, done, onMove, onMoved }: {
             {row.expiry ? <span className="text-muted"><span>Expires</span> <span className="tabular-nums">{row.expiry}</span></span> : null}
             {row.lots.length > 1 ? <span className="text-muted">{t(`${row.lots.length} lots`)}</span> : null}
           </p>
-          {row.flags.length ? <div className="mt-1.5"><InventoryRiskBadges flags={row.flags} linkToFilters /></div> : null}
-        </div>
-        {canMove ? (
+          {row.flags.length ? <div className="mt-1.5"><InventoryRiskBadges flags={row.flags} linkToFilters={!onPick} /></div> : null}
+        </Summary>
+        {canMove && !onPick ? (
           <div className="flex shrink-0 gap-1.5">
             <Button type="button" size="sm" aria-expanded={moving === "out"} onClick={() => onMove("out")}><PackageMinus className="h-3.5 w-3.5" aria-hidden />Take out</Button>
             <Button type="button" size="sm" aria-expanded={moving === "in"} onClick={() => onMove("in")}><PackagePlus className="h-3.5 w-3.5" aria-hidden />Receive</Button>
@@ -256,7 +294,7 @@ function QuickMove({ row, direction, onCancel, onDone }: { row: StockRow; direct
     let problem: string | undefined;
     try {
       if (containers && out) {
-        const result = await applyStockBulk({ action: "takeOut", ids: [lot.id], count: Number(text("count")), holder: text("holder"), place: text("place") });
+        const result = await applyStockBulk({ action: "takeOut", ids: [lot.id], count: Number(text("count")), holder: text("holder"), place: text("place"), usedUp: data.get("usedUp") === "on" });
         problem = result.error ?? result.entries?.find((entry) => entry.outcome === "skip")?.reason;
       } else if (containers) {
         problem = (await receiveContainers(lot.id, { count: Number(text("count")), place: text("place"), clientMutationId: receiptKey })).error;
@@ -290,6 +328,7 @@ function QuickMove({ row, direction, onCancel, onDone }: { row: StockRow; direct
         </label>
         {out ? <label><span className={formLabelClass}>Recipient</span><input name="holder" required maxLength={120} className={formInputClass} /></label> : null}
         <label><span className={formLabelClass}>Put at (optional)</span><input name="place" list={placesList} maxLength={240} className={formInputClass} /></label>
+        {out ? <UsedUpCheckbox className="sm:col-span-2 lg:col-span-4" /> : null}
       </> : <>
         <label>
           <span className={formLabelClass}>Amount</span>
@@ -307,5 +346,57 @@ function QuickMove({ row, direction, onCancel, onDone }: { row: StockRow; direct
       </div>
       {error ? <p role="alert" className="text-sm text-error sm:col-span-2 lg:col-span-4">{error}</p> : null}
     </form>
+  );
+}
+
+const entryClass = (on: boolean) => cn(
+  "focus-ring inline-flex h-14 items-center justify-center gap-2 rounded-[var(--ln-radius-control-lg)] border text-base font-semibold transition-colors",
+  on ? "border-moss bg-sage-surface/60 text-moss" : "border-hairline bg-surface text-ink hover:bg-warm",
+);
+
+/**
+ * The three ways to register stock on a phone (Q190). A photo of an invoice, delivery note or label goes straight to
+ * the AI reader on the import page; until a service reads pictures, those two stay gray and open the AI setup guide.
+ */
+function RegisterChoices() {
+  const router = useRouter();
+  const ai = useAiStatus();
+  const photo = useRef<HTMLInputElement>(null);
+  const library = useRef<HTMLInputElement>(null);
+  const row = "focus-ring flex w-full items-center gap-3 px-4 py-3 text-left";
+
+  function hand(list: FileList | null) {
+    if (!list?.length) return;
+    handOverPhotos([...list]);
+    router.push("/inventory/import?source=documents");
+  }
+
+  const reader = (label: string, hint: string, Icon: typeof Camera, target: React.RefObject<HTMLInputElement | null>) => (
+    <li>
+      <button type="button" onClick={() => ai.vision ? target.current?.click() : ai.openPanel()} aria-haspopup={ai.vision ? undefined : "dialog"} className={cn(row, ai.vision ? "hover:bg-warm" : "bg-stone/60 hover:bg-stone")}>
+        <Icon className={cn("h-5 w-5 shrink-0", ai.vision ? "text-ai" : "text-muted")} aria-hidden />
+        <span className="min-w-0">
+          <span className={cn("block font-medium", ai.vision ? "text-ink" : "text-muted")}>{label}</span>
+          <span className="block text-xs text-muted">{ai.vision ? hint : "AI cannot read pictures yet: tap to see how to set it up"}</span>
+        </span>
+      </button>
+    </li>
+  );
+
+  return (
+    <>
+      <ul className="divide-y divide-hairline overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
+        <li>
+          <Link href="/inventory/new" className={cn(row, "hover:bg-warm")}>
+            <PenLine className="h-5 w-5 shrink-0 text-moss" aria-hidden />
+            <span className="min-w-0"><span className="block font-medium text-ink">Fill in yourself</span><span className="block text-xs text-muted">Choose the product, then how much and where</span></span>
+          </Link>
+        </li>
+        {reader("Take a photo", "Of an invoice, delivery note or label; AI reads a draft for you to check", Camera, photo)}
+        {reader("Choose photos", "Up to 10 from the photo library", Images, library)}
+      </ul>
+      <input ref={photo} type="file" accept="image/*" capture="environment" className="sr-only" tabIndex={-1} aria-hidden onChange={(event) => hand(event.target.files)} />
+      <input ref={library} type="file" accept="image/*" multiple className="sr-only" tabIndex={-1} aria-hidden onChange={(event) => hand(event.target.files)} />
+    </>
   );
 }

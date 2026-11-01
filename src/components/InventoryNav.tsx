@@ -11,6 +11,12 @@ const sections = [
   { key: "locations", href: "/inventory/locations", label: "Storage locations", icon: MapPin },
 ] as const;
 
+/** A tab in a row of inventory tabs: the selected one has a moss label, an underline and a low tint. */
+export const inventoryTabClass = (active: boolean) => cn(
+  "focus-ring -mb-px inline-flex h-10 shrink-0 items-center gap-2 border-b-2 px-3 text-sm font-medium transition-colors",
+  active ? "border-moss bg-sage-surface/60 text-moss" : "border-transparent text-graphite hover:bg-warm hover:text-ink",
+);
+
 /**
  * The inventory pages, one row under the page title, each with how many records it lists. Detail pages show it too,
  * with the page they belong to selected (Q179).
@@ -32,10 +38,7 @@ export async function InventoryNav({ current }: { current: (typeof sections)[num
             key={key}
             href={href}
             aria-current={active ? "page" : undefined}
-            className={cn(
-              "focus-ring -mb-px inline-flex h-10 shrink-0 items-center gap-2 border-b-2 px-3 text-sm font-medium transition-colors",
-              active ? "border-moss bg-sage-surface/60 text-moss" : "border-transparent text-graphite hover:bg-warm hover:text-ink",
-            )}
+            className={inventoryTabClass(active)}
           >
             <Icon className="h-4 w-4" aria-hidden />
             <span>{label}</span>

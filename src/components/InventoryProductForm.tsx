@@ -11,7 +11,7 @@ import type { InventoryTypeField } from "@/lib/inventory-types";
 import { sequenceKind } from "@/lib/product-sequences";
 import type { GroupOption, TypeOption } from "./InventoryItemForm";
 
-type ProductInitial = {
+export type ProductInitial = {
   id?: string;
   name?: string;
   englishName?: string | null;
@@ -29,17 +29,29 @@ type ProductInitial = {
   lowThresholdUnit?: string | null;
   notes?: string | null;
 };
-type EntityOption = { id: string; name: string; type: string; code: string | null };
+export type EntityOption = { id: string; name: string; type: string; code: string | null };
+export type ProductTypeOption = TypeOption & { key: string; fields: InventoryTypeField[] };
+export type ProductFieldsProps = { types: ProductTypeOption[]; groups: GroupOption[]; entities: EntityOption[]; initial?: ProductInitial };
 
 /** A product: what it is (type and 大类), its catalogue identity, its type's fields, control levels and safety stock. */
-export function InventoryProductForm({ action, types, groups, entities, initial = {} }: {
-  action: FormAction;
-  types: (TypeOption & { key: string; fields: InventoryTypeField[] })[];
-  groups: GroupOption[];
-  entities: EntityOption[];
-  initial?: ProductInitial;
-}) {
+export function InventoryProductForm({ action, ...fields }: ProductFieldsProps & { action: FormAction }) {
   const [state, formAction, pending] = useActionState(action, {} as FormActionState);
+  return (
+    <form action={formAction} className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
+      <ProductFields {...fields} />
+      <div className="flex flex-wrap items-center justify-end gap-3 p-4">
+        {state.error ? <p role="alert" className="max-w-xl rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
+        <Button type="submit" variant="primary" size="md" disabled={pending} aria-busy={pending}>{pending ? "Saving…" : fields.initial?.id ? "Save" : "Create product"}</Button>
+      </div>
+    </form>
+  );
+}
+
+/**
+ * The product's fields without a form of their own. The lot edit page puts them above the lot's fields with the
+ * prefix `product.`, so a lot and its product are edited in one place (Q192).
+ */
+export function ProductFields({ types, groups, entities, initial = {}, prefix = "" }: ProductFieldsProps & { prefix?: string }) {
   const [typeId, setTypeId] = useState(initial.typeId ?? "");
   const [groupKey, setGroupKey] = useState(initial.groupKey ?? "");
   const type = types.find((entry) => entry.id === typeId);
@@ -48,18 +60,19 @@ export function InventoryProductForm({ action, types, groups, entities, initial 
   const biological = group === "biological" || group === "sample";
   const levels = new Set(initial.controlLevels ?? []);
   const biosafety = inventoryBiosafetyLevels.find((level) => levels.has(level.key))?.key ?? "";
+  const name = (field: string) => prefix + field;
 
   return (
-    <form action={formAction} className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
-      {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
+    <>
+      {initial.id ? <input type="hidden" name={name("id")} value={initial.id} /> : null}
       <section className="grid gap-4 border-b border-hairline p-4 md:grid-cols-2 xl:grid-cols-3">
         <label className="md:col-span-2 xl:col-span-1">
           <span className={formLabelClass}>Product name *</span>
-          <input required name="name" defaultValue={initial.name ?? ""} maxLength={180} className={formInputClass} placeholder="Anti-CD3 antibody" />
+          <input required name={name("name")} defaultValue={initial.name ?? ""} maxLength={180} className={formInputClass} placeholder="Anti-CD3 antibody" />
         </label>
         <label>
           <span className={formLabelClass}>Type</span>
-          <select name="typeId" value={typeId} onChange={(event) => setTypeId(event.target.value)} className={formInputClass}>
+          <select name={name("typeId")} value={typeId} onChange={(event) => setTypeId(event.target.value)} className={formInputClass}>
             <option value="">Not subdivided</option>
             {groups.map((entry) => {
               // Hidden 大类 and disabled types are not offered, except what this product already has.
@@ -73,7 +86,7 @@ export function InventoryProductForm({ action, types, groups, entities, initial 
         ) : (
           <label>
             <span className={formLabelClass}>Inventory group</span>
-            <select name="groupKey" value={groupKey} onChange={(event) => setGroupKey(event.target.value)} className={formInputClass}>
+            <select name={name("groupKey")} value={groupKey} onChange={(event) => setGroupKey(event.target.value)} className={formInputClass}>
               <option value="">To be classified</option>
               {groups.filter((entry) => !entry.hidden || entry.key === initial.groupKey).map((entry) => <option key={entry.key} value={entry.key}>{entry.name}</option>)}
             </select>
@@ -81,13 +94,13 @@ export function InventoryProductForm({ action, types, groups, entities, initial 
         )}
         <label>
           <span className={formLabelClass}>Brand</span>
-          <input name="brand" defaultValue={initial.brand ?? ""} maxLength={120} className={formInputClass} placeholder="BioLegend" />
+          <input name={name("brand")} defaultValue={initial.brand ?? ""} maxLength={120} className={formInputClass} placeholder="BioLegend" />
         </label>
         <label>
           <span className={formLabelClass}>Catalog number</span>
-          <input name="catalogNumber" defaultValue={initial.catalogNumber ?? ""} maxLength={120} className={formInputClass} />
+          <input name={name("catalogNumber")} defaultValue={initial.catalogNumber ?? ""} maxLength={120} className={formInputClass} />
         </label>
-        <QuantityInput key={type?.id ?? "none"} label="Safety stock" name="lowThreshold" unitName="lowThresholdUnit" initialValue={initial.lowThreshold == null ? "" : String(initial.lowThreshold)} initialUnit={initial.lowThresholdUnit ?? type?.defaults.unit ?? "mL"} options={stockUnits} checkPrecision />
+        <QuantityInput key={type?.id ?? "none"} label="Safety stock" name={name("lowThreshold")} unitName={name("lowThresholdUnit")} initialValue={initial.lowThreshold == null ? "" : String(initial.lowThreshold)} initialUnit={initial.lowThresholdUnit ?? type?.defaults.unit ?? "mL"} options={stockUnits} checkPrecision />
       </section>
 
       {type?.fields.length ? (
@@ -96,12 +109,12 @@ export function InventoryProductForm({ action, types, groups, entities, initial 
             <label key={field.key}>
               <span className={formLabelClass}>{field.label}</span>
               {field.kind === "choice" ? (
-                <select name={`field:${field.key}`} defaultValue={initial.fieldValues?.[field.key] ?? ""} className={formInputClass}>
+                <select name={name(`field:${field.key}`)} defaultValue={initial.fieldValues?.[field.key] ?? ""} className={formInputClass}>
                   <option value="">—</option>
                   {field.options?.map((option) => <option key={option} value={option}>{option}</option>)}
                 </select>
               ) : (
-                <input name={`field:${field.key}`} type={field.kind === "date" ? "date" : "text"} inputMode={field.kind === "number" ? "decimal" : undefined} defaultValue={initial.fieldValues?.[field.key] ?? ""} maxLength={240} className={formInputClass} />
+                <input name={name(`field:${field.key}`)} type={field.kind === "date" ? "date" : "text"} inputMode={field.kind === "number" ? "decimal" : undefined} defaultValue={initial.fieldValues?.[field.key] ?? ""} maxLength={240} className={formInputClass} />
               )}
             </label>
           ))}
@@ -114,7 +127,7 @@ export function InventoryProductForm({ action, types, groups, entities, initial 
             <label key={strand.role} className={kind.strands.length === 1 ? "md:col-span-2" : undefined}>
               <span className={formLabelClass}>{strand.label}</span>
               <textarea
-                name={`sequence:${strand.role}`}
+                name={name(`sequence:${strand.role}`)}
                 defaultValue={initial.sequences?.[strand.role] ?? ""}
                 rows={kind.design === "plasmid" || kind.design === "protein" ? 5 : 2}
                 spellCheck={false}
@@ -134,7 +147,7 @@ export function InventoryProductForm({ action, types, groups, entities, initial 
           <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2">
             {inventoryControlLevels.map((level) => (
               <label key={level.key} className="inline-flex min-h-8 items-center gap-2 text-sm text-graphite">
-                <input type="checkbox" name="controlLevel" value={level.key} defaultChecked={levels.has(level.key)} className="h-4 w-4 accent-[var(--action)]" />
+                <input type="checkbox" name={name("controlLevel")} value={level.key} defaultChecked={levels.has(level.key)} className="h-4 w-4 accent-[var(--action)]" />
                 <span>{level.label}</span>
               </label>
             ))}
@@ -144,7 +157,7 @@ export function InventoryProductForm({ action, types, groups, entities, initial 
         {biological ? (
           <label className="block max-w-xs">
             <span className={formLabelClass}>Biosafety level</span>
-            <select name="biosafety" defaultValue={biosafety} className={formInputClass}>
+            <select name={name("biosafety")} defaultValue={biosafety} className={formInputClass}>
               <option value="">Not set</option>
               {inventoryBiosafetyLevels.map((level) => <option key={level.key} value={level.key}>{level.label}</option>)}
             </select>
@@ -154,23 +167,18 @@ export function InventoryProductForm({ action, types, groups, entities, initial 
 
       <Disclosure title="More about this product" summary={[initial.englishName, initial.casNumber].filter(Boolean).join(" · ")} defaultOpen={!!(initial.englishName || initial.casNumber || initial.entityId || initial.notes)}>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <label><span className={formLabelClass}>English name</span><input name="englishName" defaultValue={initial.englishName ?? ""} maxLength={180} className={formInputClass} /></label>
-          <label><span className={formLabelClass}>CAS number</span><input name="casNumber" defaultValue={initial.casNumber ?? ""} maxLength={64} className={formInputClass} /></label>
+          <label><span className={formLabelClass}>English name</span><input name={name("englishName")} defaultValue={initial.englishName ?? ""} maxLength={180} className={formInputClass} /></label>
+          <label><span className={formLabelClass}>CAS number</span><input name={name("casNumber")} defaultValue={initial.casNumber ?? ""} maxLength={64} className={formInputClass} /></label>
           {kind ? null : <label>
             <span className={formLabelClass}>Made from</span>
-            <select name="entityId" defaultValue={initial.entityId ?? ""} className={formInputClass}>
+            <select name={name("entityId")} defaultValue={initial.entityId ?? ""} className={formInputClass}>
               <option value="">Not linked</option>
               {entities.map((entity) => <option key={entity.id} value={entity.id}>{entity.name} · {entity.type}{entity.code ? ` · ${entity.code}` : ""}</option>)}
             </select>
           </label>}
-          <label className="md:col-span-2 xl:col-span-3"><span className={formLabelClass}>Notes</span><textarea name="notes" defaultValue={initial.notes ?? ""} maxLength={5000} className={formTextareaClass} /></label>
+          <label className="md:col-span-2 xl:col-span-3"><span className={formLabelClass}>Notes</span><textarea name={name("notes")} defaultValue={initial.notes ?? ""} maxLength={5000} className={formTextareaClass} /></label>
         </div>
       </Disclosure>
-
-      <div className="flex flex-wrap items-center justify-end gap-3 p-4">
-        {state.error ? <p role="alert" className="max-w-xl rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
-        <Button type="submit" variant="primary" size="md" disabled={pending} aria-busy={pending}>{pending ? "Saving…" : initial.id ? "Save" : "Create product"}</Button>
-      </div>
-    </form>
+    </>
   );
 }

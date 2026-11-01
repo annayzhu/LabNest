@@ -99,14 +99,15 @@ function InventoryLocationEditor({ location, locations }: { location: InventoryL
     <li className={location.status === "active" ? undefined : "bg-warm/60"}>
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 px-4 py-2 text-sm md:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_minmax(0,11rem)_auto]">
         <span className="min-w-0">
-          <span className={`font-medium ${location.status === "active" ? "text-ink" : "text-muted"}`}>{location.path}</span>
+          {/* Opens the stock list on what is kept here and in the places inside (Q194). */}
+          <Link href={`/inventory/list?location=${location.id}&status=active`} className={`font-medium hover:text-moss hover:underline ${location.status === "active" ? "text-ink" : "text-muted"}`}>{location.path}</Link>
           <span className="ml-2 text-xs text-muted">{location.type}</span>
           {location.status !== "active" ? <span className="ml-2 text-xs text-muted">Archived</span> : null}
         </span>
         <span className="hidden min-w-0 truncate text-xs text-muted md:block">
           {[temperatureLabel(location.temperature), location.description].filter(Boolean).map((part, index) => <span key={part}>{index ? " · " : ""}{part}</span>)}
         </span>
-        <span className="hidden text-xs text-muted md:block"><span className="tabular-nums">{location.counts.items}</span> <span>stock items</span> · <span className="tabular-nums">{movementReferences}</span> <span>stock movements</span>{location.counts.samples ? <> · <Link href={`/samples?location=${location.id}`} className="text-moss hover:underline"><span className="tabular-nums">{location.counts.samples}</span> <span>samples</span></Link></> : null}</span>
+        <span className="hidden text-xs text-muted md:block"><Link href={`/inventory/list?location=${location.id}&status=active`} className="hover:text-moss hover:underline"><span className="tabular-nums">{location.counts.items}</span> <span>stock items</span></Link> · <span className="tabular-nums">{movementReferences}</span> <span>stock movements</span>{location.counts.samples ? <> · <Link href={`/samples?location=${location.id}`} className="text-moss hover:underline"><span className="tabular-nums">{location.counts.samples}</span> <span>samples</span></Link></> : null}</span>
         <span className="flex justify-end gap-0.5">
           <button type="button" onClick={() => setEditing((value) => !value)} disabled={pending} aria-label="Edit location" title="Edit location" className={iconButton}><Pencil className="h-4 w-4" /></button>
           {location.status === "active" ? (

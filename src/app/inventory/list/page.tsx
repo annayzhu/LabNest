@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, ShoppingCart } from "lucide-react";
+import { MapPin, Plus, ShoppingCart } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import { CollectionToolbar, collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
@@ -15,6 +15,7 @@ import { prisma } from "@/lib/db";
 import { filterHref, firstOptionSearchParam, firstSearchParam, type PageSearchParams } from "@/lib/filters";
 import { lotRiskFlags, type InventoryRiskFlag } from "@/lib/inventory";
 import { QuantityText } from "@/components/InventoryDetail";
+import { locationWithin } from "@/lib/inventory-location-lifecycle";
 import { stockFormLocations } from "@/lib/inventory-products.server";
 import { stockSearchWhere } from "@/lib/inventory-search";
 import { inventoryGroupName } from "@/lib/inventory-types";
@@ -42,10 +43,12 @@ export default async function InventoryListPage({ searchParams }: { searchParams
   const flag = firstSearchParam(params, "flag") as InventoryRiskFlag | "held" | undefined;
   const sort = firstSearchParam(params, "sort") ?? "updated_desc";
   const now = new Date();
+  // A location's stock includes what sits in the places inside it (Q194).
+  const within = locationId ? locationWithin(await prisma.inventoryLocation.findMany({ select: { id: true, parentLocationId: true } }), locationId) : [];
 
   const where = {
     ...(status ? { status } : {}),
-    ...(locationId ? { locationId } : {}),
+    ...(locationId ? { locationId: { in: within } } : {}),
     ...(groupKey || typeId ? { product: { ...(groupKey ? { groupKey: groupKey === "none" ? null : groupKey } : {}), ...(typeId ? { typeId } : {}) } } : {}),
     ...(principalInvestigator ? { principalInvestigator } : {}),
     // In use: a container of it is out of the store with someone.
@@ -73,12 +76,15 @@ export default async function InventoryListPage({ searchParams }: { searchParams
   const groupNames = new Map(groups.map((group) => [group.key, inventoryGroupName(group)]));
   const piOptions = principalInvestigators.flatMap((item) => item.principalInvestigator ? [item.principalInvestigator] : []);
   const exportHref = filterHref("/inventory/export", { exportScope: "filtered", q: query, status, location: locationId, group: groupKey, type: typeId, pi: principalInvestigator, flag, sort });
+  const scopeLocation = locations.find((location) => location.id === locationId);
+  const scope = scopeLocation ? <LocationScope name={scopeLocation.name} temperature={scopeLocation.temperature} inside={within.length - 1} clearHref={filterHref("/inventory/list", { q: query, status, group: groupKey, type: typeId, pi: principalInvestigator, flag, sort: sort === "updated_desc" ? undefined : sort })} /> : null;
 
   return (
     <AppShell>
       <div className="space-y-4">
         <MobileInventoryBench
           query={query}
+          scope={scope}
           key={JSON.stringify([query, status, locationId, groupKey, typeId, principalInvestigator, flag, sort])}
           totalCount={totalCount}
           filters={{ status, location: locationId, group: groupKey, type: typeId, pi: principalInvestigator, flag, sort: sort === "updated_desc" ? undefined : sort }}
@@ -100,6 +106,7 @@ export default async function InventoryListPage({ searchParams }: { searchParams
         <div className="hidden space-y-4 lg:block">
           <PageHeader title="Inventory" />
           <InventoryNav current="list" />
+          {scope}
           <InventoryReturnPoint href={filterHref("/inventory/list", { q: query, status, location: locationId, group: groupKey, type: typeId, pi: principalInvestigator, flag, sort: sort === "updated_desc" ? undefined : sort })} label="Stock list" />
           <CollectionToolbar
             path="/inventory/list"
@@ -192,5 +199,18 @@ export default async function InventoryListPage({ searchParams }: { searchParams
         </div>
       </div>
     </AppShell>
+  );
+}
+
+/** The location the list is filtered to, with its path and temperature, and a way back to all stock (Q194). */
+function LocationScope({ name, temperature, inside, clearHref }: { name: string; temperature: string | null; inside: number; clearHref: string }) {
+  return (
+    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-3 py-2 text-sm text-graphite">
+      <MapPin className="h-4 w-4 shrink-0 text-moss" aria-hidden />
+      <span className="font-medium text-ink">{name}</span>
+      {temperature ? <span className="text-muted">{temperature}</span> : null}
+      {inside ? <span className="text-muted">{`With ${inside} places inside`}</span> : null}
+      <Link href={clearHref} className="ml-auto font-medium text-moss hover:underline">Every location</Link>
+    </p>
   );
 }

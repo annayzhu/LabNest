@@ -3,120 +3,16 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import type { Prisma } from "@/generated/prisma/client";
 import { keepAttachment } from "@/lib/attachment-files";
 import { prisma } from "@/lib/db";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
-import { assertPrecision, deleteBlockers, inventoryControlKeys, isStrictlyControlled, productDocumentKinds } from "@/lib/inventory";
+import { deleteBlockers, isStrictlyControlled, productDocumentKinds } from "@/lib/inventory";
 import { mergeProductPlan, pairKey } from "@/lib/inventory-duplicates";
 import { manualFileProblem } from "@/lib/inventory-manuals";
-import { deleteProduct, productWithCatalog, syncProductLots } from "@/lib/inventory-products.server";
-import { inventoryTypeFields, isInventoryGroupKey, type InventoryTypeField } from "@/lib/inventory-types";
-import { sequenceKind } from "@/lib/product-sequences";
-import { saveProductSequences } from "@/lib/product-sequences.server";
-
-type Tx = Prisma.TransactionClient;
+import { saveProductForm } from "@/lib/inventory-product-form.server";
+import { deleteProduct, syncProductLots } from "@/lib/inventory-products.server";
 
 const text = (value: FormDataEntryValue | null) => String(value ?? "").trim() || undefined;
-const number = (value: FormDataEntryValue | null) => (text(value) === undefined ? undefined : Number(text(value)));
-
-const productSchema = z.object({
-  id: z.string().trim().optional(),
-  name: z.string().trim().min(1, "Product name is required.").max(180),
-  englishName: z.string().trim().max(180).optional(),
-  brand: z.string().trim().max(120).optional(),
-  catalogNumber: z.string().trim().max(120).optional(),
-  casNumber: z.string().trim().max(64).optional(),
-  typeId: z.string().trim().optional(),
-  groupKey: z.string().trim().optional(),
-  entityId: z.string().trim().optional(),
-  lowThreshold: z.number().finite().nonnegative().optional(),
-  lowThresholdUnit: z.string().trim().max(32).optional(),
-  notes: z.string().trim().max(5000).optional(),
-  controlLevels: z.array(z.string().refine((key) => inventoryControlKeys.includes(key), "Unknown control level.")),
-});
-
-function parseProduct(formData: FormData) {
-  return productSchema.parse({
-    id: text(formData.get("id")),
-    name: formData.get("name"),
-    englishName: text(formData.get("englishName")),
-    brand: text(formData.get("brand")),
-    catalogNumber: text(formData.get("catalogNumber")),
-    casNumber: text(formData.get("casNumber")),
-    typeId: text(formData.get("typeId")),
-    groupKey: text(formData.get("groupKey")),
-    entityId: text(formData.get("entityId")),
-    lowThreshold: number(formData.get("lowThreshold")),
-    lowThresholdUnit: text(formData.get("lowThresholdUnit")),
-    notes: text(formData.get("notes")),
-    controlLevels: [...new Set([...formData.getAll("controlLevel"), formData.get("biosafety")].map(text).filter((key): key is string => !!key))],
-  });
-}
-
-/** Values of the type's fields (`field:<key>`); a number, date or choice must read as one. Fields of other types are not kept. */
-function fieldValues(formData: FormData, fields: InventoryTypeField[]) {
-  const values: Record<string, string> = {};
-  for (const field of fields) {
-    const value = text(formData.get(`field:${field.key}`));
-    if (value === undefined) continue;
-    if (field.kind === "number" && !Number.isFinite(Number(value))) throw new Error(`${field.label} must be a number.`);
-    if (field.kind === "date" && !/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new Error(`${field.label} must be a date.`);
-    if (field.kind === "choice" && field.options && !field.options.includes(value)) throw new Error(`Choose one of the options for ${field.label}.`);
-    values[field.key] = value;
-  }
-  return values;
-}
-
-/** The type decides the 大类; without one, the chosen 大类 (or none: 待归类). A disabled type stays only where it already is. */
-async function classify(tx: Tx, parsed: z.infer<typeof productSchema>, currentTypeId?: string | null) {
-  if (!parsed.typeId) return { typeId: null, typeKey: null, groupKey: parsed.groupKey && isInventoryGroupKey(parsed.groupKey) ? parsed.groupKey : null, fields: [] as InventoryTypeField[] };
-  const type = await tx.scientificSchemaDefinition.findUnique({ where: { id: parsed.typeId } });
-  if (!type?.inventoryGroupKey || (!type.enabled && type.id !== currentTypeId)) throw new Error("Choose an inventory type that is in use.");
-  return { typeId: type.id, typeKey: type.key, groupKey: type.inventoryGroupKey, fields: inventoryTypeFields(type.fieldDefinitions) };
-}
-
-async function assertNoDuplicate(tx: Tx, parsed: z.infer<typeof productSchema>) {
-  const duplicate = await productWithCatalog(tx, { brand: parsed.brand ?? null, catalogNumber: parsed.catalogNumber ?? null }, { excludeId: parsed.id });
-  if (duplicate) throw new Error(`“${duplicate.name}” already has this brand and catalogue number.`);
-}
-
-/** Highly toxic and drug-precursor stock is only recorded precisely. */
-async function assertControlFits(tx: Tx, productId: string, levels: string[]) {
-  if (!isStrictlyControlled(levels)) return;
-  const loose = await tx.inventoryItem.count({ where: { productId, managementMode: { not: "precise" } } });
-  if (loose) throw new Error(`Highly toxic and drug-precursor stock must be recorded with precise use; switch ${loose} lot${loose === 1 ? "" : "s"} to precise use first.`);
-}
-
-/**
- * The entity a product points at. A product of a sequence type points at the entity its strands hang on, made with
- * the first strand (Q185); any other product keeps the entity chosen in the form.
- */
-async function productEntity(tx: Tx, parsed: z.infer<typeof productSchema>, classified: Awaited<ReturnType<typeof classify>>, formData: FormData, currentEntityId: string | null) {
-  const kind = sequenceKind(classified.typeKey);
-  if (!kind) return parsed.entityId ?? null;
-  const typed = Object.fromEntries(kind.strands.map((strand) => [strand.role, String(formData.get(`sequence:${strand.role}`) ?? "")]));
-  return saveProductSequences(tx, { name: parsed.name, entityId: currentEntityId }, kind, typed);
-}
-
-function productData(parsed: z.infer<typeof productSchema>, classified: Awaited<ReturnType<typeof classify>>, values: Record<string, string>) {
-  if (parsed.lowThreshold !== undefined && !parsed.lowThresholdUnit) throw new Error("Choose the unit of the safety stock.");
-  if (parsed.lowThreshold !== undefined && parsed.lowThresholdUnit) assertPrecision(parsed.lowThreshold, parsed.lowThresholdUnit);
-  return {
-    name: parsed.name,
-    englishName: parsed.englishName ?? null,
-    brand: parsed.brand ?? null,
-    catalogNumber: parsed.catalogNumber ?? null,
-    casNumber: parsed.casNumber ?? null,
-    typeId: classified.typeId,
-    groupKey: classified.groupKey,
-    fieldValues: values,
-    controlLevels: parsed.controlLevels,
-    lowThreshold: parsed.lowThreshold ?? null,
-    lowThresholdUnit: parsed.lowThreshold === undefined ? null : parsed.lowThresholdUnit,
-    notes: parsed.notes ?? null,
-  };
-}
 
 function revalidateProduct(id?: string) {
   revalidatePath("/inventory");
@@ -127,15 +23,7 @@ function revalidateProduct(id?: string) {
 export async function createInventoryProduct(_previous: FormActionState, formData: FormData): Promise<FormActionState> {
   let id: string;
   try {
-    const parsed = parseProduct(formData);
-    id = await prisma.$transaction(async (tx) => {
-      const classified = await classify(tx, parsed);
-      await assertNoDuplicate(tx, parsed);
-      const entityId = await productEntity(tx, parsed, classified, formData, null);
-      const product = await tx.inventoryProduct.create({ data: { ...productData(parsed, classified, fieldValues(formData, classified.fields)), entityId } });
-      await tx.activityLog.create({ data: { action: "create", targetType: "inventory_product", targetId: product.id, metadataJson: { name: product.name, typeId: product.typeId, groupKey: product.groupKey } } });
-      return product.id;
-    });
+    id = await prisma.$transaction((tx) => saveProductForm(tx, formData));
   } catch (error) {
     return { error: formActionErrorMessage(error, "The product could not be created.") };
   }
@@ -146,20 +34,8 @@ export async function createInventoryProduct(_previous: FormActionState, formDat
 export async function updateInventoryProduct(_previous: FormActionState, formData: FormData): Promise<FormActionState> {
   let id: string;
   try {
-    const parsed = parseProduct(formData);
-    if (!parsed.id) throw new Error("Product ID is required.");
-    id = parsed.id;
-    await prisma.$transaction(async (tx) => {
-      const current = await tx.inventoryProduct.findUnique({ where: { id } });
-      if (!current) throw new Error("This product no longer exists.");
-      const classified = await classify(tx, parsed, current.typeId);
-      await assertNoDuplicate(tx, parsed);
-      await assertControlFits(tx, id, parsed.controlLevels);
-      const entityId = await productEntity(tx, parsed, classified, formData, current.entityId);
-      await tx.inventoryProduct.update({ where: { id }, data: { ...productData(parsed, classified, fieldValues(formData, classified.fields)), entityId } });
-      await syncProductLots(tx, id);
-      await tx.activityLog.create({ data: { action: "update", targetType: "inventory_product", targetId: id, metadataJson: { previous: { name: current.name, typeId: current.typeId, groupKey: current.groupKey, controlLevels: current.controlLevels }, next: { name: parsed.name, typeId: classified.typeId, groupKey: classified.groupKey, controlLevels: parsed.controlLevels } } } });
-    });
+    if (!text(formData.get("id"))) throw new Error("Product ID is required.");
+    id = await prisma.$transaction((tx) => saveProductForm(tx, formData));
   } catch (error) {
     return { error: formActionErrorMessage(error, "The product could not be saved.") };
   }

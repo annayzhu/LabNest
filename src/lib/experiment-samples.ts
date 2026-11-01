@@ -53,8 +53,12 @@ export function withExperimentSamples(document: ScientificDocument, lines: Exper
   };
 }
 
-/** Sample names and codes in a plate layout: which wells each of the experiment's samples occupies (S14). */
-export function wellsBySample(plates: Array<{ name: string; wells: Record<string, Record<string, string | number>> }>, samples: Array<{ id: string; code: string; name: string }>) {
+/**
+ * Which wells each of the experiment's samples occupies (S14): a well chosen from the sample library names its sample by ID;
+ * a well holding only text (a planner backup, a typed name) matches by code or by a name no other sample shares.
+ */
+export function wellsBySample(plates: Array<{ name: string; wells: Record<string, Record<string, string | number | { sampleId: string; label: string }>> }>, samples: Array<{ id: string; code: string; name: string }>) {
+  const known = new Set(samples.map((sample) => sample.id));
   const byCode = new Map(samples.map((sample) => [matchKey(sample.code), sample.id]));
   const byName = new Map<string, string[]>();
   for (const sample of samples) byName.set(matchKey(sample.name), [...(byName.get(matchKey(sample.name)) ?? []), sample.id]);
@@ -63,6 +67,7 @@ export function wellsBySample(plates: Array<{ name: string; wells: Record<string
     for (const [well, params] of Object.entries(plate.wells)) {
       const ids = new Set<string>();
       for (const value of Object.values(params)) {
+        if (typeof value === "object") { if (known.has(value.sampleId)) ids.add(value.sampleId); continue; }
         const key = matchKey(String(value));
         // A name several of the experiment's samples share cannot tell them apart; a code always can.
         const id = byCode.get(key) ?? (byName.get(key)?.length === 1 ? byName.get(key)![0] : undefined);

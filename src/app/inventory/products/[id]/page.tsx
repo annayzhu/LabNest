@@ -21,6 +21,8 @@ import { inventoryGroupName, inventoryTypeFields } from "@/lib/inventory-types";
 import { sequenceKind } from "@/lib/product-sequences";
 import { readProductSequences } from "@/lib/product-sequences.server";
 import { labDate } from "@/lib/lab-time";
+import { recordMentions } from "@/lib/record-mentions.server";
+import { RecordMentionList } from "@/components/RecordMentions";
 import { deleteInventoryProduct, setInventoryProductArchived } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -40,9 +42,11 @@ export default async function InventoryProductPage({ params }: { params: Promise
     },
   });
   if (!product) notFound();
-  const [documents, sequences] = await Promise.all([
+  const [documents, sequences, mentions] = await Promise.all([
     prisma.attachmentLink.findMany({ where: { targetType: "inventory_product", targetId: id }, include: { attachment: { select: { originalFilename: true, size: true } } }, orderBy: { createdAt: "asc" } }),
     readProductSequences(prisma, product.entityId, product.type?.key),
+    // The product's own tags and those of each of its lots.
+    recordMentions([product.id, ...product.items.map((lot) => lot.id)]),
   ]);
 
   const fields = product.type ? inventoryTypeFields(product.type.fieldDefinitions) : [];
@@ -129,6 +133,10 @@ export default async function InventoryProductPage({ params }: { params: Promise
                 <InventoryKitComponents productId={product.id} components={product.kitComponents.map(({ id: componentId, name, spec, storageCondition }) => ({ id: componentId, name, spec, storageCondition }))} />
               </Panel>
             ) : null}
+
+            <Panel title="Mentioned in records">
+              <RecordMentionList mentions={mentions} />
+            </Panel>
 
             <section id="documents">
               <Panel title="Documents">

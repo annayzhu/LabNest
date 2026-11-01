@@ -2,6 +2,7 @@ import type { JSONContent } from "@tiptap/core";
 import { parseRichTextFontSizePt, type RichTextFontSizePt } from "@/lib/rich-text-font-size";
 import { parseRichTextColor, RICH_TEXT_RISK_COLOR_HEX, type RichTextColor } from "@/lib/rich-text-color";
 import { documentMediaFromMarkdown, documentMediaToMarkdown } from "./document-media";
+import { recordReferenceMarkdown } from "./record-references";
 
 export type PersistedTiptapTable = {
   rows: string[][];
@@ -19,6 +20,8 @@ function plainText(node: JSONContent | undefined): string {
   if (node.type === "hardBreak") return "\n";
   if (node.type === "text") return node.text ?? "";
   if (node.type === "documentMedia") return documentMediaToMarkdown(node.attrs?.block);
+  // Kept as its link, so the plain cell text still names the record (search, exports, mentions).
+  if (node.type === "recordReference") return typeof node.attrs?.id === "string" ? recordReferenceMarkdown({ kind: node.attrs.kind, id: node.attrs.id, label: String(node.attrs.label ?? "") }) : "";
   return (node.content ?? []).map(plainText).join(["tableCell", "tableHeader", "listItem", "taskItem"].includes(node.type ?? "") ? "\n" : "");
 }
 

@@ -30,6 +30,7 @@ import { buildExperimentResultRecording } from "@/lib/experiment-results";
 import { isRecordLocked } from "@/lib/record-lifecycle";
 import { samplesByBox } from "@/lib/samples";
 import { sampleLocationOptions } from "@/lib/samples.server";
+import { documentPlateLayouts, experimentSections, normalizeScientificDocument } from "@/lib/scientific-document";
 
 
 export const dynamic = "force-dynamic";
@@ -104,6 +105,8 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
     frozenReferences[version.protocolVersionId]??=normalizeProtocolDocument(version.contentJson)?.sections??[];
   }
   const plates = attachmentLinks.filter(link => link.linkType === 'plate_layout').map(link => ({ id: link.attachment.id, originalFilename: link.attachment.originalFilename, mimeType: link.attachment.mimeType }));
+  // Plates written in the record ("/板布局") are what the bench prepares now; attached planner files still show.
+  const documentPlates = documentPlateLayouts(normalizeScientificDocument(experiment.contentJson, experimentSections));
   const prepStock = inventoryItems.map(item => ({ id: item.id, name: item.name, unit: item.unit, currentQuantity: item.currentQuantity, quantityRecorded: item.quantityRecorded }));
   // Where the experiment's samples are taken from (S15): one line per box at the bench.
   const boxLabels = experiment.samples.length ? new Map((await sampleLocationOptions(prisma)).map(location => [location.id, location.label])) : new Map<string, string>();
@@ -133,7 +136,7 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
             {/* A phone has 现场模式 in its bottom bar. */}
             <Link href="/protocol-run" className={`${secondaryButton} max-lg:hidden`}><ArrowLeft className="h-4 w-4" aria-hidden />Run mode</Link>
             <Link href={`/experiments/${experiment.id}`} className={secondaryButton}>Experiment record</Link>
-            <RunPageMenu view={structured} runLabel={experiment.runCode ?? experiment.title} plates={plates} stock={prepStock} recorded={recordedUses} />
+            <RunPageMenu view={structured} runLabel={experiment.runCode ?? experiment.title} plates={plates} documentPlates={documentPlates} stock={prepStock} recorded={recordedUses} />
           </>}
         />
 
@@ -154,7 +157,7 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
         </details>
 
         {locked ? <p role="status" className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-2 text-sm text-graphite">This run is submitted or reviewed and read-only. Reopen it from the experiment record to change steps or deviations.</p> : null}
-        <RunSystemPreparation experimentId={id} view={structured} editable={editable} started={experiment.steps.some(step => step.completed || step.completedAt || step.timerStartedAt || step.timerPausedAt)} plates={plates} stock={prepStock} recorded={recordedUses} samples={samplePrep} inputGroups={experiment.samples.map(link => link.group?.label ?? null)} sampleGroupLabels={experiment.sampleGroups.map(group => group.label)}/>
+        <RunSystemPreparation experimentId={id} view={structured} editable={editable} started={experiment.steps.some(step => step.completed || step.completedAt || step.timerStartedAt || step.timerPausedAt)} plates={plates} documentPlates={documentPlates} stock={prepStock} recorded={recordedUses} samples={samplePrep} inputGroups={experiment.samples.map(link => link.group?.label ?? null)} sampleGroupLabels={experiment.sampleGroups.map(group => group.label)}/>
         {!structured.hasSystems && experiment.samples.length ? (
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[var(--ln-radius-panel)] border border-hairline bg-surface px-3 py-2 text-sm">
             <span className="font-medium text-ink">Samples to take out</span>

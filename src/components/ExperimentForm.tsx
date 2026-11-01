@@ -19,6 +19,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Disclosure } from "@/components/ui/Disclosure";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import type { ScientificDocument } from "@/lib/scientific-document";
+import { ReferenceScope } from "@/components/ReferencePicker";
 import { experimentStatusOptions, recordStatusOptions } from "@/lib/status-options";
 
 type PlanOption = { id: string; code: string | null; title: string; project: { name: string } };
@@ -86,10 +87,10 @@ export function ExperimentForm({ intro, action, plans, protocolVersions = [], in
     <input type="hidden" name="methodMode" value={activeMethodMode} />
     {lockedPlan ? <input type="hidden" name="researchPlanId" value={planId} /> : null}
     <DocumentEditorLayout initialView={initial.id ? "document" : "metadata"}>
-      <div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} compact sectionAddons={executionPreview ? { execution: executionPreview } : runAddons} documentType="Experiment" identifier={identifier} title={title} titlePlaceholder="Untitled Experiment" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Experiment" aria-label="Experiment title" />} subtitle={purpose} hiddenSectionKeys={activeMethodMode === "protocol" ? ["background"] : []} headerFacts={[
+      <div className="document-editor-main"><ReferenceScope.Provider value={{ experimentId: initial.id }}><ScientificDocumentEditor initialDocument={initial.document} compact sectionAddons={executionPreview ? { execution: executionPreview } : runAddons} documentType="Experiment" identifier={identifier} title={title} titlePlaceholder="Untitled Experiment" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Experiment" aria-label="Experiment title" />} subtitle={purpose} hiddenSectionKeys={activeMethodMode === "protocol" ? ["background"] : []} headerFacts={[
         { label: "Plan", value: plan?.title ?? "No plan chosen" },
         { label: "Experiment date", value: date || "Not set" },
-      ]} /></div>
+      ]} /></ReferenceScope.Provider></div>
       <aside className="document-editor-sidebar" data-document-metadata="true" aria-label="Experiment metadata">
       {intro ? <p className="ln-form-intro">{intro}</p> : null}
       <label className="block"><span className={formLabelClass}>Plan</span>{lockedPlan ? <div className={`${formInputClass} flex items-center bg-stone/50`}>{plan ? `${plan.project.name} · ${plan.title}` : "No plan chosen"}</div> : <select name="researchPlanId" value={planId} onChange={(event) => setPlanId(event.target.value)} className={formInputClass}><option value="">No plan chosen</option>{plans.map((item) => <option key={item.id} value={item.id}>{item.project.name} · {item.title}</option>)}</select>}{!lockedPlan && !planId ? <span className="mt-1 block text-xs leading-5 text-muted">You can leave it empty and choose a plan later in the metadata; the experiment then also joins that plan’s project.</span> : null}</label>

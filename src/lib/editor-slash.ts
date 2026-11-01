@@ -5,12 +5,12 @@ import type { EditorView } from '@tiptap/pm/view';
 /** "/" — or "、" and "／" from a Chinese keyboard. */
 const slash = /^[/、／]/;
 
-/** Typing `text` at `from` opens a command menu: a slash at the start of a line or after a space or Chinese punctuation, never inside a word or while an IME composes. */
+/** Typing `text` at `from` opens a command menu: a slash at the start of a line or after a space, Chinese punctuation or an inline tag (a sample or stock reference), never inside a word or while an IME composes. */
 export function slashOpensMenu(view: EditorView, from: number, text: string) {
   if (!slash.test(text) || view.composing) return false;
   const $from = view.state.doc.resolve(from);
   const before = $from.parent.textBetween(Math.max(0, $from.parentOffset - 1), $from.parentOffset, undefined, '￼');
-  return $from.parent.isTextblock && (!before || /[\s，。；：、（(]/.test(before));
+  return $from.parent.isTextblock && (!before || /[\s，。；：、（(￼]/.test(before));
 }
 
 /** What was typed after the slash at `from`; null once the menu should close (the slash is gone, a space or line break was typed, text is selected, or the query grew long). */

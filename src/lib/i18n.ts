@@ -1,6 +1,7 @@
 import { importZh, translateImportDynamic } from "./i18n-import";
 import { inventoryZh, translateInventoryDynamic } from "./i18n-inventory";
 import { samplesZh, translateSamplesDynamic } from "./i18n-samples";
+import { referencesZh } from "./i18n-references";
 
 export type AppLocale = "en" | "zh";
 
@@ -47,6 +48,7 @@ export const protocolLabelsZh: Record<string, string> = {
 // scientific content. English is the canonical source string in the codebase.
 export const zhUi: Record<string, string> = {
   ...samplesZh,
+  ...referencesZh,
   "The page is still loading; try again.": "正文还在加载，请稍后再试。",
   "Verification": "验证",
   "Backup": "备份",

@@ -18,6 +18,7 @@ import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { ExperimentResultRecordingCard } from "@/components/ExperimentResultRecording";
 import { ExperimentSamples } from "@/components/ExperimentSamples";
 import { sampleLocationOptions, sampleTypes } from "@/lib/samples.server";
+import { documentPlateLayouts, documentSampleIds, experimentSections, normalizeScientificDocument } from "@/lib/scientific-document";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { PageActionsMenu } from "@/components/PageActionsMenu";
 import { PageHeader } from "@/components/PageHeader";
@@ -52,7 +53,13 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
     prisma.attachmentLink.findMany({ where: { targetType: "experiment", targetId: id }, include: { attachment: true }, orderBy: { createdAt: "desc" } }),
   ]);
   if (!experiment) notFound();
-  const [sampleLocations, sampleTypeOptions] = await Promise.all([sampleLocationOptions(prisma), sampleTypes(prisma)]);
+  // What the record itself names: its plate layouts, and samples tagged or plated there but not yet among the experiment's samples (Q254, Q257).
+  const record = normalizeScientificDocument(experiment.contentJson, experimentSections);
+  const recordPlates = documentPlateLayouts(record);
+  const listed = new Set(experiment.samples.map((link) => link.sampleId));
+  const unlistedIds = documentSampleIds(record).filter((sampleId) => !listed.has(sampleId));
+  const [sampleLocations, sampleTypeOptions, unlistedSamples] = await Promise.all([sampleLocationOptions(prisma), sampleTypes(prisma),
+    unlistedIds.length ? prisma.sample.findMany({ where: { id: { in: unlistedIds } }, select: { id: true, code: true, name: true }, orderBy: { code: "asc" } }) : Promise.resolve([])]);
   const placeOf = new Map(sampleLocations.map((location) => [location.id, location]));
   const sampleRows = experiment.samples.map((link) => ({
     linkId: link.id, sampleId: link.sample.id, role: link.role, code: link.sample.code, name: link.sample.name, type: link.sample.type.label, groupId: link.groupId,
@@ -103,7 +110,7 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
     {recycledAssociations.some((row) => row.targetType === "result") ? <RecycleBinWarning label="Result" labelZh="结果" /> : null}
     <div className="document-preview-layout">
       <main className="document-preview-main space-y-6">
-        <ExecutionRecordProvider value={{ experimentId: experiment.id, revision: structuredRun.plan.revision, editable: !locked && experiment.status !== "archived" && !(structuredRun.hasSystems && experiment.status === "completed") }}><ScientificDocumentView document={document} title={experiment.title} identifier={experiment.runCode} subtitle={experiment.purpose} leadingContent={<ExperimentBrief id={experiment.runCode} plan={experiment.researchPlan?.title ?? null} snapshot={experiment.protocolSnapshotJson} date={experiment.date} />} sectionLeading={{ setup: <ExperimentSamples experimentId={experiment.id} editable={!locked && experiment.status !== "archived"} inputs={sampleRows.filter((row) => row.role === "input")} outputs={sampleRows.filter((row) => row.role === "output")} groups={experiment.sampleGroups} plates={attachmentLinks.filter((link) => link.linkType === "plate_layout").map((link) => ({ id: link.attachment.id, originalFilename: link.attachment.originalFilename, mimeType: link.attachment.mimeType }))} types={sampleTypeOptions.map((type) => ({ value: type.id, label: type.label }))} locations={sampleLocations.map((location) => ({ value: location.id, label: location.label }))} /> }} /></ExecutionRecordProvider>
+        <ExecutionRecordProvider value={{ experimentId: experiment.id, revision: structuredRun.plan.revision, editable: !locked && experiment.status !== "archived" && !(structuredRun.hasSystems && experiment.status === "completed") }}><ScientificDocumentView document={document} title={experiment.title} identifier={experiment.runCode} subtitle={experiment.purpose} leadingContent={<ExperimentBrief id={experiment.runCode} plan={experiment.researchPlan?.title ?? null} snapshot={experiment.protocolSnapshotJson} date={experiment.date} />} sectionLeading={{ setup: <ExperimentSamples experimentId={experiment.id} editable={!locked && experiment.status !== "archived"} inputs={sampleRows.filter((row) => row.role === "input")} outputs={sampleRows.filter((row) => row.role === "output")} groups={experiment.sampleGroups} plates={attachmentLinks.filter((link) => link.linkType === "plate_layout").map((link) => ({ id: link.attachment.id, originalFilename: link.attachment.originalFilename, mimeType: link.attachment.mimeType }))} recordPlates={recordPlates} unlisted={unlistedSamples} types={sampleTypeOptions.map((type) => ({ value: type.id, label: type.label }))} locations={sampleLocations.map((location) => ({ value: location.id, label: location.label }))} /> }} /></ExecutionRecordProvider>
 
         {experiment.status==="planned" && experiment.recordStatus==="draft" && experiment.steps.length?<ExperimentStepOrderEditor experimentId={experiment.id} updatedAt={experiment.updatedAt.toISOString()} steps={experiment.steps.map(({id,groupKey,title})=>({id,groupKey,title}))}/>:null}
         <EntrySourceCards type="experiment" id={experiment.id} locked={locked} />

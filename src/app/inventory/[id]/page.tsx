@@ -26,6 +26,8 @@ import { locationPaths, temperatureLabel } from "@/lib/inventory-location-lifecy
 import { stockItemBlockers } from "@/lib/inventory-products.server";
 import { inventoryGroupName, inventoryTypeFields } from "@/lib/inventory-types";
 import { labDate, labDateTime } from "@/lib/lab-time";
+import { recordMentions } from "@/lib/record-mentions.server";
+import { RecordMentionList } from "@/components/RecordMentions";
 import { deleteInventoryItem, recordInventoryTransaction, setInventoryItemArchived } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -57,12 +59,13 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
   });
   if (!item) notFound();
 
-  const [experiments, purchases, documents, blockers, allLocations] = await Promise.all([
+  const [experiments, purchases, documents, blockers, allLocations, mentions] = await Promise.all([
     prisma.experiment.findMany({ where: { status: { in: [ExperimentStatus.planned, ExperimentStatus.running, ExperimentStatus.completed] } }, select: { id: true, title: true, project: { select: { name: true } } }, orderBy: { updatedAt: "desc" }, take: 100 }),
     prisma.purchaseRequest.findMany({ where: { OR: [{ linkedInventoryItemId: id }, { status: { in: [PurchaseStatus.planned, PurchaseStatus.ordered, PurchaseStatus.received] } }] }, select: { id: true, title: true, status: true }, orderBy: { updatedAt: "desc" }, take: 100 }),
     item.productId ? prisma.attachmentLink.findMany({ where: { targetType: "inventory_product", targetId: item.productId }, include: { attachment: { select: { originalFilename: true } } }, orderBy: { createdAt: "asc" } }) : Promise.resolve([]),
     stockItemBlockers(prisma, id),
     prisma.inventoryLocation.findMany({ select: { id: true, name: true, parentLocationId: true, status: true } }),
+    recordMentions([id]),
   ]);
 
   const product = item.product;
@@ -144,6 +147,10 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
                   : <p className="text-sm text-graphite"><span>The remaining amount is not managed. To deduct use, edit the item and enter a counted balance.</span> <Link href={`/inventory/${item.id}/edit`} className="text-moss underline">Edit</Link></p>}
               </Panel>
             )}
+
+            <Panel title="Mentioned in records">
+              <RecordMentionList mentions={mentions} />
+            </Panel>
 
             <Panel title="Movement ledger" flush>
               <DataTable

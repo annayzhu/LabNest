@@ -26,11 +26,20 @@ const equipmentNames: Record<ToolKind, string> = { centrifuge: 'Centrifuge', mix
 /** A tool field still open, named in English by its toolSpecs label. */
 const toolFieldNames = Object.fromEntries(Object.entries(toolFieldNamesZh).map(([english, chinese]) => [chinese, english]));
 
-type PlateAttachment = { id: string; name: string };
+/** A plate to have ready: an attached planner file, or a plate layout written in the record (`detail` says which). */
+type PreparationPlate = { id: string; name: string; detail?: string };
 export type PreparationStock = { id?: string; name: string; unit: string; currentQuantity: number; quantityRecorded: boolean };
 /** The boxes the experiment's samples come out of (S15), with their positions. */
 export type PreparationSamples = { boxes: Array<{ label: string; count: number; positions: string }>; unplaced: number };
-type Options = { plates?: PlateAttachment[]; stock?: PreparationStock[]; recorded?: Array<{ source: string }>; samples?: PreparationSamples };
+type Options = { plates?: PreparationPlate[]; stock?: PreparationStock[]; recorded?: Array<{ source: string }>; samples?: PreparationSamples };
+
+/** The plates to have ready: planner files attached to the experiment, then the plate layouts written in its record ("/板布局"). */
+export function preparationPlates(attachments: Array<{ id: string; originalFilename: string }>, layouts: Array<{ id: string; name: string; plateSize: number }>): PreparationPlate[] {
+  return [
+    ...attachments.map(plate => ({ id: plate.id, name: plate.originalFilename })),
+    ...layouts.map(plate => ({ id: `layout-${plate.id}`, name: plate.name || String(plate.plateSize), detail: 'Plate layout in the record' })),
+  ];
+}
 
 /** The unit 1000 times larger in the same material scale (µL → mL, mg → g, nmol → µmol); none past the largest. */
 const largerUnit = (unit: string) => {
@@ -115,7 +124,7 @@ export function preparationChecklist(run: Pick<StructuredRunView, 'steps' | 'pla
   }
   for (const box of options.samples?.boxes ?? []) items.push({ key: `sample:${box.label}`, kind: 'sample', label: box.label, detail: `${box.count} ${box.count === 1 ? 'sample' : 'samples'}${box.positions ? ` · ${box.positions}` : ''}` });
   if (options.samples?.unplaced) items.push({ key: 'sample:unplaced', kind: 'sample', label: 'Samples without a place', detail: `${options.samples.unplaced} ${options.samples.unplaced === 1 ? 'sample' : 'samples'}` });
-  for (const plate of options.plates ?? []) items.push({ key: `plate:${plate.id}`, kind: 'plate', label: plate.name, detail: 'Plate layout attachment' });
+  for (const plate of options.plates ?? []) items.push({ key: `plate:${plate.id}`, kind: 'plate', label: plate.name, detail: plate.detail ?? 'Plate layout attachment' });
   // Equipment: each tool a step uses, with this run's settings. Groups that set it up the same way share one row.
   const equipment = new Map<string, Array<{ item: PreparationItem; settings: string; steps: string[]; group?: string }>>();
   for (const version of run.versions) {

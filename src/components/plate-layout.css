@@ -1,0 +1,87 @@
+/* Plate layouts ("/板布局"): the grid, its legend, the block in a document and the dialog that edits it. */
+.ln-plate-layout { margin: 0; display: grid; gap: 0.4rem; min-width: 0; }
+.ln-plate-layout figcaption { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: baseline; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
+.ln-plate-layout figcaption strong { color: var(--ink); font-size: var(--ln-control-font-size-md); font-weight: 600; }
+.ln-plate-layout-scroll { max-width: 100%; overflow-x: auto; }
+.ln-plate-layout-grid { display: grid; gap: 3px; max-width: 46rem; user-select: none; -webkit-user-select: none; }
+.ln-plate-layout[data-size="384"] .ln-plate-layout-grid { gap: 2px; min-width: 30rem; }
+.ln-plate-layout[data-size="6"] .ln-plate-layout-grid, .ln-plate-layout[data-size="12"] .ln-plate-layout-grid { max-width: 26rem; }
+.ln-plate-layout[data-size="24"] .ln-plate-layout-grid { max-width: 34rem; }
+.ln-plate-layout-axis { display: flex; align-items: center; justify-content: center; min-width: 0; padding: 0; font: 500 0.66rem/1 var(--font-data); color: var(--muted); border-radius: var(--ln-radius-control-sm); }
+button.ln-plate-layout-axis:hover { background: var(--warm); color: var(--ink); }
+.ln-plate-layout-well { display: flex; align-items: center; justify-content: center; aspect-ratio: 1; min-width: 0; overflow: hidden; padding: 0 0.12rem; border: 1px solid var(--hairline); border-radius: 999px; background: var(--surface); color: var(--graphite); font: 500 0.6rem/1.1 var(--font-data); text-align: center; white-space: nowrap; text-overflow: ellipsis; }
+.ln-plate-layout-well[data-plate-tone] { border-color: color-mix(in srgb, var(--ln-tone) 60%, var(--hairline)); background: color-mix(in srgb, var(--ln-tone) 22%, var(--surface)); color: var(--ink); }
+.ln-plate-layout-well[data-filled]:not([data-plate-tone]) { border-style: dashed; border-color: var(--muted); }
+.ln-plate-layout[data-size="384"] .ln-plate-layout-well { font-size: 0; border-width: 1px; }
+.ln-plate-layout[data-size="384"] .ln-plate-layout-axis { font-size: 0.5rem; }
+.ln-plate-layout[data-size="6"] .ln-plate-layout-well, .ln-plate-layout[data-size="12"] .ln-plate-layout-well, .ln-plate-layout[data-size="24"] .ln-plate-layout-well { font-size: 0.74rem; white-space: normal; }
+.ln-plate-layout-grid[data-interactive] .ln-plate-layout-well { cursor: pointer; touch-action: manipulation; }
+.ln-plate-layout-grid[data-interactive] .ln-plate-layout-well:hover { border-color: var(--graphite); }
+.ln-plate-layout-well[aria-pressed="true"] { outline: 2px solid var(--action-border, var(--moss)); outline-offset: 1px; box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--moss) 10%, transparent); }
+.ln-plate-layout-legend { display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; margin: 0; padding: 0; list-style: none; font-size: var(--ln-control-font-size-xs); color: var(--graphite); }
+.ln-plate-layout-legend li { display: inline-flex; align-items: center; gap: 0.3rem; }
+.ln-plate-layout-legend small { color: var(--muted); font-family: var(--font-data); }
+.ln-plate-layout-swatch { flex: none; width: 0.75rem; height: 0.75rem; border-radius: 999px; background: color-mix(in srgb, var(--ln-tone) 45%, var(--surface)); border: 1px solid color-mix(in srgb, var(--ln-tone) 70%, var(--hairline)); }
+.ln-plate-layout-swatch:not(:empty) { display: inline-flex; align-items: center; justify-content: center; width: 1.15rem; height: 1.15rem; background: color-mix(in srgb, var(--ln-tone) 22%, var(--surface)); color: var(--ink); font: 600 0.62rem/1 var(--font-data); }
+.ln-plate-layout-note { margin: 0; font-size: var(--ln-control-font-size-xs); color: var(--graphite); white-space: pre-wrap; }
+/* Twelve colours that stay apart in light and dark themes; past twelve values they repeat and the wells keep their text.
+   Their own attribute: the Protocol styles give [data-tone] a palette of five muted condition colours. */
+[data-plate-tone="0"] { --ln-tone: #4f7cac; } [data-plate-tone="1"] { --ln-tone: #c0713d; } [data-plate-tone="2"] { --ln-tone: #5a9367; } [data-plate-tone="3"] { --ln-tone: #a8546e; }
+[data-plate-tone="4"] { --ln-tone: #8366a8; } [data-plate-tone="5"] { --ln-tone: #b29a3c; } [data-plate-tone="6"] { --ln-tone: #3f9a9a; } [data-plate-tone="7"] { --ln-tone: #a35d4c; }
+[data-plate-tone="8"] { --ln-tone: #6c8a3a; } [data-plate-tone="9"] { --ln-tone: #c06aa0; } [data-plate-tone="10"] { --ln-tone: #5d6f8f; } [data-plate-tone="11"] { --ln-tone: #9a7b58; }
+
+/* The block in a document: the plate as it reads, and one button to edit it. */
+.ln-document-plate { margin: 0.75rem 0; padding: 0.75rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel-inner, var(--ln-radius-panel)); background: var(--surface); }
+.ln-document-plate.is-selected { outline: 2px solid var(--action-border, var(--moss)); outline-offset: 2px; }
+.ln-document-plate-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem; }
+.ln-document-plate-bar button { display: inline-flex; align-items: center; gap: 0.3rem; min-height: 2rem; padding: 0 0.7rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: var(--surface); color: var(--moss); font: 600 var(--ln-control-font-size-xs) var(--font-ui); }
+.ln-document-plate-bar button svg { width: 0.9rem; height: 0.9rem; }
+.ln-document-plate-empty { margin: 0; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
+
+/* The editor: a large dialog on a computer, the whole screen on a phone. Not a native modal <dialog>: the sample picker and the
+   confirmations it opens must be able to sit above it. */
+.ln-plate-editor-layer { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 1rem; background: rgb(0 0 0 / .35); }
+.ln-plate-editor { display: flex; flex-direction: column; width: min(72rem, 100%); max-height: calc(100dvh - 2rem); overflow: hidden; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel); background: var(--surface); color: var(--graphite); box-shadow: var(--shadow-soft); font: var(--ln-control-font-size-md)/1.45 var(--font-ui); }
+.ln-plate-editor > header { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.65rem 1rem; border-bottom: 1px solid var(--hairline); }
+.ln-plate-editor > header input { flex: 1 1 12rem; min-width: 0; height: 2.25rem; padding: 0 0.6rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); font: 600 var(--ln-control-font-size-md) var(--font-ui); color: var(--ink); }
+.ln-plate-editor select, .ln-plate-editor-side input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), .ln-plate-editor-side textarea { min-height: 2rem; padding: 0 0.5rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: var(--surface); font: inherit; color: var(--graphite); }
+.ln-plate-editor-side textarea { padding: 0.35rem 0.5rem; resize: vertical; }
+.ln-plate-editor button.ln-plate-button { display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem; min-height: 2rem; padding: 0 0.75rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: var(--surface); font: 600 var(--ln-control-font-size-xs) var(--font-ui); color: var(--graphite); }
+.ln-plate-editor button.ln-plate-button:disabled { opacity: 0.45; }
+.ln-plate-editor button.ln-plate-button.is-primary { border-color: var(--moss); background: var(--moss); color: var(--surface); }
+.ln-plate-editor button.ln-plate-button svg { width: 0.95rem; height: 0.95rem; }
+.ln-plate-editor-body { display: grid; grid-template-columns: minmax(0, 1fr) 19rem; min-height: 0; overflow: auto; }
+.ln-plate-editor-plate { display: grid; align-content: start; gap: 0.6rem; padding: 1rem; min-width: 0; }
+.ln-plate-editor-plate .ln-plate-layout-grid { max-width: 40rem; }
+.ln-plate-editor-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.75rem; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
+.ln-plate-editor-tools strong { color: var(--ink); font-family: var(--font-data); }
+.ln-plate-editor-side { display: grid; align-content: start; gap: 0.9rem; padding: 1rem; border-left: 1px solid var(--hairline); background: var(--warm); font-size: var(--ln-control-font-size-xs); }
+.ln-plate-editor-side h3 { margin: 0; font-size: var(--ln-control-font-size-md); font-weight: 600; color: var(--ink); }
+.ln-plate-editor-side section { display: grid; gap: 0.45rem; }
+.ln-plate-editor-side label { display: grid; gap: 0.2rem; color: var(--graphite); }
+.ln-plate-editor-side label > span:first-child { color: var(--muted); }
+.ln-plate-editor-field { display: flex; gap: 0.3rem; align-items: center; }
+.ln-plate-editor-field input { flex: 1; min-width: 0; }
+.ln-plate-editor-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.ln-plate-editor-param { display: grid; grid-template-columns: minmax(0, 1fr) 4.5rem auto auto; align-items: center; gap: 0.3rem; }
+.ln-plate-editor-side details { border-top: 1px solid var(--hairline); padding-top: 0.6rem; }
+.ln-plate-editor-side summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+.ln-plate-editor-side details > div { display: grid; gap: 0.45rem; margin-top: 0.5rem; }
+.ln-plate-editor-message { margin: 0; color: var(--moss); }
+.ln-plate-editor-message[data-tone="warning"] { color: var(--warning); }
+.ln-plate-editor-hint { margin: 0; color: var(--muted); }
+@media (max-width: 767px) {
+  .ln-plate-editor-layer { padding: 0; }
+  .ln-plate-editor { width: 100vw; height: 100dvh; max-height: 100dvh; border: 0; border-radius: 0; }
+  .ln-plate-editor-body { grid-template-columns: minmax(0, 1fr); }
+  .ln-plate-editor-side { border-left: 0; border-top: 1px solid var(--hairline); }
+}
+@media (pointer: coarse) {
+  .ln-plate-editor button.ln-plate-button { min-height: 2.75rem; }
+  .ln-plate-editor select { min-height: 2.75rem; }
+}
+@media print {
+  .ln-document-plate { break-inside: avoid; border: 0; padding: 0; }
+  .ln-document-plate-bar { display: none; }
+  .ln-plate-layout-well[data-plate-tone] { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

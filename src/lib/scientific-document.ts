@@ -9,6 +9,8 @@ import { stripLabNestLineHeightMarkup } from "./rich-text-line-height";
 import { richTextFontSizeSchema } from "./rich-text-font-size-schema";
 import { RICH_TEXT_COLORS } from "./rich-text-color";
 import { tiptapCellRichContentSchema } from "./tiptap-json-schema";
+import { plateLayoutsInText, plateSampleIds, platesAsText } from "./plate-layout";
+import { recordReferencesInText, stripRecordReferenceLinks } from "./record-references";
 
 /**
  * Run-derived metadata (never authored): a Protocol part (`group`), a checkable step, content that belongs to a step or part (`detail`),
@@ -300,12 +302,26 @@ export function parseScientificDocumentJson(
 export function documentPlainText(document: ScientificDocument) {
   return document.sections.flatMap((section) => section.blocks.flatMap((block) => {
     if (block.type === "heading" || block.type === "callout") return [block.text];
-    if (block.type === "text") return [stripLabNestFontFamilyMarkup(stripLabNestLineHeightMarkup(stripLabNestFontSizeMarkup(stripParagraphLayoutMarkup(block.text))))];
+    if (block.type === "text") return [stripRecordReferenceLinks(stripLabNestFontFamilyMarkup(stripLabNestLineHeightMarkup(stripLabNestFontSizeMarkup(stripParagraphLayoutMarkup(platesAsText(block.text))))))];
     if (block.type === "rich_text") return [richTextPlainText(block.nodes)];
     if (block.type === "checklist") return block.items;
-    if (block.type === "table") return block.rows.flat();
+    if (block.type === "table") return block.rows.flat().map(stripRecordReferenceLinks);
     if (block.type === "metric") return [`${block.label}: ${block.value} ${block.unit ?? ""}`.trim()];
     if (block.type === "media") return [block.caption || block.filename || block.url];
     return [block.label];
   })).filter(Boolean).join("\n");
+}
+
+/** The plate layouts written in a document ("/板布局"), in reading order. */
+export function documentPlateLayouts(document: ScientificDocument) {
+  return document.sections.flatMap((section) => section.blocks.flatMap((block) => block.type === "text" ? plateLayoutsInText(block.text) : []));
+}
+
+/** Every sample a document names: by tag in its text or tables, or in a plate layout's wells. */
+export function documentSampleIds(document: ScientificDocument) {
+  const texts = document.sections.flatMap((section) => section.blocks.flatMap((block) => block.type === "text" ? [block.text] : block.type === "table" ? block.rows.flat() : []));
+  return [...new Set([
+    ...texts.flatMap((text) => recordReferencesInText(text).filter((reference) => reference.kind === "sample").map((reference) => reference.id)),
+    ...documentPlateLayouts(document).flatMap(plateSampleIds),
+  ])];
 }

@@ -85,7 +85,8 @@ function compare(content: string, source: SourceLine[], pages: SourcePage[], { s
   // Values per system follow the source's order: 600/350 for a source that says 350 first, then 600, is a swap.
   const rows = source.map(line => amountsIn(enumerator(line.text), { flattenedPowers: true }).quantities);
   for (const run of checkOrder ? mine.runs : []) {
-    if (run.values.some(value => !numbers.has(value))) continue;
+    // "700/700 µL" says the amount is the same for every system; the source states it once, and there is no order to check.
+    if (new Set(run.values).size < 2 || run.values.some(value => !numbers.has(value))) continue;
     // An occurrence with the run's unit, when the cited lines give the value with that unit at all.
     const fits = (value: string, quantities: Quantity[]) => {
       const same = quantities.filter(other => other.value === value && run.unit && other.unit === run.unit);

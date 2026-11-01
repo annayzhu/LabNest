@@ -3,7 +3,7 @@
  * scored the same way every time a prompt or a model changes.
  *
  *   DATABASE_URL=postgresql://…/<test database> LABNEST_AI_ENCRYPTION_KEY=… \
- *     npx tsx scripts/eval-protocol-recognition.ts [--provider <AI 设置里的服务名称>] [--case <name>] [--language zh|source]
+ *     npx tsx scripts/eval-protocol-recognition.ts [--provider <AI 设置里的服务名称>] [--case <name>] [--language zh|source] [--rescore]
  *
  * Cases live outside the repository, in .local-runtime/protocol-recognition-eval/cases/<name>/: one source file
  * (source.pdf, source.docx, source.txt or source.md), expected.json, and optionally hand.docx, the same manual organized
@@ -11,7 +11,8 @@
  * anchor check is run on the hand conversion (each line given the source lines that best support it) to show how often
  * it would flag a careful draft, and whether it catches swapped per-system values. With --provider the two-pass AI
  * reading (template-v1) is scored too, against Q299's thresholds; AI must be switched on in AI 设置 (this script obeys
- * the same switch), and the manuals are sent to that service.
+ * the same switch), and the manuals are sent to that service. `--rescore` scores that service's saved drafts in outputs/
+ * again without calling it: use it after changing the expectations or the scoring, so the manuals are sent only once.
  */
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -20,6 +21,7 @@ import { prisma } from '../src/lib/db';
 import { checkAnchoredRecognition, type RecognitionCheck } from '../src/lib/protocol-anchor-check';
 import { amountsIn, foldAmounts, identifiersIn, latinNamesIn, nameIn, readAnchors, wordsOf, type SourcePage } from '../src/lib/protocol-anchors';
 import type { ConversionSummary } from '../src/lib/protocol-conversion';
+import { chipSymbolGlyphs, protocolChipText } from '../src/lib/protocol-chips';
 import { parseProtocolDocxBytes } from '../src/lib/protocol-docx';
 import { projectProtocolDocument, type ProtocolContentBlock, type ProtocolDocument } from '../src/lib/protocol-document';
 import { sectionTitles } from '../src/lib/protocol-habit-text';
@@ -33,7 +35,7 @@ type Expected = {
   steps: number;
   /** One phrase per step, in order: the step's text should contain it. */
   stepKeywords?: string[];
-  /** Per step of the hand conversion, words that one step of a reading must all contain: step recall counts these. */
+  /** Per step of the hand conversion, the words that name it; `a|b` accepts either wording. Step recall counts these. */
   stepKeys?: string[][];
   /** Amounts that should become chips, as they read: "350/600 µL", "12000 ×g", "2 min". */
   parameters?: string[];
@@ -55,7 +57,9 @@ const root = '.local-runtime/protocol-recognition-eval';
 const argument = (name: string) => { const index = process.argv.indexOf(`--${name}`); return index > 0 ? process.argv[index + 1] : undefined; };
 let n = 0;
 const newId = (prefix: string) => `${prefix}-eval-${++n}`;
-const fold = (text: string) => foldAmounts(text).toLowerCase().replace(/×/g, 'x').replace(/[–—~～]/g, '-').replace(/\s+/g, '');
+const glyphs = new RegExp(`[${Object.values(chipSymbolGlyphs).join('')}]`, 'g');
+// A chip reads with the mark of its system ("▲ 50 / ■ 200 µL"): the marks are presentation, not part of the amount.
+const fold = (text: string) => foldAmounts(text).toLowerCase().replace(/×/g, 'x').replace(/[–—~～]/g, '-').replace(glyphs, '').replace(/\s+/g, '');
 /** An expected word or amount, with alternatives written "a|b": a Chinese reading and an English one both count. */
 const holds = (text: string, key: string) => key.split('|').some(option => text.includes(fold(option)));
 const percent = (value: number | undefined) => value === undefined ? '—' : `${(value * 100).toFixed(0)}%`;
@@ -63,12 +67,14 @@ const percent = (value: number | undefined) => value === undefined ? '—' : `${
 /** Each part of the score is a fraction from 0 to 1; a part without an expectation is left out of the mean. */
 function score(reading: Reading, expected: Expected) {
   const projection = projectProtocolDocument(reading.document);
-  const stepTexts = projection.steps.map(step => fold(`${step.title} ${step.description ?? ''}`));
+  // Amounts are chips by now ("{{p-64}}"): put their values back, or no expected amount is ever found.
+  const read = (text: string) => fold(text.replace(/\{\{([\w-]+)\}\}/g, (_, id: string) => protocolChipText(id, reading.document.systems)));
+  const stepTexts = projection.steps.map(step => read(`${step.title} ${step.description ?? ''}`));
   const chips = new Set(reading.summary.chips.map(fold));
   const systems = (reading.document.systems?.dimensions ?? []).map(dimension => fold(dimension.label));
   const conditions = reading.summary.conditions.map(fold);
   const record = projection.resultTemplates.flatMap(template => [...template.fields.map(field => field.label ?? field.name ?? ''), ...(template.artifacts ?? []).map(artifact => artifact.label)]).map(fold);
-  const everything = fold(JSON.stringify(reading.document));
+  const everything = read(JSON.stringify(reading.document));
   const share = (wanted: string[] | undefined, found: (item: string, index: number) => boolean) => wanted?.length ? wanted.filter(found).length / wanted.length : undefined;
   const keys = expected.stepKeys ?? expected.stepKeywords?.map(keyword => [keyword]);
   const parts = {
@@ -82,8 +88,11 @@ function score(reading: Reading, expected: Expected) {
   const present = Object.values(parts).filter((value): value is number => value !== undefined);
   return {
     ...parts, overall: present.reduce((sum, value) => sum + value, 0) / present.length, foundSteps: projection.steps.length, chips: reading.summary.chips.length,
-    /** Steps of the hand conversion found in some step of this reading, wherever it falls. */
-    stepRecall: share(keys?.map(key => key.join('\u0000')), key => stepTexts.some(text => key.split('\u0000').every(word => holds(text, word)))),
+    // A reading may write one operation of the hand conversion as two steps, so a step and the one after it count together.
+    stepRecall: share(keys?.map(key => key.join('\u0000')), key => stepTexts.some((text, index) => {
+      const window = `${text}${stepTexts[index + 1] ?? ''}`;
+      return key.split('\u0000').every(word => holds(window, word));
+    })),
     keyNumbers: share(expected.keyNumbers, amount => holds(everything, amount)),
   };
 }
@@ -187,7 +196,9 @@ async function main() {
   const providerName = argument('provider');
   const only = argument('case');
   const language = argument('language') === 'source' ? 'source' as const : 'zh' as const;
-  const resolved = providerName ? await (async () => {
+  const rescore = process.argv.includes('--rescore');
+  if (rescore && !providerName) throw new Error('--rescore 需要 --provider：要重新评分的是哪个服务存下的整理稿');
+  const resolved = providerName && !rescore ? await (async () => {
     const provider = await prisma.aIProvider.findFirst({ where: { name: providerName } });
     if (!provider) throw new Error(`AI 设置里没有名为“${providerName}”的服务`);
     const result = await resolveAdapterForProvider(provider.id, undefined, { timeoutMs: 240_000 });
@@ -223,6 +234,16 @@ async function main() {
       await writeFile(path.join(root, 'outputs', `${name}.hand-cited.txt`), cited);
       console.log(`  手工稿过锚点核对：${check.lines.length - check.unverified}/${check.lines.length} 行通过（未核实 ${percent(check.unverified / Math.max(1, check.lines.length))}）；体系取值互换 ${swaps.caught}/${swaps.tried} 行被抓到`);
     }
+    const saved = rescore ? await readFile(path.join(root, 'outputs', `${name}.${providerName}.${RECOGNITION_PROMPT_VERSION}.txt`), 'utf8').catch(() => undefined) : undefined;
+    if (saved) {
+      const scored = score(habitTextProtocol(saved, newId), expected);
+      const check = checkAnchoredRecognition(saved, source.sourcePages);
+      const amounts = anchoredAmounts(check);
+      const unverifiedShare = check.unverified / Math.max(1, check.lines.length);
+      row.ai = { ...scored, model: null, promptVersion: RECOGNITION_PROMPT_VERSION, language, rescored: true, lines: check.lines.length, unverified: check.unverified, unverifiedShare, missing: check.missing.length, anchoredAmounts: amounts,
+        passes: { anchoredAmounts: amounts.share >= thresholds.anchoredAmounts, stepRecall: (scored.stepRecall ?? 0) >= thresholds.stepRecall, unverifiedShare: unverifiedShare <= thresholds.unverifiedShare } };
+      console.log(`  AI（${providerName}，重新评分）：有位置的数值正确 ${percent(amounts.share)}（${amounts.total - amounts.wrong}/${amounts.total}），步骤召回 ${percent(scored.stepRecall)}，关键数值 ${percent(scored.keyNumbers)}，未核实 ${percent(unverifiedShare)}`);
+    }
     if (resolved) {
       const started = Date.now();
       let calls = 0;
@@ -238,7 +259,7 @@ async function main() {
       row.ai = {
         ...scored, model: result.model ?? resolved.config.defaultModel, promptVersion: RECOGNITION_PROMPT_VERSION, language, calls, seconds: Math.round((Date.now() - started) / 1000),
         sentChars: result.sentChars, pagesRead: batchPages(outline, choice).all.length, outline, lines: result.check.lines.length, unverified: result.check.unverified, unverifiedShare,
-        missing: result.check.missing.length, anchoredAmounts: amounts, truncated: result.truncated,
+        missing: result.check.missing.length, anchoredAmounts: amounts, truncated: result.truncated, keyNumbers: scored.keyNumbers,
         passes: { anchoredAmounts: amounts.share >= thresholds.anchoredAmounts, stepRecall: (scored.stepRecall ?? 0) >= thresholds.stepRecall, unverifiedShare: unverifiedShare <= thresholds.unverifiedShare },
       };
       await mkdir(path.join(root, 'outputs'), { recursive: true });

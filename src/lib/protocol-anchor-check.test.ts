@@ -95,6 +95,10 @@ describe('锚点核对', () => {
     ]);
   });
 
+  it('accepts one amount written for every system, which the original states once', () => {
+    expect(checkAnchoredRecognition('材料：\n- Buffer RW1 | 700/700 µL | 试剂盒内 45 mL〔p1:3, p2:1〕', pages).lines[0]).toMatchObject({ verified: true });
+  });
+
   it('catches two lines whose amounts were swapped, though both amounts are elsewhere in the manual', () => {
     const swapped = organized.replace('4. 加入 700 µL', '4. 加入 50 µL').replace('5. 加入 50 µL', '5. 加入 700 µL');
     expect(failing(swapped)).toEqual([['4. 加入 50', '数值不在指向的原文：50 µL'], ['5. 加入 70', '数值不在指向的原文：700 µL']]);

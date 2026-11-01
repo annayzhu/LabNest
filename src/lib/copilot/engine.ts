@@ -133,7 +133,7 @@ export async function runUnit(input: CopilotRunView, deps: EngineDeps): Promise<
   } else {
     if (!state.design?.items.some(item => item.experiments.length)) throw new Error('没有可写入的方案，已暂停');
     log('stage', 'Writing suggestions');
-    run.suggestions = buildSuggestions(run.id, state.design ?? { summary: '', items: [], gaps: [] }, state.subQuestions ?? [], state.papers ?? [], deps.now().toISOString().slice(0, 10));
+    run.suggestions = buildSuggestions(run.id, state.design ?? { summary: '', items: [], gaps: [] }, state.subQuestions ?? [], state.papers ?? [], deps.now().toISOString().slice(0, 10), run.inputs);
     finish('write');
   }
   } catch (error) {

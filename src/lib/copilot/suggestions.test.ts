@@ -80,3 +80,11 @@ it('fills all proposed sections without changing existing content or media and w
   expect(new Set(ids).size).toBe(ids.length);
   expect(document.sections[1].blocks).toEqual([]);
 });
+
+
+it('fills confirmed sample and method literally, retaining unresolved material type', () => {
+  const card = buildSuggestions('run', design, subQuestions, papers, '2026-11-01', { method: 'Ligand blot / far-Western', sample: 'KYSE150 或 KYSE410；蛋白类型待定', subject: 'SRGN 与候选分子', objective: '验证结合' })[0];
+  if (card.kind !== 'design') throw new Error('Missing design');
+  expect(card.sections?.find(section => section.key === 'material_methods')?.blocks.map(block => block.text)).toContain('样本与模型：KYSE150 或 KYSE410；蛋白类型待定');
+  expect(card.blocks.map(block => block.text)).toContain('已确认目标：验证结合');
+});

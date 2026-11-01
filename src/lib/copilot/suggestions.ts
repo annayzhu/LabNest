@@ -1,11 +1,11 @@
 import type { ScientificDocument } from '../scientific-document';
-import type { Design, DesignExperiment, Paper, SubQuestion, Suggestion, PlanBlocks, PlanSectionDraft } from './types';
+import type { Design, DesignExperiment, Paper, SubQuestion, Suggestion, PlanBlocks, PlanSectionDraft, CopilotInputs } from './types';
 
 /**
  * Stage 5: the design as changes the author may adopt: the design written into 设计, the papers cited into
  * 参考与工作笔记, and one card for each experiment that can become a planned Experiment. Nothing here writes anything.
  */
-export function buildSuggestions(runId: string, design: Design, subQuestions: SubQuestion[], papers: Paper[], date: string): Suggestion[] {
+export function buildSuggestions(runId: string, design: Design, subQuestions: SubQuestion[], papers: Paper[], date: string, inputs: CopilotInputs = {}): Suggestion[] {
   // Papers are numbered in the order the design first cites them.
   const cited: Paper[] = [];
   const numberOf = (key: string) => { const found = papers.find(paper => paper.key === key); if (!found) return undefined; if (!cited.includes(found)) cited.push(found); return cited.indexOf(found) + 1; };
@@ -16,6 +16,8 @@ export function buildSuggestions(runId: string, design: Design, subQuestions: Su
     return `${parts.join('；')}${experiment.verified ? '' : `（未核实：${experiment.problem}）`}`;
   };
   const designBlocks: PlanBlocks = [{ type: 'heading', text: `Copilot 实验设计（${date}）` }];
+  if (inputs.objective) designBlocks.push({ type: 'text', text: `已确认目标：${inputs.objective}` });
+  if (inputs.subject) designBlocks.push({ type: 'text', text: `研究对象：${inputs.subject}` });
   if (design.summary) designBlocks.push({ type: 'text', text: design.summary });
   for (const item of design.items) {
     const question = subQuestions.find(q => q.id === item.subQuestionId);
@@ -32,6 +34,8 @@ export function buildSuggestions(runId: string, design: Design, subQuestions: Su
   const referenceBlocks: { type: 'heading' | 'text'; text: string }[] = [{ type: 'heading', text: `文献（Copilot 检索，${date}）` },
     ...cited.map((paper, index) => ({ type: 'text' as const, text: `[${index + 1}] ${[paper.authors?.replace(/\.$/, ''), paper.title, paper.venue, paper.year].filter(Boolean).join('. ')}${paper.key.startsWith('PMC') ? ` ${paper.key}` : ''}${paper.url ? ` ${paper.url}` : ''} · 来源：${paper.source === 'pubmed' ? 'PubMed' : 'Europe PMC'} · ${paper.basis === 'fulltext' ? '已读全文' : '仅摘要或待核对全文'}` }))];
   const methods: PlanBlocks = [{ type: 'heading', text: `Copilot 材料与方法概览（${date}）` }];
+  if (inputs.method) methods.push({ type: 'text', text: `已确认方法：${inputs.method}` });
+  if (inputs.sample) methods.push({ type: 'text', text: `样本与模型：${inputs.sample}` });
   const criteria: PlanBlocks = [{ type: 'heading', text: `Copilot 判定标准（${date}）` }];
   for (const item of design.items) for (const experiment of item.experiments) {
     methods.push({ type: 'heading', text: experiment.name }, { type: 'text', text: `方法：${experiment.approach || '待定'}` });

@@ -10,7 +10,7 @@ describe('Photos of a manual as text', () => {
 
   it('keeps the pages in order, leaves out a page with nothing legible, and counts the marks to check', () => {
     const pages = [{ text: ' 1. 加入 50 µL ' }, { text: NO_TEXT }, { text: `2. 离心 ${UNCLEAR} min` }, { text: '' }];
-    expect(joinTranscripts(pages)).toBe(`1. 加入 50 µL\n\n2. 离心 ${UNCLEAR} min`);
+    expect(joinTranscripts(pages)).toBe(`1. 加入 50 µL\n\f\n2. 离心 ${UNCLEAR} min`);
     expect(unclearCount(joinTranscripts(pages))).toBe(1);
   });
 

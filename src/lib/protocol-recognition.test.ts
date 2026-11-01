@@ -1,6 +1,12 @@
+import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
+import { convertLegacyProtocol, isLegacyProtocol } from './protocol-conversion';
+import { parseProtocolDocxBytes } from './protocol-docx';
+import { exportOrganizedDraftDocx } from './protocol-docx-template';
+import { projectProtocolDocument } from './protocol-document';
 import { habitTextToDocument } from './protocol-habit-text';
-import { checkRecognition, cleanModelText, habitTextProtocol, recognizeProtocolText } from './protocol-recognition';
+import { checkRecognition, cleanModelText, habitTextProtocol, organizeSource, outlineSource, pageRanges } from './protocol-recognition';
+import { defaultChoice, needsConfirmation } from './protocol-recognition-scope';
 
 /** A made-up kit manual: introduction, components, storage, the protocol, a measurement and an FAQ. */
 const manual = [
@@ -62,7 +68,7 @@ describe('Text written by habit', () => {
   });
 });
 
-describe('Checking a laid-out text against the original', () => {
+describe('Checking a text without positions against the whole original', () => {
   it('passes a faithful layout, including per-system values gathered from one sentence', () => {
     const check = checkRecognition(faithful, manual);
     expect(check.lines.filter(line => !line.verified)).toEqual([]);
@@ -82,31 +88,123 @@ describe('Checking a laid-out text against the original', () => {
   });
 });
 
-describe('AI 识别 with one repair round', () => {
-  it('sends the problems back once and keeps the corrected layout', async () => {
+/** A three-page English manual: product page, a procedure with two systems, and an appendix for another use. */
+const kit = { fileName: 'kit.pdf', title: '质粒提取', goal: '从 100 mL 菌液提取质粒用于转染', pages: [
+  { page: 1, lines: ['Plasmid Kit User Guide', 'Use this kit to purify plasmid DNA from E. coli cultures.', 'Store the kit at room temperature. Store Buffer R3 with RNase A at 4 °C.'] },
+  { page: 2, lines: ['Procedure', 'Add RNase A to Buffer R3 before first use.', 'Mini: resuspend the pellet in 0.4 mL Buffer R3.', 'Maxi: resuspend the pellet in 10 mL Buffer R3.', 'Centrifuge at 12,000 × g for 10 minutes.', 'Measure the DNA concentration and A260/A280.'] },
+  { page: 3, lines: ['Appendix: BAC DNA', 'APPENDIX-ONLY: add 999 µL Buffer X.'] },
+] };
+
+const outlineAnswer = JSON.stringify({ parts: [{ pages: '1', label: 'Product', use: '背景' }, { pages: '2', label: 'Procedure', use: '步骤' }, { pages: '3', label: 'Appendix: BAC DNA', use: '不要' }],
+  workflows: [], systems: { label: '体系', options: ['Mini', 'Maxi'] }, conflicts: [] });
+
+const answers = {
+  front: ['标题：质粒提取（Mini / Maxi）', '说明：', '体系对应：Mini / Maxi〔p2:3–4〕', '目的：', '从 E. coli 培养物中纯化质粒 DNA。〔p1:2〕', '背景：', '储存：试剂盒室温保存；加 RNase A 后的 Buffer R3 于 4 °C 保存。〔p1:3〕'],
+  material: ['材料：', '- Buffer R3 | 0.4/10 mL | 含 RNase A，首次使用前加入〔p2:2–4〕'],
+  steps: ['步骤：', '体系：Mini / Maxi〔p2:3–4〕', '1. 首次使用前：向 Buffer R3 加入 RNase A。〔p2:2〕', '2. 用 Buffer R3 0.4/10 mL 重悬沉淀。〔p2:3–4〕', '3. 12,000 ×g 离心 10 min。〔p2:5〕'],
+  results: ['结果：', 'DNA 质检', '记录：DNA 浓度、A260/A280〔p2:6〕'],
+};
+
+/** A fake model: the outline for the first request, then each batch's answer by the layout its request asks for. */
+function fakeModel(overrides: Partial<Record<keyof typeof answers, string[][]>> = {}) {
+  const sent: { system: string; user: string }[] = [];
+  const served: Record<string, number> = {};
+  const complete = async (system: string, user: string) => {
+    sent.push({ system, user });
+    if (system.includes('JSON')) return { text: outlineAnswer, model: 'fake-model' };
+    const key = system.includes('只写“标题”') ? 'front' : system.includes('只写“材料”') ? 'material' : system.includes('只写“步骤”') ? 'steps' : 'results';
+    const round = served[key] = (served[key] ?? 0) + 1;
+    return { text: (overrides[key]?.[round - 1] ?? answers[key]).join('\n'), model: 'fake-model' };
+  };
+  return { complete, sent };
+}
+
+describe('AI 识别 in two passes (template-v1)', () => {
+  it('outlines the source from its digest, with the name and the goal, and asks the author to choose the systems', async () => {
+    const { complete, sent } = fakeModel();
+    const { outline } = await outlineSource(kit, complete);
+    expect(sent[0].user).toContain('规程名称：质粒提取');
+    expect(sent[0].user).toContain('作者的目标：从 100 mL 菌液提取质粒用于转染');
+    expect(outline.parts.map(part => [part.from, part.use])).toEqual([[1, 'background'], [2, 'steps'], [3, 'drop']]);
+    expect(needsConfirmation(outline)).toBe(true);
+    expect(defaultChoice(outline, 'zh')).toEqual({ systems: ['Mini', 'Maxi'], language: 'zh', dropped: [2] });
+  });
+
+  it('writes each section from its own pages, repairs a batch once, and puts the template together', async () => {
+    const wrongSteps = answers.steps.map(line => line.replace('0.4/10 mL', '0.5/10 mL'));
+    const { complete, sent } = fakeModel({ steps: [wrongSteps] });
+    const { outline } = await outlineSource(kit, complete);
+    const result = await organizeSource(kit, outline, defaultChoice(outline, 'zh'), complete);
+    const prompts = sent.slice(1);
+    // The appendix the author left out is never sent; every request carries the name and the goal.
+    expect(prompts.some(prompt => prompt.user.includes('APPENDIX-ONLY'))).toBe(false);
+    expect(prompts.every(prompt => prompt.user.includes('规程名称：质粒提取') && prompt.user.includes('体系：Mini / Maxi'))).toBe(true);
+    expect(prompts.find(prompt => prompt.system.includes('只写“步骤”'))!.user).toContain('[p2:3] Mini: resuspend the pellet in 0.4 mL Buffer R3.');
+    expect(prompts.find(prompt => prompt.system.includes('只写“标题”'))!.user).not.toContain('[p2:');
+    // The steps came back with 0.5 mL, which p2:3 does not say: one repair round, with the problem named.
+    expect(result.calls).toBe(5);
+    expect(prompts.at(-1)!.user).toContain('数值不在指向的原文：0.5 mL');
+    expect(result.habitText.split('\n')).toEqual([
+      '标题：质粒提取', '说明：', '来源：kit.pdf，读取第 1–2 页（共 3 页）', '范围：体系 Mini / Maxi；中文整理（数值、单位、试剂名、货号照原文）；不含：Appendix: BAC DNA（第 3 页）',
+      '体系对应：Mini / Maxi〔p2:3–4〕', '目的：', '从 E. coli 培养物中纯化质粒 DNA。〔p1:2〕', '背景：', '储存：试剂盒室温保存；加 RNase A 后的 Buffer R3 于 4 °C 保存。〔p1:3〕',
+      ...answers.material, ...answers.steps, ...answers.results,
+    ]);
+    expect(result.check).toMatchObject({ unverified: 0, missing: [], ok: true });
+    expect(result.scope).toEqual({ systems: ['Mini', 'Maxi'], language: 'zh', dropped: [2], pages: [1, 2] });
+  });
+
+  it('writes long steps in parts from all their pages, never cutting the source, and numbers them again', async () => {
+    const long = (page: number, step: string) => ({ page, lines: [`${step}: add ${page}0 µL Buffer.`, ...Array.from({ length: 400 }, (_, index) => `Note ${page}-${index}: keep the tube closed and on ice while you work.`)] });
+    const source = { fileName: 'long.pdf', pages: [long(1, 'First'), long(2, 'Second')] };
     const sent: string[] = [];
-    const answers = [`以下是整理结果：\n\`\`\`\n${faithful.replace('700 µL', '750 µL')}\n\`\`\``, faithful];
-    const result = await recognizeProtocolText(manual, async (_system, user) => { sent.push(user); return { text: answers[sent.length - 1], model: 'fake-model' }; });
-    expect(result).toMatchObject({ attempts: 2, model: 'fake-model', truncated: false, habitText: faithful });
-    expect(result.check.ok).toBe(true);
-    expect(sent[1]).toContain('数值不在原文：750');
-    expect(cleanModelText(answers[0]).startsWith('标题：')).toBe(true);
+    const complete = async (system: string, user: string) => {
+      sent.push(user);
+      if (system.includes('JSON')) return { text: JSON.stringify({ parts: [{ pages: '1-2', label: 'Procedure', use: '步骤' }], workflows: [], systems: null, conflicts: [] }) };
+      if (!system.includes('只写“步骤”')) return { text: '' };
+      const page = user.includes('[p1:1]') ? 1 : 2;
+      return { text: `步骤：\n1. 加入 ${page}0 µL Buffer。〔p${page}:1〕` };
+    };
+    const { outline } = await outlineSource(source, complete);
+    const result = await organizeSource(source, outline, defaultChoice(outline, 'zh'), complete);
+    expect(sent.filter(user => user.includes('分 2 段整理'))).toHaveLength(2);
+    expect(sent.some(user => user.includes('[p1:401] Note 1-399')) && sent.some(user => user.includes('[p2:401] Note 2-399'))).toBe(true);
+    expect(result.habitText).toContain('步骤：\n1. 加入 10 µL Buffer。〔p1:1〕\n2. 加入 20 µL Buffer。〔p2:1〕');
   });
 
-  it('checks a long manual only against the part the model was given', async () => {
-    const beyond = Array.from({ length: 30 }, (_, index) => `${index + 1}. 加入 ${index + 101} µL 试剂 ${index + 1}。`).join('\n');
-    const long = `${manual}\n${'附录。'.repeat(11_000)}\n${beyond}`;
-    const result = await recognizeProtocolText(long, async () => ({ text: faithful }));
-    expect(result).toMatchObject({ truncated: true, attempts: 1 });
-    expect(result.check.missing).toEqual([]);
+  it('reads a draft into a Protocol without its positions', () => {
+    const draft = ['标题：质粒提取', '说明：', '来源：kit.pdf', ...answers.material, ...answers.steps, ...answers.results].join('\n');
+    const { document, summary } = habitTextProtocol(draft, ids());
+    expect(JSON.stringify(document)).not.toContain('〔p');
+    expect(summary).toMatchObject({ steps: 3, systems: ['体系：Mini / Maxi'], resultTemplates: 1 });
+    expect(summary.chips).toContain('0.4/10 mL');
   });
 
-  it('turns the layout into step blocks, a system, a scoped step and a result template', () => {
-    const { document, summary, title } = habitTextProtocol(faithful, ids());
-    expect(title).toBe('XX 总 RNA 提取试剂盒 使用说明书');
-    expect(summary).toMatchObject({ steps: 5, systems: ['体系：少于 5×10^6 个细胞 / 5×10^6 至 1×10^7 个细胞'], conditions: ['Step 2 · only 富脂样本'], recordLines: 1, resultTemplates: 1 });
-    expect(summary.chips).toContain('350/600 µL');
-    const template = document.sections.find(section => section.key === 'result_templates')!.blocks[0];
-    expect(template.type === 'table' && template.resultTemplate?.fields.map(field => [field.label, field.dataType])).toEqual([['RNA 浓度', 'number'], ['A260/280', 'number']]);
+  it('cleans lead-in chatter from an answer', () => {
+    expect(cleanModelText('以下是整理结果：\n```\n材料：\n- A | 1 mL〔p1:1〕\n```')).toBe('材料：\n- A | 1 mL〔p1:1〕');
+    expect(pageRanges([5, 1, 2, 3, 7, 8])).toBe('1–3、5、7–8');
+  });
+});
+
+describe('The organized draft as the Word template', () => {
+  const draft = ['标题：质粒提取', '说明：', '来源：kit.pdf，读取第 1–2 页（共 3 页）', '目的：', '从 E. coli 培养物中纯化质粒 DNA。〔p1:2〕', ...answers.material, ...answers.steps, ...answers.results].join('\n');
+  const reading = (document: ReturnType<typeof habitTextToDocument>['document']) => {
+    const { document: converted, summary } = isLegacyProtocol(document) ? convertLegacyProtocol(document, ids()) : { document, summary: undefined };
+    const projection = projectProtocolDocument(converted);
+    return { steps: projection.steps.map(step => step.title), chips: summary?.chips, systems: summary?.systems, results: projection.resultTemplates.map(template => template.fields.map(field => field.label)) };
+  };
+  const web = habitTextProtocol(draft, ids());
+  const expected = { steps: projectProtocolDocument(web.document).steps.map(step => step.title), chips: web.summary.chips, systems: web.summary.systems, results: projectProtocolDocument(web.document).resultTemplates.map(template => template.fields.map(field => field.label)) };
+
+  it('downloads without positions and imports back to the same Protocol, unchanged or edited in Word', () => {
+    const { bytes, filename } = exportOrganizedDraftDocx(draft, '质粒提取');
+    expect(filename).toBe('PRT-UNASSIGNED_质粒提取_v0.1_Draft.docx');
+    const files = unzipSync(bytes);
+    expect(strFromU8(files['word/document.xml'])).not.toContain('〔p');
+    const unchanged = parseProtocolDocxBytes(bytes, filename);
+    expect(unchanged.canonicalTitle).toBe('质粒提取');
+    expect(reading(unchanged.document)).toEqual(expected);
+    // Saved again by Word: LabNest's own record no longer matches, so the visible text is read.
+    const edited = zipSync({ ...Object.fromEntries(Object.entries(files).filter(([name]) => name !== 'word/labnest-protocol.json')), 'word/document.xml': strToU8(strFromU8(files['word/document.xml'])) });
+    expect(reading(parseProtocolDocxBytes(edited, filename).document)).toEqual(expected);
   });
 });

@@ -1,0 +1,43 @@
+/* 整理稿 beside 原文: the draft's lines with their positions, the source's pages with numbered lines. */
+.ln-draft { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+.ln-draft-title { color: var(--ink); font-size: 13px; font-weight: 600; margin: 0 0 0.5rem; }
+.ln-draft-lines { display: grid; gap: 0.15rem; list-style: none; margin: 0; padding: 0; font-size: 13px; line-height: 1.55; color: var(--graphite); }
+.ln-draft-lines > li { border-left: 3px solid transparent; border-radius: var(--ln-radius-control-sm); padding: 0.15rem 0.4rem; }
+.ln-draft-lines > li[data-unverified] { background: var(--warning-surface); border-left-color: var(--warning); }
+.ln-draft-heading { color: var(--ink); font-weight: 600; margin-top: 0.5rem; }
+.ln-draft-line { color: var(--ink); }
+.ln-draft-problem { color: var(--warning); display: block; font-size: 12px; }
+.ln-anchor { background: var(--surface); border: 1px solid var(--hairline); border-radius: 999px; color: var(--moss); cursor: pointer; display: inline-block; font: 500 11px/1.5 var(--font-ui); margin-left: 0.3rem; padding: 0 0.45em; white-space: nowrap; }
+.ln-anchor:hover { background: var(--action-surface); border-color: var(--action-border); }
+.ln-draft-missing { border-top: 1px solid var(--hairline); display: grid; gap: 0.35rem; margin-top: 0.75rem; padding-top: 0.75rem; }
+.ln-draft-missing ul { display: grid; gap: 0.25rem; list-style: none; margin: 0; padding: 0; font-size: 12px; color: var(--graphite); }
+.ln-draft-missing .ln-anchor { margin: 0 0.4rem 0 0; }
+.ln-draft-source { position: sticky; top: 0.75rem; }
+.ln-draft-pages { background: var(--warm); border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel-inner); max-height: 75vh; overflow: auto; padding: 0.5rem 0.25rem; position: relative; }
+.ln-draft-page + .ln-draft-page { border-top: 1px dashed var(--hairline); margin-top: 0.5rem; padding-top: 0.5rem; }
+.ln-draft-page[data-unread] { opacity: 0.55; }
+.ln-draft-page-head { color: var(--muted); font-size: 11px; font-weight: 600; margin: 0 0 0.25rem 0.5rem; }
+.ln-draft-page ol { display: grid; list-style: none; margin: 0; padding: 0; font-size: 12px; line-height: 1.5; color: var(--graphite); }
+.ln-draft-page li { border-radius: var(--ln-radius-control-sm); display: grid; gap: 0.5rem; grid-template-columns: 2rem minmax(0, 1fr); padding: 0 0.35rem; }
+.ln-draft-page li[data-missing] { box-shadow: inset 3px 0 0 var(--warning); }
+.ln-draft-page li[data-focus] { background: var(--action-surface); color: var(--ink); }
+.ln-draft-number { color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; user-select: none; }
+.ln-scope { background: var(--warm); border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel-inner); display: grid; gap: 0.75rem; padding: 0.75rem; }
+.ln-scope-group, .ln-scope-languages { border: 0; display: grid; gap: 0.3rem; margin: 0; min-width: 0; padding: 0; }
+.ln-scope-group legend, .ln-scope-languages legend { color: var(--muted); font-size: var(--ln-control-font-size-xs); margin-bottom: 0.25rem; padding: 0; }
+.ln-scope-group label, .ln-scope-languages label { align-items: center; color: var(--graphite); cursor: pointer; display: flex; flex-wrap: wrap; font-size: 13px; gap: 0.4rem 0.5rem; min-height: 2rem; }
+.ln-scope-group input, .ln-scope-languages input { accent-color: var(--moss); height: 1.05rem; width: 1.05rem; }
+.ln-scope-parts { display: grid; gap: 0.15rem; list-style: none; margin: 0; padding: 0; }
+.ln-scope-parts li[data-left-out] .ln-scope-label { color: var(--muted); text-decoration: line-through; }
+.ln-scope-pages { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 3.5rem; }
+.ln-scope-label { color: var(--ink); }
+.ln-scope-use, .ln-scope-tag { border: 1px solid var(--hairline); border-radius: 999px; color: var(--graphite); font-size: 11px; padding: 0 0.45em; }
+.ln-scope-tag { background: var(--surface); }
+@media (max-width: 900px) {
+  .ln-draft { grid-template-columns: minmax(0, 1fr); }
+  .ln-draft-source { position: static; }
+  .ln-draft-pages { max-height: 60vh; }
+}
+@media (pointer: coarse) {
+  .ln-anchor { font-size: 12px; padding: 0.15em 0.6em; }
+}

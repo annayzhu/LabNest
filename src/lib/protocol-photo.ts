@@ -33,9 +33,12 @@ export function cleanTranscript(text: string) {
 
 export const hasText = (transcript: string) => Boolean(transcript.trim()) && transcript.trim() !== NO_TEXT;
 
-/** The pages in the order the author set, joined into one text; a page with nothing legible is left out. */
+/**
+ * The pages in the order the author set, joined into one text; a page with nothing legible is left out. A form feed
+ * separates the pages, so a source position "p3:5" is the third picture read, line 5.
+ */
 export function joinTranscripts(pages: { text: string }[]) {
-  return pages.map(page => page.text.trim()).filter(hasText).join('\n\n');
+  return pages.map(page => page.text.trim()).filter(hasText).join('\n\f\n');
 }
 
 /** How many `UNCLEAR` marks a text carries: the author checks each against the picture. */

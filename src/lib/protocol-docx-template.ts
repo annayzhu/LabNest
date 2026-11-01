@@ -1,6 +1,7 @@
-import { exportProtocolDocx } from "./protocol-docx-export";
+import { stripAnchors } from './protocol-anchors';
+import { exportProtocolDocx, protocolDocxFilename } from "./protocol-docx-export";
 import { createEmptyProtocolDocument, createProtocolTemplateDocument, type ProtocolContentBlock, type ProtocolDocument, type ProtocolSectionKey } from "./protocol-document";
-import { sectionTitles } from './protocol-habit-text';
+import { habitTextToDocument, sectionTitles } from './protocol-habit-text';
 import { systemTableCaptions } from './protocol-system-tables';
 
 export const protocolDocxTemplateTitle = "请填写实验规程标题 / Replace with Protocol title";
@@ -36,6 +37,18 @@ function createProtocolHabitTemplateDocument(): ProtocolDocument {
   ];
   section("result_templates").blocks = [text("result-0", "RNA 质检"), text("result-1", "记录：浓度 ng/µL、A260/280、A260/230、胶图"), text("result-2", "每个样本：样本名、浓度 ng/µL")];
   return document;
+}
+
+/**
+ * An organized draft (整理稿) as the Word template the import page offers: the same sections, lines and material table,
+ * without the source positions. Edited in Word and imported again, it is read by the same reader as the web page's
+ * draft, without AI.
+ */
+export function exportOrganizedDraftDocx(habitText: string, title?: string) {
+  const { document, title: written } = habitTextToDocument(stripAnchors(habitText));
+  for (const section of document.sections) section.title = sectionTitles[section.key];
+  const identity = { canonicalTitle: title?.trim() || written || "Untitled Protocol", availability: "draft", reviewStage: "draft", displayVersion: "0.1", scope: "general", tags: ["AI 识别"] };
+  return { bytes: exportProtocolDocx(identity, document), filename: protocolDocxFilename(identity) };
 }
 
 export function exportProtocolDocxTemplate() {

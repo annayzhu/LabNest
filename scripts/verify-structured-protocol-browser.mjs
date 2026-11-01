@@ -86,20 +86,18 @@ await check('UI A1 actual-value drafts never display a stale saved receipt and c
   assert((await row.innerText()).match(/上次保存：50 µL|Last saved value 50 µL/));
   assert.equal((await record(experimentId)).protocolRun.executionPlanJson.actualValues[steps.dose.id]['actual-proteinase'].value, 50);
   const other = page.locator(`#step-${steps.prepare.id} [data-structured-step-record]`);
-  await other.locator('details > summary').click(); await other.getByLabel(/^(跳过原因|Reason for skipping)$/).fill('隔离验收暂时跳过');
+  await other.getByRole('button', { name: /^(跳过本步…|Skip this step…)$/ }).click(); await other.getByLabel(/^(跳过原因|Reason for skipping)$/).fill('隔离验收暂时跳过');
   await other.getByRole('button', { name: /^(记录跳过|Record skip)$/, exact: true }).click();
   await waitRecord(experimentId, e => Boolean(e.protocolRun.executionPlanJson.skips[steps.prepare.id]));
   await page.waitForFunction(id => document.querySelector(`#step-${id} input[aria-label="实际 Proteinase K"]`)?.value === '55', steps.dose.id);
   const undoSkip = other.getByRole('button', { name: /^(撤销跳过|Undo skip)$/, exact: true, includeHidden: true });
-  // The server refresh may replace the open details node; wait for the updated control before opening it.
-  await undoSkip.waitFor({ state: 'attached' });
-  if (!await undoSkip.isVisible()) await other.locator('details > summary').click();
+  await undoSkip.waitFor();
   await undoSkip.click();
   await waitRecord(experimentId, e => !e.protocolRun.executionPlanJson.skips[steps.prepare.id]);
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForFunction(id => document.querySelector(`#step-${id} input[aria-label="实际 Proteinase K"]`)?.value === '55', steps.dose.id);
   await row.getByText(/^(未保存修改|Unsaved change)$/, { exact: true }).waitFor(); await shot('actual-value-unsaved-draft');
-  await row.locator('details > summary').click();
+  await row.getByRole('button', { name: /^(跳过本步…|Skip this step…)$/ }).click();
   const reason = row.getByLabel(/^(跳过原因|Reason for skipping)$/); await reason.fill('未提交的原因草稿');
   let releaseSave, finishSave; const saveGate = new Promise(resolve => { releaseSave = resolve; });
   const saveRouted = new Promise(resolve => { finishSave = resolve; });
@@ -111,7 +109,7 @@ await check('UI A1 actual-value drafts never display a stale saved receipt and c
     assert(await input.isDisabled());
   } finally { releaseSave(); await saveRouted; await page.unroute(`**/experiments/${experimentId}/run`, holdSave); }
   await waitRecord(experimentId, e => e.protocolRun.executionPlanJson.actualValues[steps.dose.id]['actual-proteinase'].value === 55);
-  await page.waitForFunction(id => document.querySelector(`#step-${id} [data-structured-step-record] details input`)?.value === '未提交的原因草稿', steps.dose.id);
+  await page.waitForFunction(id => document.querySelector(`#step-${id} [data-step-skip] input`)?.value === '未提交的原因草稿', steps.dose.id);
   assert.equal(await reason.inputValue(), '未提交的原因草稿');
   await page.waitForFunction(id => !/未保存修改|Unsaved change/.test(document.querySelector(`#step-${id} [data-structured-step-record]`)?.textContent ?? ''), steps.dose.id);
   assert(await row.getByRole('button', { name: /^(保存实际值|Save actual values)$/, exact: true }).isDisabled());

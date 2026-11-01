@@ -3,14 +3,16 @@
 import { newClientMutationId } from "@/lib/client-mutation-id";
 
 import { createPortal } from "react-dom";
-import { Gauge, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useImperativeHandle, useRef, useState, type Ref, type RefObject } from "react";
 import { enqueueMobileMutation } from "@/lib/mobile-mutation-queue";
 
-export function MobileMeasurementCapture({ experimentId, step }: { experimentId: string; step?: { id: string; title: string; order: number } }) {
+export type MeasurementCaptureHandle = { open(): void };
+
+/** The measurement form for a step. Whoever owns the button opens it through `ref`; focus returns to `returnFocusTo`. */
+export function MeasurementCapture({ experimentId, step, ref, returnFocusTo }: { experimentId: string; step?: { id: string; title: string; order: number }; ref?: Ref<MeasurementCaptureHandle>; returnFocusTo?: RefObject<HTMLElement | null> }) {
   const router = useRouter();
-  const trigger = useRef<HTMLButtonElement>(null);
   const formRef=useRef<HTMLFormElement>(null);
   const draftKey=`labnest.measurement-draft:${experimentId}:${step?.id ?? "none"}`;
   const valueInput = useRef<HTMLInputElement>(null);
@@ -31,10 +33,10 @@ export function MobileMeasurementCapture({ experimentId, step }: { experimentId:
       }
     } catch { setStatus("Draft storage unavailable. Keep this page open."); }
     valueInput.current?.focus();});
-    const close = (event: KeyboardEvent) => { if (event.key === "Escape" && !saving) { setOpen(false); trigger.current?.focus(); } };
+    const close = (event: KeyboardEvent) => { if (event.key === "Escape" && !saving) { setOpen(false); returnFocusTo?.current?.focus(); } };
     window.addEventListener("keydown", close);
     return () => {cancelAnimationFrame(frame);window.removeEventListener("keydown", close);};
-  }, [open,draftKey,saving]);
+  }, [open,draftKey,saving,returnFocusTo]);
 
   function finishDraft(){
     try{sessionStorage.removeItem(draftKey);}catch{}
@@ -67,15 +69,17 @@ export function MobileMeasurementCapture({ experimentId, step }: { experimentId:
     finally { setSaving(false); }
   }
 
+  useImperativeHandle(ref, () => ({ open() {
+    if (!step) return;
+    const now = new Date();
+    if (!hasOpened) setObservedAt(new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16));
+    setHasOpened(true); setOpen(true);
+  } }), [step, hasOpened]);
+
   return <>
-    <button ref={trigger} type="button" disabled={!step} onClick={() => {
-      const now = new Date();
-      if(!hasOpened)setObservedAt(new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16));
-      setHasOpened(true);setOpen(true);
-    }} className="focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2 text-center text-xs font-semibold text-moss disabled:opacity-45"><Gauge className="h-5 w-5" aria-hidden />Measurement</button>
-    {!open && status ? <p role="status" className="text-xs text-muted">{status}</p> : null}
-    {hasOpened && step ? createPortal(<div hidden={!open} className="ln-modal-layer fixed inset-0 z-50 lg:hidden"><button type="button" aria-label="Close measurement" onClick={() => { if(saving)return;setOpen(false); trigger.current?.focus(); }} className="ln-modal-backdrop absolute inset-0 bg-ink/25" /><section role="dialog" aria-modal="true" aria-labelledby="measurement-title" className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-soft">
-      <div className="flex items-start justify-between gap-3"><div><h2 id="measurement-title" className="text-xl font-semibold text-ink">Record measurement</h2><p className="mt-1 text-xs text-muted">Step {step.order} · {step.title}</p></div><button type="button" onClick={() => { if(saving)return;setOpen(false); trigger.current?.focus(); }} aria-label="Close measurement" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-hairline"><X className="h-4 w-4" /></button></div>
+    {!open && status ? <p role="status" className="col-span-full text-xs text-muted">{status}</p> : null}
+    {hasOpened && step ? createPortal(<div hidden={!open} className="ln-modal-layer fixed inset-0 z-50 lg:grid lg:place-items-center"><button type="button" aria-label="Close measurement" onClick={() => { if(saving)return;setOpen(false); returnFocusTo?.current?.focus(); }} className="ln-modal-backdrop absolute inset-0 bg-ink/25" /><section role="dialog" aria-modal="true" aria-labelledby="measurement-title" className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-soft lg:relative lg:inset-auto lg:w-[min(32rem,calc(100vw-2rem))] lg:rounded-[var(--ln-radius-panel)] lg:border lg:pb-4">
+      <div className="flex items-start justify-between gap-3"><div><h2 id="measurement-title" className="text-xl font-semibold text-ink">Record measurement</h2><p className="mt-1 text-xs text-muted">Step {step.order} · {step.title}</p></div><button type="button" onClick={() => { if(saving)return;setOpen(false); returnFocusTo?.current?.focus(); }} aria-label="Close measurement" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-hairline"><X className="h-4 w-4" /></button></div>
       <form ref={formRef} onInput={()=>{try{if(formRef.current)sessionStorage.setItem(draftKey,JSON.stringify(Object.fromEntries(new FormData(formRef.current))));}catch{setStatus("Draft could not be saved. Keep this page open.");}}} onSubmit={submit} className="mt-4 grid grid-cols-2 gap-3">
         <label><span className="text-xs font-semibold text-muted">Value *</span><input ref={valueInput} required name="value" type="number" step="any" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
         <label><span className="text-xs font-semibold text-muted">Unit *</span><input required name="unit" maxLength={32} placeholder="ng/µL, %, fold…" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>

@@ -9,6 +9,10 @@ describe('local actual-value draft reconciliation', () => {
   it('clears only the actual value acknowledged by the server, keeping unrelated reason', () => {
     expect(reconcileStructuredStepDraft(draft, draft.context, { dose: { value: 55 } })).toEqual({ values: {}, reason: draft.reason, contextChanged: false, needsReview: false });
   });
+  it('clears a skip reason once the server records that skip, keeping an unrelated one', () => {
+    expect(reconcileStructuredStepDraft(draft, draft.context, recorded, draft.reason).reason).toBe('');
+    expect(reconcileStructuredStepDraft(draft, draft.context, recorded, '另一个原因').reason).toBe(draft.reason);
+  });
   it('requires explicit review after another writer changes the same actual value', () => {
     expect(reconcileStructuredStepDraft(draft, draft.context, { dose: { value: 60 } }).needsReview).toBe(true);
   });

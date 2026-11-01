@@ -141,3 +141,26 @@
 .ln-timer-alert-prompt { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.6rem; margin: 0.4rem 0 0; font-size: var(--ln-control-font-size-xs); color: var(--graphite); }
 .ln-timer-alert-prompt button { min-height: 2rem; padding: 0 0.4rem; border-radius: var(--ln-radius-control-md); color: var(--moss); font-weight: 600; }
 .ln-timer-alert-prompt button.is-quiet { color: var(--muted); font-weight: 500; }
+
+/* ——— A step's own record: an optional/skipped tag, values to record, why it cannot be completed, skipping ——— */
+.ln-step-tag { display: inline-block; margin-left: 0.5rem; padding: 0 0.45em; border: 1px solid var(--hairline); border-radius: 999px; font: 500 var(--ln-control-font-size-xs)/1.5 var(--font-ui); color: var(--graphite); vertical-align: 0.1em; }
+.ln-step-note { margin: 0.75rem 0 0.4rem; font-size: var(--ln-control-font-size-xs); line-height: 1.45; color: var(--warning); }
+.ln-step-record { display: grid; gap: 0.4rem; margin-top: 0.75rem; font-size: var(--ln-control-font-size-md); color: var(--graphite); }
+.ln-step-field { display: grid; grid-template-columns: minmax(0, 1fr) minmax(6rem, 9rem); align-items: center; gap: 0.1rem 0.75rem; }
+.ln-step-field input { height: var(--ln-control-height-md); width: 100%; padding: 0 0.55rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: var(--surface); color: var(--ink); font: 600 var(--ln-control-font-size-md) var(--font-data); text-align: right; }
+.ln-step-field small { grid-column: 1 / -1; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
+.ln-step-record-warning, .ln-step-record-error, .ln-step-record-note { margin: 0; font-size: var(--ln-control-font-size-xs); line-height: 1.45; }
+.ln-step-record-warning { color: var(--warning); }
+.ln-step-record-warning ul { margin: 0.2rem 0 0.4rem; padding-left: 1.1rem; }
+.ln-step-record-error { color: var(--error); }
+.ln-step-record-note { color: var(--muted); }
+.ln-step-skip { display: grid; justify-items: start; gap: 0.3rem; margin-top: 0.4rem; font-size: var(--ln-control-font-size-sm); }
+/* Under the full-width completion button in field mode, centred on it. */
+button[name="completedCurrentStepId"] + .ln-step-skip { justify-items: center; }
+.ln-step-skip-toggle { min-height: 2.75rem; padding: 0 0.6rem; border-radius: var(--ln-radius-control-md); color: var(--muted); }
+.ln-step-skip-toggle:hover:not(:disabled) { color: var(--ink); background: var(--stone); }
+.ln-step-skip-form { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; width: 100%; }
+.ln-step-skip-form label { display: flex; flex: 1 1 14rem; align-items: center; gap: 0.5rem; color: var(--graphite); }
+.ln-step-skip-form input { flex: 1; min-width: 0; height: var(--ln-control-height-md); padding: 0 0.55rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: var(--surface); color: var(--ink); font-size: var(--ln-control-font-size-md); }
+/* The Record menu is used with gloves on a phone: full-height touch rows. */
+@media (pointer: coarse) { .ln-step-record-menu.ln-actions-menu.ln-actions-menu :is(a, button) { min-height: 2.75rem; } }

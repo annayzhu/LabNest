@@ -1,0 +1,14 @@
+{
+  "base": "http://127.0.0.1:3002",
+  "passed": true,
+  "checks": [
+    "1440 current step: no status line, skip under completion",
+    "1440 record menu: three items; measurement opens centred; Escape returns focus",
+    "1440 skip opens in place with focus; cancel closes",
+    "1440 step 8: 可选 tag; skip shows 已跳过 tag, note above completion, 撤销跳过; undo restores",
+    "1440 step 9: value rows (13px), required value saved",
+    "390: no status line; menu; measurement as bottom sheet; no horizontal scroll",
+    "1440 list view: 可选 tag and 跳过本步… in the step record"
+  ],
+  "errors": []
+}

@@ -70,6 +70,13 @@ it('does not contact PubMed without the per-run setting, and fails when both sou
   expect(urls).toHaveLength(1);
   await expect(search('binding', true)).rejects.toThrow('均未能完成检索');
 });
+it('uses publication dates instead of earlier citation revision dates', async () => {
+  const revised = pubmedXml.replace('<Article>', '<DateRevised><Year>2026</Year></DateRevised><Article>');
+  const read = (xml: string) => searchPubMed('binding', async url => url.includes('esearch') ? '{"esearchresult":{"idlist":["123"]}}' : xml);
+  expect((await read(revised))[0].year).toBe('2024');
+  expect((await read(revised.replace('<PubDate><Year>2024</Year></PubDate>', '<PubDate><MedlineDate>2023 Dec-2024 Jan</MedlineDate></PubDate>')))[0].year).toBe('2023 Dec-2024 Jan');
+  expect((await read(revised.replace('<PubDate><Year>2024</Year></PubDate>', '')))[0].year).toBeUndefined();
+});
 it('rejects malformed PubMed responses instead of calling them empty results', async () => {
   await expect(searchPubMed('binding', async () => '{}')).rejects.toThrow('无效');
 });

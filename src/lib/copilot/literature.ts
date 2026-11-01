@@ -96,7 +96,10 @@ export async function searchPubMed(query: string, fetchText: FetchText, onNotice
     }).filter(Boolean).join(', ');
     const abstract = Array.from(article.getElementsByTagName('AbstractText')).map(node => [node.getAttribute('Label'), node.textContent?.trim()].filter(Boolean).join(': ')).join('\n');
     const doi = Array.from(article.getElementsByTagName('ArticleId')).find(node => node.getAttribute('IdType') === 'doi')?.textContent?.trim();
-    return [{ key: `MED:${pmid}`, source: 'pubmed' as const, title, authors, year: get('Year') || get('MedlineDate'), venue: get('Title'), url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`, doi, abstract, openAccess: false }];
+    // Citation-level revision dates precede Article in PubMed XML; use the journal publication date only.
+    const published = article.getElementsByTagName('Journal')[0]?.getElementsByTagName('PubDate')[0];
+    const year = published?.getElementsByTagName('Year')[0]?.textContent?.trim() || published?.getElementsByTagName('MedlineDate')[0]?.textContent?.trim();
+    return [{ key: `MED:${pmid}`, source: 'pubmed' as const, title, authors, year, venue: get('Title'), url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`, doi, abstract, openAccess: false }];
   });
 }
 

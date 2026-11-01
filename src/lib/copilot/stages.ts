@@ -102,6 +102,7 @@ export function designPrompt(purpose: string, inputs: Inputs, subQuestions: SubQ
       '你是科研方案助手。根据研究目的、子问题，和别人论文里已经做过的实验，为每个子问题设计需要做的实验。这是针对科学问题的实验设计，不是实验规程：不写操作步骤、试剂用量。',
       '每个实验写：name、purpose（验证什么）、approach（做法类型）、comparison（比较哪些对象或组别）、readouts、controls、decisionCriteria（什么观察支持或不支持目标，何时需补充验证）、priority（must 必做 / optional 可选）、evidence（依据的论文 key 列表，只能用下面给出的 key）、note（要注意的点）。',
       '只给回答本轮目标所必需的最小设计，不扩展为完整机制课题。必须有可核查的方法依据才能列为必做，没有依据的列为可选并说明。文献中的其他分子或细胞系只作为方法依据，不能冒充当前候选结合已被证明。膜上结合、复合物关联、直接结合及因果作用必须分别表述。只有摘要时不能声称核实了全文方法。待定的样本类型和条件保留待定，不编造定量阈值、操作条件或预期结果。',
+      '输出保持精简：每个子问题最多 2 项实验，总计最多 6 项。同一种验证用于多个候选时，在 comparison 中分别列出组合，不重复生成同样设计。每个文字字段最多 120 字；readouts、controls、decisionCriteria 各最多 3 条，缺失信息集中写 gaps。',
       'gaps 写文献没有覆盖、需要研究者自己决定的地方。',
       '只输出一个 JSON 对象：{"summary":"一段话概括整体设计","items":[{"subQuestionId":"q1","experiments":[{...}]}],"gaps":["…"]}。',
     ].join('\n'),

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, type ReactNode } from "react";
 import { useI18n } from "@/components/I18nProvider";
 import { readInventoryBarcode } from "@/lib/inventory-barcode";
+import { UsedUpHidden } from "@/components/InventoryRiskBadges";
 import { formatStockQuantity, type InventoryRiskFlag } from "@/lib/inventory";
 
 type MobileInventoryItem = {
@@ -14,9 +15,11 @@ type MobileInventoryItem = {
   riskFlags: InventoryRiskFlag[];
 };
 
-export function MobileInventoryBench({ items, totalCount, query, filters, riskCounts, scope }: {
+export function MobileInventoryBench({ items, totalCount, query, filters, riskCounts, usedUp, scope }: {
   items: MobileInventoryItem[]; totalCount: number; query?: string;
   filters: Record<string, string | undefined>; riskCounts: Record<InventoryRiskFlag, number>;
+  /** Used-up lots the list leaves out, and the link that lists them. */
+  usedUp?: { hidden: number; href: string };
   /** The location the list is filtered to, shown under the title. */
   scope?: ReactNode;
 }) {
@@ -29,9 +32,10 @@ export function MobileInventoryBench({ items, totalCount, query, filters, riskCo
   const [visibleCount, setVisibleCount] = useState(12);
   const labels: Record<InventoryRiskFlag, string> = {
     low: zh ? "余量不足" : "Low stock",
-    depleted: zh ? "已用完" : "Out of stock",
+    depleted: zh ? "缺货" : "Out of stock",
     expired: zh ? "已过期" : "Expired",
     expiring: zh ? "30天内到期" : "Expires in 30 days",
+    used_up: zh ? "已用完" : "Used up",
   };
   const filtered = Object.values(filters).some(Boolean) || Boolean(query);
 
@@ -104,7 +108,8 @@ export function MobileInventoryBench({ items, totalCount, query, filters, riskCo
             <span className="mt-1 block text-sm text-muted">{item.location || (zh ? "位置未登记" : "No location")} · {item.subtitle}</span>
             {item.lot ? <span className="mt-1 block text-sm text-muted">{zh ? "批号" : "Lot"}: {item.lot}</span> : null}
             {item.code ? <span className="mt-1 block break-all text-xs text-muted" data-i18n-ignore>{item.code}</span> : null}
-            {item.riskFlags.length ? <span className="mt-1 block text-sm font-medium text-warning">{item.riskFlags.map(flag => labels[flag]).join(" · ")}</span> : null}
+            {item.riskFlags.some((flag) => flag !== "used_up") ? <span className="mt-1 block text-sm font-medium text-warning">{item.riskFlags.filter((flag) => flag !== "used_up").map(flag => labels[flag]).join(" · ")}</span> : null}
+            {item.riskFlags.includes("used_up") ? <span className="mt-1 block text-sm text-muted">{labels.used_up}</span> : null}
           </span>
           <span className="max-w-28 shrink-0 text-right text-sm font-medium text-ink">{item.quantityRecorded ? <><span>{formatStockQuantity(item.quantity, item.unit)}</span> <span>{item.unit}</span></> : (zh ? "余量未登记" : "Quantity not recorded")}</span>
           <ChevronRight className="h-4 w-4 shrink-0 text-muted" aria-hidden />
@@ -115,6 +120,7 @@ export function MobileInventoryBench({ items, totalCount, query, filters, riskCo
         </div> : null}
       </div>
       {visibleCount < items.length ? <button type="button" onClick={() => setVisibleCount(count => count + 12)} className="focus-ring mt-3 min-h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline text-sm font-medium text-moss">{zh ? `显示更多（已显示 ${visibleCount}/${items.length}）` : `Show more (${visibleCount}/${items.length})`}</button> : null}
+      {usedUp ? <UsedUpHidden count={usedUp.hidden} href={usedUp.href} className="mt-3 text-sm text-muted" /> : null}
     </section>
   </section>;
 }

@@ -46,7 +46,7 @@ export default async function MergeProductsPage({ searchParams }: { searchParams
         <Row label="CAS" value={product.casNumber} mono />
         <Row label="Type" value={product.type?.label ?? (product.group ? "Not subdivided" : "To be classified")} />
         {product.group ? <Row label="Inventory group" value={inventoryGroupName(product.group)} /> : null}
-        <Row label="Safety stock" value={product.lowThreshold != null ? <QuantityText quantity={product.lowThreshold} unit={product.lowThresholdUnit} /> : null} />
+        <Row label="Stock reminder" value={product.lowThreshold === 0 ? <span>Remind when used up</span> : product.lowThreshold != null ? <QuantityText quantity={product.lowThreshold} unit={product.lowThresholdUnit} /> : null} />
         {product.controlLevels.length ? <div className="flex flex-wrap gap-1.5 pt-1">{product.controlLevels.map((level) => <Badge key={level} tone={isStrictlyControlled([level]) ? "danger" : "warning"}>{controlLevelName(level)}</Badge>)}</div> : null}
       </SideSection>
       <SideSection title="Moves with it">

@@ -100,7 +100,7 @@ export function ProductFields({ types, groups, entities, initial = {}, prefix = 
           <span className={formLabelClass}>Catalog number</span>
           <input name={name("catalogNumber")} defaultValue={initial.catalogNumber ?? ""} maxLength={120} className={formInputClass} />
         </label>
-        <QuantityInput key={type?.id ?? "none"} label="Safety stock" name={name("lowThreshold")} unitName={name("lowThresholdUnit")} initialValue={initial.lowThreshold == null ? "" : String(initial.lowThreshold)} initialUnit={initial.lowThresholdUnit ?? type?.defaults.unit ?? "mL"} options={stockUnits} checkPrecision />
+        <StockReminderField key={type?.id ?? "none"} name={name} lowThreshold={initial.lowThreshold} unit={initial.lowThresholdUnit ?? type?.defaults.unit ?? "mL"} />
       </section>
 
       {type?.fields.length ? (
@@ -180,5 +180,33 @@ export function ProductFields({ types, groups, entities, initial = {}, prefix = 
         </div>
       </Disclosure>
     </>
+  );
+}
+
+/**
+ * The product's stock reminder (Q241): none, when it is used up (a safety stock of 0), or at or below an amount. Only a
+ * product with one ever shows as low or out of stock.
+ */
+function StockReminderField({ name, lowThreshold, unit }: { name: (field: string) => string; lowThreshold?: number | null; unit: string }) {
+  const [mode, setMode] = useState(lowThreshold == null ? "none" : lowThreshold === 0 ? "usedUp" : "below");
+  return (
+    <div className="min-w-0 space-y-2">
+      <label className="block">
+        <span className={formLabelClass}>Stock reminder</span>
+        <select value={mode} onChange={(event) => setMode(event.target.value)} className={formInputClass}>
+          <option value="none">No reminder</option>
+          <option value="usedUp">When it is used up</option>
+          <option value="below">When it falls to an amount</option>
+        </select>
+      </label>
+      {mode === "below" ? (
+        <QuantityInput label="Remind at or below" name={name("lowThreshold")} unitName={name("lowThresholdUnit")} initialValue={lowThreshold ? String(lowThreshold) : ""} initialUnit={unit} options={stockUnits} required checkPrecision />
+      ) : (
+        <>
+          <input type="hidden" name={name("lowThreshold")} value={mode === "usedUp" ? "0" : ""} />
+          <input type="hidden" name={name("lowThresholdUnit")} value={mode === "usedUp" ? unit : ""} />
+        </>
+      )}
+    </div>
   );
 }

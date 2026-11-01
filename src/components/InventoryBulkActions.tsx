@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, Dna, MapPin, PackageMinus, RotateCcw, ShieldMinus, ShieldPlus, Tags, Trash2, UserRound, type LucideIcon } from "lucide-react";
+import { Archive, BellRing, Dna, MapPin, PackageMinus, RotateCcw, ShieldMinus, ShieldPlus, Tags, Trash2, UserRound, type LucideIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { applyProductBulk, applyStockBulk, previewProductBulk, previewStockBulk } from "@/app/inventory/bulk-actions";
@@ -13,7 +13,7 @@ import { inventoryControlLevels } from "@/lib/inventory";
 import type { BulkEntry } from "@/lib/inventory-bulk";
 
 type Option = { value: string; label: string };
-type Mode = "move" | "pi" | "takeOut" | "classify" | "addControl" | "removeControl" | "sequences";
+type Mode = "move" | "pi" | "takeOut" | "classify" | "addControl" | "removeControl" | "reminder" | "sequences";
 
 const questions: Record<string, string> = {
   archive: "Archive the selected records?",
@@ -24,6 +24,7 @@ const questions: Record<string, string> = {
   classify: "Change the type of the selected products?",
   addControl: "Add this control level to the selected products?",
   removeControl: "Remove this control level from the selected products?",
+  reminder: "Change the stock reminder of the selected products?",
 };
 const controlOptions: Option[] = inventoryControlLevels.map((level) => ({ value: level.key, label: level.label }));
 const fieldClass = `${formInlineInputClass} h-8 w-auto max-w-56 text-sm`;
@@ -110,6 +111,7 @@ export function InventoryBulkActions({ kind, locations = [], classes = [] }: {
     else if (next === "classify") setValue(classes[0]?.options[0]?.value ?? "none");
     else if (next === "pi") setValue("");
     else if (next === "sequences") setValue("fasta");
+    else if (next === "reminder") setValue("usedUp");
     else setValue(controlOptions[0].value);
   }
 
@@ -131,6 +133,7 @@ export function InventoryBulkActions({ kind, locations = [], classes = [] }: {
       const [scope, key] = value.split(":");
       return run("classify", scope === "type" ? { typeId: key } : scope === "group" ? { groupKey: key } : {});
     }
+    if (mode === "reminder") return run("reminder", { reminder: value });
     if (mode) return run(mode, { level: value });
   }
 
@@ -146,7 +149,7 @@ export function InventoryBulkActions({ kind, locations = [], classes = [] }: {
       </> : mode === "pi" ? (
         <input aria-label="New PI" value={value} maxLength={120} placeholder="Zhang Lab" onChange={(event) => setValue(event.target.value)} onKeyDown={applyOnEnter} className={fieldClass} />
       ) : (
-        <select aria-label={mode === "move" ? "Move to" : mode === "classify" ? "Type" : mode === "sequences" ? "File format" : "Control level"} value={value} onChange={(event) => setValue(event.target.value)} className={fieldClass}>
+        <select aria-label={mode === "move" ? "Move to" : mode === "classify" ? "Type" : mode === "sequences" ? "File format" : mode === "reminder" ? "Stock reminder" : "Control level"} value={value} onChange={(event) => setValue(event.target.value)} className={fieldClass}>
           {mode === "move" ? <><option value="">Unassigned</option>{locations.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</> : null}
           {mode === "classify" ? <><option value="none">To be classified</option>{classes.map((group) => (
             <optgroup key={group.label} label={group.label}>
@@ -156,6 +159,7 @@ export function InventoryBulkActions({ kind, locations = [], classes = [] }: {
           ))}</> : null}
           {mode === "addControl" || mode === "removeControl" ? controlOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>) : null}
           {mode === "sequences" ? <><option value="fasta">FASTA</option><option value="csv">CSV</option></> : null}
+          {mode === "reminder" ? <><option value="usedUp">When it is used up</option><option value="none">No reminder</option></> : null}
         </select>
       )}
       <Button type="button" size="sm" variant="primary" disabled={busy} onClick={() => void apply()}>Apply</Button>
@@ -171,6 +175,7 @@ export function InventoryBulkActions({ kind, locations = [], classes = [] }: {
       <BulkButton icon={Dna} label="Export sequences…" disabled={busy} onClick={() => start("sequences")} />
       <BulkButton icon={ShieldPlus} label="Add control level…" disabled={busy} onClick={() => start("addControl")} />
       <BulkButton icon={ShieldMinus} label="Remove control level…" disabled={busy} onClick={() => start("removeControl")} />
+      <BulkButton icon={BellRing} label="Stock reminder…" disabled={busy} onClick={() => start("reminder")} />
       <BulkButton icon={Archive} label="Archive" disabled={busy} onClick={() => void run("archive")} />
       <BulkButton icon={RotateCcw} label="Restore" disabled={busy} onClick={() => void run("restore")} />
     </>}

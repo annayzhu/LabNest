@@ -125,7 +125,8 @@ async function productEntity(tx: Tx, parsed: Parsed, classified: Classified, rea
 }
 
 function productData(parsed: Parsed, classified: Classified, values: Record<string, string>) {
-  if (parsed.lowThreshold !== undefined && !parsed.lowThresholdUnit) throw new Error("Choose the unit of the safety stock.");
+  // "Remind when it is used up" (0) counts every unit, so only an amount needs one.
+  if (parsed.lowThreshold && !parsed.lowThresholdUnit) throw new Error("Choose the unit of the safety stock.");
   if (parsed.lowThreshold !== undefined && parsed.lowThresholdUnit) assertPrecision(parsed.lowThreshold, parsed.lowThresholdUnit);
   return {
     name: parsed.name,

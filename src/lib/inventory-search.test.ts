@@ -11,13 +11,19 @@ describe("stock search rows (Q180, Q181)", () => {
   it("shows a product once with its lots earliest-expiry first, the earliest with stock chosen, and totals in one unit; an empty lot does not make the product out of stock", () => {
     const [row] = stockRows([
       lot("late", { expiryDate: new Date("2027-06-01"), unit: "瓶", currentQuantity: 2 }),
-      lot("empty", { expiryDate: new Date("2026-12-01"), currentQuantity: 0, flags: ["depleted"] }),
+      lot("empty", { expiryDate: new Date("2026-12-01"), currentQuantity: 0, flags: ["used_up"] }),
       lot("soon", { expiryDate: new Date("2027-01-01"), currentQuantity: 3, location: "Freezer A / Shelf 1" }),
     ], products, "");
     expect(row).toMatchObject({ name: "PBS 10x", detail: "Gibco · 10010", kind: "Solutions & buffers", href: "/inventory/products/p_pbs", expiry: "2027-01-01", focusLotId: "soon", flags: [] });
     expect(row.lots.map((entry) => entry.id)).toEqual(["empty", "soon", "late"]);
     expect(row.totals).toEqual([{ quantity: 5, unit: "bottle" }]);
     expect(row.places).toEqual(["Shelf 2", "Freezer A / Shelf 1"]);
+  });
+
+  it("marks a product used up only when every lot is, and out of stock only when its lots say so (Q237, Q238)", () => {
+    expect(stockRows([lot("a", { currentQuantity: 0, flags: ["used_up"] }), lot("b", { currentQuantity: 0, flags: ["used_up"] })], products, "")[0].flags).toEqual(["used_up"]);
+    expect(stockRows([lot("a", { currentQuantity: 0, flags: ["used_up", "depleted"] })], products, "")[0].flags).toEqual(["depleted", "used_up"]);
+    expect(stockRows([lot("a", { currentQuantity: 0, held: 1, flags: [] })], products, "")[0].focusLotId).toBe("a");
   });
 
   it("puts an exact lot number or code first and focuses that lot; a single lot opens its own page", () => {

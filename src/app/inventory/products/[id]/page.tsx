@@ -9,14 +9,14 @@ import { ProductSequences } from "@/components/ProductSequences";
 import { Panel, QuantityText, Row, SideSection } from "@/components/InventoryDetail";
 import { InventoryKitComponents } from "@/components/InventoryKitComponents";
 import { InventoryLifecycleMenu } from "@/components/InventoryLifecycleMenu";
-import { InventoryRiskBadges } from "@/components/InventoryRiskBadges";
+import { InventoryRiskBadges, StockReminderText } from "@/components/InventoryRiskBadges";
 import { PageActionsMenu } from "@/components/PageActionsMenu";
 import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { buttonStyles } from "@/components/ui/Button";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
-import { controlLevelName, deleteBlockers, isStrictlyControlled, lotRiskFlags, lowStockAdvice, productSafetyStock, stockUnit } from "@/lib/inventory";
+import { controlLevelName, deleteBlockers, heldCount, isStrictlyControlled, lotRiskFlags, lowStockAdvice, productSafetyStock, stockUnit } from "@/lib/inventory";
 import { inventoryGroupName, inventoryTypeFields } from "@/lib/inventory-types";
 import { sequenceKind } from "@/lib/product-sequences";
 import { readProductSequences } from "@/lib/product-sequences.server";
@@ -36,7 +36,7 @@ export default async function InventoryProductPage({ params }: { params: Promise
       group: true,
       entity: { select: { id: true, name: true, type: true } },
       kitComponents: { orderBy: { sortOrder: "asc" } },
-      items: { include: { location: { select: { name: true } } }, orderBy: [{ status: "asc" }, { expiryDate: { sort: "asc", nulls: "last" } }] },
+      items: { include: { location: { select: { name: true } }, _count: heldCount }, orderBy: [{ status: "asc" }, { expiryDate: { sort: "asc", nulls: "last" } }] },
     },
   });
   if (!product) notFound();
@@ -47,14 +47,14 @@ export default async function InventoryProductPage({ params }: { params: Promise
 
   const fields = product.type ? inventoryTypeFields(product.type.fieldDefinitions) : [];
   const values = product.fieldValues as Record<string, string>;
-  const { low } = productSafetyStock(product, product.items);
+  const { low, depleted } = productSafetyStock(product, product.items);
   const sdsMissing = isStrictlyControlled(product.controlLevels) && !documents.some((document) => document.linkType === "sds");
   const showKit = product.type?.key === "kit" || product.kitComponents.length > 0;
   const activeLots = product.items.filter((lot) => lot.status === "active");
   // What is on the shelf in all, one sum per unit: "2 box", or "2 box · 500 mL" when lots are counted differently.
   const totals = [...Map.groupBy(activeLots.filter((lot) => lot.quantityRecorded), (lot) => stockUnit(lot.unit))].map(([, lots]) => ({ unit: lots[0].unit, quantity: Number(lots.reduce((sum, lot) => sum + lot.currentQuantity, 0).toFixed(6)) }));
   const flagged = product.items.map((lot) => ({ ...lot, flags: lot.status === "archived" ? [] : lotRiskFlags(lot, product, product.items) }));
-  const attention = product.status === "archived" || low || sdsMissing;
+  const attention = product.status === "archived" || low || depleted || sdsMissing;
   const filled = fields.filter((field) => values[field.key]);
   const identity = product.englishName || product.casNumber || (product.entity && !sequenceKind(product.type?.key));
   const aside = identity || fields.length || product.controlLevels.length || product.notes;
@@ -88,14 +88,15 @@ export default async function InventoryProductPage({ params }: { params: Promise
             {product.group ? <><span aria-hidden className="text-muted">·</span><span>{inventoryGroupName(product.group)}</span></> : null}
             {totals.length ? <><span aria-hidden className="text-muted">·</span><span><span>In all</span> {totals.map((total, index) => <span key={total.unit}>{index ? " + " : ""}<QuantityText quantity={total.quantity} unit={total.unit} /></span>)}</span></> : null}
             <span aria-hidden className="text-muted">·</span><span className="tabular-nums">{`${activeLots.length} lots`}</span>
-            {product.lowThreshold != null ? <><span aria-hidden className="text-muted">·</span><span className="text-muted"><span>Safety stock</span> <QuantityText quantity={product.lowThreshold} unit={product.lowThresholdUnit} /></span></> : null}
+            {product.lowThreshold != null ? <><span aria-hidden className="text-muted">·</span><span className="text-muted"><StockReminderText lowThreshold={product.lowThreshold} unit={product.lowThresholdUnit} /></span></> : null}
           </p>
           {attention ? (
             <p className="flex flex-wrap items-center gap-2 text-sm text-graphite">
               {product.status === "archived" ? <Badge tone="neutral">Archived</Badge> : null}
+              {depleted ? <Badge tone="danger">out of stock</Badge> : null}
               {low ? <Badge tone="warning">low stock</Badge> : null}
               {sdsMissing ? <Badge tone="danger">SDS missing</Badge> : null}
-              {low ? <span className="text-muted">{adviceText[lowStockAdvice(product.groupKey)]}</span> : null}
+              {low || depleted ? <span className="text-muted">{adviceText[lowStockAdvice(product.groupKey)]}</span> : null}
             </p>
           ) : null}
         </div>

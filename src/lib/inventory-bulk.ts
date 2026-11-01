@@ -9,7 +9,7 @@ export type BulkEntry = { id: string; name: string; outcome: BulkOutcome; reason
 
 export const stockBulkActions = ["archive", "restore", "move", "pi", "takeOut", "delete"] as const;
 type StockBulkAction = (typeof stockBulkActions)[number];
-export const productBulkActions = ["archive", "restore", "classify", "addControl", "removeControl", "delete"] as const;
+export const productBulkActions = ["archive", "restore", "classify", "addControl", "removeControl", "reminder", "delete"] as const;
 type ProductBulkAction = (typeof productBulkActions)[number];
 
 export function bulkStockPlan(
@@ -35,11 +35,16 @@ export function bulkStockPlan(
 
 export function bulkProductPlan(
   action: ProductBulkAction,
-  rows: (Row & { typeId: string | null; groupKey: string | null; controlLevels: string[]; lots: number; impreciseLots: number })[],
-  params: { typeId?: string | null; groupKey?: string | null; level?: string } = {},
+  rows: (Row & { typeId: string | null; groupKey: string | null; controlLevels: string[]; lots: number; impreciseLots: number; lowThreshold: number | null })[],
+  params: { typeId?: string | null; groupKey?: string | null; level?: string; reminder?: "none" | "usedUp" } = {},
 ) {
   return rows.map((row) => {
     if (action === "archive" || action === "restore") return lifecycle(row, action);
+    // A stock reminder set in bulk is unit-free: none, or when the product is used up (Q241).
+    if (action === "reminder") {
+      if (params.reminder === "usedUp") return row.lowThreshold === 0 ? entry(row, "skip", "Already reminds when used up.") : entry(row, "change");
+      return row.lowThreshold == null ? entry(row, "skip", "Already has no stock reminder.") : entry(row, "change");
+    }
     if (action === "delete") return removal(row, deleteBlockers({ lots: row.lots }));
     if (action === "classify") {
       const same = row.typeId === (params.typeId ?? null) && row.groupKey === (params.groupKey ?? null);

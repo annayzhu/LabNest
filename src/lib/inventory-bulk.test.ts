@@ -44,8 +44,8 @@ describe("bulkStockPlan", () => {
   });
 });
 
-const product = (id: string, fields: Partial<{ status: string; typeId: string | null; groupKey: string | null; controlLevels: string[]; lots: number; impreciseLots: number }> = {}) => ({
-  id, name: id, status: "active", typeId: null, groupKey: "reagent", controlLevels: [], lots: 0, impreciseLots: 0, ...fields,
+const product = (id: string, fields: Partial<{ status: string; typeId: string | null; groupKey: string | null; controlLevels: string[]; lots: number; impreciseLots: number; lowThreshold: number | null }> = {}) => ({
+  id, name: id, status: "active", typeId: null, groupKey: "reagent", controlLevels: [], lots: 0, impreciseLots: 0, lowThreshold: null, ...fields,
 });
 
 describe("bulkProductPlan", () => {
@@ -63,6 +63,16 @@ describe("bulkProductPlan", () => {
       ["skip", "Already has this control level."],
     ]);
     expect(bulkProductPlan("addControl", [product("b", { lots: 3, impreciseLots: 1 })], { level: "hazardous" })[0].outcome).toBe("change");
+  });
+
+  it("sets a stock reminder only where it differs (Q241)", () => {
+    const rows = [product("a"), product("b", { lowThreshold: 0 }), product("c", { lowThreshold: 5 })];
+    expect(bulkProductPlan("reminder", rows, { reminder: "usedUp" }).map((entry) => [entry.outcome, entry.reason])).toEqual([
+      ["change", undefined],
+      ["skip", "Already reminds when used up."],
+      ["change", undefined],
+    ]);
+    expect(bulkProductPlan("reminder", rows, { reminder: "none" }).map((entry) => entry.outcome)).toEqual(["skip", "change", "change"]);
   });
 
   it("removes a control level only where it is set", () => {

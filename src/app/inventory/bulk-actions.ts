@@ -33,6 +33,7 @@ const productInput = z.object({
   typeId: z.string().min(1).nullish(),
   groupKey: z.string().min(1).nullish(),
   level: z.string().refine((key) => inventoryControlKeys.includes(key), "Unknown control level.").optional(),
+  reminder: z.enum(["none", "usedUp"]).optional(),
   confirmation: z.string().optional(),
 });
 
@@ -65,12 +66,13 @@ async function productPlan(tx: Tx, input: z.infer<typeof productInput>) {
     target = { typeId: null, groupKey: input.groupKey && isInventoryGroupKey(input.groupKey) ? input.groupKey : null };
   }
   if ((input.action === "addControl" || input.action === "removeControl") && !input.level) throw new Error("Choose a control level.");
+  if (input.action === "reminder" && !input.reminder) throw new Error("Choose a stock reminder.");
   const products = inSelectionOrder(await tx.inventoryProduct.findMany({
     where: { id: { in: input.ids } },
-    select: { id: true, name: true, status: true, typeId: true, groupKey: true, controlLevels: true, _count: { select: { items: true } }, items: { where: { managementMode: { not: "precise" } }, select: { id: true } } },
+    select: { id: true, name: true, status: true, typeId: true, groupKey: true, controlLevels: true, lowThreshold: true, _count: { select: { items: true } }, items: { where: { managementMode: { not: "precise" } }, select: { id: true } } },
   }), input.ids);
   const rows = products.map((product) => ({ ...product, lots: product._count.items, impreciseLots: product.items.length }));
-  return { target, products, plan: bulkProductPlan(input.action, rows, { ...target, level: input.level }) };
+  return { target, products, plan: bulkProductPlan(input.action, rows, { ...target, level: input.level, reminder: input.reminder }) };
 }
 
 const idsWith = (plan: BulkEntry[], outcome: BulkEntry["outcome"]) => plan.filter((entry) => entry.outcome === outcome).map((entry) => entry.id);
@@ -154,11 +156,15 @@ export async function applyProductBulk(raw: unknown): Promise<BulkState> {
           await tx.inventoryProduct.update({ where: { id: product.id }, data: { controlLevels: levels } });
         }
       }
+      if (input.action === "reminder") {
+        // "When used up" keeps any unit the product had; it counts every unit anyway.
+        await tx.inventoryProduct.updateMany({ where: { id: { in: changed } }, data: input.reminder === "usedUp" ? { lowThreshold: 0 } : { lowThreshold: null, lowThresholdUnit: null } });
+      }
       if (input.action === "delete") {
         for (const id of idsWith(plan, "delete")) await deleteProduct(tx, id);
         await tx.inventoryProduct.updateMany({ where: { id: { in: idsWith(plan, "archive") } }, data: { status: "archived" } });
       }
-      await tx.activityLog.create({ data: { action: `bulk_${input.action}`, targetType: "inventory_product_bulk", targetId: randomUUID(), metadataJson: { ...target, level: input.level ?? null, entries: plan } } });
+      await tx.activityLog.create({ data: { action: `bulk_${input.action}`, targetType: "inventory_product_bulk", targetId: randomUUID(), metadataJson: { ...target, level: input.level ?? null, reminder: input.reminder ?? null, entries: plan } } });
       return plan;
     });
     revalidatePath("/inventory");

@@ -58,6 +58,24 @@ export const inventoryZh: Record<string, string> = {
   "Container deleted": "删除误登记的实物",
   "Put at": "放到",
   "Put back at": "放回",
+
+  // Q237–Q242 stock alerts: out of stock is a reminder for products with a safety stock; a lot at 0 is just used up.
+  "out of stock": "缺货",
+  "Out of stock": "缺货",
+  "used up": "已用完",
+  "Used up lots": "已用完的批次",
+  "Show them": "显示",
+  "Stock reminder": "库存提醒",
+  "Stock reminder…": "库存提醒…",
+  "No reminder": "不提醒",
+  "When it is used up": "用完时提醒",
+  "When it falls to an amount": "降到一定数量时提醒",
+  "Remind at or below": "降到多少时提醒",
+  "Remind when used up": "用完时提醒",
+  "Change the stock reminder of the selected products?": "修改所选产品的库存提醒？",
+  "Already reminds when used up.": "已经是用完时提醒。",
+  "Already has no stock reminder.": "已经不提醒。",
+  "Choose a stock reminder.": "请选择库存提醒。",
 };
 
 /** Inventory messages with a number or name in them. */
@@ -68,5 +86,6 @@ export function translateInventoryDynamic(value: string): string | undefined {
   if ((match = value.match(/^Taken out (\d{2}-\d{2})$/))) return `${match[1]} 领用`;
   if ((match = value.match(/^With (\d+) places? inside$/))) return `含 ${match[1]} 个下级库位`;
   if ((match = value.match(/^Took out (\d+) and marked them used up\.$/))) return `已领用 ${match[1]} 个，并标记为用完。`;
+  if ((match = value.match(/^(\d+) used-up lots? (?:is|are) not shown\.$/))) return `另有 ${match[1]} 个已用完的批次没有列出。`;
   return undefined;
 }

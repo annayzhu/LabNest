@@ -20,6 +20,7 @@ import {
   lowStockAdvice,
   movementReversalProblem,
   observationUnits,
+  productSafetyStock,
   productStock,
 } from "./inventory";
 
@@ -160,10 +161,38 @@ describe("product safety stock (Q140)", () => {
     expect(productStock(lots, "µL")).toBe(500);
   });
 
-  it("flags every lot low when the product total reaches its safety stock, not the lot alone", () => {
-    expect(getInventoryRiskFlags({ currentQuantity: 3, lowThreshold: 10, productQuantity: 15 })).toEqual([]);
-    expect(getInventoryRiskFlags({ currentQuantity: 12, lowThreshold: 20, productQuantity: 15 })).toEqual(["low"]);
-    expect(getInventoryRiskFlags({ currentQuantity: 0, lowThreshold: 20, productQuantity: 15 })).toEqual(["depleted"]);
+  it("flags every lot low when the product total reaches its safety stock, and a used-up lot of a stocked product only as used up", () => {
+    const product = { lowThreshold: 20, lowThresholdUnit: "mL" };
+    expect(lotRiskFlags({ currentQuantity: 3, unit: "mL" }, { ...product, lowThreshold: 10 }, lots)).toEqual([]);
+    expect(lotRiskFlags({ currentQuantity: 12, unit: "mL" }, product, lots)).toEqual(["low"]);
+    expect(lotRiskFlags({ currentQuantity: 0, unit: "mL" }, product, lots)).toEqual(["used_up", "low"]);
+  });
+});
+
+describe("reminders only for stock someone asked about (Q237–Q241)", () => {
+  const empty = [{ currentQuantity: 0, unit: "bottle", quantityRecorded: true, status: "active" }];
+
+  it("a lot used up without a safety stock is used up, not out of stock, and no longer goes off", () => {
+    expect(lotRiskFlags({ currentQuantity: 0, unit: "bottle", expiryDate: "2020-01-01" }, { lowThreshold: null, lowThresholdUnit: null }, empty)).toEqual(["used_up"]);
+    expect(getInventoryRiskFlags({ currentQuantity: 0, expiryDate: "2020-01-01" })).toEqual(["used_up"]);
+  });
+
+  it("a safety stock of 0 reminds when every lot is used up, in any unit", () => {
+    const product = { lowThreshold: 0, lowThresholdUnit: null };
+    expect(lotRiskFlags({ currentQuantity: 0, unit: "bottle" }, product, empty)).toEqual(["used_up", "depleted"]);
+    expect(lotRiskFlags({ currentQuantity: 0, unit: "bottle" }, product, [...empty, { currentQuantity: 5, unit: "mL" }])).toEqual(["used_up"]);
+    expect(productSafetyStock(product, empty)).toEqual({ total: undefined, low: false, depleted: true });
+  });
+
+  it("counts containers out with someone as stock", () => {
+    const held = { currentQuantity: 0, unit: "bottle", _count: { containers: 1 } };
+    expect(lotRiskFlags(held, { lowThreshold: 0, lowThresholdUnit: "bottle" }, [held])).toEqual([]);
+    expect(productStock([held, { currentQuantity: 2, unit: "bottle" }], "bottle")).toBe(3);
+  });
+
+  it("a product that is stopped or archived never reminds", () => {
+    expect(lotRiskFlags({ currentQuantity: 0, unit: "bottle" }, { lowThreshold: 0, lowThresholdUnit: null, status: "inactive" }, empty)).toEqual(["used_up"]);
+    expect(productSafetyStock({ lowThreshold: 5, lowThresholdUnit: "bottle", status: "archived" }, empty)).toEqual({ total: undefined, low: false, depleted: false });
   });
 });
 

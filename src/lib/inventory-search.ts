@@ -40,6 +40,8 @@ export type SearchLot = {
   location: string | null;
   /** Containers in store, for stock kept by container. */
   inStore: number;
+  /** Containers out with someone and not yet used up: still stock, though not in store. */
+  held?: number;
   flags: InventoryRiskFlag[];
 };
 
@@ -68,11 +70,11 @@ export type StockRow = {
 };
 
 const day = (date: Date | null) => date?.toISOString().slice(0, 10) ?? null;
-const hasStock = (lot: SearchLot) => !lot.quantityRecorded || lot.currentQuantity > 0;
+const hasStock = (lot: SearchLot) => !lot.quantityRecorded || lot.currentQuantity + (lot.held ?? 0) > 0;
 
 /**
  * Lots as one row per product. Rows whose code equals the search come first, then names starting with it, then the
- * rest, each in the order given (recency when nothing is searched). A row is out of stock only when all its lots are.
+ * rest, each in the order given (recency when nothing is searched). A row is used up only when all its lots are.
  */
 export function stockRows(lots: SearchLot[], products: Map<string, { kind: string | null; strict: boolean }>, query: string): StockRow[] {
   const search = query.trim().toLowerCase();
@@ -97,7 +99,9 @@ function row(key: string, lots: SearchLot[], product: { kind: string | null; str
     const total = totals.get(code) ?? { quantity: 0, unit: lot.unit };
     totals.set(code, { ...total, quantity: Number((total.quantity + lot.currentQuantity).toFixed(6)) });
   }
-  const flags = new Set(stocked.flatMap((lot) => lot.flags.filter((flag) => flag !== "depleted")));
+  // Low and out of stock are the product's, so any lot carries them; a used-up lot beside stocked ones is no news (Q238).
+  const flags = new Set(lots.flatMap((lot) => lot.flags));
+  if (stocked.length) flags.delete("used_up");
   return {
     key,
     name: first.name,
@@ -108,7 +112,7 @@ function row(key: string, lots: SearchLot[], product: { kind: string | null; str
     totals: [...totals.values()],
     places: [...new Set(lots.flatMap((lot) => lot.location ? [lot.location] : []))],
     expiry: day(stocked.find((lot) => lot.expiryDate)?.expiryDate ?? null),
-    flags: [...(lots.some((lot) => lot.quantityRecorded) && !stocked.length ? ["depleted" as const] : []), ...(["low", "expired", "expiring"] as const).filter((flag) => flags.has(flag))],
+    flags: (["depleted", "low", "expired", "expiring", "used_up"] as const).filter((flag) => flags.has(flag)),
     lots: lots.map((lot) => ({ id: lot.id, lotNumber: lot.lotNumber, managementMode: lot.managementMode, quantity: lot.currentQuantity, unit: lot.unit, quantityRecorded: lot.quantityRecorded, location: lot.location, inStore: lot.inStore, expiry: day(lot.expiryDate) })),
     focusLotId: (exact ?? stocked[0] ?? first).id,
     exact: !!exact,

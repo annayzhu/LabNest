@@ -6,14 +6,14 @@ import { CollectionToolbar, collectionPrimaryActionClass, collectionSecondaryAct
 import { InventoryBulkActions } from "@/components/InventoryBulkActions";
 import { InventoryNav } from "@/components/InventoryNav";
 import { InventoryReturnPoint } from "@/components/InventoryBackLink";
-import { InventoryRiskBadges } from "@/components/InventoryRiskBadges";
+import { InventoryRiskBadges, StockReminderText, UsedUpHidden } from "@/components/InventoryRiskBadges";
 import { MobileInventoryBench } from "@/components/MobileInventoryBench";
 import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
 import { filterHref, firstOptionSearchParam, firstSearchParam, type PageSearchParams } from "@/lib/filters";
-import { lotRiskFlags, type InventoryRiskFlag } from "@/lib/inventory";
+import { heldCount, lotRiskFlags, type InventoryRiskFlag } from "@/lib/inventory";
 import { QuantityText } from "@/components/InventoryDetail";
 import { locationWithin } from "@/lib/inventory-location-lifecycle";
 import { stockFormLocations } from "@/lib/inventory-products.server";
@@ -29,6 +29,7 @@ const flagOptions = [
   { value: "expired", label: "Expired" },
   { value: "expiring", label: "Expires in 30 days" },
   { value: "held", label: "In use" },
+  { value: "used_up", label: "Used up lots" },
 ];
 
 /** Every lot in the lab, one row each, with search, filters and bulk actions; the inventory home finds single things faster. */
@@ -58,19 +59,23 @@ export default async function InventoryListPage({ searchParams }: { searchParams
   const orderBy = sort === "name_asc" ? { name: "asc" as const } : sort === "expiry_asc" ? { expiryDate: { sort: "asc" as const, nulls: "last" as const } } : { updatedAt: "desc" as const };
 
   const [matchedItems, totalCount, locations, groups, types, principalInvestigators, allStock] = await Promise.all([
-    prisma.inventoryItem.findMany({ where, include: { location: true, product: { include: { type: { select: { label: true } } } } }, orderBy }),
+    prisma.inventoryItem.findMany({ where, include: { location: true, product: { include: { type: { select: { label: true } } } }, _count: heldCount }, orderBy }),
     prisma.inventoryItem.count(),
     stockFormLocations(prisma),
     prisma.inventoryGroup.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.scientificSchemaDefinition.findMany({ where: { inventoryGroupKey: { not: null } }, select: { id: true, label: true }, orderBy: { label: "asc" } }),
     prisma.inventoryItem.findMany({ where: { principalInvestigator: { not: null } }, distinct: ["principalInvestigator"], select: { principalInvestigator: true }, orderBy: { principalInvestigator: "asc" } }),
-    prisma.inventoryItem.findMany({ select: { id: true, productId: true, currentQuantity: true, unit: true, quantityRecorded: true, status: true, lowThreshold: true, expiryDate: true, product: { select: { lowThreshold: true, lowThresholdUnit: true } } } }),
+    prisma.inventoryItem.findMany({ select: { id: true, productId: true, currentQuantity: true, unit: true, quantityRecorded: true, status: true, lowThreshold: true, expiryDate: true, _count: heldCount, product: { select: { lowThreshold: true, lowThresholdUnit: true, status: true } } } }),
   ]);
 
   const lotsByProduct = Map.groupBy(allStock, (lot) => lot.productId ?? lot.id);
   const flagsOf = (lot: (typeof allStock)[number] | (typeof matchedItems)[number]) => lotRiskFlags(lot, lot.product, lotsByProduct.get(lot.productId ?? lot.id) ?? [], now);
   const itemsWithRisk = matchedItems.map((item) => ({ ...item, riskFlags: flagsOf(item) }));
-  const items = flag && flag !== "held" ? itemsWithRisk.filter((item) => item.riskFlags.includes(flag)) : itemsWithRisk;
+  const flagged = flag && flag !== "held" ? itemsWithRisk.filter((item) => item.riskFlags.includes(flag)) : itemsWithRisk;
+  // Active lots with nothing left stay out of the list until asked for (Q239); a state filter shows what it names.
+  const items = flag ? flagged : flagged.filter((item) => !(item.status === "active" && item.riskFlags.includes("used_up")));
+  const usedUpHidden = flagged.length - items.length;
+  const usedUpHref = filterHref("/inventory/list", { q: query, status, location: locationId, group: groupKey, type: typeId, pi: principalInvestigator, flag: "used_up" });
   const stockRisk = allStock.filter((lot) => lot.status === "active").map(flagsOf);
   const count = (wanted: InventoryRiskFlag) => stockRisk.filter((flags) => flags.includes(wanted)).length;
   const groupNames = new Map(groups.map((group) => [group.key, inventoryGroupName(group)]));
@@ -88,7 +93,8 @@ export default async function InventoryListPage({ searchParams }: { searchParams
           key={JSON.stringify([query, status, locationId, groupKey, typeId, principalInvestigator, flag, sort])}
           totalCount={totalCount}
           filters={{ status, location: locationId, group: groupKey, type: typeId, pi: principalInvestigator, flag, sort: sort === "updated_desc" ? undefined : sort }}
-          riskCounts={{ low: count("low"), depleted: count("depleted"), expired: count("expired"), expiring: count("expiring") }}
+          riskCounts={{ low: count("low"), depleted: count("depleted"), expired: count("expired"), expiring: count("expiring"), used_up: count("used_up") }}
+          usedUp={usedUpHidden ? { hidden: usedUpHidden, href: usedUpHref } : undefined}
           items={items.map((item) => ({
             id: item.id,
             name: item.name,
@@ -171,7 +177,7 @@ export default async function InventoryListPage({ searchParams }: { searchParams
                 render: (row) => (
                   <div>
                     <QuantityText quantity={row.currentQuantity} unit={row.unit} recorded={row.quantityRecorded} />
-                    {row.product?.lowThreshold != null ? <p className="mt-0.5 text-xs text-muted"><span>Safety stock</span> <QuantityText quantity={row.product.lowThreshold} unit={row.product.lowThresholdUnit} /></p> : null}
+                    {row.product?.lowThreshold != null ? <p className="mt-0.5 text-xs text-muted"><StockReminderText lowThreshold={row.product.lowThreshold} unit={row.product.lowThresholdUnit} /></p> : null}
                   </div>
                 ),
               },
@@ -198,6 +204,7 @@ export default async function InventoryListPage({ searchParams }: { searchParams
               },
             ]}
           />
+          {usedUpHidden ? <UsedUpHidden count={usedUpHidden} href={usedUpHref} /> : null}
         </div>
       </div>
     </AppShell>

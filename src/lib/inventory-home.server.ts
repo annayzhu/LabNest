@@ -1,6 +1,6 @@
 import { PurchaseStatus } from "@/generated/prisma/enums";
 import { prisma } from "./db";
-import { isStrictlyControlled, lotRiskFlags, type InventoryRiskFlag } from "./inventory";
+import { heldCount, isStrictlyControlled, lotRiskFlags, type InventoryRiskFlag } from "./inventory";
 import { duplicateOverview } from "./inventory-products.server";
 import { inventoryGroupName } from "./inventory-types";
 import { labDate } from "./lab-time";
@@ -15,7 +15,7 @@ export type HeldContainer = { id: string; itemId: string; name: string; lotNumbe
 /** What needs attention, each as a count that opens the stock or product list filtered to it. */
 export async function inventoryAlerts(now = new Date()): Promise<InventoryAlert[]> {
   const [lots, inUse, openPurchases, strictProducts, duplicates] = await Promise.all([
-    prisma.inventoryItem.findMany({ where: { status: "active" }, select: { id: true, productId: true, currentQuantity: true, unit: true, quantityRecorded: true, status: true, lowThreshold: true, expiryDate: true, product: { select: { lowThreshold: true, lowThresholdUnit: true } } } }),
+    prisma.inventoryItem.findMany({ where: { status: "active" }, select: { id: true, productId: true, currentQuantity: true, unit: true, quantityRecorded: true, status: true, lowThreshold: true, expiryDate: true, _count: heldCount, product: { select: { lowThreshold: true, lowThresholdUnit: true, status: true } } } }),
     // Containers, as the in-use list it opens counts them.
     prisma.inventoryContainer.count({ where: { state: "held", inventoryItem: { status: "active" } } }),
     prisma.purchaseRequest.count({ where: { status: { in: [PurchaseStatus.planned, PurchaseStatus.ordered, PurchaseStatus.received] } } }),
@@ -23,13 +23,15 @@ export async function inventoryAlerts(now = new Date()): Promise<InventoryAlert[
     duplicateOverview(prisma),
   ]);
   const byProduct = Map.groupBy(lots, (lot) => lot.productId ?? lot.id);
-  const flags = lots.map((lot) => lotRiskFlags(lot, lot.product, byProduct.get(lot.productId ?? lot.id) ?? [], now));
-  const count = (flag: InventoryRiskFlag) => flags.filter((entry) => entry.includes(flag)).length;
+  const flagged = lots.map((lot) => ({ key: lot.productId ?? lot.id, flags: lotRiskFlags(lot, lot.product, byProduct.get(lot.productId ?? lot.id) ?? [], now) }));
+  const count = (flag: InventoryRiskFlag) => flagged.filter((entry) => entry.flags.includes(flag)).length;
+  // Low and out of stock belong to a product, so each is counted once however many lots it has (Q238).
+  const products = (flag: InventoryRiskFlag) => new Set(flagged.filter((entry) => entry.flags.includes(flag)).map((entry) => entry.key)).size;
   const strict = strictProducts.filter((product) => isStrictlyControlled(product.controlLevels));
   const sds = strict.length ? await prisma.attachmentLink.findMany({ where: { targetType: "inventory_product", linkType: "sds", targetId: { in: strict.map((product) => product.id) } }, select: { targetId: true } }) : [];
   const alerts: InventoryAlert[] = [
-    { label: "Low stock", value: count("low"), href: "/inventory/list?flag=low", tone: "warning" },
-    { label: "Out of stock", value: count("depleted"), href: "/inventory/list?flag=depleted", tone: "danger" },
+    { label: "Low stock", value: products("low"), href: "/inventory/products?flag=low", tone: "warning" },
+    { label: "Out of stock", value: products("depleted"), href: "/inventory/products?flag=depleted", tone: "danger" },
     { label: "Expired", value: count("expired"), href: "/inventory/list?flag=expired", tone: "danger" },
     { label: "Expires in 30 days", value: count("expiring"), href: "/inventory/list?flag=expiring", tone: "warning" },
     { label: "In use", value: inUse, href: "/inventory#in-use", tone: "info" },

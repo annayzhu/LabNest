@@ -6,7 +6,7 @@ import { InventoryBackLink } from "@/components/InventoryBackLink";
 import { InventoryContainers } from "@/components/InventoryContainers";
 import { InventoryNav } from "@/components/InventoryNav";
 import { InventoryLifecycleMenu } from "@/components/InventoryLifecycleMenu";
-import { InventoryRiskBadges } from "@/components/InventoryRiskBadges";
+import { InventoryRiskBadges, StockReminderText } from "@/components/InventoryRiskBadges";
 import { InventoryTransactionForm } from "@/components/InventoryTransactionForm";
 import { PageActionsMenu } from "@/components/PageActionsMenu";
 import { PageHeader } from "@/components/PageHeader";
@@ -18,7 +18,7 @@ import { Panel, QuantityText, Row, SideSection } from "@/components/InventoryDet
 import { ExperimentStatus, PurchaseStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import {
-  controlLevelName, formatStockQuantity, inventoryNoteText, isStrictlyControlled, lotRiskFlags, lowStockAdvice, managementModeLabels,
+  controlLevelName, formatStockQuantity, heldCount, inventoryNoteText, isStrictlyControlled, lotRiskFlags, lowStockAdvice, managementModeLabels,
   movementReversalProblem, observationUnits, productDocumentKindNames,
 } from "@/lib/inventory";
 import { ledgerEntry } from "@/lib/inventory-ledger";
@@ -36,7 +36,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
   const item = await prisma.inventoryItem.findUnique({
     where: { id },
     include: {
-      product: { include: { type: true, group: true, kitComponents: { orderBy: { sortOrder: "asc" } }, items: { select: { currentQuantity: true, unit: true, quantityRecorded: true, status: true } } } },
+      product: { include: { type: true, group: true, kitComponents: { orderBy: { sortOrder: "asc" } }, items: { select: { currentQuantity: true, unit: true, quantityRecorded: true, status: true, _count: heldCount } } } },
       containers: { include: { observations: { orderBy: { createdAt: "desc" } }, events: { orderBy: { createdAt: "desc" } } }, orderBy: { createdAt: "asc" } },
       location: true,
       parentInventoryItem: { select: { id: true, name: true, aliquotCode: true } },
@@ -67,7 +67,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
 
   const product = item.product;
   const paths = locationPaths(allLocations);
-  const riskFlags = lotRiskFlags(item, product, product?.items ?? []);
+  const riskFlags = lotRiskFlags({ ...item, _count: { containers: item.containers.filter((container) => container.state === "held").length } }, product, product?.items ?? []);
   const strict = isStrictlyControlled(product?.controlLevels ?? []);
   const advice = lowStockAdvice(product?.groupKey);
   const fields = product?.type ? inventoryTypeFields(product.type.fieldDefinitions) : [];
@@ -105,7 +105,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
         <div className="-mt-2 space-y-1.5">
           <p className="flex flex-wrap items-baseline gap-x-2 text-sm text-graphite">
             <span className="font-medium text-ink"><QuantityText quantity={item.currentQuantity} unit={item.unit} recorded={item.quantityRecorded} /></span>
-            {product?.lowThreshold != null ? <span className="text-muted"><span>Safety stock</span> <QuantityText quantity={product.lowThreshold} unit={product.lowThresholdUnit} /></span> : null}
+            {product?.lowThreshold != null ? <span className="text-muted"><StockReminderText lowThreshold={product.lowThreshold} unit={product.lowThresholdUnit} /></span> : null}
             <span aria-hidden className="text-muted">·</span>
             <span>{item.location ? paths.get(item.location.id) ?? item.location.name : "Unassigned"}{item.positionCode ? ` · ${item.positionCode}` : ""}</span>
             {temperatureLabel(item.location?.temperature) ? <span className="text-muted">{temperatureLabel(item.location?.temperature)}</span> : null}

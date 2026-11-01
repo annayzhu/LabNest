@@ -1,5 +1,5 @@
 import { prisma } from "./db";
-import { isStrictlyControlled, lotRiskFlags } from "./inventory";
+import { heldCount, isStrictlyControlled, lotRiskFlags } from "./inventory";
 import { locationPaths } from "./inventory-location-lifecycle";
 import { stockRows, stockSearchWhere, type StockSearch } from "./inventory-search";
 import { inventoryGroupName } from "./inventory-types";
@@ -23,8 +23,9 @@ export async function findStock(query: string, limit = 8): Promise<StockSearch> 
     prisma.inventoryItem.findMany({
       where: { status: "active", OR: [{ productId: { in: matched.flatMap((lot) => lot.productId ? [lot.productId] : []) } }, { id: { in: matched.filter((lot) => !lot.productId).map((lot) => lot.id) } }] },
       include: {
-        product: { include: { type: { select: { label: true } }, group: true, items: { where: { status: "active" }, select: { currentQuantity: true, unit: true, quantityRecorded: true, status: true } } } },
+        product: { include: { type: { select: { label: true } }, group: true, items: { where: { status: "active" }, select: { currentQuantity: true, unit: true, quantityRecorded: true, status: true, _count: heldCount } } } },
         containers: { where: { state: "warehouse" }, select: { id: true } },
+        _count: heldCount,
       },
     }),
     prisma.inventoryLocation.findMany({ select: { id: true, name: true, parentLocationId: true } }),
@@ -40,7 +41,7 @@ export async function findStock(query: string, limit = 8): Promise<StockSearch> 
         lotNumber: lot.lotNumber, barcode: lot.barcode, aliquotCode: lot.aliquotCode,
         managementMode: lot.managementMode, currentQuantity: lot.currentQuantity, unit: lot.unit, quantityRecorded: lot.quantityRecorded,
         expiryDate: lot.expiryDate, location: [lot.locationId ? paths.get(lot.locationId) : null, lot.positionCode].filter(Boolean).join(" · ") || null,
-        inStore: lot.containers.length, flags: lotRiskFlags(lot, lot.product, lot.product?.items ?? [], now),
+        inStore: lot.containers.length, held: lot._count.containers, flags: lotRiskFlags(lot, lot.product, lot.product?.items ?? [], now),
       })),
     products,
     search,

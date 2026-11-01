@@ -9,9 +9,10 @@ import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
 import { QuantityText } from "@/components/InventoryDetail";
+import { StockReminderText } from "@/components/InventoryRiskBadges";
 import { prisma } from "@/lib/db";
 import { filterHref, firstOptionSearchParam, firstSearchParam, type PageSearchParams } from "@/lib/filters";
-import { controlLevelName, isStrictlyControlled, productSafetyStock } from "@/lib/inventory";
+import { controlLevelName, heldCount, isStrictlyControlled, productSafetyStock } from "@/lib/inventory";
 import { duplicateOverview } from "@/lib/inventory-products.server";
 import { strandWhere } from "@/lib/inventory-search";
 import { inventoryGroupName } from "@/lib/inventory-types";
@@ -42,7 +43,7 @@ export default async function InventoryProductsPage({ searchParams }: { searchPa
         ] } : {}),
         ...(flag === "sequences" ? { entity: { sequenceLinks: { some: {} } } } : {}),
       },
-      include: { type: { select: { label: true } }, items: { select: { currentQuantity: true, unit: true, quantityRecorded: true, status: true } } },
+      include: { type: { select: { label: true } }, items: { select: { currentQuantity: true, unit: true, quantityRecorded: true, status: true, _count: heldCount } } },
       orderBy: sort === "updated_desc" ? { updatedAt: "desc" } : { name: "asc" },
     }),
     prisma.inventoryProduct.count(),
@@ -67,7 +68,7 @@ export default async function InventoryProductsPage({ searchParams }: { searchPa
       sdsMissing: isStrictlyControlled(product.controlLevels) && !withSds.has(product.id),
       activeLots: product.items.filter((lot) => lot.status === "active").length,
     };
-  }).filter((row) => flag === "sds" ? row.sdsMissing : flag === "low" ? row.low : true);
+  }).filter((row) => flag === "sds" ? row.sdsMissing : flag === "low" ? row.low : flag === "depleted" ? row.depleted : true);
 
   return (
     <AppShell>
@@ -86,7 +87,7 @@ export default async function InventoryProductsPage({ searchParams }: { searchPa
           filters={[
             { name: "group", label: "groups", value: groupKey, options: [...groups.map((group) => ({ value: group.key, label: inventoryGroupName(group) })), { value: "none", label: "To be classified" }] },
             { name: "type", label: "types", value: typeId, options: types.map((type) => ({ value: type.id, label: type.label })) },
-            { name: "flag", label: "attention", value: flag, options: [{ value: "low", label: "Low stock" }, { value: "sds", label: "SDS missing" }, { value: "sequences", label: "Has sequences" }] },
+            { name: "flag", label: "attention", value: flag, options: [{ value: "low", label: "Low stock" }, { value: "depleted", label: "Out of stock" }, { value: "sds", label: "SDS missing" }, { value: "sequences", label: "Has sequences" }] },
             { name: "status", label: "statuses", value: status, options: objectStatusOptions },
           ]}
           sortOptions={[{ value: "name_asc", label: "Name A–Z" }, { value: "updated_desc", label: "Recently updated" }]}
@@ -120,8 +121,8 @@ export default async function InventoryProductsPage({ searchParams }: { searchPa
             {
               key: "stock",
               header: "Stock",
-              render: (row) => row.total !== undefined
-                ? <div><QuantityText quantity={row.total} unit={row.lowThresholdUnit} /><p className="mt-0.5 text-xs text-muted"><span>Safety stock</span> <QuantityText quantity={row.lowThreshold ?? 0} unit={row.lowThresholdUnit} /></p></div>
+              render: (row) => row.lowThreshold != null
+                ? <div>{row.total !== undefined ? <QuantityText quantity={row.total} unit={row.lowThresholdUnit} /> : null}<p className="mt-0.5 text-xs text-muted"><StockReminderText lowThreshold={row.lowThreshold} unit={row.lowThresholdUnit} /></p></div>
                 : <span className="text-muted">—</span>,
             },
             { key: "lots", header: "Lots", render: (row) => <span className="tabular-nums">{row.activeLots}</span> },
@@ -133,7 +134,7 @@ export default async function InventoryProductsPage({ searchParams }: { searchPa
             {
               key: "attention",
               header: "Attention",
-              render: (row) => row.status === "archived" ? <span className="text-xs text-muted">Archived</span> : <div className="flex flex-wrap gap-1">{row.low ? <Badge tone="warning">low stock</Badge> : null}{row.sdsMissing ? <Badge tone="danger">SDS missing</Badge> : null}</div>,
+              render: (row) => row.status === "archived" ? <span className="text-xs text-muted">Archived</span> : <div className="flex flex-wrap gap-1">{row.depleted ? <Badge tone="danger">out of stock</Badge> : null}{row.low ? <Badge tone="warning">low stock</Badge> : null}{row.sdsMissing ? <Badge tone="danger">SDS missing</Badge> : null}</div>,
             },
           ]}
         />

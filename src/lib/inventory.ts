@@ -1,16 +1,31 @@
 import { zhUi } from "./i18n";
 import type { InventoryItem, InventoryTransaction } from "./types";
 
-export type InventoryRiskFlag = "depleted" | "low" | "expired" | "expiring";
+/**
+ * What a lot's stock calls for. "low" and "depleted" (out of stock) are reminders, raised only for stock with a safety
+ * stock (Q237); "used_up" is a plain state, a counted lot with nothing left, and never a reminder.
+ */
+export type InventoryRiskFlag = "depleted" | "low" | "expired" | "expiring" | "used_up";
 
-type InventoryRiskInput = {
+/** Prisma `_count` of a lot's containers taken out and not yet used up: stock kept by container still holds them. */
+export const heldCount = { select: { containers: { where: { state: "held" as const } } } };
+
+type HeldCount = { _count?: { containers: number } };
+
+type InventoryRiskInput = HeldCount & {
   currentQuantity: number;
   quantityRecorded?: boolean;
+  /** The safety stock of stock saved before products; null means nobody asked to be reminded, 0 "when it is all gone". */
   lowThreshold?: number | null;
-  /** The product's stock across its lots (productStock); safety stock is the product's, so "low" compares this total. */
-  productQuantity?: number;
+  /** For a lot of a product: whether the product as a whole is low or out of stock (productSafetyStock). */
+  productState?: { low: boolean; depleted: boolean };
   expiryDate?: string | Date | null;
 };
+
+/** What a lot still holds: its amount, and for stock kept by container the containers out with someone too (Q239). */
+export function stockOnHand(lot: { currentQuantity: number } & HeldCount) {
+  return lot.currentQuantity + (lot._count?.containers ?? 0);
+}
 
 export function getInventoryRiskFlags(
   item: InventoryRiskInput,
@@ -18,14 +33,17 @@ export function getInventoryRiskFlags(
   expiringWithinDays = 30,
 ): InventoryRiskFlag[] {
   const flags: InventoryRiskFlag[] = [];
+  const counted = item.quantityRecorded !== false;
+  const usedUp = counted && stockOnHand(item) <= 0;
+  if (usedUp) flags.push("used_up");
 
-  if (item.quantityRecorded !== false && item.currentQuantity <= 0) {
-    flags.push("depleted");
-  } else if (item.quantityRecorded !== false && item.lowThreshold != null && (item.productQuantity ?? item.currentQuantity) <= item.lowThreshold) {
-    flags.push("low");
-  }
+  // A lot of a product takes the product's state; stock saved before products compares its own amount.
+  const state = item.productState ?? (item.lowThreshold != null ? { depleted: usedUp, low: stockOnHand(item) <= item.lowThreshold } : undefined);
+  if (counted && state?.depleted) flags.push("depleted");
+  else if (counted && state?.low) flags.push("low");
 
-  if (item.expiryDate) {
+  // A lot with nothing left cannot go off (Q240).
+  if (item.expiryDate && !usedUp) {
     // Date-input values are stored as UTC midnight. Compare calendar days,
     // using the caller/runtime local day for "today", not an expiry instant.
     const expiryDay = item.expiryDate instanceof Date ? item.expiryDate.toISOString().slice(0,10) : item.expiryDate.slice(0,10);
@@ -43,27 +61,31 @@ export function getInventoryRiskFlags(
   return flags;
 }
 
-type StockLot = { currentQuantity: number; unit: string; quantityRecorded?: boolean; status?: string };
-type SafetyStock = { lowThreshold: number | null; lowThresholdUnit: string | null };
+type StockLot = HeldCount & { currentQuantity: number; unit: string; quantityRecorded?: boolean; status?: string };
+/** A product's safety stock; a product that is not active (stopped or archived) is never a reminder (Q241). */
+type SafetyStock = { lowThreshold: number | null; lowThresholdUnit: string | null; status?: string };
 
 /** A product's stock, adding its active, counted lots in the unit its safety stock is set in; lots in another unit are left out. */
 export function productStock(lots: StockLot[], unit: string) {
   return Number(lots.filter((lot) => sameUnit(lot.unit, unit) && lot.quantityRecorded !== false && (lot.status ?? "active") === "active")
-    .reduce((sum, lot) => sum + lot.currentQuantity, 0).toFixed(6));
+    .reduce((sum, lot) => sum + stockOnHand(lot), 0).toFixed(6));
 }
 
-/** A product's stock in its safety-stock unit, and whether that is at or below its safety stock. */
+/**
+ * A product's stock in its safety-stock unit, and whether it is low or out of stock. Out of stock means no active,
+ * counted lot holds anything, in any unit; so "remind me when it is used up" (0) needs no unit.
+ */
 export function productSafetyStock(product: SafetyStock, lots: StockLot[]) {
-  if (product.lowThreshold == null || !product.lowThresholdUnit) return { total: undefined, low: false };
-  const total = productStock(lots, product.lowThresholdUnit);
-  return { total, low: total <= product.lowThreshold };
+  if (product.lowThreshold == null || (product.status ?? "active") !== "active") return { total: undefined, low: false, depleted: false };
+  const depleted = !lots.some((lot) => lot.quantityRecorded !== false && (lot.status ?? "active") === "active" && stockOnHand(lot) > 0);
+  const total = product.lowThresholdUnit ? productStock(lots, product.lowThresholdUnit) : undefined;
+  return { total, low: !depleted && total !== undefined && total <= product.lowThreshold, depleted };
 }
 
-/** A lot's flags: "low" compares its product's total in the safety-stock unit; stock saved before products keeps its own threshold. */
+/** A lot's flags: "low" and "depleted" are its product's (Q238); stock saved before products keeps its own threshold. */
 export function lotRiskFlags(lot: InventoryRiskInput & { unit: string }, product: SafetyStock | null | undefined, productLots: StockLot[], now = new Date()) {
   if (!product) return getInventoryRiskFlags(lot, now);
-  const productQuantity = product.lowThreshold != null && product.lowThresholdUnit ? productStock(productLots, product.lowThresholdUnit) : undefined;
-  return getInventoryRiskFlags({ ...lot, lowThreshold: productQuantity === undefined ? null : product.lowThreshold, productQuantity }, now);
+  return getInventoryRiskFlags({ ...lot, lowThreshold: null, productState: productSafetyStock(product, productLots) }, now);
 }
 
 /** The safety stock a lot exports in its own unit: its product's when set in that unit, else the lot's own (from before products). */

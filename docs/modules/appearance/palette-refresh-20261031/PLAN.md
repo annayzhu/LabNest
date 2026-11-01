@@ -163,3 +163,13 @@
   - `evidence/settings-phone-before-after.png`：手机，同样三个位置。
   - `evidence/settings-desktop-en-dark.png`：英文深色。
   - `evidence/settings-webkit-desktop.png`：WebKit。
+
+## 7. 发布到 3001（2026-10-31 20:55 PDT）
+
+- 提交：`4dc990a9`（配色）、`1dc1bc63`（设置页排版与本文档），接在 `dcc688e4` 之后。
+- 三处版本一致：GitHub main、开发目录 HEAD（与 origin/main 0/0）、3001 镜像 `labnest-app:settings-refresh-1dc1bc63`，都是 `1dc1bc63`。3001 健康检查正常。
+- 数据：
+  - 发布前应用备份 `20261101-115019`，已做还原检查。
+  - 无迁移。70 张表与 66 个附件在部署前后逐字节相同，运行配置不变。
+- 检查（只发 GET 请求）：暂存镜像（数据库副本）和 3001 上，各跑一次通用检查（76 项全过）和设置页检查（7 项全过）。
+- 回滚：旧容器 `labnest-app-before-settings-refresh-20261101` 保留。发布记录在 `.local-runtime/release-settings-refresh-20261101/DELIVERY.md`。

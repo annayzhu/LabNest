@@ -47,6 +47,7 @@ export const protocolLabelsZh: Record<string, string> = {
 // scientific content. English is the canonical source string in the codebase.
 export const zhUi: Record<string, string> = {
   ...samplesZh,
+  "The page is still loading; try again.": "正文还在加载，请稍后再试。",
   "Verification": "验证",
   "Backup": "备份",
   "Backups are not set up on this server (LABNEST_BACKUP_ROOT is not set).": "这台服务器还没有设置备份（未设置 LABNEST_BACKUP_ROOT）。",
@@ -2099,7 +2100,6 @@ export const zhUi: Record<string, string> = {
   "Structured": "结构化",
   "Summary unit": "摘要单位",
   "Take photo": "拍照",
-  "The page is still loading; try again.": "页面仍在加载，请稍后重试。",
   "Added at the end of the page": "插到正文末尾",
   "Files kept beside the page. New pictures and files go into the page: type / there, paste, or drop them on it.": "这些文件存放在正文之外。新的图片和文件直接放进正文：在正文里输入 /，或粘贴、拖入。",
   "Temperature": "温度",

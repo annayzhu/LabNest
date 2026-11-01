@@ -103,3 +103,13 @@ describe('What a run may spend', () => {
     expect(estimateModelCalls({ maxPapers: 20, maxFullText: 8 })).toBe(33);
   });
 });
+
+
+it('does not contradict explicit purpose text with synthetic missing-confirmation placeholders', async () => {
+  const { clarificationPrompt } = await import('./stages');
+  const prompt = clarificationPrompt('Ligand blot 检测 SRGN 与候选分子', { sample: 'KYSE150 或 KYSE410；蛋白类型待定' });
+  expect(prompt.user).toContain('Ligand blot');
+  expect(prompt.user).not.toContain('已确认方法：未说明');
+  expect(prompt.user).not.toContain('研究对象：未说明');
+  expect(prompt.system).toContain('不因缺少单独字段就重复追问');
+});

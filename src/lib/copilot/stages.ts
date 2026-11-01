@@ -5,7 +5,7 @@ import { clarificationSchema, designSchema, extractionSchema, subQuestionSchema,
 
 /** Prompts and readers for the stages of a run. Every reader refuses text that is not the shape asked for. */
 type Inputs = CopilotInputs;
-const context = (purpose: string, inputs: Inputs) => `${inputs.mode === 'adjust' ? '任务：调整一份已有的研究方案。方案里已经写了的内容不要重复，只补缺口、指出需要修正的地方。\n' : ''}研究目的：${purpose}\n样本或模型：${inputs.sample || inputs.model || '未说明'}\n已有条件：${inputs.conditions || '未说明'}\n已确认方法：${inputs.method || '未说明'}\n研究对象：${inputs.subject || '未说明'}\n本轮目标：${inputs.objective || purpose}`;
+const context = (purpose: string, inputs: Inputs) => `${inputs.mode === 'adjust' ? '任务：调整一份已有的研究方案。方案里已经写了的内容不要重复，只补缺口、指出需要修正的地方。\n' : ''}研究目的：${purpose}\n样本或模型：${inputs.sample || inputs.model || '未说明'}\n已有条件：${inputs.conditions || '未说明'}${inputs.method ? `\n已确认方法：${inputs.method}` : ''}${inputs.subject ? `\n已确认研究对象：${inputs.subject}` : ''}${inputs.objective ? `\n已确认本轮目标：${inputs.objective}` : ''}`;
 
 function jsonObject(raw: string): unknown {
   const payload = extractJsonPayload(raw);
@@ -15,7 +15,7 @@ function jsonObject(raw: string): unknown {
 
 export function clarificationPrompt(purpose: string, inputs: Inputs) {
   return {
-    system: '先澄清研究问题，暂不检索和设计实验。检查术语歧义、分子拼写、研究对象、样本和目标。不擅自纠正或补全研究者未提供的信息：未知项写“待定”，有歧义的术语保留原词，并在 questions 中给出需要作者决定的选项。例：ligation blot 可能是 ligand blot/far-Western，也可能是连接相关检测，必须由作者确认。用户明确提供的信息原样保留。只输出 JSON：{"method":"方法及全称","subject":"分子与候选对象","sample":"样本类型和模型，未知写待定","objective":"本轮要回答的问题","questions":["需要确认的问题"]}。',
+    system: '先澄清研究问题，暂不检索和设计实验。检查术语歧义、分子拼写、研究对象、样本和目标。不擅自纠正或补全研究者未提供的信息：未知项写“待定”，有歧义的术语保留原词，并在 questions 中给出需要作者决定的选项。例：ligation blot 可能是 ligand blot/far-Western，也可能是连接相关检测，必须由作者确认。用户在研究目的、样本、已有条件中明确提供的信息均为有效输入，原样保留，不因缺少单独字段就重复追问或改成待定。questions 最多 4 个，只问影响本轮目标的实际歧义；已经明确为待定的条件不重复问，作为后续设计限制保留。用“结论适用范围”，不用“边界”一词。只输出 JSON：{"method":"方法及全称","subject":"分子与候选对象","sample":"样本类型和模型，未知写待定","objective":"本轮要回答的问题","questions":["需要确认的问题"]}。',
     user: context(purpose, inputs),
   };
 }

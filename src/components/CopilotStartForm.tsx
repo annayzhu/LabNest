@@ -33,7 +33,7 @@ export function CopilotStartForm({ readiness, mode, busy, lead, onStart }: { rea
       </div>
       <label className="ln-copilot-check"><input type="checkbox" checked={form.stepwise} onChange={event => setForm({ ...form, stepwise: event.target.checked })} />Stop after each stage so I can look</label>
     </details>
-    {blocked === 'tools' ? <p role="status" className="ln-copilot-warn">The default AI service cannot work with tools. Choose DeepSeek, OpenAI, Anthropic, Qwen or Gemini as the default service in AI settings.</p> : null}
+    {blocked === 'tools' ? <p role="status" className="ln-copilot-warn">The default AI service cannot work with tools. Choose a ChatGPT subscription, DeepSeek, OpenAI, Anthropic, Qwen or Gemini as the default service in AI settings.</p> : null}
     {blocked === 'literature' ? <p role="status" className="ln-copilot-warn">Searching Europe PMC is off. Turn on outside method search and tick Europe PMC in the search settings of <Link href="/protocols/design" className="underline">Design from a goal</Link></p> : null}
     <div className="ln-copilot-footer">
       {lead}

@@ -3540,7 +3540,7 @@ export const zhUi: Record<string, string> = {
   "e.g. KYSE150 and KYSE30 cells": "例如：KYSE150 和 KYSE30 细胞",
   "Papers to read": "读几篇论文",
   "Of them, full texts": "其中读全文的",
-  "The default AI service cannot work with tools. Choose DeepSeek, OpenAI, Anthropic, Qwen or Gemini as the default service in AI settings.": "默认的 AI 服务不能用工具调用的方式工作。请在 AI 设置里把 DeepSeek、OpenAI、Anthropic、通义千问或 Gemini 选为默认服务。",
+  "The default AI service cannot work with tools. Choose a ChatGPT subscription, DeepSeek, OpenAI, Anthropic, Qwen or Gemini as the default service in AI settings.": "默认的 AI 服务不能用工具调用的方式工作。请在 AI 设置里把 ChatGPT 订阅、DeepSeek、OpenAI、Anthropic、通义千问或 Gemini 选为默认服务。",
   "Searching Europe PMC is off. Turn on outside method search and tick Europe PMC in the search settings of": "Europe PMC 检索没有开启。请在下面页面的检索设置里打开外部方法检索并勾选 Europe PMC：",
   "Start": "开始",
   "Stages": "阶段",

@@ -162,9 +162,11 @@
   .ln-schedule-summary { position: static; margin-bottom: 0.5rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel); }
   .ln-schedule-track { flex-direction: column; width: auto; gap: 0.5rem; }
   .ln-schedule-links { display: none; }
-  .ln-schedule-day { width: auto; min-height: 0; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel); background: var(--surface); overflow: clip; }
+  .ln-schedule-day { width: auto; min-height: 0; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel); background: var(--surface); }
+  /* An open day menu sits above the days below it. */
+  .ln-schedule-day:has(.ln-schedule-menu) { z-index: 5; }
   .ln-schedule-day[data-off] { background: color-mix(in srgb, var(--muted) 6%, var(--surface)); }
-  .ln-schedule-day > header { position: static; padding-left: 0.4rem; border-bottom: 0; backdrop-filter: none; }
+  .ln-schedule-day > header { position: static; padding-left: 0.4rem; border-bottom: 0; border-radius: var(--ln-radius-panel) var(--ln-radius-panel) 0 0; background: transparent; backdrop-filter: none; }
   .ln-schedule-day:not([data-folded]) > header { border-bottom: 1px solid var(--divider, var(--hairline)); }
   .ln-schedule-day-fold { display: inline-flex; width: 2rem; height: 2rem; align-items: center; justify-content: center; border-radius: var(--ln-radius-control-sm); color: var(--muted); }
   .ln-schedule-day-fold svg { width: 1rem; height: 1rem; transition: transform 160ms; }

@@ -34,7 +34,7 @@ export function MobileToday({ experiments, blocks = [], today, monthKey, initial
   const count = ordered.length + blocks.length;
   const dateLabel = today.toLocaleDateString(zh ? "zh-CN" : "en-US", { month: "long", day: "numeric", weekday: "long" });
 
-  return <section className="bench-mobile space-y-6 lg:hidden">
+  return <section className="bench-mobile space-y-6 tablet:hidden">
     <header className="flex items-end justify-between gap-4 pt-1">
       <div className="min-w-0">
         <p className="text-xs font-medium text-moss" data-i18n-ignore>{dateLabel}</p>

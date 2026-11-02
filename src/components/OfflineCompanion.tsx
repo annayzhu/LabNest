@@ -45,7 +45,7 @@ export function OfflineCompanion() {
   if (!offline || executionPage) return null;
   const zh = locale === "zh";
   return (
-    <aside className="ln-offline-companion fixed bottom-20 right-3 z-[65] w-[248px] overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface shadow-soft lg:bottom-4 lg:right-4" aria-label={zh ? "离线小游戏" : "Offline mini game"}>
+    <aside className="ln-offline-companion fixed bottom-20 right-3 z-[65] w-[248px] overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface shadow-soft tablet:bottom-4 tablet:right-4" aria-label={zh ? "离线小游戏" : "Offline mini game"}>
       <div className="flex items-center justify-between border-b border-hairline px-3 py-2">
         <span className="flex items-center gap-1.5 text-xs font-semibold text-ink"><WifiOff className="h-3.5 w-3.5 text-action" aria-hidden />{zh ? "离线模式" : "Offline mode"}</span>
         <span className="record-identifier text-xs text-muted" aria-live="polite">{zh ? "得分" : "Score"} {score}</span>

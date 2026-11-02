@@ -33,7 +33,7 @@ export default async function NewEntryPage({ searchParams }: { searchParams?: Pa
   return (
     <AppShell>
       <div className="space-y-6">
-        <div className={captureMode ? "hidden lg:block" : undefined}>
+        <div className={captureMode ? "hidden tablet:block" : undefined}>
           <PageHeader
             eyebrow="New entry"
             title="Add Entry"

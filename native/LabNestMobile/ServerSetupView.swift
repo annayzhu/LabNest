@@ -13,6 +13,8 @@ struct ServerSetupView: View {
     @State private var error: String?
 
     private var canScan: Bool { DataScannerViewController.isSupported && DataScannerViewController.isAvailable }
+    /// On iPad a sheet is a small card in the middle of the screen; the camera gets the whole screen there instead.
+    private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
 
     var body: some View {
         NavigationStack {
@@ -46,6 +48,10 @@ struct ServerSetupView: View {
                     Section { Text(error).foregroundStyle(.orange).accessibilityIdentifier("setup-error") }
                 }
             }
+            // A readable column on iPad; a phone is narrower than this anyway.
+            .frame(maxWidth: 560)
+            .frame(maxWidth: .infinity)
+            .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
             .navigationTitle("LabNest")
             .toolbar { if cancellable { ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } } } }
             .onAppear {
@@ -57,14 +63,17 @@ struct ServerSetupView: View {
                 }
                 #endif
             }
-            .sheet(isPresented: $scanning) {
-                QRScanner { payload in scanning = false; connect(payload) }
-                    .ignoresSafeArea()
-                    .overlay(alignment: .topTrailing) {
-                        Button("取消") { scanning = false }.buttonStyle(.borderedProminent).padding()
-                    }
-            }
+            .sheet(isPresented: Binding(get: { scanning && !isPad }, set: { scanning = $0 })) { scanner }
+            .fullScreenCover(isPresented: Binding(get: { scanning && isPad }, set: { scanning = $0 })) { scanner }
         }
+    }
+
+    private var scanner: some View {
+        QRScanner { payload in scanning = false; connect(payload) }
+            .ignoresSafeArea()
+            .overlay(alignment: .topTrailing) {
+                Button("取消") { scanning = false }.buttonStyle(.borderedProminent).padding()
+            }
     }
 
     private func connect(_ input: String) {

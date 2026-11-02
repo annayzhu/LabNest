@@ -403,6 +403,12 @@ html[data-labnest-ui-scale="comfortable"] {
   --ln-list-table-head-font-size: 13px;
 }
 
+/* A tablet held upright (iPad mini portrait is 744 px) already gets the computer's shell: sidebar rail, search, inline page
+   actions. Below it is the phone (Q345). */
+@theme {
+  --breakpoint-tablet: 46.5rem;
+}
+
 @theme inline {
   --color-paper: var(--paper);
   --color-warm: var(--warm);
@@ -652,7 +658,7 @@ textarea {
 }
 
 /* Phones keep the bottom navigation visible below the card. */
-@media (max-width: 1023px) {
+@media (max-width: 743.98px) {
   .ln-ai-panel { max-height: calc(100dvh - var(--ln-app-topbar-height) - 6.5rem); right: 0.75rem; }
 }
 
@@ -938,6 +944,21 @@ details > summary:active { transform: scale(0.985); }
 .sidebar-toggle-icon-open { opacity: 0; transform: translateX(-5px) rotate(-20deg) scale(0.72); }
 .sidebar-shell[data-collapsed="true"] .sidebar-toggle-icon-close { opacity: 0; transform: translateX(5px) rotate(20deg) scale(0.72); }
 .sidebar-shell[data-collapsed="true"] .sidebar-toggle-icon-open { opacity: 1; transform: translateX(0) rotate(0) scale(1); }
+/* A tablet held upright: the rail even before the page has measured itself, and ⟩ lays the whole sidebar over the page
+   while the rail keeps its place, so nothing reflows (Q346). */
+@media (min-width: 744px) and (max-width: 1023.98px) {
+  .sidebar-shell:not([data-overlay]) { width: 72px; padding-inline: 0.5rem; }
+  .sidebar-shell:not([data-overlay]) :is(.sidebar-nav-item, .sidebar-brand) { gap: 0; justify-content: center; padding-inline: 0; }
+  .sidebar-shell:not([data-overlay]) .sidebar-label { clip-path: inset(50%); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
+  .sidebar-shell:not([data-overlay]) .sidebar-toggle-icon-close { opacity: 0; transform: translateX(5px) rotate(20deg) scale(0.72); }
+  .sidebar-shell:not([data-overlay]) .sidebar-toggle-icon-open { opacity: 1; transform: none; }
+  .sidebar-shell[data-overlay] { width: 72px; padding-inline: 0; }
+  .sidebar-shell[data-overlay] .sidebar-panel { position: absolute; inset-block: 0; left: 0; width: 14rem; padding-inline: 0.75rem; border-right: 1px solid var(--hairline); background: var(--surface); box-shadow: 0 14px 38px rgb(56 62 86 / 0.14); animation: ln-mobile-drawer-in 280ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .sidebar-shell[data-overlay] .sidebar-toggle { left: calc(14rem - 0.75rem); right: auto; z-index: 61; }
+  /* A fingertip, not a cursor: the small round toggle answers across 44 px. */
+  .sidebar-toggle::before { content: ""; inset: -10px; position: absolute; }
+}
+@media (prefers-reduced-motion: reduce) { .sidebar-shell[data-overlay] .sidebar-panel { animation: none; } }
 
 .ln-offline-companion { animation: ln-modal-card-in 340ms cubic-bezier(0.16, 1, 0.3, 1) both; }
 .ln-offline-dino { transition: transform 90ms linear; }
@@ -1091,6 +1112,10 @@ details > summary:active { transform: scale(0.985); }
 .ln-actions-menu.ln-actions-menu :is(a, button) * {
   font-size: inherit;
 }
+
+/* The run page's 现场模式 and 实验记录 links: in ··· below 1280 px, in the header above it (Q348); a phone has 现场模式 in its bottom bar. */
+@media (min-width: 1280px) { .ln-actions-menu.ln-actions-menu .ln-menu-below-xl { display: none; } }
+@media (max-width: 743.98px) { .ln-actions-menu.ln-actions-menu .ln-menu-above-phone { display: none; } }
 
 /* Text-only rows: mixed icon/no-icon actions would not align. */
 .ln-actions-menu.ln-actions-menu svg {
@@ -2458,10 +2483,12 @@ details > summary:active { transform: scale(0.985); }
   width: 100%;
 }
 
-@media (min-width: 1024px) {
-  .page-header .page-actions {
-    flex-wrap: nowrap;
-  }
+/* Title and actions share a row while both fit; otherwise the actions take the next row, right-aligned, instead of being
+   cut off at the edge (Q348). */
+@media (min-width: 768px) {
+  .page-header { flex-wrap: wrap; }
+  .page-header > div:first-child { flex: 1 1 20rem; }
+  .page-header .page-actions { justify-content: flex-end; margin-left: auto; }
 }
 
 @media (min-width: 1400px) {
@@ -3847,6 +3874,32 @@ details > summary:active { transform: scale(0.985); }
   }
 }
 
+/* 744–1279 px: the side panel waits off the right edge until 详情 in the top bar slides it in over the page (Q349). */
+.ln-document-panel-toggle, .ln-document-panel-scrim { display: none; }
+@media screen and (min-width: 744px) and (max-width: 1279.98px) {
+  body:has(.document-preview-sidebar) .ln-document-panel-toggle { display: inline-flex; }
+  .document-preview-sidebar {
+    border-radius: 0;
+    border-width: 0 0 0 1px;
+    bottom: 0;
+    box-shadow: -14px 0 38px rgb(56 62 86 / 0.14);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-top: env(safe-area-inset-top);
+    position: fixed;
+    right: 0;
+    top: 0;
+    transform: translateX(105%);
+    transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 280ms;
+    visibility: hidden;
+    width: min(24rem, 88vw);
+    z-index: 46;
+  }
+  html[data-document-panel="open"] .document-preview-sidebar { transform: none; transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1); visibility: visible; }
+  .ln-document-panel-scrim { display: block; z-index: 45; }
+}
+@media (prefers-reduced-motion: reduce) { .document-preview-sidebar { transition: none !important; } }
+
 .document-premise-label {
   color: var(--muted);
   font-size: 7pt;
@@ -4664,7 +4717,7 @@ table :where(td) {
   }
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 743.98px) {
   .entry-editor-save-bar,
   .document-editor-save-bar {
     bottom: calc(4.25rem + env(safe-area-inset-bottom));

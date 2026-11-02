@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Command, Menu, Search } from "lucide-react";
+import { ArrowLeft, Command, Menu, PanelRight, Search } from "lucide-react";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { AiAssistantButton } from "@/components/AiAssistant";
 import { MobileDrawer, sectionLabel } from "@/components/Sidebar";
 import { PageMenuButton, PageMenuSheet } from "@/components/MobilePageMenu";
+import { useI18n } from "@/components/I18nProvider";
 
 /** A module's own page (one level deep) opens the drawer; a page inside it goes back. The calculator works offline as its own app. */
 const rootPage = (pathname: string) => pathname.split("/").filter(Boolean).length <= 1 || pathname.startsWith("/tools/calculator");
@@ -22,7 +24,7 @@ export function TopBar() {
   return (
     <header className="sticky top-0 z-30 border-b border-hairline/80 bg-paper/92 px-3 py-2 backdrop-blur-xl md:px-5">
       <div className="mx-auto flex min-h-11 max-w-[1480px] items-center gap-2 md:gap-3">
-        <div className="flex min-w-0 flex-1 items-center justify-between lg:hidden">
+        <div className="flex min-w-0 flex-1 items-center justify-between tablet:hidden">
           <div className="flex min-w-0 items-center gap-1">
             {rootPage(pathname) ? (
               <button
@@ -53,7 +55,7 @@ export function TopBar() {
             <PageMenuButton />
           </div>
         </div>
-        <form action="/search" className="hidden min-w-0 flex-1 lg:block">
+        <form action="/search" className="hidden min-w-0 flex-1 tablet:block">
           <label className="ln-global-search flex h-9 max-w-xl items-center gap-2 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2.5 text-[length:var(--ln-ui-search-font-size)] text-muted transition focus-within:border-fog focus-within:ring-[3px] focus-within:ring-info/10">
             <Search className="h-4 w-4" aria-hidden />
             <span className="sr-only">Search LabNest</span>
@@ -70,10 +72,47 @@ export function TopBar() {
             </span>
           </label>
         </form>
-        <div className="hidden items-center gap-2 lg:flex"><AiAssistantButton /><LanguageToggle /></div>
+        <div className="hidden items-center gap-2 tablet:flex"><DocumentPanelToggle /><AiAssistantButton /><LanguageToggle /></div>
       </div>
       <MobileDrawer open={drawerOpen} onClose={closeDrawer} />
       <PageMenuSheet />
     </header>
+  );
+}
+
+/**
+ * Between a tablet held upright and 1280 px a record's side panel (执行控制, 附件, 活动…) is not beside the paper, so this
+ * slides it in from the right (Q349). The button only shows on pages that have one (CSS); a new page starts closed.
+ */
+function DocumentPanelToggle() {
+  const zh = useI18n().locale === "zh";
+  const pathname = usePathname();
+  const [openOn, setOpenOn] = useState<string | null>(null);
+  const open = openOn === pathname;
+  const close = useCallback(() => setOpenOn(null), []);
+
+  useEffect(() => {
+    if (!open) return;
+    const root = document.documentElement;
+    root.dataset.documentPanel = "open";
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") close(); };
+    window.addEventListener("keydown", onKey);
+    return () => { delete root.dataset.documentPanel; window.removeEventListener("keydown", onKey); };
+  }, [open, close]);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpenOn(open ? null : pathname)}
+        aria-expanded={open}
+        className="ln-document-panel-toggle focus-ring h-9 items-center gap-1.5 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2.5 text-sm text-graphite hover:bg-warm"
+      >
+        <PanelRight className="h-4 w-4" aria-hidden />
+        {zh ? "详情" : "Details"}
+      </button>
+      {/* On the page, not inside the top bar: its backdrop blur would become the scrim's frame. */}
+      {open ? createPortal(<button type="button" aria-label={zh ? "关闭详情" : "Close details"} onClick={close} className="ln-document-panel-scrim fixed inset-0 bg-ink/20" />, document.body) : null}
+    </>
   );
 }

@@ -109,7 +109,7 @@ export default async function InventoryListPage({ searchParams }: { searchParams
           }))}
         />
 
-        <div className="hidden space-y-4 lg:block">
+        <div className="hidden space-y-4 tablet:block">
           <PageHeader title="Inventory" />
           <InventoryNav current="list" />
           {scope}

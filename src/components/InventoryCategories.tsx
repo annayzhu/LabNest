@@ -8,11 +8,11 @@ export function InventoryCategories(categories: Categories) {
   if (!categories.groups.length && !categories.unclassified) return null;
   return (
     <>
-      <section aria-labelledby="inventory-categories" className="hidden overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface lg:block">
+      <section aria-labelledby="inventory-categories" className="hidden overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface tablet:block">
         <h2 id="inventory-categories" className="border-b border-hairline px-4 py-2.5 text-sm font-semibold text-ink">Categories</h2>
         <CategoryList {...categories} />
       </section>
-      <details className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface lg:hidden">
+      <details className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface tablet:hidden">
         <summary className="focus-ring cursor-pointer px-4 py-3 text-sm font-semibold text-ink">Categories</summary>
         <div className="border-t border-hairline"><CategoryList {...categories} /></div>
       </details>

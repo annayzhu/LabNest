@@ -4,10 +4,11 @@ import { createContext, useEffect, useRef, useState, useSyncExternalStore, type 
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { Ellipsis, X } from "lucide-react";
+import { useMediaQuery } from "@/lib/use-media-query";
 
 /**
  * On a phone the top bar keeps ← title ···, Notion-style, and a page header's actions move into the sheet behind ···.
- * A computer shows them in the header as before. Either way there is one copy, so a button keeps its state.
+ * A tablet or computer shows them in the header as before. Either way there is one copy, so a button keeps its state.
  */
 
 /** Inside the sheet a page's own "More actions" menu lays its items out flat instead of opening a second menu. */
@@ -15,7 +16,7 @@ export const InPageMenu = createContext(false);
 
 /** A page header's actions. `className` lays them out in the header on a computer. */
 export function PageActions({ children, className }: { children: ReactNode; className?: string }) {
-  const phone = usePhone();
+  const phone = useMediaQuery("(max-width: 743.98px)");
   const { target } = useMenu();
   // A header the phone layout hides (e.g. the computer's half of the home page) adds nothing to ···.
   const probe = useRef<HTMLSpanElement>(null);
@@ -28,7 +29,7 @@ export function PageActions({ children, className }: { children: ReactNode; clas
   }, [phone]);
   if (phone) return <><span ref={probe} className="block h-0 w-0" aria-hidden />{shown && target ? createPortal(<InPageMenu.Provider value><div className="ln-page-menu-items">{children}</div></InPageMenu.Provider>, target) : null}</>;
   // Before the page knows it is on a phone, the header must not flash its buttons.
-  return <div className={`${className ?? ""} max-lg:hidden`}>{children}</div>;
+  return <div className={`${className ?? ""} max-tablet:hidden`}>{children}</div>;
 }
 
 export function PageMenuButton() {
@@ -68,7 +69,7 @@ export function PageMenuSheet() {
   if (!inBrowser) return null;
   const close = () => update({ open: false });
   return createPortal(
-    <div className="ln-page-menu ln-modal-layer fixed inset-0 z-50 lg:hidden" hidden={!open}>
+    <div className="ln-page-menu ln-modal-layer fixed inset-0 z-50 tablet:hidden" hidden={!open}>
       <button type="button" aria-label="Close page actions" onClick={close} className="ln-modal-backdrop absolute inset-0 bg-ink/25 backdrop-blur-[1px]" />
       <section
         role="dialog"
@@ -99,12 +100,3 @@ const update = (next: Partial<MenuState>) => { state = { ...state, ...next }; li
 const subscribe = (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener); }; };
 const useMenu = () => useSyncExternalStore(subscribe, () => state, () => closed);
 const noChanges = () => () => {};
-
-const phoneQuery = "(max-width: 1023.98px)";
-function usePhone() {
-  return useSyncExternalStore(
-    (onChange) => { const query = window.matchMedia(phoneQuery); query.addEventListener("change", onChange); return () => query.removeEventListener("change", onChange); },
-    () => window.matchMedia(phoneQuery).matches,
-    () => false,
-  );
-}

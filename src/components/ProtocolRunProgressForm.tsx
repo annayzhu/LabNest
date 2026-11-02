@@ -303,7 +303,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
       </Fragment>)}</ol>
       <footer><a className="focus-ring" href="#run-preparation">{zh ? "准备清单" : "Preparation"}</a><a className="focus-ring" href="#result-recording">{zh ? "实验结果" : "Results"}</a></footer>
     </aside> : null}
-    <section className={`${bench ? "" : "lg:hidden "}overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface`}>
+    <section className={`${bench ? "" : "tablet:hidden "}overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface`}>
       <div className="border-b border-hairline px-4 py-3">
         <div className="flex items-center justify-between gap-3 text-xs text-muted">
           <span>{hasSteps ? zh ? `第${selectedStepIndex+1}/${steps.length}步 · 已完成${completedIds.size}步` : `${completedIds.size} of ${steps.length} complete` : "No fixed steps"}</span>
@@ -331,9 +331,10 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
           {record.values}
           {evidence && Object.values(evidence).some(count => count > 0) ? <p className="mt-3 rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-xs leading-5 text-graphite" aria-label="Current step evidence">{Object.entries(evidence).filter(([,count])=>count>0).map(([key,count])=>`${zh?({observations:"观察",measurements:"测量",files:"附件",consumptions:"耗材"} as Record<string,string>)[key]:key} ${count}`).join(" · ")}</p> : null}
 
-          <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="mt-4 grid grid-cols-3 gap-2 tablet:grid-cols-2">
             <button type="button" disabled={selectedStepIndex <= 0} onClick={() => setSelectedStepId(steps[selectedStepIndex - 1].id)} className="focus-ring flex min-h-11 items-center justify-center gap-1 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-2 text-xs font-semibold text-moss disabled:opacity-35"><ArrowLeft className="h-4 w-4" aria-hidden />Previous</button>
-            <button type="button" onClick={() => setAllStepsOpen(true)} className="focus-ring min-h-11 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-2 text-xs font-semibold text-moss">All steps</button>
+            {/* From a tablet up the step list is beside this card. */}
+            <button type="button" onClick={() => setAllStepsOpen(true)} className="focus-ring min-h-11 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-2 text-xs font-semibold text-moss tablet:hidden">All steps</button>
             <button type="button" disabled={selectedStepIndex >= steps.length - 1} onClick={() => setSelectedStepId(steps[selectedStepIndex + 1].id)} className="focus-ring flex min-h-11 items-center justify-center gap-1 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-2 text-xs font-semibold text-moss disabled:opacity-35">Next<ArrowRight className="h-4 w-4" aria-hidden /></button>
           </div>
 
@@ -390,7 +391,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
 
     {referenceFor !== undefined ? <ProtocolReferenceSheet groups={referenceGroups} references={frozenReferences ?? {}} chipContexts={chipContexts} stepRef={referenceFor} onClose={() => setReferenceFor(undefined)} /> : null}
 
-    {allStepsOpen ? <div className="ln-modal-layer fixed inset-0 z-50 lg:hidden">
+    {allStepsOpen ? <div className="ln-modal-layer fixed inset-0 z-50 tablet:hidden">
       <button type="button" aria-label="Close all steps" onClick={() => setAllStepsOpen(false)} className="ln-modal-backdrop absolute inset-0 bg-ink/25 backdrop-blur-[1px]" />
       <section role="dialog" aria-modal="true" aria-labelledby="all-steps-title" className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[82dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-soft">
         <div className="sticky top-0 flex items-center justify-between gap-3 border-b border-hairline bg-surface/95 px-4 py-3 backdrop-blur">
@@ -406,7 +407,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
       </section>
     </div> : null}
 
-    <section className={`${bench ? "hidden" : "hidden lg:block"} overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface`}>
+    <section className={`${bench ? "hidden" : "hidden tablet:block"} overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface`}>
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline px-4 py-3">
         <h2 className="text-lg font-semibold text-ink">Execution record</h2>
       </div>
@@ -454,7 +455,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     {consumptionReview ? <CompletionConsumptionDialog lines={consumption} stock={stock} onCancel={() => setConsumptionReview(null)}
       onSkip={() => { const button = consumptionReview; consumptionReviewed.current = true; setConsumptionReview(null); formRef.current?.requestSubmit(button); }}
       onDeduct={choices => { const button = consumptionReview; consumptionChoices.current = choices; consumptionReviewed.current = true; setConsumptionReview(null); formRef.current?.requestSubmit(button); }} /> : null}
-    {editable ? <div className={`sticky bottom-20 z-30 hidden space-y-2 rounded-[var(--ln-radius-panel)] border border-hairline bg-surface/95 p-3 shadow-soft backdrop-blur lg:bottom-4 ${bench ? "" : "lg:block"}`}>
+    {editable ? <div className={`sticky bottom-20 z-30 hidden space-y-2 rounded-[var(--ln-radius-panel)] border border-hairline bg-surface/95 p-3 shadow-soft backdrop-blur tablet:bottom-4 ${bench ? "" : "tablet:block"}`}>
       {state.error ? <p role="alert" className="rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
       {state.message ? <p role="status" className="rounded-[var(--ln-radius-control-lg)] border border-success/30 bg-success-surface px-3 py-2 text-sm text-success">{state.message}</p> : null}
       <div className="flex flex-wrap items-center justify-end gap-2">

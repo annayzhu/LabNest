@@ -414,7 +414,7 @@ export function EntryComposer({
     <form inert={isSubmitting} aria-busy={isSubmitting} onSubmit={submit} className="space-y-5">
       <input id={cameraInputId} className="sr-only" disabled={isSubmitting} type="file" accept="image/*" capture="environment" onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
       {captureMode ? (
-        <section className="space-y-5 lg:hidden">
+        <section className="space-y-5 tablet:hidden">
           <div>
             <h1 className="text-xl font-semibold tracking-[-0.02em] text-ink">Quick capture</h1>
             <p className="mt-1 text-sm leading-6 text-muted">Record what happened now. You can organize the document later.</p>
@@ -472,7 +472,7 @@ export function EntryComposer({
         </section>
       ) : null}
 
-      <div className={captureMode ? "hidden lg:block" : undefined}>
+      <div className={captureMode ? "hidden tablet:block" : undefined}>
       <DocumentEditorLayout className="entry-editor-layout">
       <div className="entry-editor-main-column">
       <StandaloneDocumentEditorViewport

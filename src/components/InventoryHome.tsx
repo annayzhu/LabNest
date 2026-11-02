@@ -130,7 +130,7 @@ export function InventoryHome({ initial, alerts, places }: { initial: StockSearc
 
   return (
     <div className="min-w-0 space-y-3">
-      <div className="space-y-2 lg:hidden">
+      <div className="space-y-2 tablet:hidden">
         <div className="grid grid-cols-2 gap-2">
           <button type="button" aria-expanded={registering} onClick={() => { setRegistering(!registering); setTakingOut(false); }} className={entryClass(registering)}>
             <PackagePlus className="h-5 w-5" aria-hidden />Register stock

@@ -110,10 +110,13 @@
 .ln-bench-steps .ln-bench-group { display: block; padding: 0.5rem 0.6rem 0.15rem; font: 600 var(--ln-control-font-size-xs)/1.4 var(--font-ui); color: var(--muted); }
 .ln-bench-steps footer { display: grid; gap: 0.3rem; padding: 0.6rem 0.85rem; border-top: 1px solid var(--hairline); font-size: var(--ln-control-font-size-xs); }
 .ln-bench-steps footer a { color: var(--moss); }
-@media (min-width: 1024px) {
-  .ln-bench-grid { grid-template-columns: minmax(15rem, 19rem) minmax(0, 1fr); align-items: start; }
-  .ln-bench-steps { position: sticky; top: 1rem; max-height: calc(100dvh - 2rem); overflow: auto; }
+/* From a tablet held upright: the step list beside the step, both in view; the list scrolls on its own below the top bar (Q347). */
+@media (min-width: 744px) {
+  .ln-bench-grid { grid-template-columns: 15rem minmax(0, 1fr); align-items: start; }
+  .ln-bench-steps { position: sticky; top: calc(var(--ln-app-topbar-height) + 1rem); max-height: calc(100dvh - var(--ln-app-topbar-height) - 2rem); overflow: auto; overscroll-behavior: contain; }
 }
+@media (min-width: 1024px) { .ln-bench-grid { grid-template-columns: 17rem minmax(0, 1fr); } }
+@media (min-width: 1280px) { .ln-bench-grid { grid-template-columns: minmax(15rem, 19rem) minmax(0, 1fr); } }
 @media print { .ln-bench-controls, .ln-prep-note-toggle { display: none; } }
 
 /* ——— Dialogs from the run page: offline copy, the Protocol original ——— */

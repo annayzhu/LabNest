@@ -283,7 +283,7 @@ export default async function OverviewPage({
   return (
     <AppShell>
       <BackupAlert />
-      {!mobileCalendarOpen ? <MobileToday experiments={mobileExperiments} blocks={mobileBlocks} today={today} monthKey={viewMonthKey} initialSelectedDateKey={initialSelectedDateKey} activities={calendarActivities} locale={locale} /> : <section className="bench-mobile space-y-3 lg:hidden">
+      {!mobileCalendarOpen ? <MobileToday experiments={mobileExperiments} blocks={mobileBlocks} today={today} monthKey={viewMonthKey} initialSelectedDateKey={initialSelectedDateKey} activities={calendarActivities} locale={locale} /> : <section className="bench-mobile space-y-3 tablet:hidden">
         <Link href="/" className="focus-ring inline-flex min-h-11 items-center gap-2 px-2 text-sm font-semibold text-moss">
           <ArrowRight className="h-4 w-4 rotate-180" aria-hidden />Back to Today
         </Link>
@@ -296,7 +296,7 @@ export default async function OverviewPage({
         />
       </section>}
 
-      <div id="calendar" className="overview-desktop hidden space-y-5 lg:block">
+      <div id="calendar" className="overview-desktop hidden space-y-5 tablet:block">
         <PageHeader title="Overview" actions={fieldModeEntry} />
 
         <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_260px]">

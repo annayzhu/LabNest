@@ -144,10 +144,10 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
           actions={<>
             <RunBenchControls bench={bench} />
             <FieldDevices experimentId={experiment.id} title={experiment.title} watch={!structured.hasSystems ? "legacy" : editable ? "ready" : "locked"} />
-            {/* A phone has 现场模式 in its bottom bar. */}
-            <Link href="/protocol-run" className={`${secondaryButton} max-lg:hidden`}><ArrowLeft className="h-4 w-4" aria-hidden />Run mode</Link>
-            <Link href={`/experiments/${experiment.id}`} className={secondaryButton}>Experiment record</Link>
-            <RunPageMenu view={structured} runLabel={experiment.runCode ?? experiment.title} plates={plates} documentPlates={documentPlates} stock={prepStock} recorded={recordedUses} />
+            {/* Below 1280 px both are in ··· (RunPageMenu); a phone has 现场模式 in its bottom bar. */}
+            <Link href="/protocol-run" className={`${secondaryButton} max-xl:hidden`}><ArrowLeft className="h-4 w-4" aria-hidden />Run mode</Link>
+            <Link href={`/experiments/${experiment.id}`} className={`${secondaryButton} max-xl:hidden`}>Experiment record</Link>
+            <RunPageMenu view={structured} recordHref={`/experiments/${experiment.id}`} runLabel={experiment.runCode ?? experiment.title} plates={plates} documentPlates={documentPlates} stock={prepStock} recorded={recordedUses} />
           </>}
         />
 
@@ -204,7 +204,7 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
           <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4">
             <div className="mb-4 flex items-center gap-2"><Camera className="h-4 w-4 text-moss" aria-hidden /><h2 className="text-lg font-semibold text-ink">Photos and files</h2></div>
             <RunStepAttachmentUpload steps={renderedSteps.map(s=>({id:s.id,title:s.title,order:s.order}))}/>
-            <div className="hidden lg:block"><AttachmentUploadForm targetType="experiment" targetId={experiment.id} hideTargetFields fileLabel="Photo or file" accept="image/*,video/*,.pdf,.csv,.tsv,.xlsx" linkType="run_evidence" /></div>
+            <div className="hidden tablet:block"><AttachmentUploadForm targetType="experiment" targetId={experiment.id} hideTargetFields fileLabel="Photo or file" accept="image/*,video/*,.pdf,.csv,.tsv,.xlsx" linkType="run_evidence" /></div>
             {attachmentLinks.length ? <ul className="mt-4 space-y-2 border-t border-hairline pt-4">{attachmentLinks.map((link) => <li key={link.id} className="flex items-center gap-2 text-sm"><Link href={`/api/attachments/${link.attachment.id}`} className="min-w-0 flex-1 truncate font-medium text-moss hover:underline">{link.attachment.originalFilename}</Link><span className="text-xs text-muted">{(link.attachment.size / 1024).toFixed(1)} KB</span><AttachmentDeleteButton attachmentId={link.attachment.id} linkId={link.id} filename={link.attachment.originalFilename} /></li>)}</ul> : <p className="mt-4 text-sm text-muted">No run evidence attached.</p>}
           </section>
 

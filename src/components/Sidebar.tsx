@@ -33,6 +33,7 @@ import { cn } from "@/lib/cn";
 import { useI18n } from "@/components/I18nProvider";
 import { holdKeyboard } from "@/lib/keep-keyboard";
 import { inNativeApp, postNative } from "@/lib/native-bridge";
+import { useMediaQuery } from "@/lib/use-media-query";
 import "./mobile-shell.css";
 
 const sidebarStorageKey = "labnest.sidebar.collapsed";
@@ -79,6 +80,13 @@ function desktopNavItemClass(active: boolean, collapsed: boolean) {
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  // A tablet held upright: the sidebar is an icon rail, and ⟩ opens it over the page instead of pushing the page aside (Q346).
+  const narrow = useMediaQuery("(max-width: 1023.98px)");
+  const [opened, setOpened] = useState(false);
+  const overlay = narrow && opened;
+  // The remembered 收起 is the computer's; a tablet held upright always starts from the rail.
+  const rail = narrow ? !opened : collapsed;
+  const closeOverlay = () => setOpened(false);
 
   useEffect(() => {
     if (window.localStorage.getItem(sidebarStorageKey) === "true") {
@@ -86,7 +94,15 @@ export function Sidebar() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!overlay) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setOpened(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [overlay]);
+
   function toggleSidebar() {
+    if (narrow) { setOpened((current) => !current); return; }
     setCollapsed((current) => {
       const next = !current;
       window.localStorage.setItem(sidebarStorageKey, String(next));
@@ -95,20 +111,23 @@ export function Sidebar() {
   }
 
   return (
+    <>
+    {overlay ? <button type="button" aria-label="Close navigation" onClick={closeOverlay} className="sidebar-scrim fixed inset-0 z-40 bg-ink/20" /> : null}
     <aside
       className={cn(
-        "sidebar-shell sticky top-0 z-50 hidden h-screen shrink-0 border-r border-hairline/80 bg-surface lg:block",
-        collapsed ? "w-[72px] px-2" : "w-56 px-3",
+        "sidebar-shell sticky top-0 z-50 hidden h-screen shrink-0 border-r border-hairline/80 bg-surface tablet:block",
+        rail ? "w-[72px] px-2" : "w-56 px-3",
       )}
-      data-collapsed={collapsed ? "true" : "false"}
+      data-collapsed={rail ? "true" : "false"}
+      data-overlay={overlay ? "true" : undefined}
     >
       <button
         type="button"
         onClick={toggleSidebar}
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        aria-expanded={!collapsed}
+        aria-label={rail ? "Expand sidebar" : "Collapse sidebar"}
+        aria-expanded={!rail}
         aria-controls="primary-sidebar-navigation"
-        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        title={rail ? "Expand sidebar" : "Collapse sidebar"}
         className="sidebar-toggle focus-ring absolute -right-3 top-5 z-[60] flex h-6 w-6 items-center justify-center rounded-full border border-hairline bg-surface text-muted shadow-[0_2px_8px_rgba(56,62,86,0.08)] hover:border-sage hover:text-ink active:scale-[0.96]"
       >
         <span className="sidebar-toggle-icon-stage" aria-hidden>
@@ -117,21 +136,21 @@ export function Sidebar() {
         </span>
       </button>
 
-      <div className="h-full overflow-y-auto py-4 [scrollbar-gutter:stable]">
+      <div className="sidebar-panel h-full overflow-y-auto py-4 [scrollbar-gutter:stable]" onClick={(event) => { if (overlay && (event.target as HTMLElement).closest("a[href]")) closeOverlay(); }}>
         <Link
           prefetch={pathname === "/ai" ? false : undefined}
           href="/"
           aria-label="LabNest home"
-          title={collapsed ? "LabNest" : undefined}
+          title={rail ? "LabNest" : undefined}
           className={cn(
-            "focus-ring mb-5 flex items-center rounded-[var(--ln-radius-control-lg)] py-1.5",
-            collapsed ? "justify-center px-0" : "gap-2.5 px-2.5",
+            "sidebar-brand focus-ring mb-5 flex items-center rounded-[var(--ln-radius-control-lg)] py-1.5",
+            rail ? "justify-center px-0" : "gap-2.5 px-2.5",
           )}
         >
           <span className="brand-mark flex h-9 w-9 items-center justify-center rounded-[var(--ln-radius-control-lg)] border">
             <TraditionalMotif motif="huiwen" className="h-[18px] w-[18px]" aria-hidden />
           </span>
-          <span className={cn("text-[length:var(--ln-ui-brand-font-size)] font-semibold tracking-[-0.02em] text-ink", collapsed && "sr-only")}>LabNest</span>
+          <span className={cn("sidebar-label text-[length:var(--ln-ui-brand-font-size)] font-semibold tracking-[-0.02em] text-ink", rail && "sr-only")}>LabNest</span>
         </Link>
         <nav id="primary-sidebar-navigation" aria-label="Primary navigation" className="space-y-1">
           {navItems.map((item) => {
@@ -145,12 +164,12 @@ export function Sidebar() {
                   prefetch={pathname === "/ai" ? false : undefined}
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  aria-label={collapsed ? item.label : undefined}
-                  title={collapsed ? item.label : undefined}
-                  className={desktopNavItemClass(active, collapsed)}
+                  aria-label={rail ? item.label : undefined}
+                  title={rail ? item.label : undefined}
+                  className={desktopNavItemClass(active, rail)}
                 >
                   <Icon className="h-4 w-4 shrink-0" aria-hidden />
-                  <span className={cn("truncate", collapsed && "sr-only")}>{item.label}</span>
+                  <span className={cn("sidebar-label truncate", rail && "sr-only")}>{item.label}</span>
                 </Link>
               </Fragment>
             );
@@ -166,18 +185,19 @@ export function Sidebar() {
                 key={item.href}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                aria-label={collapsed ? item.label : undefined}
-                title={collapsed ? item.label : undefined}
-                className={desktopNavItemClass(active, collapsed)}
+                aria-label={rail ? item.label : undefined}
+                title={rail ? item.label : undefined}
+                className={desktopNavItemClass(active, rail)}
               >
                 <Icon className="h-4 w-4 shrink-0" aria-hidden />
-                <span className={cn("truncate", collapsed && "sr-only")}>{item.label}</span>
+                <span className={cn("sidebar-label truncate", rail && "sr-only")}>{item.label}</span>
               </Link>
             );
           })}
         </nav>
       </div>
     </aside>
+    </>
   );
 }
 
@@ -192,7 +212,7 @@ function mobileNavItemClass(current: boolean) {
 }
 
 /**
- * A phone's bar, Notion-style: Home · Search · Run mode · 速记. Every other module is in the drawer behind ☰. The last
+ * A phone's bar (narrower than a tablet held upright), Notion-style: Home · Search · Run mode · 速记. Every other module is in the drawer behind ☰. The last
  * one is named 速记, not 新建, so it does not read as a new record of whatever page is open (Q189).
  */
 export function MobileBottomNav() {
@@ -207,7 +227,7 @@ export function MobileBottomNav() {
   return (
     <nav
       aria-label="Mobile navigation"
-      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-hairline bg-surface/95 px-1 pt-1 shadow-soft backdrop-blur-md pb-[calc(0.35rem+env(safe-area-inset-bottom))] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-hairline bg-surface/95 px-1 pt-1 shadow-soft backdrop-blur-md pb-[calc(0.35rem+env(safe-area-inset-bottom))] tablet:hidden"
     >
       {items.map((item) => {
         const Icon = item.icon;
@@ -288,7 +308,7 @@ export function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => 
   };
   // On the page, not inside the top bar: its backdrop blur would become the drawer's frame.
   return createPortal(
-    <div className="ln-modal-layer fixed inset-0 z-50 lg:hidden">
+    <div className="ln-modal-layer fixed inset-0 z-50 tablet:hidden">
       <button type="button" aria-label="Close navigation" onClick={onClose} className="ln-modal-backdrop absolute inset-0 bg-ink/25 backdrop-blur-[1px]" />
       <section
         id="mobile-drawer"

@@ -57,7 +57,7 @@ export function MobileInventoryBench({ items, totalCount, query, filters, riskCo
     }
   }
 
-  return <section className="space-y-4 lg:hidden" aria-label={zh ? "实验台库存" : "Bench inventory"}>
+  return <section className="space-y-4 tablet:hidden" aria-label={zh ? "实验台库存" : "Bench inventory"}>
     <header className="flex items-center justify-between gap-3">
       <div className="min-w-0"><h1 className="page-header-title text-ink">{zh ? "库存清单" : "Stock list"}</h1></div>
       <Link href="/inventory/new" className="focus-ring inline-flex min-h-11 items-center gap-1 text-sm text-moss"><Plus className="h-4 w-4" aria-hidden />{zh ? "新增物料" : "Add material"}</Link>

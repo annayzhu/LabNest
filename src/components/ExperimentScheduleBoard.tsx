@@ -9,6 +9,7 @@ import {
   localizeBlockTitle, MAX_SCHEDULE_DAYS, moveBlock, removeDay, scheduleDayLabel, scheduleMarks, scheduleSpan, shiftSchedule, sortBlocks, weekday,
   type BlockMark, type OtherBlock, type ScheduleBlock, type ScheduleStep, type WorkHours,
 } from "@/lib/experiment-schedule";
+import { newClientMutationId } from "@/lib/client-mutation-id";
 import { useI18n } from "./I18nProvider";
 import "./experiment-schedule.css";
 
@@ -147,7 +148,7 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
     const begin = labInstant(firstDay, clockMinutes(draftClock));
     if (Number.isNaN(Date.parse(begin))) { setError(zh ? "请选择开始的日期和时间。" : "Choose a start date and time."); return; }
     if (locked.size) { setError(zh ? "已有完成的段，不能重新排初稿；请直接调整。" : "Some blocks are done: adjust the schedule instead of redrafting it."); return; }
-    const drafted = draftSchedule(steps, begin, { hours, newId: () => crypto.randomUUID() });
+    const drafted = draftSchedule(steps, begin, { hours, newId: newClientMutationId });
     if (!drafted.length) { setError(zh ? "没有可以安排的步骤。" : "There are no open steps to schedule."); return; }
     // Items stay where they were; what they waited for may be gone.
     const items = blocks.filter(block => block.kind === "task").map(block => ({ ...block, afterBlockId: null, minGapMinutes: null, maxGapMinutes: null, gapSource: null }));
@@ -157,13 +158,13 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
   }
 
   function addItem(dayKey: string) {
-    const id = crypto.randomUUID();
+    const id = newClientMutationId();
     apply([...blocks, { id, kind: "task", title: "", stepRefs: [], startAt: labInstant(dayKey, hours.start), allDay: true, estimatedMinutes: null, afterBlockId: null, minGapMinutes: null, maxGapMinutes: null, gapSource: null, note: null, doneAt: null }]);
     setSelectedId(id);
   }
 
   function split(block: ScheduleBlock, index: number) {
-    const id = crypto.randomUUID();
+    const id = newClientMutationId();
     const kept = block.stepRefs.slice(0, index), rest = block.stepRefs.slice(index);
     const share = block.estimatedMinutes ? Math.max(5, Math.round(block.estimatedMinutes * kept.length / block.stepRefs.length)) : null;
     const startAt = new Date(Date.parse(block.startAt) + (share ?? 30) * 60_000).toISOString();

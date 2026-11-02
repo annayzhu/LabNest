@@ -1,6 +1,7 @@
 'use client';
 import { ArrowDown, ArrowUp, Camera, RotateCcw, Sparkles, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { newClientMutationId } from '@/lib/client-mutation-id';
 import { shrinkPhoto } from '@/lib/photo-resize';
 import { joinTranscripts, MAX_PHOTOS, unclearCount } from '@/lib/protocol-photo';
 import { AiButton, useAiStatus } from './AiAssistant';
@@ -37,7 +38,7 @@ export function RecognitionPhotos({ onText, disabled }: { onText: (text: string,
     const room = MAX_PHOTOS - photos.length;
     const taken = chosen.slice(0, Math.max(0, room));
     setNote(chosen.length > taken.length ? `At most ${MAX_PHOTOS} pictures; ${chosen.length - taken.length} extra ignored.` : chosen.length < (files?.length ?? 0) ? 'Some files are not pictures and were ignored.' : undefined);
-    setPhotos(current => [...current, ...taken.map(file => ({ id: crypto.randomUUID(), file, url: URL.createObjectURL(file), status: 'ready' as const, text: '' }))]);
+    setPhotos(current => [...current, ...taken.map(file => ({ id: newClientMutationId(), file, url: URL.createObjectURL(file), status: 'ready' as const, text: '' }))]);
     if (picker.current) picker.current.value = '';
   };
   const remove = (id: string) => setPhotos(current => { const gone = current.find(photo => photo.id === id); if (gone) URL.revokeObjectURL(gone.url); return current.filter(photo => photo.id !== id); });

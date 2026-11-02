@@ -1,4 +1,5 @@
 import type { JSONContent } from "@tiptap/core";
+import { prefixedClientId } from "@/lib/client-mutation-id";
 import { parseRichTextFontSizePt, type RichTextFontSizePt } from "@/lib/rich-text-font-size";
 import { parseRichTextColor, RICH_TEXT_RISK_COLOR_HEX, type RichTextColor } from "@/lib/rich-text-color";
 import { documentMediaFromMarkdown, documentMediaToMarkdown } from "./document-media";
@@ -117,7 +118,7 @@ export function persistedTableFromTiptap(node: JSONContent): PersistedTiptapTabl
   const columnConditions = (node.content?.[0]?.content ?? []).map((cell) => { const [dimensionId, optionId] = typeof cell.attrs?.protocolColumn === "string" ? cell.attrs.protocolColumn.split(":") : []; return dimensionId && optionId ? { dimensionId, optionId } : null; });
   return {
     rows,
-    ...((node.content ?? []).some(row => row.attrs?.protocolRowId) ? { rowIds: (node.content ?? []).map(row => String(row.attrs?.protocolRowId ?? `row-${globalThis.crypto.randomUUID()}`)) } : {}),
+    ...((node.content ?? []).some(row => row.attrs?.protocolRowId) ? { rowIds: (node.content ?? []).map(row => String(row.attrs?.protocolRowId ?? prefixedClientId('row'))) } : {}),
     columnWidths: columnWidths.some((value) => value !== null) ? columnWidths : undefined,
     cellFontSizesPt: cellFontSizesPt.some((row) => row.some((value) => value !== null)) ? cellFontSizesPt : undefined,
     cellColors: cellColors.some((row) => row.some((value) => value !== null)) ? cellColors : undefined,

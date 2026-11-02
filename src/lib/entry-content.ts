@@ -121,6 +121,12 @@ export function getEntryMarkdown(value: unknown, fallbackBody = "") {
   return textBlock?.markdown ?? fallbackBody;
 }
 
+/** The record's content with new text and its files as they were; undefined for a record saved before content documents. */
+export function withEntryMarkdown(value: unknown, markdown: string): EntryContentDocument | undefined {
+  const content = parseEntryContent(value);
+  return content && { ...content, blocks: content.blocks.map(block => block.type === "text" ? { ...block, markdown: markdown.trim() } : block) };
+}
+
 export function getOrderedAttachmentIds(value: unknown) {
   return (
     parseEntryContent(value)?.blocks

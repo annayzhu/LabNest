@@ -5,14 +5,18 @@ import { addDays, labDayKey, labInstant } from '../../experiment-schedule';
 import { createExperimentWithProtocolSnapshotInTransaction } from '../../experiments';
 import { reserveRecordCode } from '../../record-codes';
 import { createScientificDocument, experimentSections, normalizeResearchPlanDocument } from '../../scientific-document';
+import { adoptedAs, decideSuggestion, recordSuggestions, ignoreOpen, type NewSuggestion } from '../suggestions.server';
 import { gatherContext } from './context.server';
+import type { PreparedStep } from './deps.server';
 import { DESIGN_SPEC, MAX_DESIGN_LOG, type DesignEvent, type DesignRunView, type DesignState, type RunStatus, type RunStep } from './spec';
-import { applyAction, designRules, runModelStep, signBlockers, type DesignAction, type DesignDeps } from './workflow';
+import { applyAction, designRules, runModelStep, signBlockers, type DesignAction } from './workflow';
 import { applySections, buildSignOff, premiseFields, type PremiseField } from './write-back';
 
 type Row = Prisma.ResearchPlanDesignRunGetPayload<Record<string, never>>;
+type Db = Prisma.TransactionClient | typeof prisma;
 const json = (value: unknown) => JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 const STALE_MS = 10 * 60 * 1000;
+const runTarget = (runId: string) => ({ targetType: 'research_plan_design_run', targetId: runId });
 
 export function designViewOf(row: Row): DesignRunView {
   return {
@@ -66,7 +70,7 @@ export async function createPlanWithDesign(input: { projectId: string; purpose: 
  * One model step. The run is claimed first (a step already running cannot start twice), the model is waited on outside
  * any transaction, and the result is kept only if the AI settings did not change meanwhile.
  */
-export async function stepDesignRun(planId: string, runId: string, options: { blockId?: string }, prepare: (purpose: string) => Promise<{ deps: DesignDeps; provider: string; assertAllowed: () => Promise<void> }>) {
+export async function stepDesignRun(planId: string, runId: string, options: { blockId?: string }, prepare: (purpose: string) => Promise<PreparedStep>) {
   const claimed = await prisma.researchPlanDesignRun.updateMany({
     where: { id: runId, researchPlanId: planId, OR: [{ status: { in: ['idle', 'failed'] } }, { status: 'working', updatedAt: { lt: new Date(Date.now() - STALE_MS) } }] },
     data: { status: 'working' },
@@ -74,10 +78,18 @@ export async function stepDesignRun(planId: string, runId: string, options: { bl
   if (claimed.count !== 1) throw new Error('A step is already running, or the design is signed');
   const before = designViewOf(await loadRow(planId, runId));
   try {
-    const { deps, provider, assertAllowed } = await prepare(before.purpose);
-    const after = await runModelStep(before, deps, options);
-    await assertAllowed();
-    return designViewOf(await prisma.researchPlanDesignRun.update({ where: { id: runId }, data: { status: after.status, stateJson: json(after.state), logJson: json(after.log.slice(-MAX_DESIGN_LOG)), provider, model: after.model ?? null, modelCalls: after.modelCalls, error: after.error ?? null } }));
+    const prepared = await prepare(before.purpose);
+    const after = await runModelStep(before, prepared.deps, options);
+    await prepared.assertAllowed();
+    return designViewOf(await prisma.$transaction(async tx => {
+      const row = await tx.researchPlanDesignRun.update({ where: { id: runId }, data: { status: after.status, stateJson: json(after.state), logJson: json(after.log.slice(-MAX_DESIGN_LOG)), provider: prepared.provider, model: after.model ?? null, modelCalls: after.modelCalls, error: after.error ?? null } });
+      if (after.status === 'idle') {
+        // A new review round replaces the last one, findings and all.
+        if ((after.state.review?.rounds.length ?? 0) > (before.state.review?.rounds.length ?? 0)) await ignoreOpen(tx, { ...runTarget(runId), kind: 'review_finding' }, 'regenerated');
+        await recordSuggestions(tx, stepSuggestions(before, after, prepared));
+      }
+      return row;
+    }));
   } catch (error) {
     const message = error instanceof Error ? error.message.slice(0, 400) : 'The step failed';
     return designViewOf(await prisma.researchPlanDesignRun.update({ where: { id: runId }, data: { status: 'failed', error: message, logJson: json([...before.log, { at: new Date().toISOString(), step: before.step, kind: 'error', text: message }].slice(-MAX_DESIGN_LOG)) } }));
@@ -95,6 +107,7 @@ export async function actOnDesignRun(planId: string, runId: string, action: Desi
     const view = designViewOf(row);
     const { step, state } = applyAction(view, action, new Date());
     const log = step !== view.step ? [...view.log, { at: new Date().toISOString(), step: view.step, kind: 'step' as const, text: action.kind === 'reopen' ? `Reopened ${step}` : `${view.step} confirmed` }] : view.log;
+    await noteDecision(tx, view, action, state);
     return designViewOf(await tx.researchPlanDesignRun.update({ where: { id: runId }, data: { step, stateJson: json(state), logJson: json(log.slice(-MAX_DESIGN_LOG)), status: 'idle', error: null } }));
   });
 }
@@ -103,7 +116,46 @@ export async function removeDesignRun(planId: string, runId: string) {
   const row = await loadRow(planId, runId);
   if (row.status === 'working') throw new Error('A step is running; wait for it to finish');
   if (row.status === 'signed') throw new Error('A signed design stays as the record of what was written');
-  await prisma.researchPlanDesignRun.delete({ where: { id: runId } });
+  await prisma.$transaction(async tx => {
+    await ignoreOpen(tx, runTarget(runId), 'other', 'The design was removed');
+    await tx.researchPlanDesignRun.delete({ where: { id: runId } });
+  });
+}
+
+/** What a model step proposed (Q336): the context card, the chain, the card it drafted, or the new round's findings. */
+function stepSuggestions(before: DesignRunView, after: DesignRunView, prepared: PreparedStep): NewSuggestion[] {
+  const state = after.state;
+  const drafted = (kind: string, subject: string, specId: NewSuggestion['specId'], proposed: unknown): NewSuggestion => ({
+    ...runTarget(after.id), kind, subject, specId, proposed, requestKey: `design:${after.id}:${kind}:${subject}:${after.modelCalls}`,
+    providerId: prepared.providerIds.drafting, provider: prepared.provider, model: after.model,
+  });
+  if (before.step === 'context' && state.context) return [drafted('context_card', 'context', 'plan-design.context', state.context.card)];
+  if (before.step === 'chain' && state.chain?.draft) return [drafted('evidence_chain', 'chain', 'plan-design.chain', { ...state.chain.draft, tier: state.chain.tier })];
+  if (before.step === 'cards') {
+    const card = state.cards?.items.find(item => state.cards?.edited?.[item.blockId] !== before.state.cards?.edited?.[item.blockId]);
+    return card ? [drafted('design_card', card.blockId, 'plan-design.card', card)] : [];
+  }
+  const round = state.review?.rounds.at(-1);
+  if (before.step !== 'review' || !round || (state.review?.rounds.length ?? 0) === (before.state.review?.rounds.length ?? 0)) return [];
+  return round.findings.map(finding => ({ ...runTarget(after.id), kind: 'review_finding', subject: finding.id, specId: 'plan-design.review', proposed: finding,
+    requestKey: `design:${after.id}:review_finding:${finding.id}`, providerId: prepared.providerIds.review, provider: round.provider, model: round.model }));
+}
+
+/** What an author's action says about those suggestions (Q334): an edit, an adoption at confirm, a finding fixed or waived. */
+async function noteDecision(db: Db, view: DesignRunView, action: DesignAction, next: DesignState) {
+  const about = (kind: string, subject: string) => ({ ...runTarget(view.id), kind, subject });
+  if (action.kind === 'context') return decideSuggestion(db, about('context_card', 'context'), { status: 'edited' });
+  if (action.kind === 'chain') return decideSuggestion(db, about('evidence_chain', 'chain'), { status: 'edited' });
+  if (action.kind === 'card') {
+    for (const [blockId, at] of Object.entries(next.cards?.edited ?? {})) if (at !== view.state.cards?.edited?.[blockId]) await decideSuggestion(db, about('design_card', blockId), { status: 'edited' });
+    return;
+  }
+  if (action.kind === 'finding') return decideSuggestion(db, about('review_finding', action.findingId),
+    action.status === 'resolved' ? { status: 'adopted' } : action.status === 'waived' ? { status: 'ignored', reason: 'not_needed', note: action.reason } : { status: 'pending' });
+  if (action.kind !== 'confirm') return;
+  if (view.step === 'context' && next.context) return decideSuggestion(db, about('context_card', 'context'), adoptedAs(next.context.card, ['states', 'questions']));
+  if (view.step === 'chain' && next.chain?.draft) return decideSuggestion(db, about('evidence_chain', 'chain'), adoptedAs({ ...next.chain.draft, tier: next.chain.tier }, ['drift']));
+  if (view.step === 'cards') for (const card of next.cards?.items ?? []) await decideSuggestion(db, about('design_card', card.blockId), adoptedAs(card, ['confirmed', 'drift']));
 }
 
 async function signContext(tx: Prisma.TransactionClient | typeof prisma, view: DesignRunView) {

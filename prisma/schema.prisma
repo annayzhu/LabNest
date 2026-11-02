@@ -1906,6 +1906,44 @@ model ResearchPlanDesignRun {
   @@index([researchPlanId, createdAt])
 }
 
+/// One thing a Copilot proposed and what the author did with it (Q334, Q336), so adoption can be counted per module,
+/// task spec version and service. The suggested record keeps its own copy; this row is the history and the numbers.
+model CopilotSuggestion {
+  id           String    @id @default(cuid())
+  /// One row per suggestion as generated: writing the same key again finds this row instead of adding another.
+  requestKey   String    @unique
+  /// research_plan | protocol_import | entry | result
+  module       String
+  kind         String
+  specId       String
+  specVersion  Int
+  providerId   String?
+  provider     String?
+  model        String?
+  targetType   String
+  targetId     String
+  /// What the suggestion is about inside the target: a block, a field, a finding.
+  subject      String    @default("")
+  /// What was there before (the original words, the old field value), when there was something.
+  beforeJson   Json?
+  proposedJson Json
+  /// The program's checks on the proposal: rule findings, numbers not found in the original.
+  checksJson   Json?
+  /// pending | edited (changed, not decided) | adopted | ignored
+  status       String    @default("pending")
+  /// The fields the author changed before adopting.
+  editedFields String[]  @default([])
+  /// wrong | not_needed | already_have | poor_wording | regenerated | other
+  ignoreReason String?
+  note         String?
+  createdAt    DateTime  @default(now())
+  decidedAt    DateTime?
+
+  @@index([targetType, targetId])
+  @@index([providerId, createdAt])
+  @@index([module, specId, specVersion])
+}
+
 /// The fixed lifecycle 大类 of inventory: they can be renamed or hidden, never added or removed.
 model InventoryGroup {
   key       String   @id

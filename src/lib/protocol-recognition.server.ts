@@ -2,12 +2,14 @@ import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { keepAttachment } from './attachment-files';
 import { resolveAttachmentPath } from './attachments';
+import { decideSuggestion, ignoreOpen } from './copilot/suggestions.server';
 import { prisma } from './db';
 import { checkAnchoredRecognition } from './protocol-anchor-check';
 import type { SourcePage } from './protocol-anchors';
 import { convertLegacyProtocol, isLegacyProtocol, type ConversionSummary } from './protocol-conversion';
 import { projectProtocolDocument, type ProtocolDocument } from './protocol-document';
 import { createDraftProtocol } from './protocol-draft.server';
+import { changedSections } from './protocol-habit-text';
 import { checkRecognition, habitTextProtocol, RECOGNITION_PROMPT_VERSION, type RecognitionCheck } from './protocol-recognition';
 import type { Outline, RecognitionScope } from './protocol-recognition-scope';
 import { readSourceFile, type SourceText } from './protocol-source-text.server';
@@ -30,6 +32,9 @@ export type RecognitionView = {
   /** Characters of the source sent in the second pass (each batch counted). */
   sentChars?: number;
 };
+
+/** The AI draft of a kept source, as a Copilot suggestion (Q336): saving it adopts it, saving the source as written sets it aside. */
+export const recognitionDraft = (sourceId: string) => ({ targetType: 'recognition_source', targetId: sourceId, kind: 'organized_draft' });
 
 /** The uploaded or pasted source, kept as an attachment so every later step reads the same original. */
 export const keepRecognitionSource = (file: File) => keepAttachment(file, { targetType: 'protocol_recognition', targetId: randomUUID(), linkType: 'recognition_source' });
@@ -103,6 +108,8 @@ export async function saveRecognition(input: { sourceId: string; mode: Recogniti
     await tx.attachmentLink.create({ data: { attachmentId: loaded.sourceId, targetType: 'protocol_version', targetId: version.id, linkType: 'recognition_source' } });
     // Activity entries print their fields as text: keep them flat.
     await tx.activityLog.create({ data: { action: 'protocol_recognition_saved', targetType: 'protocol', targetId: protocol.id, metadataJson: { versionId: version.id, sourceId: loaded.sourceId, fileName: loaded.fileName, mode: input.mode, model: input.model ?? null, promptVersion: promptVersion ?? null, unverified, steps: view.summary.steps } } });
+    if (ai) await decideSuggestion(tx, recognitionDraft(loaded.sourceId), { status: 'adopted', changed: proposed => typeof proposed.habitText === 'string' ? changedSections(proposed.habitText, input.habitText) : [] });
+    else await ignoreOpen(tx, recognitionDraft(loaded.sourceId), 'other', 'Saved as written instead');
     return { protocolId: protocol.id, versionId: version.id };
   });
 }

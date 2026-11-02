@@ -1,3 +1,4 @@
+import { jsonObject } from '../structured';
 import type { RuleFinding } from './rules';
 import { chainSchema, claimTypes, contextCardSchema, contextFields, designCardSchema, reviewDimensions, reviewSchema, requiredBlocks, type Chain, type ChainBlock, type ContextCard, type ContextItem, type DesignCard, type Tier } from './spec';
 import type { ChainTemplate } from './templates';
@@ -6,12 +7,6 @@ import type { ChainTemplate } from './templates';
  * One prompt and one reader per model step. Every reader refuses an answer that is not the shape asked for. The prompts
  * carry the confirmed artifacts as JSON, so a step sees exactly what the author confirmed and nothing of earlier turns.
  */
-/** The outermost object of an answer, fenced or not: prose before it ("审查如下：") is skipped. */
-function jsonObject(raw: string): unknown {
-  const payload = /```(?:json)?\s*([\s\S]*?)```/i.exec(raw)?.[1] ?? raw;
-  const start = payload.indexOf('{'), end = payload.lastIndexOf('}');
-  return JSON.parse(start >= 0 && end > start ? payload.slice(start, end + 1) : payload);
-}
 const cardOf = (card: ContextCard) => JSON.stringify(Object.fromEntries(contextFields.map(field => [field, card[field]])), null, 1);
 const common = '只输出一个 JSON 对象，不要其他文字。用中文写内容，分子、细胞系、试剂名保留原文。不知道的值留空字符串或 null，不要编造数字、批号或文献。';
 

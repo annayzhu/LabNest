@@ -35,6 +35,12 @@ export type AIConnectionResult = {
 };
 type Completion = { text: string; model?: string; returnedModel?: string; truncated?: boolean };
 
+/**
+ * `json`: the answer must be one JSON object. A service that can be told so is told (Q333); the caller still checks
+ * the answer against its own structure. `testing`: the connection test, which caps the answer and skips settings.
+ */
+export type CompleteOptions = { json?: boolean; testing?: boolean };
+
 export type AIGenerationResult = {
   actions: ProposedAction[];
   rawResponse: string;
@@ -88,7 +94,7 @@ export interface AIProviderAdapter {
   testConnection(): Promise<AIConnectionResult>;
   generateProposedActions?(input: EntryToActionPromptInput): Promise<AIGenerationResult>;
   /** Raw completion for feature-specific prompts. Absent on manual copy-paste mode. */
-  complete?(system: string, user: string): Promise<{ text: string; model?: string }>;
+  complete?(system: string, user: string, options?: CompleteOptions): Promise<{ text: string; model?: string }>;
   /** Reads one picture with a model that can see; absent when the service cannot (manual mode, Dify). */
   describeImage?(system: string, user: string, image: ImageInput): Promise<{ text: string; model?: string }>;
   /** One turn of a conversation where the model may call tools; absent when the service cannot (manual mode, Dify). */
@@ -373,11 +379,11 @@ abstract class ConnectedProvider implements AIProviderAdapter {
   }
 
   abstract testConnection(): Promise<AIConnectionResult>;
-  abstract complete(system: string, user: string, testing?: boolean): Promise<Completion>;
+  abstract complete(system: string, user: string, options?: CompleteOptions): Promise<Completion>;
 
   protected testGeneration(): Promise<AIConnectionResult> {
     return this.guarded(async () => {
-      const result = await this.complete("Reply with the single word OK.", "Connection test only. No business data.", true);
+      const result = await this.complete("Reply with the single word OK.", "Connection test only. No business data.", { testing: true });
       if (!result.text.trim()) throw new AIProviderError(result.truncated ? "The test used up its output allowance before any text came back; this does not mean the key is wrong." : "The model returned empty content; generation is not verified yet.");
       if (this.config.type === "dify") return { ok: true, verification: "application", message: "App generation test succeeded; the actual model is set by the Dify app." };
       const requestedModel = this.requireModel();
@@ -426,28 +432,41 @@ function openAIContentToText(content: OpenAIChatResponse["choices"]): string {
   throw new AIProviderError("The model response did not contain a message.");
 }
 
+/** Services that answered JSON mode with an error, by provider id, for as long as the server runs. */
+const jsonModeRefused = new Set<string>();
+
 /** OpenAI Chat Completions and any compatible endpoint (Qwen/DashScope compatible mode, vLLM, Ollama, etc.). */
 export class OpenAICompatibleProvider extends ConnectedProvider {
   async testConnection(): Promise<AIConnectionResult> {
     return this.testGeneration();
   }
 
-  async complete(system: string, user: string, testing = false) {
+  async complete(system: string, user: string, { testing = false, json = false }: CompleteOptions = {}): Promise<Completion> {
     const apiKey = this.requireApiKey();
     const model = this.requireModel();
-    const response = await this.request("/chat/completions", {
-      method: "POST",
-      headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
-      body: JSON.stringify({
-        model,
-        ...(testing ? (this.config.type === "openai" ? { max_completion_tokens: 1024 } : { max_tokens: 1024 }) : { temperature: 0 }),
-        ...(testing && new URL(this.baseUrl).hostname === "api.deepseek.com" ? { thinking: { type: "disabled" } } : {}),
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: user },
-        ],
-      }),
-    });
+    const jsonMode = json && this.config.capabilities.includes("structured_output") && !jsonModeRefused.has(this.config.id);
+    let response: Response;
+    try {
+      response = await this.request("/chat/completions", {
+        method: "POST",
+        headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          model,
+          ...(testing ? (this.config.type === "openai" ? { max_completion_tokens: 1024 } : { max_tokens: 1024 }) : { temperature: 0 }),
+          ...(testing && new URL(this.baseUrl).hostname === "api.deepseek.com" ? { thinking: { type: "disabled" } } : {}),
+          ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
+          messages: [
+            { role: "system", content: system },
+            { role: "user", content: user },
+          ],
+        }),
+      });
+    } catch (error) {
+      // A compatible service that does not take JSON mode says so once; it is asked plainly from then on.
+      if (!jsonMode || !(error instanceof AIProviderError) || error.status !== 400 || !/response_format|json/i.test(error.message)) throw error;
+      jsonModeRefused.add(this.config.id);
+      return this.complete(system, user, { testing });
+    }
     const payload = (await response.json()) as OpenAIChatResponse;
     return { text: openAIContentToText(payload.choices), model: typeof payload.model === "string" ? payload.model : model, returnedModel: typeof payload.model === "string" ? payload.model : undefined, truncated: payload.choices?.[0]?.finish_reason === "length" };
   }
@@ -511,7 +530,7 @@ export class AnthropicProvider extends ConnectedProvider {
     return this.testGeneration();
   }
 
-  async complete(system: string, user: string, testing = false) {
+  async complete(system: string, user: string, { testing = false }: CompleteOptions = {}) {
     const apiKey = this.requireApiKey();
     const model = this.requireModel();
     const response = await this.request("/messages", {

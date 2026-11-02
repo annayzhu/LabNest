@@ -71,7 +71,7 @@ const mock = createServer(async (req, res) => {
   const request = JSON.parse(body);
   const system = request.messages[0].content, user = request.messages.at(-1).content;
   const step = system.includes("情境卡”。") ? "context" : system.includes("现在做“证据链”") ? "chain" : system.includes("设计卡") ? "card" : system.includes("独立的实验设计审稿人") ? "review" : "other";
-  calls.push({ step, model: request.model, chars: user.length, sentInventory: user.includes("KYSE150") });
+  calls.push({ step, model: request.model, chars: user.length, sentInventory: user.includes("KYSE150"), json: request.response_format?.type });
   let text = "{}";
   if (step === "context") text = JSON.stringify(context);
   if (step === "chain") text = JSON.stringify(chain);
@@ -243,6 +243,22 @@ try {
     report.modelCalls = run.modelCalls;
     assert(run.modelCalls <= 12, "a full run without literature stays within 12 model calls");
     assert(calls.filter(call => call.step === "context").every(call => call.sentInventory || true));
+  });
+
+  await check("each suggestion and what the author did with it is kept, and every step asked for one JSON object (Q333, Q334)", async () => {
+    const runId = (await db.query('SELECT id FROM "ResearchPlanDesignRun" WHERE "researchPlanId"=$1', [planId])).rows[0].id;
+    const rows = (await db.query('SELECT kind, subject, status, "editedFields", "ignoreReason", "specId", "specVersion", provider FROM "CopilotSuggestion" WHERE "targetId"=$1 ORDER BY "createdAt"', [runId])).rows;
+    const of = (kind, subject) => rows.find(row => row.kind === kind && row.subject === subject);
+    assert.equal(of("context_card", "context")?.status, "adopted");
+    assert.equal(of("evidence_chain", "chain")?.status, "adopted");
+    assert.deepEqual([of("design_card", "kd-check")?.editedFields, of("design_card", "phenotype")?.editedFields], [[], ["unit"]], "the n fixed before confirming counts as a change");
+    assert.equal(of("review_finding", "1-1")?.status, "adopted", "the severe finding was fixed in its card");
+    assert.equal(of("review_finding", "1-2")?.ignoreReason, "regenerated", "a finding left open is replaced by the next round");
+    assert(rows.filter(row => row.kind === "review_finding").every(row => row.provider === "Design reviewer mock" && row.specVersion === 2));
+    assert(calls.every(call => call.json === "json_object"), "JSON mode on every step");
+    report.suggestions = rows;
+    await page.goto(`${base}/ai`, { waitUntil: "networkidle" });
+    await page.locator(`[data-provider-row="${drafter}"] [data-adoption]`).getByText("Copilot 最近 30 天：采纳 4/4（100%）", { exact: false }).waitFor();
   });
 
   await check("the plan page shows one line for the signed design; the workbench fits a phone", async () => {

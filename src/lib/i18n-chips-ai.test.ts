@@ -109,8 +109,6 @@ const entries: Array<[string, string]> = [
   ["Add a model service", "添加一个模型服务"],
   ["Make it the default service and fill in its key and model", "选为默认服务，并填好密钥和模型"],
   ["Turn on “Enable AI”", "打开“启用 AI”"],
-  ["Propose next steps from a quick entry", "从快速记录提议后续操作"],
-  ["On a quick entry, click “Propose with AI” at the top right; proposals take effect only after you confirm them", "在快速记录页右上角点“Propose with AI”，提议等你确认后才生效"],
   ["AI workbench", "AI 工作台"],
   ["Without a connected model, copy the prompt to any AI and paste the answer back", "没有联网的模型时，复制提示词给任意 AI，再把回答贴回来"],
   ["Reading settings…", "正在读取设置…"],

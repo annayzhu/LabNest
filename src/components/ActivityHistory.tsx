@@ -9,7 +9,7 @@ const actionLabels: Record<string, string> = {
   protocol_recognized: "Recognized from a document", protocol_recognition_saved: "Recognized from a document",
   repair_draft_execution: "Execution record repaired", confirm_execution_structure: "Execution structure confirmed",
   experiment_step_recorded: "Step recorded", merge_protocol_ranges: "Ranges merged", fix_protocol_range: "Range corrected",
-  create_revision: "Revision created", unlink_attachment: "Attachment removed",
+  create_revision: "Revision created", unlink_attachment: "Attachment removed", entry_assign: "Filed", entry_tidied: "AI-tidied draft adopted",
 };
 const actionLabel = (action: string) => actionLabels[action] ?? `${action.charAt(0).toUpperCase()}${action.slice(1).replaceAll("_", " ")}`;
 

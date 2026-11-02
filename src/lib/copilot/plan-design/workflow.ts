@@ -1,3 +1,4 @@
+import { askJson, type Complete } from '../structured';
 import { blockingRules, checkCards } from './rules';
 import { cardPrompt, chainPrompt, contextPrompt, parseCard, parseChain, parseContext, parseReview, reviewPrompt, type ProtocolChoice } from './prompts';
 import {
@@ -6,7 +7,6 @@ import {
 } from './spec';
 import { suggestTemplate, templateById } from './templates';
 
-type Complete = (system: string, user: string) => Promise<{ text: string; model?: string }>;
 /** What a model step needs: the drafting model, the reviewing one (the same model when none is set), the plan's Protocols. */
 export type DesignDeps = { complete: Complete; review: { complete: Complete; provider: string; selfReview: boolean }; protocols: ProtocolChoice[]; now: () => Date };
 
@@ -20,15 +20,9 @@ export async function runModelStep(input: DesignRunView, deps: DesignDeps, optio
   const state = run.state;
   const log = (kind: DesignEvent['kind'], text: string) => { run.log.push({ at: deps.now().toISOString(), step: run.step, kind, text }); run.log.splice(0, Math.max(0, run.log.length - MAX_DESIGN_LOG)); };
   const structured = async <T,>(complete: Complete, system: string, user: string, read: (text: string) => T) => {
-    run.modelCalls += 1;
-    const first = await complete(system, user);
-    if (complete === deps.complete) run.model ??= first.model;
-    try { return { value: read(first.text), model: first.model }; } catch (error) {
-      log('note', `The answer could not be read (${error instanceof Error ? error.message.slice(0, 120) : 'unknown'}); asked again`);
-      run.modelCalls += 1;
-      const second = await complete(system, `${user}\n\n你上一次的回答无法解析：${error instanceof Error ? error.message.slice(0, 300) : ''}\n请只输出要求的 JSON 对象。`);
-      return { value: read(second.text), model: second.model };
-    }
+    const answer = await askJson(complete, { system, user }, read, { onCall: () => { run.modelCalls += 1; }, onRetry: reason => log('note', `The answer could not be read (${reason.slice(0, 120)}); asked again`) });
+    if (complete === deps.complete) run.model ??= answer.model;
+    return answer;
   };
   run.error = undefined;
   try {

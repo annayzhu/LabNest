@@ -24,17 +24,20 @@ export async function prepareDesignStep(planId: string, purpose: string) {
   if (!resolved.ok) throw new Error(resolved.error);
   const { adapter, config, gate } = resolved;
   if (!adapter.complete) throw new Error(`The service “${config.name}” cannot write text; choose another default service on the AI page`);
-  const complete: DesignDeps['complete'] = (system, user) => adapter.complete!(system, user);
+  const complete: DesignDeps['complete'] = (system, user, options) => adapter.complete!(system, user, options);
   const settings = await prisma.aISettings.findUniqueOrThrow({ where: { id: 'default' } });
   let review: DesignDeps['review'] = { complete, provider: config.name, selfReview: true };
   let reviewGate: { assertAllowed: () => Promise<void> } | undefined;
+  let reviewProviderId = config.id;
   if (settings.reviewProviderId && settings.reviewProviderId !== config.id) {
     const reviewer = await resolveAdapterForProvider(settings.reviewProviderId, settings.updatedAt.toISOString(), { timeoutMs: 240_000 });
     if (!reviewer.ok) throw new Error(`Review service: ${reviewer.error}`);
     if (!reviewer.adapter.complete) throw new Error(`The review service “${reviewer.config.name}” cannot write text`);
-    review = { complete: (system, user) => reviewer.adapter.complete!(system, user), provider: reviewer.config.name, selfReview: false };
+    review = { complete: (system, user, options) => reviewer.adapter.complete!(system, user, options), provider: reviewer.config.name, selfReview: false };
     reviewGate = reviewer.gate;
+    reviewProviderId = reviewer.config.id;
   }
   const deps: DesignDeps = { now: () => new Date(), complete, review, protocols: await protocolChoices(planId, purpose) };
-  return { deps, provider: config.name, assertAllowed: async () => { await gate.assertAllowed(); await reviewGate?.assertAllowed(); } };
+  return { deps, provider: config.name, providerIds: { drafting: config.id, review: reviewProviderId }, assertAllowed: async () => { await gate.assertAllowed(); await reviewGate?.assertAllowed(); } };
 }
+export type PreparedStep = Awaited<ReturnType<typeof prepareDesignStep>>;

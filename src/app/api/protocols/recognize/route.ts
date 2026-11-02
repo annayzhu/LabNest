@@ -1,11 +1,13 @@
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { AIProviderError } from "@/lib/ai";
 import { resolveConnectedAdapter } from "@/lib/ai-server";
 import { validateAIRequest } from "@/lib/ai-request";
+import { recordSuggestions } from "@/lib/copilot/suggestions.server";
 import { prisma } from "@/lib/db";
 import { organizeSource, outlineSource, RECOGNITION_PROMPT_VERSION } from "@/lib/protocol-recognition";
 import { choiceInput, defaultChoice, needsConfirmation, outlineInput } from "@/lib/protocol-recognition-scope";
-import { loadRecognitionSource, textView } from "@/lib/protocol-recognition.server";
+import { loadRecognitionSource, recognitionDraft, textView } from "@/lib/protocol-recognition.server";
 
 export const runtime = "nodejs";
 
@@ -59,6 +61,9 @@ export async function POST(request: Request) {
       provider: config.name, model: model ?? null, promptVersion: RECOGNITION_PROMPT_VERSION, calls: result.calls, language: choice.language, unverified: view.check?.unverified ?? 0, lines: view.check?.lines.length ?? 0,
       missing: view.check?.missing.length ?? 0, chars: loaded.source.text.length, sentChars: result.sentChars, pages: result.scope.pages.length, truncated: result.truncated,
     } } });
+    await recordSuggestions(prisma, [{ ...recognitionDraft(loaded.sourceId), requestKey: `recognize:${loaded.sourceId}:${randomUUID()}`, specId: "protocol-import.organize",
+      providerId: config.id, provider: config.name, model, proposed: { habitText: result.habitText },
+      checks: { unverified: view.check?.unverified ?? 0, lines: view.check?.lines.length ?? 0, missing: view.check?.missing.length ?? 0, truncated: result.truncated } }]);
     return Response.json({ view });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "The model request failed" }, { status: error instanceof AIProviderError && error.status === 403 ? 403 : 502 });

@@ -9,17 +9,19 @@ import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { DocumentOutlineWorkbench } from "@/components/DocumentOutlinePanel";
-import { EntryAiProposeButton } from "@/components/EntryAiProposeButton";
 import { EntryAssignmentControl } from "@/components/EntryAssignmentControl";
 import { EntryMediaGrid } from "@/components/EntryMediaGrid";
 import { EntrySuggestions } from "@/components/EntrySuggestions";
 import { EntryContentView } from "@/components/EntryContentView";
+import { EntryTidyButton, EntryTidyPanel, EntryTidyProvider } from "@/components/EntryTidy";
+import { Disclosure } from "@/components/ui/Disclosure";
 import { PageActionsMenu } from "@/components/PageActionsMenu";
 import { PageHeader } from "@/components/PageHeader";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
 import { RecordStatusControl } from "@/components/RecordStatusControl";
 import { Badge, BadgeLink, StatusPill } from "@/components/ui/Badge";
 import { getEntryDetailRecord } from "@/lib/entries";
+import { originalWords } from "@/lib/entry-tidy.server";
 import { entryTimelineTimestamp, formatEntryDetailTimestamp } from "@/lib/entry-timeline";
 import { filterHref } from "@/lib/filters";
 import { localeCookieName, resolveAppLocale } from "@/lib/i18n";
@@ -63,9 +65,10 @@ export default async function EntryDetailPage({ params, searchParams }: { params
 
   const inlineIds = new Set(collectDocumentMedia(entry.contentMarkdown).map(documentMediaAttachmentId));
   const imageAttachments = entry.attachments.filter((attachment) => attachment.mimeType.startsWith("image/") && !inlineIds.has(attachment.id));
-  const [reportSourceReferences, activityLogs] = await Promise.all([
+  const [reportSourceReferences, activityLogs, original] = await Promise.all([
     prisma.reportSource.count({ where: { sourceType: "entry", sourceId: entry.id } }),
     prisma.activityLog.findMany({ where: { targetType: "entry", targetId: entry.id }, orderBy: { createdAt: "desc" }, take: 12 }),
+    originalWords(entry.id),
   ]);
   const primary = entry.itemLinks.find(link => link.direction === "outbound" && link.linkType === "entry_primary");
   const targetRecord = primary ? primary.counterpartType === "result" ? await prisma.result.findUnique({where:{id:primary.counterpartId},select:{title:true,status:true}}) : await prisma.experiment.findUnique({where:{id:primary.counterpartId},select:{title:true,status:true}}) : null;
@@ -79,18 +82,20 @@ export default async function EntryDetailPage({ params, searchParams }: { params
 
   return (
     <AppShell>
+      <EntryTidyProvider entryId={entry.id}>
       <div className="space-y-6">
         <PageHeader
           eyebrow={formatEntryDetailTimestamp(timelineTimestamp, locale)}
           title={entry.title}
           description="A journal entry remains a lightweight source record until its observations or decisions are reviewed and formalized elsewhere."
-          actions={<div className="flex flex-wrap gap-2">
-            {!locked ? <EntryAiProposeButton entryId={entry.id} /> : null}
+          actions={<>
+            {!locked ? <EntryTidyButton /> : null}
             {locked ? null : <Link href={`/entries/${entry.id}/edit`} className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95"><Pencil className="h-4 w-4" aria-hidden />Edit Entry</Link>}
             <PageActionsMenu><Link href="/entries" className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-4 text-sm font-medium text-graphite shadow-paper transition hover:bg-sage-surface/60 hover:text-ink"><ArrowLeft className="h-4 w-4" aria-hidden />All Entries</Link><DocumentPrintButton showLabel /><RecordLifecycleControl menuItem id={entry.id} identifier={entry.title} title="Journal entry" recordLabel="Entry" recordLabelZh="快速记录" blockers={deletionBlockers} archived={Boolean(entry.archivedAt)} deleteAction={deleteEntry} archiveAction={archiveEntry} restoreAction={restoreEntry} /></PageActionsMenu>
-          </div>}
+          </>}
         />
 
+        {!locked ? <EntryTidyPanel entryId={entry.id} original={entry.contentMarkdown ?? entry.body} /> : null}
         {!locked ? <EntryAssignmentControl key={primary ? `${primary.counterpartType}:${primary.counterpartId}` : "none"} initialOpen={autoAssign} id={entry.id} target={primary ? {type:primary.counterpartType,id:primary.counterpartId,title:targetRecord?.title ?? "目标已失效",invalid:!targetRecord || targetRecord.status === "archived" || Boolean(recycledTarget)} : null} /> : null}
         <EntrySuggestions entryId={entry.id} locked={locked} suggestions={entry.suggestions.filter(suggestion => suggestion.status === "pending")} />
         {imageAttachments.length ? (
@@ -108,6 +113,7 @@ export default async function EntryDetailPage({ params, searchParams }: { params
                 <h1 className="document-page-title mt-2 font-serif font-medium leading-tight text-ink">{entry.title}</h1>
               </header>
               <EntryContentView markdown={entry.contentMarkdown ?? entry.body} />
+              {original ? <Disclosure title="Original words" summary="As written before tidying" className="mt-6 rounded-[var(--ln-radius-panel-inner)] border border-hairline"><EntryContentView markdown={original} /></Disclosure> : null}
 
               {entry.tags.length || entry.moodStatus ? (
                 <div className="mt-7 flex flex-wrap gap-2 border-t border-hairline pt-5">
@@ -225,6 +231,7 @@ export default async function EntryDetailPage({ params, searchParams }: { params
           </aside>
         </div>
       </div>
+      </EntryTidyProvider>
     </AppShell>
   );
 }

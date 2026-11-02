@@ -29,7 +29,7 @@ export type AiPlace = { key: 'recognize' | 'design' | 'entry' | 'workbench'; lab
 const places: Array<Omit<AiPlace, 'here'> & { href: string; at: (pathname: string) => boolean }> = [
   { key: 'recognize', label: 'Organize instructions or a non-template Protocol', detail: 'A PDF, Word file or pasted text made into a Protocol, every line checked against the original', href: '/protocols/import/recognize', at: pathname => pathname.startsWith('/protocols/import') },
   { key: 'design', label: 'Design a Protocol from a goal', detail: 'Search methods by experiment goal, have AI summarize them as method cards, then generate a draft Protocol', href: '/protocols/design', at: pathname => pathname === '/protocols' || pathname.startsWith('/protocols/design') },
-  { key: 'entry', label: 'Propose next steps from a quick entry', detail: 'On a quick entry, click “Propose with AI” at the top right; proposals take effect only after you confirm them', href: '/entries', at: pathname => pathname === '/entries' || pathname.startsWith('/entries/') },
+  { key: 'entry', label: 'Tidy up a quick record', detail: 'Dictate with the keyboard’s microphone, then click “Tidy up” on the saved record; the draft changes nothing until you adopt it', href: '/entries', at: pathname => pathname === '/entries' || pathname.startsWith('/entries/') },
   { key: 'workbench', label: 'AI workbench', detail: 'Without a connected model, copy the prompt to any AI and paste the answer back', href: '/actions/manual', at: pathname => pathname.startsWith('/actions/manual') },
 ];
 

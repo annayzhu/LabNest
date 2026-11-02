@@ -51,6 +51,16 @@ export function documentSourceText(document: ProtocolDocument, title?: string) {
 /** The usual names of the sections: as headings in written text and in the Word template. */
 export const sectionTitles: Record<ProtocolSectionKey, string> = { description: '说明', purpose: '目的', background: '背景', material: '材料', steps: '步骤', result_templates: '结果', consumption_rules: '消耗规则' };
 
+/** The sections (and `title`) whose text differs between two habit texts: what an author changed in an organized draft. */
+export function changedSections(before: string, after: string) {
+  const read = (text: string) => {
+    const { document, title } = habitTextToDocument(text);
+    return new Map<string, string>([['title', title ?? ''], ...document.sections.map(section => [section.key, documentSourceText({ ...document, sections: [section] })] as [string, string])]);
+  };
+  const was = read(before), now = read(after);
+  return [...new Set([...was.keys(), ...now.keys()])].filter(key => was.get(key) !== now.get(key));
+}
+
 /** "- Buffer RL | 350/600 µL | 按体系": a material line, as written in text. */
 const materialLine = /^\s*[-•*·]?\s*([^|｜\t]+?)\s*[|｜\t]\s*(.*)$/;
 

@@ -232,3 +232,31 @@ describe("createAIProviderAdapter", () => {
     expect(createAIProviderAdapter({ ...baseConfig, type: "dify" })).toBeInstanceOf(DifyProvider);
   });
 });
+
+describe("JSON mode (Q333)", () => {
+  const answer = json({ model: "qwen-plus", choices: [{ message: { content: '{"ok":true}' } }] });
+  const sent = (call: Call) => JSON.parse(String(call.init.body)) as Record<string, unknown>;
+
+  it("asks a service marked for structured output for one JSON object, and others plainly", async () => {
+    const { fetchImpl, calls } = fakeFetch(() => answer.clone());
+    await new OpenAICompatibleProvider({ ...baseConfig, id: "json-1", capabilities: ["text", "structured_output"] }, { fetchImpl }).complete("s", "u", { json: true });
+    await new OpenAICompatibleProvider({ ...baseConfig, id: "json-2" }, { fetchImpl }).complete("s", "u", { json: true });
+    await new OpenAICompatibleProvider({ ...baseConfig, id: "json-3", capabilities: ["text", "structured_output"] }, { fetchImpl }).complete("s", "u");
+    expect(calls.map(call => sent(call).response_format)).toEqual([{ type: "json_object" }, undefined, undefined]);
+    expect(calls.every(call => sent(call).temperature === 0)).toBe(true);
+  });
+
+  it("asks again without it when the service refuses JSON mode, and stops asking for it", async () => {
+    const { fetchImpl, calls } = fakeFetch(call => sent(call).response_format ? json({ error: { message: "This response_format type is unavailable now" } }, 400) : answer.clone());
+    const provider = new OpenAICompatibleProvider({ ...baseConfig, id: "json-refused", capabilities: ["text", "structured_output"] }, { fetchImpl });
+    expect((await provider.complete("s", "u", { json: true })).text).toBe('{"ok":true}');
+    await provider.complete("s", "u", { json: true });
+    expect(calls.map(call => Boolean(sent(call).response_format))).toEqual([true, false, false]);
+  });
+
+  it("does not hide another bad request behind the retry", async () => {
+    const { fetchImpl, calls } = fakeFetch(() => json({ error: { message: "context length exceeded" } }, 400));
+    await expect(new OpenAICompatibleProvider({ ...baseConfig, id: "json-4", capabilities: ["text", "structured_output"] }, { fetchImpl }).complete("s", "u", { json: true })).rejects.toThrow(/context length/);
+    expect(calls).toHaveLength(1);
+  });
+});

@@ -27,3 +27,19 @@ describe('The design workbench sign-off in Chinese', () => {
     ['Changed after the last review and not reviewed again: Transwell 迁移. Signing writes this into the limitations.', '最后一轮审查之后改过、没有再审查：Transwell 迁移。签署时会写进“限制与依赖”。'],
   ])('%s', (english, chinese) => expect(translateUiText(english, 'zh')).toBe(chinese));
 });
+
+describe('Adoption numbers and 整理 in Chinese', () => {
+  it.each([
+    ['Copilot, last 30 days: adopted 3 of 4 (75%) · 1.5 fields changed before adopting · 2 waiting · set aside: Poorly written 1', 'Copilot 最近 30 天：采纳 3/4（75%） · 采纳前平均改 1.5 处 · 2 条待处理 · 未采用：写法不好 1'],
+    ['Copilot, last 30 days: none decided yet · 1 waiting', 'Copilot 最近 30 天：还没有处理过 · 1 条待处理'],
+    ['Research plans · Design card · v1', '研究方案 · 设计卡 · 第 1 版'],
+    ['Quick records · Tidied quick record · v1', '快速记录 · 整理快速记录 · 第 1 版'],
+    ['Tidy up', '整理'],
+    ['Use this draft', '采用'],
+    ['Original words', '原话'],
+    ['Not in your words: 48, EXP-0013. Check them before adopting.', '原话里没有：48、EXP-0013。采用前请核对。'],
+    ['Your words name EXP-0012 Transwell 迁移. File this record under it?', '原话提到了 EXP-0012 Transwell 迁移。把这条记录归入它吗？'],
+    ['From DeepSeek (deepseek-v4-flash). Nothing on the record changes until you adopt it; the words as they are now stay under “Original words”.', '来自 DeepSeek (deepseek-v4-flash)。采用之前记录不会改变；现在的文字会保留在“原话”里。'],
+    ['Tidy up a quick record', '整理快速记录'],
+  ])('%s', (english, chinese) => expect(translateUiText(english, 'zh')).toBe(chinese));
+});

@@ -1,4 +1,5 @@
 import { toolArguments, type ChatMessage, type ChatToolSpec, type ChatTurn } from "./ai-chat";
+import { acceptableActionTypes } from "./ai-suggestion";
 import { proposedActionSchema } from "./validation";
 import type { ProposedAction } from "./types";
 
@@ -42,19 +43,14 @@ export type AIGenerationResult = {
 
 export const AI_LIMITS = { entryTitle: 160, entryBody: 60_000, responseText: 200_000, actions: 50 } as const;
 
-export const allowedProposedActionTypes: ProposedAction["actionType"][] = [
-  "create_experiment",
-  "update_experiment",
-  "consume_inventory",
-  "create_entity",
-  "create_result",
-  "create_purchase_request",
-  "receive_purchase",
-  "link_attachment",
-  "link_item",
-  "create_inventory_item",
-  "create_protocol_run",
-];
+/** A model reading an entry may propose only what 采纳 on the entry page can carry out. */
+export const allowedProposedActionTypes: ProposedAction["actionType"][] = [...acceptableActionTypes];
+
+/** What each action means to the model, and the payload 采纳 reads from it (ai-suggestion.ts). */
+const actionTypeGuides: Partial<Record<ProposedAction["actionType"], string>> = {
+  link_attachment: "link_attachment: file this entry under an existing experiment the entry names; payload {\"experiment\": its run code (EXP-…) or exact title}.",
+  create_experiment: "create_experiment: the entry starts work that has no experiment yet; payload {\"title\": a short experiment title}.",
+};
 
 export const defaultProviderBaseUrls: Partial<Record<AIProviderType, string>> = {
   openai: "https://api.openai.com/v1",
@@ -123,6 +119,8 @@ export function buildProposedActionPrompt(input: EntryToActionPromptInput): { sy
     "You are assisting a lab notebook user. Extract only reviewable proposed actions.",
     "Never claim that an action was executed. Never mutate inventory, experiments, entities, protocols, results, or purchases.",
     `Allowed action types: ${input.allowedActionTypes.join(", ")}`,
+    ...input.allowedActionTypes.flatMap(type => actionTypeGuides[type] ?? []),
+    "An entry goes under one experiment, so propose at most one action.",
     "Return only a JSON array. Each item must match: {sourceType, actionType, reason, payload}.",
     "Use sourceType: \"ai\" unless a stronger source is explicitly present.",
     "Keep payload conservative and traceable. Do not invent measurements, sample IDs, stock quantities, or statistical results.",

@@ -19,3 +19,11 @@ describe('The research plan Copilot in Chinese', () => {
     ['Paper 2 could not be read: Europe PMC is busy', '第 2 篇没能读完：Europe PMC is busy'],
   ])('%s', (english, chinese) => expect(translateUiText(english, 'zh')).toBe(chinese));
 });
+
+describe('The design workbench sign-off in Chinese', () => {
+  it.each([
+    ['Needs a group and a readout: Transwell 迁移', '至少要有一个分组和一项读出：Transwell 迁移'],
+    ['Changed after review round 1, review again: 敲低验证, Transwell 迁移', '第 1 轮审查之后改过，请再审查一轮：敲低验证、Transwell 迁移'],
+    ['Changed after the last review and not reviewed again: Transwell 迁移. Signing writes this into the limitations.', '最后一轮审查之后改过、没有再审查：Transwell 迁移。签署时会写进“限制与依赖”。'],
+  ])('%s', (english, chinese) => expect(translateUiText(english, 'zh')).toBe(chinese));
+});

@@ -2,7 +2,7 @@ import { blockingRules, checkCards } from './rules';
 import { cardPrompt, chainPrompt, contextPrompt, parseCard, parseChain, parseContext, parseReview, reviewPrompt, type ProtocolChoice } from './prompts';
 import {
   chainSchema, contextCardSchema, contextFields, designCardSchema, designSteps, MAX_DESIGN_LOG, MAX_REQUIRED_BLOCKS, MAX_REVIEW_ROUNDS, requiredBlocks, requiredContextFields, tiers,
-  type DesignEvent, type DesignRunView, type DesignState, type DesignStep, type ReviewFinding, type Tier,
+  type DesignCard, type DesignEvent, type DesignRunView, type DesignState, type DesignStep, type ReviewFinding, type Tier,
 } from './spec';
 import { suggestTemplate, templateById } from './templates';
 
@@ -53,7 +53,7 @@ export async function runModelStep(input: DesignRunView, deps: DesignDeps, optio
       const card = (await structured(deps.complete, prompt.system, prompt.user, text => parseCard(text, block, deps.protocols))).value;
       state.cards ??= { items: [] };
       state.cards.items = [...state.cards.items.filter(item => item.blockId !== block.id), card].sort((a, b) => required.findIndex(item => item.id === a.blockId) - required.findIndex(item => item.id === b.blockId));
-      state.cards.editedAt = deps.now().toISOString();
+      state.cards.edited = { ...state.cards.edited, [block.id]: deps.now().toISOString() };
       log('model', `Design card drafted: ${card.title}`);
     } else if (run.step === 'review') {
       const { chain, tier } = confirmedChain(state);
@@ -135,9 +135,11 @@ export function applyAction(run: DesignRunView, action: DesignAction, now: Date)
     case 'card': {
       only('cards', 'review');
       const card = designCardSchema.parse(action.card);
-      if (!state.cards?.items.some(item => item.blockId === card.blockId)) throw new Error('This block has no design card');
-      state.cards.items = state.cards.items.map(item => item.blockId === card.blockId ? card : item);
-      state.cards.editedAt = at;
+      const before = state.cards?.items.find(item => item.blockId === card.blockId);
+      if (!before) throw new Error('This block has no design card');
+      if (JSON.stringify({ ...before, confirmed: false }) === JSON.stringify({ ...card, confirmed: false })) break;
+      state.cards!.items = state.cards!.items.map(item => item.blockId === card.blockId ? card : item);
+      state.cards!.edited = { ...state.cards!.edited, [card.blockId]: at };
       break;
     }
     case 'confirm':
@@ -157,12 +159,14 @@ export function applyAction(run: DesignRunView, action: DesignAction, now: Date)
         if (!required.length) throw new Error('No block is required at this tier');
         if (required.length > MAX_REQUIRED_BLOCKS) throw new Error(`At most ${MAX_REQUIRED_BLOCKS} required blocks: make some optional`);
         state.chain.confirmedAt = at;
-        state.cards = { items: (state.cards?.items ?? []).filter(card => required.some(block => block.id === card.blockId)), editedAt: state.cards?.editedAt };
+        state.cards = { items: (state.cards?.items ?? []).filter(card => required.some(block => block.id === card.blockId)), edited: state.cards?.edited, editedAt: state.cards?.editedAt };
         step = 'cards';
       } else if (step === 'cards') {
         const { chain, tier } = confirmedChain(state);
         const missing = requiredBlocks(chain, tier).filter(block => !state.cards?.items.some(card => card.blockId === block.id));
         if (missing.length) throw new Error(`Draft the remaining design cards first: ${missing.map(block => block.title).join(', ')}`);
+        const unfinished = unfinishedCards(state.cards!.items);
+        if (unfinished.length) throw new Error(`Needs a group and a readout: ${unfinished.map(card => card.title).join(', ')}`);
         state.cards!.items = state.cards!.items.map(card => ({ ...card, confirmed: true }));
         state.cards!.confirmedAt = at;
         step = 'review';
@@ -184,7 +188,10 @@ export function applyAction(run: DesignRunView, action: DesignAction, now: Date)
       if (!round || !finding) throw new Error('This finding is not in the latest review');
       const reason = action.reason?.trim();
       if (action.status === 'waived' && !reason) throw new Error('Say why this finding does not apply');
-      if (action.status === 'resolved' && finding.severity === 'critical' && !(state.cards?.editedAt && state.cards.editedAt > round.at)) throw new Error('Change the design card first, or waive the finding with a reason');
+      // A finding about one card is fixed only by changing that card; one about the whole design, by changing any.
+      const card = state.cards?.items.find(item => item.blockId === finding.blockId);
+      const changed = card ? changedSince(state, card, round.at) : changedSinceReview(state).length > 0;
+      if (action.status === 'resolved' && finding.severity === 'critical' && !changed) throw new Error('Change the design card first, or waive the finding with a reason');
       Object.assign(finding, { status: action.status, reason: action.status === 'open' ? undefined : reason });
       break;
     }
@@ -200,13 +207,32 @@ export function applyAction(run: DesignRunView, action: DesignAction, now: Date)
 export const designRules = (state: DesignState) =>
   state.cards && state.chain?.draft && state.chain.tier ? checkCards(state.cards.items, state.chain.draft, state.chain.tier) : [];
 
-/** Why the design cannot be signed yet, if anything stops it: no review, an open critical finding, an unwaived serious rule. */
+/**
+ * Why the design cannot be signed yet, if anything stops it: a card with no group or readout, no review, a card changed
+ * since the review while a round is left, an open critical finding, an unwaived serious rule. Once both rounds are used,
+ * later changes are signed as not reviewed again and written into the limitations.
+ */
 export function signBlockers(state: DesignState) {
   const problems: string[] = [];
   if (!state.cards?.confirmedAt) problems.push('Confirm the design cards');
-  const round = state.review?.rounds.at(-1);
+  for (const card of unfinishedCards(state.cards?.items ?? [])) problems.push(`Needs a group and a readout: ${card.title}`);
+  const rounds = state.review?.rounds ?? [];
+  const round = rounds.at(-1);
   if (!round) problems.push('Run the review');
+  const changed = changedSinceReview(state);
+  if (changed.length && rounds.length < MAX_REVIEW_ROUNDS) problems.push(`Changed after review round ${rounds.length}, review again: ${changed.map(card => card.title).join(', ')}`);
   for (const finding of round?.findings ?? []) if (finding.severity === 'critical' && finding.status === 'open') problems.push(`Critical review finding: ${finding.problem}`);
   for (const finding of blockingRules(designRules(state), state.waivers)) problems.push(`Rule ${finding.rule}: ${finding.text}`);
   return problems;
 }
+
+/** The cards changed after the latest review round. */
+export function changedSinceReview(state: DesignState) {
+  const round = state.review?.rounds.at(-1);
+  return round ? (state.cards?.items ?? []).filter(card => changedSince(state, card, round.at)) : [];
+}
+
+const changedSince = (state: DesignState, card: DesignCard, at: string) => (state.cards?.edited?.[card.blockId] ?? state.cards?.editedAt ?? '') > at;
+
+/** Cards no planned experiment can be made from: nothing to compare, or nothing measured. */
+const unfinishedCards = (cards: DesignCard[]) => cards.filter(card => !card.groups.length || !card.readouts.length);

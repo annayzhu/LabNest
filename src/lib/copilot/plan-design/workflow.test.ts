@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { createScientificDocument, researchPlanSections } from '../../scientific-document';
 import { brokenCards, srgnCards, srgnChain, srgnContext } from './fixtures';
-import type { DesignRunView } from './spec';
+import { reviewDimensions, type DesignRunView } from './spec';
 import { applyAction, runModelStep, signBlockers, type DesignDeps } from './workflow';
 import { applySections, buildSignOff, DESIGN_BLOCK_PREFIX } from './write-back';
 
 const now = new Date('2026-11-02T01:00:00.000Z');
+/** Every review dimension judged, with the given ones as concerns. */
+const judged = (...concerns: string[]) => reviewDimensions.map(key => ({ key, verdict: concerns.includes(key) ? 'concern' : 'ok', note: '' }));
+const clean = { verdict: 'ready', dimensions: judged(), findings: [] };
 const fresh = (): DesignRunView => ({
   id: 'run1', researchPlanId: 'plan1', spec: 'plan-design-v1', purpose: '研究 SRGN 敲低是否抑制 KYSE150 迁移', step: 'context', status: 'idle',
   state: { gathered: [{ id: 'inventory-1', kind: 'inventory', label: 'KYSE150', detail: '细胞系 · 在库 3 份', included: true }, { id: 'result-1', kind: 'result', label: '旧结果', detail: '', included: false }] },
@@ -13,7 +16,7 @@ const fresh = (): DesignRunView => ({
 });
 
 /** A model that answers each step with the fixtures, and records what it was sent. */
-function fakeModel(review = { verdict: 'revise', dimensions: [{ key: 'controls', verdict: 'concern', note: '' }], findings: [{ severity: 'critical', dimension: 'overclaiming', blockId: 'phenotype', field: 'criteria', problem: '迁移下降可能来自增殖', suggestion: '加增殖对照' }] }) {
+function fakeModel(review: object = { verdict: 'revise', dimensions: judged('overclaiming'), findings: [{ severity: 'critical', dimension: 'overclaiming', blockId: 'phenotype', field: 'criteria', problem: '迁移下降可能来自增殖', suggestion: '加增殖对照' }] }) {
   const sent: { system: string; user: string }[] = [];
   const answer = (system: string, user: string) => {
     sent.push({ system, user });
@@ -91,9 +94,52 @@ describe('the design workflow', () => {
     expect(() => applyAction(run, { kind: 'finding', findingId: '1-1', status: 'resolved' }, now)).toThrow(/Change the design card/);
     expect(() => applyAction(run, { kind: 'finding', findingId: '1-1', status: 'waived' }, now)).toThrow(/why/);
     const later = new Date(now.getTime() + 60_000);
+    // Changing the other card does not fix a finding about this one.
+    run = { ...run, ...applyAction(run, { kind: 'card', card: { ...run.state.cards!.items[0], blinding: '盲法计数' } }, later) };
+    expect(() => applyAction(run, { kind: 'finding', findingId: '1-1', status: 'resolved' }, later)).toThrow(/Change the design card/);
     run = { ...run, ...applyAction(run, { kind: 'card', card: { ...run.state.cards!.items[1], readouts: [...run.state.cards!.items[1].readouts, { name: '增殖', method: 'CCK-8', timepoint: '24 h', assay: 'viability' }] } }, later) };
     run = { ...run, ...applyAction(run, { kind: 'finding', findingId: '1-1', status: 'resolved' }, later) };
+    expect(signBlockers(run.state)).toEqual(['Changed after review round 1, review again: 敲低效率验证（qPCR + WB）, Transwell 迁移']);
+    run = await runModelStep(run, fakeModel(clean).deps);
     expect(signBlockers(run.state)).toEqual([]);
+  });
+
+  it('does not count an empty review, or a concern with no finding, as a round', async () => {
+    const flow = await throughCards();
+    flow.act({ kind: 'confirm' });
+    for (const review of [{}, { verdict: 'ready', dimensions: [], findings: [] }, { verdict: 'revise', dimensions: judged('controls'), findings: [] }]) {
+      const run = await runModelStep(flow.get(), fakeModel(review).deps);
+      expect(run.status).toBe('failed');
+      expect(run.state.review).toBeUndefined();
+      expect(run.modelCalls - flow.get().modelCalls).toBe(2);
+      expect(signBlockers(run.state)).toEqual(['Run the review']);
+    }
+  });
+
+  it('needs a group and a readout on every card, and an unchanged card is not an edit', async () => {
+    const flow = await throughCards();
+    const run = flow.get();
+    const emptied = { ...run, ...applyAction(run, { kind: 'card', card: { ...run.state.cards!.items[1], groups: [] } }, now) };
+    expect(() => applyAction(emptied, { kind: 'confirm' }, now)).toThrow('Needs a group and a readout: Transwell 迁移');
+    const later = new Date(now.getTime() + 60_000);
+    expect(applyAction(run, { kind: 'card', card: { ...run.state.cards!.items[1], confirmed: true } }, later).state.cards!.edited).toEqual(run.state.cards!.edited);
+    flow.act({ kind: 'confirm' });
+    const reviewed = await runModelStep(flow.get(), fakeModel(clean).deps);
+    const noReadout = { ...reviewed, ...applyAction(reviewed, { kind: 'card', card: { ...reviewed.state.cards!.items[0], readouts: [] } }, later) };
+    expect(signBlockers(noReadout.state)).toContain('Needs a group and a readout: 敲低效率验证（qPCR + WB）');
+  });
+
+  it('after both rounds, signs later changes as not reviewed again', async () => {
+    const flow = await throughCards();
+    flow.act({ kind: 'confirm' });
+    const deps = fakeModel(clean).deps;
+    let run = await runModelStep(await runModelStep(flow.get(), deps), deps);
+    run = { ...run, ...applyAction(run, { kind: 'card', card: { ...run.state.cards!.items[1], blinding: '双盲计数' } }, new Date(now.getTime() + 60_000)) };
+    expect(signBlockers(run.state)).toEqual([]);
+    const signOff = buildSignOff(run.state, { objective: null, hypothesis: null, rationale: null, document: createScientificDocument(researchPlanSections) }, { runId: 'run1', version: 1, date: '2026-11-02', purpose: run.purpose, drafting: 'Fake', rules: [], protocols: new Map() });
+    const text = JSON.stringify(signOff.sections);
+    expect(text).toContain('最后一轮审查之后又修改了：Transwell 迁移。这些修改没有再审查。');
+    expect(text).toContain('之后修改的设计卡（Transwell 迁移）未再审查');
   });
 
   it('counts serious rule findings as blockers, and stops after two review rounds', async () => {
@@ -101,7 +147,7 @@ describe('the design workflow', () => {
     flow.act({ kind: 'confirm' });
     let run = flow.get();
     run = { ...run, ...applyAction(run, { kind: 'card', card: brokenCards.noNc[0] }, now) };
-    const deps = fakeModel({ verdict: 'ready', dimensions: [], findings: [] }).deps;
+    const deps = fakeModel(clean).deps;
     run = await runModelStep(run, deps);
     expect(signBlockers(run.state)).toEqual(['Rule 1: No concurrent negative control: add one run alongside the treated groups']);
     run = { ...run, ...applyAction(run, { kind: 'waive', key: 'r1:kd-check', reason: 'NC 在同一板的迁移实验里' }, now) };
@@ -115,7 +161,7 @@ describe('signing', () => {
   it('fills the premise, writes five sections, and replaces an earlier signed design', async () => {
     const flow = await throughCards();
     flow.act({ kind: 'confirm' });
-    const run = await runModelStep(flow.get(), fakeModel({ verdict: 'ready', dimensions: [], findings: [{ severity: 'minor', dimension: 'feasibility', blockId: '', field: '', problem: '时间紧', suggestion: '' }] }).deps);
+    const run = await runModelStep(flow.get(), fakeModel({ verdict: 'ready', dimensions: judged('feasibility'), findings: [{ severity: 'minor', dimension: 'feasibility', blockId: '', field: '', problem: '时间紧', suggestion: '' }] }).deps);
     const document = createScientificDocument(researchPlanSections);
     document.sections[0].blocks.push({ id: `${DESIGN_BLOCK_PREFIX}old-design-1`, type: 'text', text: '旧设计' }, { id: 'mine', type: 'text', text: '作者写的' });
     const signOff = buildSignOff(run.state, { objective: run.purpose, hypothesis: '我自己的假设', rationale: null, document }, { runId: 'run1', version: 2, date: '2026-11-02', purpose: run.purpose, drafting: 'Fake', rules: [], protocols: new Map([['p1', { code: 'PRT-001', title: 'Transwell 迁移' }]]) });

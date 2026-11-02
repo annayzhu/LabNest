@@ -97,8 +97,8 @@ export function reviewPrompt(card: ContextCard, chain: Chain, tier: Tier, cards:
   return {
     system: [
       '你是独立的实验设计审稿人。你没有参与起草，只根据下面的成果判断这份设计能否支持它的主张。不重写方案，不替作者选择。',
-      `按固定评分表逐项给出 verdict（ok / concern / not_applicable）：${reviewDimensions.join('、')}（对照是否充分、混杂与批次、伪重复、样本量依据、多重比较、结论是否过度、可行性、安全与伦理）。`,
-      'findings 每条分级：critical 严重（不改就不能支持主张，或有安全伦理问题）、major 重要、minor 次要；写明指向哪个实验块（blockId）和字段（field），problem 写问题，suggestion 写具体改法。',
+      `按固定评分表逐项给出 verdict（ok / concern / not_applicable），${reviewDimensions.length} 个维度每个一条、不能省略：${reviewDimensions.join('、')}（对照是否充分、混杂与批次、伪重复、样本量依据、多重比较、结论是否过度、可行性、安全与伦理）。`,
+      'findings 每条分级：critical 严重（不改就不能支持主张，或有安全伦理问题）、major 重要、minor 次要；写明指向哪个实验块（blockId）和字段（field），problem 写问题，suggestion 写具体改法。判为 concern 的维度至少写一条 finding。',
       '程序已经做了规则检查，结果列在下面；不要重复这些条目，只补充程序查不出的问题。没有问题的维度不要硬找问题。',
       `总体 verdict：ready（可以签署）/ revise（需要修改）/ rethink（主张或证据链需要重想）。这是第 ${round} 轮审查，最多 2 轮。`,
       `输出：{"verdict":"revise","dimensions":[{"key":"controls","verdict":"ok","note":""}],"findings":[{"severity":"major","dimension":"controls","blockId":"","field":"","problem":"","suggestion":""}]}。${common}`,

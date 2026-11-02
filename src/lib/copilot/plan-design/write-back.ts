@@ -1,6 +1,7 @@
 import type { ScientificContentBlock, ScientificDocument } from '../../scientific-document';
 import type { RuleFinding } from './rules';
 import { claimTypeLabels, dimensionLabels, requiredBlocks, type ContextCard, type DesignCard, type DesignState, type ReviewRound, type Tier } from './spec';
+import { changedSinceReview } from './workflow';
 
 /**
  * What signing writes (Q309, Q310), built without touching anything so the author sees it first: the premise fields
@@ -78,12 +79,14 @@ export function buildSignOff(state: DesignState, plan: { objective: string | nul
   if (card.outOfScope) limits.push(para('constraints', `不做：${card.outOfScope}`));
   const left = round?.findings.filter(finding => finding.status !== 'resolved') ?? [];
   if (left.length) limits.push(heading('constraints', '审查后仍保留的问题'), ...left.map(finding => para('constraints', `[${severityZh[finding.severity]}·${dimensionZh(finding.dimension)}] ${finding.problem}${finding.status === 'waived' ? `（作者说明：${finding.reason}）` : ''}`)));
+  const unreviewed = changedSinceReview(state).map(item => item.title).join('、');
+  if (unreviewed) limits.push(para('constraints', `最后一轮审查之后又修改了：${unreviewed}。这些修改没有再审查。`));
   const waived = context.rules.filter(finding => state.waivers?.[finding.key]);
   if (waived.length) limits.push(heading('constraints', '规则检查的豁免'), ...waived.map(finding => para('constraints', `规则 ${finding.rule}（${titleOf(finding.blockId)}）：${state.waivers![finding.key]}`)));
 
   const notes: ScientificContentBlock[] = [heading('references', `设计工作台 v${context.version} 的说明（${context.date}）`),
     para('references', '本版设计未检索文献；各实验条目为常规做法，未经文献核对。'),
-    para('references', `AI 使用：情境卡、证据链、设计卡由 ${context.drafting} 起草；${round ? `审查由 ${round.provider}${round.model ? `（${round.model}）` : ''} 完成，共 ${state.review!.rounds.length} 轮${round.selfReview ? '，与起草是同一服务，独立性有限' : ''}` : '未审查'}。每一步均由作者确认。`)];
+    para('references', `AI 使用：情境卡、证据链、设计卡由 ${context.drafting} 起草；${round ? `审查由 ${round.provider}${round.model ? `（${round.model}）` : ''} 完成，共 ${state.review!.rounds.length} 轮${round.selfReview ? '，与起草是同一服务，独立性有限' : ''}${unreviewed ? `；之后修改的设计卡（${unreviewed}）未再审查` : ''}` : '未审查'}。每一步均由作者确认。`)];
 
   const sections = [['design', design], ['material_methods', methods], ['acceptance_criteria', criteria], ['constraints', limits], ['references', notes]] as const;
   const writes = sections.map(([key, blocks]) => ({ key, blocks: [...blocks], replaced: (plan.document.sections.find(section => section.key === key)?.blocks ?? []).filter(block => block.id.startsWith(DESIGN_BLOCK_PREFIX)).length }));

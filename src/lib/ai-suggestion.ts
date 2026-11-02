@@ -20,9 +20,12 @@ const labels: Record<string, string> = {
 };
 export const suggestionLabel = (type: string) => labels[type] ?? '其他建议';
 
-/** link_attachment puts the entry, with its images and files, under an experiment; create_experiment makes one first. */
-const acceptable = ['link_attachment', 'create_experiment'] as const;
-export const canAccept = (type: string): type is (typeof acceptable)[number] => (acceptable as readonly string[]).includes(type);
+/**
+ * What 采纳 can carry out, and so all a model is asked for: link_attachment puts the entry, with its images and files,
+ * under an experiment; create_experiment makes one first. Suggestions of the other types come from earlier runs.
+ */
+export const acceptableActionTypes = ['link_attachment', 'create_experiment'] as const;
+export const canAccept = (type: string): type is (typeof acceptableActionTypes)[number] => (acceptableActionTypes as readonly string[]).includes(type);
 
 const text = (value: unknown) => typeof value === 'string' && value.trim() ? value.trim() : undefined;
 

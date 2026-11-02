@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import type { ProtocolChoice } from '@/lib/copilot/plan-design/prompts';
 import { dimensionLabels, MAX_REVIEW_ROUNDS, type DesignRunView, type ReviewFinding } from '@/lib/copilot/plan-design/spec';
-import { designRules, signBlockers } from '@/lib/copilot/plan-design/workflow';
+import { changedSinceReview, designRules, signBlockers } from '@/lib/copilot/plan-design/workflow';
 import type { SignOff } from '@/lib/copilot/plan-design/write-back';
 import { AiButton } from './AiAssistant';
 import { DesignCardsStep } from './DesignCardsStep';
@@ -27,6 +27,7 @@ export function DesignReviewStep(props: StepProps & { protocols: ProtocolChoice[
   const round = rounds.at(-1);
   const rules = designRules(run.state);
   const blockers = signBlockers(run.state);
+  const unreviewed = rounds.length >= MAX_REVIEW_ROUNDS ? changedSinceReview(run.state) : [];
   const [preview, setPreview] = useState<Preview>();
   const [choices, setChoices] = useState<{ premise: string[]; keepPrevious: boolean; experiments: string[] }>();
   const [signing, setSigning] = useState<string>();
@@ -64,6 +65,7 @@ export function DesignReviewStep(props: StepProps & { protocols: ProtocolChoice[
         <ul className="ln-dw-findings">{round.findings.map(finding => <Finding key={finding.id} finding={finding} busy={busy} chainTitle={run.state.chain?.draft?.blocks.find(block => block.id === finding.blockId)?.title}
           onDecide={(status, reason) => act({ kind: 'finding', findingId: finding.id, status, reason })} />)}</ul>
         {!round.findings.length ? <p className="ln-dw-note">No findings beyond the rule checks.</p> : null}
+        {unreviewed.length ? <p className="ln-dw-warn">{`Changed after the last review and not reviewed again: ${unreviewed.map(card => card.title).join(', ')}. Signing writes this into the limitations.`}</p> : null}
       </> : null}
     </div>
     {rules.length ? <div className="ln-dw-box"><h3>Rule checks</h3><ul className="ln-dw-findings">{rules.map(finding => <RuleRow key={finding.key} text={`Rule ${finding.rule} · ${run.state.chain?.draft?.blocks.find(block => block.id === finding.blockId)?.title ?? finding.blockId}: ${finding.text}`} severity={finding.severity}

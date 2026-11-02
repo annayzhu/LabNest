@@ -329,6 +329,12 @@ export function translateDesignDynamic(value: string): string | undefined {
   if (match) return `确认前请填写：${match[1].split(", ").map(field => ({ question: "研究问题", claimType: "主张类型", subject: "研究对象" })[field] ?? field).join("、")}`;
   match = value.match(/^Draft the remaining design cards first: (.+)$/);
   if (match) return `请先起草其余的设计卡：${match[1]}`;
+  match = value.match(/^Needs a group and a readout: (.+)$/);
+  if (match) return `至少要有一个分组和一项读出：${match[1].split(", ").join("、")}`;
+  match = value.match(/^Changed after review round (\d+), review again: (.+)$/);
+  if (match) return `第 ${match[1]} 轮审查之后改过，请再审查一轮：${match[2].split(", ").join("、")}`;
+  match = value.match(/^Changed after the last review and not reviewed again: (.+)\. Signing writes this into the limitations\.$/);
+  if (match) return `最后一轮审查之后改过、没有再审查：${match[1].split(", ").join("、")}。签署时会写进“限制与依赖”。`;
   match = value.match(/^Gathered (\d+) LabNest records$/);
   if (match) return `读取了 ${match[1]} 条 LabNest 记录`;
   return undefined;

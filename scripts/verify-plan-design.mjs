@@ -53,9 +53,11 @@ const card = (blockId, protocols) => ({
   protocol: blockId === "kd-check" && protocols.siRNA ? { id: protocols.siRNA, title: "", needed: false } : { id: "", title: "Transwell 迁移", needed: true },
   methodNote: "", drift: [],
 });
+// A review judges every dimension, with a finding behind each concern; anything less is not a round.
+const judged = (...concerns) => ["controls", "confounding", "pseudoreplication", "sample_size", "multiple_comparisons", "overclaiming", "feasibility", "safety_ethics"].map(key => ({ key, verdict: concerns.includes(key) ? "concern" : "ok", note: "" }));
 const reviews = [
-  { verdict: "revise", dimensions: [{ key: "controls", verdict: "ok", note: "" }, { key: "overclaiming", verdict: "concern", note: "迁移下降可能来自增殖" }], findings: [{ severity: "critical", dimension: "overclaiming", blockId: "phenotype", field: "readouts", problem: "迁移下降可能来自增殖减慢", suggestion: "同期加 CCK-8 增殖检测" }, { severity: "minor", dimension: "feasibility", blockId: "", field: "", problem: "两周内完成较紧", suggestion: "" }] },
-  { verdict: "ready", dimensions: [{ key: "overclaiming", verdict: "ok", note: "" }], findings: [] },
+  { verdict: "revise", dimensions: judged("overclaiming", "feasibility"), findings: [{ severity: "critical", dimension: "overclaiming", blockId: "phenotype", field: "readouts", problem: "迁移下降可能来自增殖减慢", suggestion: "同期加 CCK-8 增殖检测" }, { severity: "minor", dimension: "feasibility", blockId: "", field: "", problem: "两周内完成较紧", suggestion: "" }] },
+  { verdict: "ready", dimensions: judged(), findings: [] },
 ];
 
 const token = "design-fake-token";
@@ -208,10 +210,12 @@ try {
     await row.getByLabel("检测类型").selectOption("viability");
     await Promise.all([patched(page), phenotype.getByRole("button", { name: "保存这张卡" }).click()]);
     await Promise.all([patched(page), page.getByRole("button", { name: "已在卡片中修改" }).first().click()]);
-    await page.getByRole("button", { name: "预览签署要写入的内容" }).waitFor({ state: "visible" });
-    assert.equal(await page.getByRole("button", { name: "预览签署要写入的内容" }).isDisabled(), false);
+    // The card changed after round 1, and a round is left: it is reviewed again before signing.
+    await page.getByText("第 1 轮审查之后改过，请再审查一轮：Transwell 迁移").waitFor();
+    assert.equal(await page.getByRole("button", { name: "预览签署要写入的内容" }).isDisabled(), true);
     await page.getByRole("button", { name: "开始第 2 轮审查" }).click();
     await page.getByText("第 2 轮：可以签署", { exact: false }).waitFor();
+    assert.equal(await page.getByRole("button", { name: "预览签署要写入的内容" }).isDisabled(), false);
     assert.equal(await page.getByRole("button", { name: "两轮审查已完成" }).isDisabled(), true, "at most two rounds");
   });
 

@@ -132,15 +132,18 @@ export const severities = ['critical', 'major', 'minor'] as const;
 export type Severity = typeof severities[number];
 export const MAX_REVIEW_ROUNDS = 2;
 
+/** A review that judged every dimension, with a finding behind each concern: an empty answer is not a review. */
 export const reviewSchema = z.object({
-  verdict: z.enum(['ready', 'revise', 'rethink']).default('revise'),
-  dimensions: z.array(z.object({ key: z.enum(reviewDimensions), verdict: z.enum(['ok', 'concern', 'not_applicable']), note: text(600) })).max(reviewDimensions.length).default([]),
+  verdict: z.enum(['ready', 'revise', 'rethink']),
+  dimensions: z.array(z.object({ key: z.enum(reviewDimensions), verdict: z.enum(['ok', 'concern', 'not_applicable']), note: text(600) })).max(reviewDimensions.length),
   findings: z.array(z.object({
     severity: z.enum(severities), dimension: z.enum(reviewDimensions),
     blockId: z.string().trim().max(24).default(''), field: z.string().trim().max(60).default(''),
     problem: z.string().trim().min(2).max(800), suggestion: text(800),
   })).max(30).default([]),
-});
+})
+  .refine(review => reviewDimensions.every(key => review.dimensions.some(item => item.key === key)), { message: `Judge every dimension once: ${reviewDimensions.join(', ')}` })
+  .refine(review => review.dimensions.every(item => item.verdict !== 'concern' || review.findings.some(finding => finding.dimension === item.key)), { message: 'Give at least one finding for each dimension with a concern' });
 export type ReviewFinding = z.infer<typeof reviewSchema>['findings'][number] & { id: string; status: 'open' | 'resolved' | 'waived'; reason?: string };
 export type ReviewRound = { at: string; provider: string; model?: string; selfReview: boolean; verdict: 'ready' | 'revise' | 'rethink'; dimensions: z.infer<typeof reviewSchema>['dimensions']; findings: ReviewFinding[] };
 
@@ -148,8 +151,11 @@ export type DesignState = {
   gathered?: ContextItem[];
   context?: { card: ContextCard; confirmedAt?: string };
   chain?: { templateId: string; templateVersion: number; draft?: Chain; tier?: Tier; confirmedAt?: string };
-  /** `editedAt` lets a critical review finding count as fixed only after a card changed. */
-  cards?: { items: DesignCard[]; confirmedAt?: string; editedAt?: string };
+  /**
+   * `edited` holds when each block's card last changed: a critical finding counts as fixed only after its card changed,
+   * and a review is out of date once a card changed after it. Runs saved before it only have `editedAt`, the latest change.
+   */
+  cards?: { items: DesignCard[]; confirmedAt?: string; edited?: Record<string, string>; editedAt?: string };
   review?: { rounds: ReviewRound[] };
   /** Rule findings the author chose to sign past, with the reason. */
   waivers?: Record<string, string>;

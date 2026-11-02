@@ -11,6 +11,8 @@ export async function readAISettings() {
     enabled: settings?.enabled ?? false,
     defaultProviderId: settings?.defaultProviderId ?? null,
     visionProviderId: settings?.visionProviderId ?? null,
+    /** Who reviews a research-plan design; empty means the default service reviews its own drafts. */
+    reviewProviderId: settings?.reviewProviderId ?? null,
     /** Whether a picture can be read now, and by which service. */
     vision: visionFromSettings(settings),
     attachmentsEnabled: settings?.attachmentsEnabled ?? false,
@@ -26,7 +28,7 @@ export async function readAISettings() {
 export type AISettingsView = Awaited<ReturnType<typeof readAISettings>>;
 export type AISettingsChange = { revision: string } & (
   | { kind: "enabled"; enabled: boolean }
-  | { kind: "configuration"; defaultProviderId: string | null; attachmentsEnabled: boolean; visionProviderId?: string | null }
+  | { kind: "configuration"; defaultProviderId: string | null; attachmentsEnabled: boolean; visionProviderId?: string | null; reviewProviderId?: string | null }
 );
 
 export class AISettingsConflict extends Error {}
@@ -47,9 +49,12 @@ export async function changeAISettings(change: AISettingsChange) {
     if (change.kind === "configuration" && change.visionProviderId && !await tx.aIProvider.findUnique({ where: { id: change.visionProviderId } })) {
       throw new AISettingsConflict("所选识别图片的服务已不存在，请重新选择。");
     }
-    // An omitted photo service stays as it is: older pages and scripts never send it.
+    if (change.kind === "configuration" && change.reviewProviderId && !await tx.aIProvider.findUnique({ where: { id: change.reviewProviderId } })) {
+      throw new AISettingsConflict("所选审查方案的服务已不存在，请重新选择。");
+    }
+    // An omitted photo or review service stays as it is: older pages and scripts never send them.
     const data = change.kind === "enabled" ? { enabled: change.enabled }
-      : { defaultProviderId: change.defaultProviderId, attachmentsEnabled: change.attachmentsEnabled, ...(change.visionProviderId !== undefined ? { visionProviderId: change.visionProviderId } : {}) };
+      : { defaultProviderId: change.defaultProviderId, attachmentsEnabled: change.attachmentsEnabled, ...(change.visionProviderId !== undefined ? { visionProviderId: change.visionProviderId } : {}), ...(change.reviewProviderId !== undefined ? { reviewProviderId: change.reviewProviderId } : {}) };
     // Millisecond-unique revisions also reject off→on responses and stale tab writes.
     const updatedAt = new Date(Math.max(Date.now(), (saved?.updatedAt.getTime() ?? 0) + 1));
     await tx.aISettings.upsert({ where: { id: "default" },

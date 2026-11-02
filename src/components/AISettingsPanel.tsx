@@ -17,8 +17,8 @@ const stateLabels: Record<AiState, string> = { checking: "Reading settings…", 
 export function AISettingsPanel({ providers, services }: { providers: { id: string; name: string }[]; services?: ReactNode }) {
   const { saved, error, refresh, accept, state } = useAiStatus();
   const router = useRouter();
-  const [editedDraft, setDraft] = useState<{ defaultProviderId: string; visionProviderId: string; attachmentsEnabled: boolean }>();
-  const draft = editedDraft ?? { defaultProviderId: saved?.defaultProviderId ?? "", visionProviderId: saved?.visionProviderId ?? "", attachmentsEnabled: saved?.attachmentsEnabled ?? false };
+  const [editedDraft, setDraft] = useState<{ defaultProviderId: string; visionProviderId: string; reviewProviderId: string; attachmentsEnabled: boolean }>();
+  const draft = editedDraft ?? { defaultProviderId: saved?.defaultProviderId ?? "", visionProviderId: saved?.visionProviderId ?? "", reviewProviderId: saved?.reviewProviderId ?? "", attachmentsEnabled: saved?.attachmentsEnabled ?? false };
   const dirty = editedDraft !== undefined;
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string>();
@@ -29,7 +29,7 @@ export function AISettingsPanel({ providers, services }: { providers: { id: stri
     submitting.current = true; setBusy(true); setFailure(undefined); setMessage("");
     const change: AISettingsChange = kind === "enabled"
       ? { kind, revision: saved.revision, enabled: !saved.enabled }
-      : { kind, revision: saved.revision, defaultProviderId: draft.defaultProviderId || null, visionProviderId: draft.visionProviderId || null, attachmentsEnabled: draft.attachmentsEnabled };
+      : { kind, revision: saved.revision, defaultProviderId: draft.defaultProviderId || null, visionProviderId: draft.visionProviderId || null, reviewProviderId: draft.reviewProviderId || null, attachmentsEnabled: draft.attachmentsEnabled };
     try {
       const response = await fetch("/api/ai/settings", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(change) });
       const result = await response.json();
@@ -67,6 +67,7 @@ export function AISettingsPanel({ providers, services }: { providers: { id: stri
       <div className="grid items-start gap-3 sm:grid-cols-2">
         <label className="block"><span className={formLabelClass}>Default AI service</span><Select id="default-provider" name="defaultProviderId" disabled={busy || !saved || Boolean(error)} value={draft.defaultProviderId} onChange={event => { setDraft({ ...draft, defaultProviderId: event.target.value }); setMessage(""); }}><option value="">None chosen</option>{providers.map(provider => <option key={provider.id} value={provider.id}>{provider.name}</option>)}</Select><span className="mt-1 block text-xs leading-5 text-muted">AI actions use this service; reading pictures can use another one.</span></label>
         <label className="block"><span className={formLabelClass}>Service that reads photos</span><Select id="vision-provider" name="visionProviderId" disabled={busy || !saved || Boolean(error)} value={draft.visionProviderId} onChange={event => { setDraft({ ...draft, visionProviderId: event.target.value }); setMessage(""); }}><option value="">Same as the default service (OpenAI, Anthropic and ChatGPT subscription only)</option>{providers.map(provider => <option key={provider.id} value={provider.id}>{provider.name}</option>)}</Select><span className="mt-1 block text-xs leading-5 text-muted">Reads pictures of manuals and labels; its model must be able to see.</span>{saved?.vision && !saved.vision.ready && saved.enabled && saved.vision.reason ? <span className="mt-1 block text-xs leading-5 text-warning">{saved.vision.reason}</span> : null}</label>
+        <label className="block"><span className={formLabelClass}>Service that reviews research-plan designs</span><Select id="review-provider" name="reviewProviderId" disabled={busy || !saved || Boolean(error)} value={draft.reviewProviderId} onChange={event => { setDraft({ ...draft, reviewProviderId: event.target.value }); setMessage(""); }}><option value="">Same as the default service (reviews its own drafts)</option>{providers.map(provider => <option key={provider.id} value={provider.id}>{provider.name}</option>)}</Select><span className="mt-1 block text-xs leading-5 text-muted">A different model than the one that drafts makes the review more independent.</span></label>
       </div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <label className="flex min-h-10 items-center gap-2 text-sm"><input name="attachmentsEnabled" type="checkbox" disabled={busy || !saved || Boolean(error)} checked={draft.attachmentsEnabled} onChange={event => { setDraft({ ...draft, attachmentsEnabled: event.target.checked }); setMessage(""); }} className="h-4 w-4 accent-[var(--ink)]" />Allow attachments the user explicitly chooses</label>

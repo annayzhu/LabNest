@@ -7,7 +7,7 @@ import { experimentStepGroupHeading } from "./experiment-planning";
 import { assertRecordEditable } from "./record-lifecycle";
 import { stepVersion, structuredRunView, type StructuredRunView } from "./structured-run";
 import {
-  blockState, blockTitle, daysBetween, labDayKey, overnightWindow, saysOvernight, scheduleProblems, sortBlocks, textTimes,
+  blockEnd, blockState, blockTitle, daysBetween, draftSchedule, labDayKey, nextWorkMoment, overnightWindow, saysOvernight, scheduleProblems, sortBlocks, textTimes,
   type ScheduleBlock, type ScheduleStep, type ScheduleWait,
 } from "./experiment-schedule";
 
@@ -198,6 +198,23 @@ export async function shiftScheduleToDate(tx: Tx, experiment: { id: string; prot
   const steps = new Map(scheduleSteps(experiment).map(step => [step.ref, step]));
   if (rows.some(row => blockState(blockView(row), steps) === "done")) throw new Error("Part of the schedule is done: change the days on the schedule itself.");
   for (const row of rows) await tx.experimentScheduleBlock.update({ where: { id: row.id }, data: { startAt: new Date(row.startAt.getTime() + days * 86_400_000) } });
+}
+
+/**
+ * A first schedule for a new experiment, drafted from its steps to start at the next working moment after `notBefore`
+ * (a signed research-plan design, Q310). Returns when the last block ends, so a later experiment can follow it; an
+ * experiment without steps gets no schedule.
+ */
+export async function draftNewSchedule(tx: Tx, experimentId: string, notBefore: string) {
+  const experiment = await tx.experiment.findUniqueOrThrow({ where: { id: experimentId }, include: { steps: true, protocolRun: true } });
+  const steps = scheduleSteps(experiment);
+  if (!steps.length) return undefined;
+  const blocks = draftSchedule(steps, nextWorkMoment(notBefore), { newId: () => crypto.randomUUID() });
+  await tx.experimentScheduleBlock.createMany({ data: blocks.map(block => ({ id: block.id, experimentId, kind: block.kind, title: block.title, stepRefs: block.stepRefs, startAt: new Date(block.startAt), allDay: block.allDay,
+    estimatedMinutes: block.estimatedMinutes, afterBlockId: block.afterBlockId, minGapMinutes: block.minGapMinutes, maxGapMinutes: block.maxGapMinutes, gapSource: block.gapSource, note: block.note })) });
+  const first = sortBlocks(blocks)[0];
+  if (first) await tx.experiment.update({ where: { id: experimentId }, data: { date: experimentDateOf(labDayKey(first.startAt)) } });
+  return new Date(Math.max(...blocks.map(block => Date.parse(blockEnd(block))))).toISOString();
 }
 
 /** A block as other pages show it: its experiment, its name, and its first open step to go straight to. */

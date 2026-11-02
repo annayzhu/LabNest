@@ -411,6 +411,7 @@ model ResearchPlan {
   results     Result[]
   reports     Report[]
   copilotRuns ResearchPlanCopilotRun[]
+  designRuns  ResearchPlanDesignRun[]
 
   @@index([projectId])
   @@index([status])
@@ -1640,6 +1641,7 @@ model AIProvider {
   updatedAt        DateTime           @updatedAt
   aisettings       AISettings[]       @relation("DefaultProvider")
   visionSettings   AISettings[]       @relation("VisionProvider")
+  reviewSettings   AISettings[]       @relation("ReviewProvider")
   session          AIProviderSession?
 
   @@index([type])
@@ -1667,12 +1669,16 @@ model AISettings {
   /// The service that reads photos (transcribes pictures of a manual); empty means the default service when it can.
   visionProviderId   String?
   visionProvider     AIProvider? @relation("VisionProvider", fields: [visionProviderId], references: [id], onDelete: SetNull)
+  /// The service that reviews a research-plan design (设计工作台 ⑥); empty means the drafting service, flagged as a self-review.
+  reviewProviderId   String?
+  reviewProvider     AIProvider? @relation("ReviewProvider", fields: [reviewProviderId], references: [id], onDelete: SetNull)
   externalDataPolicy String      @default("explicit_context")
   attachmentsEnabled Boolean     @default(false)
   updatedAt          DateTime    @updatedAt
 
   @@index([defaultProviderId])
   @@index([visionProviderId])
+  @@index([reviewProviderId])
 }
 
 model ReferenceConnector {
@@ -1868,6 +1874,32 @@ model ResearchPlanCopilotRun {
   error           String?
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
+
+  @@index([researchPlanId, createdAt])
+}
+
+/// One pass of the research-plan design workbench (plan-design-v1): context card → evidence chain → design cards →
+/// review → sign-off. Each step's artifact lives in `stateJson`; the author confirms every step before the next one.
+/// Superseded the literature-first ResearchPlanCopilotRun, whose rows stay readable.
+model ResearchPlanDesignRun {
+  id             String       @id @default(cuid())
+  researchPlanId String
+  researchPlan   ResearchPlan @relation(fields: [researchPlanId], references: [id], onDelete: Cascade)
+  spec           String       @default("plan-design-v1")
+  purpose        String
+  /// context | chain | cards | review | signed
+  step           String       @default("context")
+  /// idle (waiting for the author) | working | failed | signed
+  status         String       @default("idle")
+  stateJson      Json         @default("{}")
+  logJson        Json         @default("[]")
+  provider       String?
+  model          String?
+  modelCalls     Int          @default(0)
+  error          String?
+  signedAt       DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   @@index([researchPlanId, createdAt])
 }

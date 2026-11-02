@@ -1,7 +1,16 @@
 import { DOMParser } from '@xmldom/xmldom';
 import { europePmcQuery, topLevelSections } from '../method-sources/europe-pmc';
 import { joinSections, plainTitle, stripHtml, textOf } from '../method-sources/types';
-import type { Paper } from './types';
+
+/** One paper as the Copilot reads it. */
+export type Paper = {
+  /** "PMC123456" for an open-access paper, "MED:12345678" otherwise: stable across searches. */
+  key: string; title: string; authors?: string; year?: string; venue?: string; url?: string; doi?: string;
+  openAccess: boolean; abstract?: string; source?: 'europe_pmc' | 'pubmed';
+  why?: string; subQuestionIds?: string[];
+  /** What was read: the Methods and Results of the full text, or only the abstract. */
+  basis?: 'fulltext' | 'abstract';
+};
 
 export type FetchText = (url: string, init?: RequestInit) => Promise<string>;
 

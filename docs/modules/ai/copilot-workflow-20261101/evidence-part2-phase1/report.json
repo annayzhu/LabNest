@@ -1,0 +1,89 @@
+{
+  "base": "http://localhost:3002",
+  "at": "2026-11-02T00:36:53.852Z",
+  "synthetic": true,
+  "liveProviders": false,
+  "spec": "plan-design-v1",
+  "checks": [
+    {
+      "name": "a new plan from the overview opens its design workbench, with LabNest records listed and nothing sent",
+      "status": "passed"
+    },
+    {
+      "name": "① the context card marks AI suggestions, asks what is ambiguous, and confirms",
+      "status": "passed"
+    },
+    {
+      "name": "③ the evidence chain comes from the knockdown template; at the standard tier the rescue is optional",
+      "status": "passed"
+    },
+    {
+      "name": "④ two design cards; wells counted as n is caught by the rules and fixed in the card",
+      "status": "passed"
+    },
+    {
+      "name": "⑥ the separate reviewer's severe finding blocks signing until a card changes",
+      "status": "passed"
+    },
+    {
+      "name": "signing shows what it writes, then fills the plan and makes two planned experiments with groups",
+      "status": "passed"
+    },
+    {
+      "name": "the plan page shows one line for the signed design; the workbench fits a phone",
+      "status": "passed"
+    }
+  ],
+  "failures": [],
+  "calls": [
+    {
+      "step": "context",
+      "model": "mock-drafter",
+      "chars": 121,
+      "sentInventory": true
+    },
+    {
+      "step": "chain",
+      "model": "mock-drafter",
+      "chars": 1602,
+      "sentInventory": true
+    },
+    {
+      "step": "card",
+      "model": "mock-drafter",
+      "chars": 1316,
+      "sentInventory": true
+    },
+    {
+      "step": "card",
+      "model": "mock-drafter",
+      "chars": 1315,
+      "sentInventory": true
+    },
+    {
+      "step": "review",
+      "model": "mock-reviewer",
+      "chars": 4757,
+      "sentInventory": true
+    },
+    {
+      "step": "review",
+      "model": "mock-reviewer",
+      "chars": 4869,
+      "sentInventory": true
+    }
+  ],
+  "experiments": [
+    {
+      "title": "敲低效率验证（qPCR + WB）",
+      "protocol": true,
+      "scheduleBlocks": 1
+    },
+    {
+      "title": "Transwell 迁移",
+      "protocol": false,
+      "scheduleBlocks": 0
+    }
+  ],
+  "modelCalls": 6
+}

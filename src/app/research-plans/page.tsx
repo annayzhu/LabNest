@@ -8,7 +8,6 @@ import { PageHeader } from "@/components/PageHeader";
 import { ResearchPlanRelationCounts } from "@/components/ResearchPlanRelationCounts";
 import { StatusPill } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
-import { copilotReadiness } from "@/lib/copilot/deps.server";
 import { prisma } from "@/lib/db";
 import { filterHref, firstOptionSearchParam, firstSearchParam, type PageSearchParams } from "@/lib/filters";
 import { normalizeResearchPlanSort, researchPlanOrderBy, researchPlanSortOptions } from "@/lib/research-plan-sorting";
@@ -48,7 +47,6 @@ export default async function ResearchPlansPage({ searchParams }: { searchParams
     ? await prisma.researchPlan.findMany({ where: { id: { notIn: recycledIds } }, select: { id: true, code: true, title: true, projectId: true }, orderBy: { updatedAt: "desc" }, take: 100 })
     : undefined;
   const launcher = recent ? {
-    readiness: await copilotReadiness(),
     plans: recent.map((plan) => ({ id: plan.id, label: `${plan.code ? `${plan.code} · ` : ""}${plan.title}` })),
     defaultProjectId: projectId ?? recent[0]?.projectId,
   } : undefined;
@@ -76,7 +74,7 @@ export default async function ResearchPlansPage({ searchParams }: { searchParams
           <Link href="/research-plans/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Research Plan</Link>
         </>}
       />
-      {launcher ? <CopilotLauncher readiness={launcher.readiness} plans={launcher.plans} projects={projects.map((project) => ({ id: project.id, label: project.name }))} defaultProjectId={launcher.defaultProjectId}
+      {launcher ? <CopilotLauncher plans={launcher.plans} projects={projects.map((project) => ({ id: project.id, label: project.name }))} defaultProjectId={launcher.defaultProjectId}
         closeHref={filterHref("/research-plans", { q: query, project: projectId, status, sort: sort === "updated_desc" ? undefined : sort })} /> : null}
       <DataTable rows={plans} getRowKey={(row) => row.id} emptyMessage="No Research Plans match this view." selection={{ exportPath: "/research-plans/export" }} columns={[
         { key: "plan", header: "Research Plan", render: (row) => <div><div className="flex items-center gap-2">{row.code ? <span className="record-identifier text-xs font-medium text-muted">{row.code}</span> : null}<Link href={`/research-plans/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.title}</Link></div><p className="mt-1 max-w-xl text-xs leading-5 text-muted">{row.objective ?? "Objective not recorded."}</p></div> },

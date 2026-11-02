@@ -56,7 +56,18 @@ struct WatchRunView: View {
                         Text("本机待同步：\(["complete": "完成操作", "start": "开始计时", "pause": "暂停计时", "finish": "结束计时"][pending.request.intent] ?? "实验操作")").foregroundStyle(.orange)
                         if let conflict = pending.conflict { Text(conflict).font(.footnote); Button("丢弃本机未同步操作", role: .destructive) { discard = true } }
                     }
-                    if model.credential != nil { Button("同步") { Task { await model.refresh() } }.disabled(model.busy) }
+                    if model.credential != nil {
+                        Button { Task { await model.refresh() } } label: {
+                            HStack {
+                                if model.syncing { ProgressView().controlSize(.small) }
+                                Text(model.syncing ? "正在同步…" : "同步")
+                            }
+                        }.disabled(model.busy).accessibilityIdentifier("sync-run")
+                        if let syncedAt = model.lastSyncedAt {
+                            Text("上次同步：\(syncedAt.formatted(date: .omitted, time: .standard))")
+                                .font(.footnote).foregroundStyle(.secondary)
+                        }
+                    }
                     Button("连接设置") { settings = true }
                 }.padding(.horizontal, 6)
             }.navigationTitle(model.snapshot?.title ?? "LabNest").navigationBarTitleDisplayMode(.inline)

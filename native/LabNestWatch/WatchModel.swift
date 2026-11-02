@@ -56,6 +56,8 @@ enum WatchStorage {
     @Published var pending: PendingMutation? = WatchStorage.load(PendingMutation.self, "pending.json")
     @Published var message = ""
     @Published var busy = false
+    @Published var syncing = false
+    @Published var lastSyncedAt: Date?
     @Published var connected = false
     @Published var pairingError: String?
     @Published var notificationStatus = "未授权通知"
@@ -116,7 +118,10 @@ enum WatchStorage {
         }
     }
     func refresh(allowTimerSubmission: Bool = false) async {
-        guard let credential, !busy else { return }; busy = true; defer { busy = false }
+        guard !busy else { return }
+        guard let credential else { message = "尚未连接实验，请先在连接设置中配对。"; return }
+        busy = true; syncing = true; message = "正在同步…"
+        defer { busy = false; syncing = false }
         do {
             // A queued mutation retains its captured revision. Fetching a newer snapshot must not rebase it.
             if let queued = pending, queued.conflict == nil, queued.request.intent != "complete", !allowTimerSubmission {
@@ -128,14 +133,21 @@ enum WatchStorage {
                     _ = try await request("/api/watch/runs/\(credential.experimentId)", body: JSONEncoder().encode(queued.request))
                     try FileManager.default.removeItem(at: WatchStorage.url("pending.json")); pending = nil
                 } catch let error as NSError {
-                    if error.domain == "LabNest" { let conflict = PendingMutation(request: queued.request, conflict: error.localizedDescription); try WatchStorage.save(conflict, "pending.json"); pending = conflict }
-                    throw error
+                    if error.domain == "LabNest" {
+                        let conflict = PendingMutation(request: queued.request, conflict: error.localizedDescription)
+                        try WatchStorage.save(conflict, "pending.json"); pending = conflict
+                        // A rejected write must not prevent reading the current server state.
+                        // Keep the original operation/revision for explicit conflict review.
+                    } else { throw error }
                 }
             }
             let value = try JSONDecoder().decode(RunSnapshot.self, from: await request("/api/watch/runs/\(credential.experimentId)"))
             try WatchStorage.save(value, "snapshot.json"); snapshot = value; connected = true
             serverOffset = value.serverTime / 1000 - Date().timeIntervalSince1970
-            message = pending == nil ? "" : "本机有冲突，未覆盖服务器。"
+            lastSyncedAt = Date()
+            message = pending == nil
+                ? "同步成功 · \(value.steps.filter { $0.completed }.count)/\(value.steps.count) 步已完成"
+                : "已读取最新状态；本机有待处理操作，未覆盖服务器。"
             publishWidget()
             await scheduleReminders()
         } catch {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   addDays, blockEnd, blockState, blockTitle, defaultWorkHours, dependents, draftSchedule, formatWait, labClock, labDayKey, labInstant,
-  moveBlock, nextWorkMoment, overnightWindow, saysOvernight, scheduleMarks, scheduleProblems, shiftSchedule, textTimes, weekday,
+  insertDay, moveBlock, nextWorkMoment, removeDay, scheduleSpan, overnightWindow, saysOvernight, scheduleMarks, scheduleProblems, shiftSchedule, textTimes, weekday,
   type ScheduleBlock, type ScheduleStep,
 } from "./experiment-schedule";
 
@@ -181,5 +181,29 @@ describe("titles, states and checks", () => {
 
   it("uses working hours 09:00–18:00 on weekdays by default", () => {
     expect(defaultWorkHours).toEqual({ start: 540, end: 1080, workdays: [1, 2, 3, 4, 5] });
+  });
+});
+
+describe("days of a schedule", () => {
+  const block = (id: string, day: string, extra: Partial<ScheduleBlock> = {}): ScheduleBlock => ({ id, kind: "steps", title: null, stepRefs: [], startAt: labInstant(day, 9 * 60 + 30), allDay: false, estimatedMinutes: 30, afterBlockId: null, minGapMinutes: null, maxGapMinutes: null, gapSource: null, note: null, doneAt: null, ...extra });
+  const blocks = [block("a", "2026-11-02"), block("b", "2026-11-03", { afterBlockId: "a" }), block("c", "2026-11-05", { afterBlockId: "b" })];
+
+  it("is never shorter than the day of its last block", () => {
+    expect(scheduleSpan("2026-11-02", blocks)).toBe(4);
+    expect(scheduleSpan("2026-11-02", [])).toBe(1);
+  });
+
+  it("puts a day in by moving every later block one day on, keeping their clock time", () => {
+    const moved = insertDay(blocks, "2026-11-03");
+    expect(moved.map(item => labDayKey(item.startAt))).toEqual(["2026-11-02", "2026-11-04", "2026-11-06"]);
+    expect(labClock(moved[1].startAt)).toBe("09:30");
+    expect(() => insertDay(blocks, "2026-11-03", new Set(["c"]))).toThrow("A done block stays where it is");
+  });
+
+  it("takes a day out with its blocks, closing the gap and the chain", () => {
+    const left = removeDay(blocks, "2026-11-03");
+    expect(left.map(item => [item.id, labDayKey(item.startAt), item.afterBlockId])).toEqual([["a", "2026-11-02", null], ["c", "2026-11-04", "a"]]);
+    expect(removeDay(blocks, "2026-11-04").map(item => labDayKey(item.startAt))).toEqual(["2026-11-02", "2026-11-03", "2026-11-04"]);
+    expect(() => removeDay(blocks, "2026-11-04", new Set(["c"]))).toThrow("A done block stays where it is");
   });
 });

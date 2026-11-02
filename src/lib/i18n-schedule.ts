@@ -4,6 +4,8 @@ export const scheduleZh: Record<string, string> = {
   "Each day’s work, drafted from the waits in its Protocols. Drag a block to another day; what waits for it moves along.": "每天要做的事，按规程里的等待自动排出。把一段拖到另一天，等它的后续段会一起移动。",
   "View": "视图",
   "Flowchart": "流程图",
+  "Days": "共几天",
+  "Day 1 starts at": "第 1 天开始于",
   "List": "列表",
   "Day": "第几天",
   "Move the blocks after it too": "后面的段一起移动",

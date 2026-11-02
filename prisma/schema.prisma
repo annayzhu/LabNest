@@ -500,6 +500,8 @@ model Experiment {
   entries               Entry[]
   protocolVersions      ExperimentProtocolVersion[]
   scheduleBlocks        ExperimentScheduleBlock[]
+  /// How many days the schedule spans from `date`, as the author set it; null follows the blocks. Never shorter than they reach.
+  scheduleDays          Int?
 
   @@index([status])
   @@index([recordStatus])

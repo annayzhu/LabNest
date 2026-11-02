@@ -8,7 +8,7 @@ import { experimentExecutionDocument } from "@/lib/experiment-document";
 import { CopyExperimentButton } from "@/components/CopyExperimentButton";
 import { CalendarExportButton } from "@/components/CalendarExportButton";
 import { isExportableExperiment } from "@/lib/calendar-export";
-import { labDayKey } from "@/lib/experiment-schedule";
+import { addDays, labDayKey, scheduleSpan } from "@/lib/experiment-schedule";
 import { CalendarDays, Lock, Play } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -121,7 +121,7 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
       <aside className="document-preview-sidebar" aria-label="Experiment controls and result recording">
         <Card><CardHeader className="min-h-10 px-3 py-2" title="Execution control" eyebrow="Plan and exact method provenance" action={<div className="flex gap-1"><StatusPill status={experiment.status} />{locked ? <Badge tone="neutral"><Lock className="mr-1 h-3 w-3" aria-hidden />Locked</Badge> : null}</div>} /><CardBody className="space-y-2.5 p-3">
           <div className="grid grid-cols-2 gap-x-3"><Control label="Research Plan">{experiment.researchPlan ? <span className="flex flex-wrap items-center gap-1"><Link href={`/research-plans/${experiment.researchPlan.id}`} className="text-moss hover:underline">{experiment.researchPlan.code ?? experiment.researchPlan.title}</Link>{recycledKeys.has(`research_plan:${experiment.researchPlan.id}`) ? <Badge tone="warning" className="min-h-5 px-1.5 py-0 text-xs leading-4">In Recycle Bin</Badge> : null}</span> : <span className="text-warning">未分配</span>}</Control><Control label="Project">{experiment.project?.name ?? <span className="text-warning">未分配</span>}</Control></div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-hairline pt-2"><CompactStat label="Day plan" value={<Link href={`/experiments/${experiment.id}/schedule`} className="text-moss hover:underline">{scheduleSummary(experiment.date, experiment.scheduleBlocks)}</Link>} /><CompactStat label="Steps" value={`${progress.done}/${progress.total}`} /><CompactStat label="Results" value={experiment.results.length} /><CompactStat label="Attachments" value={attachmentLinks.length} /></div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-hairline pt-2"><CompactStat label="Day plan" value={<Link href={`/experiments/${experiment.id}/schedule`} className="text-moss hover:underline">{scheduleSummary(experiment.date, experiment.scheduleBlocks, experiment.scheduleDays)}</Link>} /><CompactStat label="Steps" value={`${progress.done}/${progress.total}`} /><CompactStat label="Results" value={experiment.results.length} /><CompactStat label="Attachments" value={attachmentLinks.length} /></div>
           {experiment.primaryProtocolVersion ? <Link aria-label={`Primary protocol: ${experiment.primaryProtocolVersion.protocol.canonicalTitle ?? experiment.primaryProtocolVersion.protocol.title}`} href={`/protocols/${experiment.primaryProtocolVersion.protocolId}?version=${experiment.primaryProtocolVersion.id}`} className="block border-t border-hairline pt-2 text-moss hover:underline"><ProtocolIdentity compact title={experiment.primaryProtocolVersion.protocol.canonicalTitle ?? experiment.primaryProtocolVersion.protocol.title} code={experiment.primaryProtocolVersion.protocol.humanCode} version={experiment.primaryProtocolVersion.displayVersion} meta={experiment.tags.join(" · ") || undefined} /></Link> : experiment.tags.length ? <p className="border-t border-hairline pt-2 text-xs text-muted">{experiment.tags.join(" · ")}</p> : null}
           <div className="border-t border-hairline pt-2"><RecordStatusControl targetType="experiment" id={experiment.id} recordStatus={experiment.recordStatus} /></div>
         </CardBody></Card>
@@ -140,12 +140,13 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
 
 function Control({ label, children }: { label: string; children: React.ReactNode }) { return <div className="min-w-0"><p className="text-xs font-medium leading-3 text-muted">{label}</p><div className="mt-0.5 min-w-0 break-words text-xs font-medium leading-4 text-ink">{children}</div></div>; }
 
-/** "11/03–11/06 · 4 blocks" (Q262); an experiment without a schedule shows its day and the way to arrange it. */
-function scheduleSummary(date: Date, blocks: { startAt: Date }[]) {
-  const day = (value: Date) => labDayKey(value).slice(5).replace("-", "/");
-  if (!blocks.length) return <><span data-i18n-ignore>{`${day(date)} · `}</span><span>Arrange each day</span></>;
-  const first = day(blocks[0].startAt), last = day(blocks[blocks.length - 1].startAt);
-  return <><span data-i18n-ignore>{`${first === last ? first : `${first}–${last}`} · `}</span><span>{`${blocks.length} ${blocks.length === 1 ? "block" : "blocks"}`}</span></>;
+/** "11/03–11/07 · 4 blocks" (Q262, Q314): day 1 to the last day the author set; without a schedule, its day and the way to arrange it. */
+function scheduleSummary(date: Date, blocks: { startAt: Date }[], days: number | null) {
+  const label = (key: string) => key.slice(5).replace("-", "/");
+  if (!blocks.length && !days) return <><span data-i18n-ignore>{`${label(labDayKey(date))} · `}</span><span>Arrange each day</span></>;
+  const first = labDayKey(date) < labDayKey(blocks[0]?.startAt ?? date) ? labDayKey(date) : labDayKey(blocks[0].startAt);
+  const last = addDays(first, Math.max(days ?? 1, scheduleSpan(first, blocks.map(block => ({ startAt: block.startAt.toISOString() })))) - 1);
+  return <><span data-i18n-ignore>{`${first === last ? label(first) : `${label(first)}–${label(last)}`} · `}</span><span>{`${blocks.length} ${blocks.length === 1 ? "block" : "blocks"}`}</span></>;
 }
 
 function CompactStat({ label, value }: { label: string; value: React.ReactNode }) { return <span className="whitespace-nowrap text-xs leading-4 text-muted"><span className="font-medium">{label}</span><strong className="ml-1 font-medium text-ink">{value}</strong></span>; }

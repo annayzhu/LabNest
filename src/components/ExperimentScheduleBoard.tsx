@@ -2,11 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition, type DragEvent } from "react";
-import { AlertTriangle, Check, GripVertical, List, Plus, Scissors, Trash2, Undo2, Wand2, Workflow, X } from "lucide-react";
+import { AlertTriangle, CalendarPlus, Check, ChevronDown, Minus, MoreHorizontal, Pencil, Plus, Scissors, Trash2, Undo2, Wand2, Workflow, List, X } from "lucide-react";
 import { saveSchedule, setItemDone, type ScheduleSaveResult } from "@/app/experiments/[id]/schedule/actions";
 import {
-  addDays, blockState, blockTitle, daysBetween, defaultWorkHours, draftSchedule, formatDuration, formatWait, formatWindow, labClock, labDayKey, labInstant, labMinuteOfDay,
-  localizeBlockTitle, moveBlock, scheduleDayLabel, scheduleMarks, sortBlocks, weekday, type BlockMark, type OtherBlock, type ScheduleBlock, type ScheduleStep, type WorkHours,
+  addDays, blockState, blockTitle, daysBetween, defaultWorkHours, draftSchedule, formatDuration, formatWait, formatWindow, insertDay, labClock, labDayKey, labInstant, labMinuteOfDay,
+  localizeBlockTitle, MAX_SCHEDULE_DAYS, moveBlock, removeDay, scheduleDayLabel, scheduleMarks, scheduleSpan, shiftSchedule, sortBlocks, weekday,
+  type BlockMark, type OtherBlock, type ScheduleBlock, type ScheduleStep, type WorkHours,
 } from "@/lib/experiment-schedule";
 import { useI18n } from "./I18nProvider";
 import "./experiment-schedule.css";
@@ -20,6 +21,9 @@ type Props = {
   others: OtherBlock[];
   suggestedStart: string;
   todayKey: string;
+  /** Day 1 and the length the author saved (Q314, Q315); null follows the blocks. */
+  startDay: string;
+  savedDays: number | null;
 };
 type Connector = { id: string; d: string; warn: boolean };
 
@@ -30,16 +34,23 @@ const clockOf = (minutes: number) => `${String(Math.floor(minutes / 60)).padStar
 const waitText = (minutes: number) => formatWait(Math.max(0, minutes) * 60);
 
 /**
- * The schedule (Q262): days left to right, a card for each block, the waits between them as labelled connectors. A card
- * dragged to another day takes the blocks that wait for it along unless only that block should move. Below 768 px the
- * days stack and a card's day and time change from its panel. Nothing is saved until "Save schedule".
+ * The schedule (Q262, Q314–Q317): days left to right from day 1, a card for each block, the waits between them as
+ * labelled connectors. The author sets day 1 and how many days there are; days can be put in or taken out, and the
+ * schedule never ends before its last block. A card dragged to another day takes the blocks that wait for it along unless
+ * only that block should move. Below 768 px the days stack and fold. Nothing is saved until "Save schedule".
  */
-export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: initialBlocks, token: initialToken, others, suggestedStart, todayKey }: Props) {
+export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: initialBlocks, token: initialToken, others, suggestedStart, todayKey, startDay, savedDays }: Props) {
   const { locale } = useI18n();
   const zh = locale === "zh";
   const router = useRouter();
-  const [saved, setSaved] = useState({ blocks: initialBlocks, token: initialToken });
+  const initialDays = Math.max(savedDays ?? 1, scheduleSpan(startDay, initialBlocks));
+  const [saved, setSaved] = useState({ blocks: initialBlocks, token: initialToken, startDay, days: initialDays });
   const [blocks, setBlocks] = useState(initialBlocks);
+  const [start, setStart] = useState(startDay);
+  const [length, setLength] = useState(initialDays);
+  const [menuDay, setMenuDay] = useState<string | null>(null);
+  const [confirmDay, setConfirmDay] = useState<string | null>(null);
+  const [opened, setOpened] = useState<Record<string, boolean>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [view, setView] = useState<"board" | "list">("board");
   const [hours, setHours] = useState<WorkHours>(defaultWorkHours);
@@ -48,7 +59,6 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [drafting, setDrafting] = useState(!initialBlocks.length);
-  const [draftDay, setDraftDay] = useState(labDayKey(suggestedStart));
   const [draftClock, setDraftClock] = useState(labClock(suggestedStart));
   const [pending, startTransition] = useTransition();
 
@@ -63,6 +73,13 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
     });
     return () => cancelAnimationFrame(frame);
   }, []);
+  // A day's menu closes on a click anywhere else.
+  useEffect(() => {
+    if (!menuDay) return;
+    const close = (event: PointerEvent) => { if (!(event.target instanceof Element && event.target.closest(".ln-schedule-day-menu"))) { setMenuDay(null); setConfirmDay(null); } };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [menuDay]);
   const remember = (key: string, value: string) => { try { localStorage.setItem(key, value); } catch { /* private window: not kept */ } };
   const changeHours = (next: WorkHours) => { setHours(next); remember(hoursKey, JSON.stringify(next)); };
   const changeView = (next: "board" | "list") => { setView(next); remember(viewKey, next); };
@@ -71,18 +88,55 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
   const ordered = useMemo(() => sortBlocks(blocks), [blocks]);
   const locked = useMemo(() => new Set(blocks.filter(block => blockState(block, stepMap) === "done").map(block => block.id)), [blocks, stepMap]);
   const marks = useMemo(() => scheduleMarks(blocks, { hours, others }), [blocks, hours, others]);
-  const dirty = JSON.stringify(sortBlocks(blocks)) !== JSON.stringify(sortBlocks(saved.blocks));
-  const firstDay = ordered[0] ? labDayKey(ordered[0].startAt) : undefined;
-  const lastDay = ordered.length ? labDayKey(ordered[ordered.length - 1].startAt) : undefined;
-  const days = firstDay && lastDay ? Array.from({ length: daysBetween(firstDay, lastDay) + 2 }, (_, index) => addDays(firstDay, index)) : [];
+  // A block put before day 1 makes its day the first; a block past the last day lengthens the schedule.
+  const firstDay = ordered[0] && labDayKey(ordered[0].startAt) < start ? labDayKey(ordered[0].startAt) : start;
+  const minDays = scheduleSpan(firstDay, blocks);
+  const dayCount = Math.max(length + daysBetween(firstDay, start), minDays);
+  const days = Array.from({ length: dayCount }, (_, index) => addDays(firstDay, index));
+  const lastDay = days[days.length - 1];
+  const dirty = JSON.stringify(sortBlocks(blocks)) !== JSON.stringify(sortBlocks(saved.blocks)) || firstDay !== saved.startDay || dayCount !== saved.days;
   const scheduled = new Set(blocks.flatMap(block => block.stepRefs));
   const unscheduled = steps.filter(step => !scheduled.has(step.ref) && !step.completed);
   const movedSaved = blocks.some(block => { const before = saved.blocks.find(item => item.id === block.id); return before && before.startAt !== block.startAt; });
   const needsReason = experiment.status === "running" && movedSaved;
   const selected = blocks.find(block => block.id === selectedId) ?? null;
-  const dayIndex = (dayKey: string) => (firstDay ? daysBetween(firstDay, dayKey) : 0) + 1;
+  const dayIndex = (dayKey: string) => daysBetween(firstDay, dayKey) + 1;
+  const stepBlocks = blocks.filter(block => block.kind === "steps").length;
+  const openItems = blocks.filter(block => block.kind === "task" && !block.doneAt).length;
 
   const apply = (next: ScheduleBlock[]) => { setBlocks(next); setError(""); setNotice(""); };
+  const doneError = () => setError(zh ? "已完成的段不能移动；请先调整其他天。" : "A done block stays where it is; change the other days instead.");
+  /** The length from the current day 1, so a day put before it is not lost. */
+  const resize = (count: number) => { setStart(firstDay); setLength(Math.min(MAX_SCHEDULE_DAYS, Math.max(minDays, count))); };
+
+  function changeStart(next: string) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(next) || next === firstDay) return;
+    const shift = daysBetween(firstDay, next);
+    if (blocks.length) {
+      if (locked.size) { doneError(); return; }
+      apply(shiftSchedule(blocks, shift * 86_400_000));
+      setNotice(zh ? `整份日程${shift > 0 ? "推后" : "提前"} ${Math.abs(shift)} 天（${blocks.length} 项），检查后保存。` : `The whole schedule moved ${Math.abs(shift)} day${Math.abs(shift) === 1 ? "" : "s"} ${shift > 0 ? "later" : "earlier"} (${blocks.length} blocks). Check it, then save.`);
+    }
+    setStart(next);
+    setLength(dayCount);
+  }
+  function putDay(dayKey: string) {
+    if (dayCount >= MAX_SCHEDULE_DAYS) { setError(zh ? `日程最长 ${MAX_SCHEDULE_DAYS} 天。` : `A schedule spans ${MAX_SCHEDULE_DAYS} days at most.`); return; }
+    try { apply(insertDay(blocks, dayKey, locked)); } catch { doneError(); return; }
+    setStart(firstDay); setLength(dayCount + 1); setMenuDay(null);
+  }
+  function takeDay(dayKey: string) {
+    const count = blocks.filter(block => labDayKey(block.startAt) === dayKey).length;
+    if (count && confirmDay !== dayKey) { setConfirmDay(dayKey); return; }
+    let next: ScheduleBlock[];
+    try { next = removeDay(blocks, dayKey, locked); } catch { doneError(); return; }
+    apply(next);
+    // Taking out day 1 makes the next day the first; the others keep their place.
+    setStart(dayKey === firstDay ? addDays(firstDay, 1) : firstDay);
+    setLength(Math.max(1, dayCount - 1));
+    setMenuDay(null); setConfirmDay(null); setSelectedId(null);
+    if (count) setNotice(zh ? `删除了这一天和其中 ${count} 项，后面的事项提前了一天。` : `The day and its ${count} block${count === 1 ? "" : "s"} were taken out; later days moved one day earlier.`);
+  }
   const update = (id: string, patch: Partial<ScheduleBlock>) => apply(blocks.map(block => block.id === id ? { ...block, ...patch } : block));
   const move = (id: string, startAt: string) => {
     try { apply(moveBlock(blocks, id, startAt, { chain, locked })); }
@@ -90,10 +144,10 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
   };
 
   function draft() {
-    const start = labInstant(draftDay, clockMinutes(draftClock));
-    if (Number.isNaN(Date.parse(start))) { setError(zh ? "请选择开始的日期和时间。" : "Choose a start date and time."); return; }
+    const begin = labInstant(firstDay, clockMinutes(draftClock));
+    if (Number.isNaN(Date.parse(begin))) { setError(zh ? "请选择开始的日期和时间。" : "Choose a start date and time."); return; }
     if (locked.size) { setError(zh ? "已有完成的段，不能重新排初稿；请直接调整。" : "Some blocks are done: adjust the schedule instead of redrafting it."); return; }
-    const drafted = draftSchedule(steps, start, { hours, newId: () => crypto.randomUUID() });
+    const drafted = draftSchedule(steps, begin, { hours, newId: () => crypto.randomUUID() });
     if (!drafted.length) { setError(zh ? "没有可以安排的步骤。" : "There are no open steps to schedule."); return; }
     // Items stay where they were; what they waited for may be gone.
     const items = blocks.filter(block => block.kind === "task").map(block => ({ ...block, afterBlockId: null, minGapMinutes: null, maxGapMinutes: null, gapSource: null }));
@@ -137,15 +191,16 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
 
   const settle = (result: ScheduleSaveResult, keepLocal = false) => {
     if (!result.ok) { setError(result.error); return false; }
-    setSaved({ blocks: result.blocks, token: result.token });
+    setSaved(current => ({ blocks: result.blocks, token: result.token, startDay: result.startDay ?? current.startDay, days: result.days ?? current.days }));
     if (!keepLocal) setBlocks(result.blocks);
+    if (!keepLocal && result.startDay && result.days) { setStart(result.startDay); setLength(result.days); }
     router.refresh();
     return true;
   };
   function save() {
     if (needsReason && !reason.trim()) { setError(zh ? "实验进行中改期，请写一句原因。" : "The experiment is under way: say why the schedule changes."); return; }
     startTransition(async () => {
-      const done = settle(await saveSchedule({ experimentId: experiment.id, token: saved.token, blocks, reason: needsReason ? reason.trim() : undefined }));
+      const done = settle(await saveSchedule({ experimentId: experiment.id, token: saved.token, blocks, startDay: firstDay, days: dayCount, reason: needsReason ? reason.trim() : undefined }));
       if (done) { setReason(""); setNotice(zh ? "日程已保存。" : "Schedule saved."); }
     });
   }
@@ -208,28 +263,60 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
     const blockMarks = marks[block.id] ?? [];
     const draggable = editable && !locked.has(block.id);
     const gap = block.afterBlockId ? gapLabel(block, stepMap, zh) : null;
+    const warn = blockMarks.some(mark => mark.kind === "window" || mark.kind === "order");
+    const title = titleOf(block, stepMap, zh);
     return <article key={block.id} ref={element => { if (element) cards.current.set(block.id, element); else cards.current.delete(block.id); }}
       className="ln-schedule-card focus-ring" data-state={state} data-kind={block.kind} aria-current={selectedId === block.id ? "true" : undefined} data-marked={blockMarks.length ? "" : undefined}
-      tabIndex={0} role="button" draggable={draggable} onDragStart={event => { event.dataTransfer.setData("text/plain", block.id); event.dataTransfer.effectAllowed = "move"; }}
-      onClick={() => setSelectedId(block.id)} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedId(block.id); } }}>
-      {gap ? <p className="ln-schedule-gap-inline" data-warn={blockMarks.some(mark => mark.kind === "window" || mark.kind === "order") ? "" : undefined}>{zh ? `等待 ${gap}` : `After ${gap}`}</p> : null}
-      <p className="ln-schedule-time" data-i18n-ignore>{block.allDay ? (zh ? "全天" : "All day") : labClock(block.startAt)}{block.estimatedMinutes ? ` · ${formatDuration(block.estimatedMinutes)}` : ""}{draggable ? <GripVertical className="ln-schedule-grip" aria-hidden /> : null}</p>
-      <h3 data-i18n-ignore>{block.kind === "task" && block.doneAt ? <Check className="h-3.5 w-3.5" aria-hidden /> : null}{titleOf(block, stepMap, zh)}</h3>
-      {block.kind === "steps" ? <p className="ln-schedule-meta" data-i18n-ignore>{stateText(state, zh)}{block.stepRefs.length > 1 ? ` · ${zh ? `${block.stepRefs.length} 步` : `${block.stepRefs.length} steps`}` : ""}</p> : null}
-      {blockMarks.length ? <ul className="ln-schedule-marks" data-i18n-ignore>{blockMarks.map((mark, index) => <li key={index}><AlertTriangle aria-hidden />{markText(mark, zh)}</li>)}</ul> : null}
+      tabIndex={0} role="button" aria-label={title} draggable={draggable} onDragStart={event => { event.dataTransfer.setData("text/plain", block.id); event.dataTransfer.effectAllowed = "move"; }}
+      onClick={() => setSelectedId(block.id)} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); setSelectedId(block.id); } }}>
+      {gap ? <p className="ln-schedule-wait" data-warn={warn ? "" : undefined} data-i18n-ignore>{zh ? `等待 ${gap}` : `After ${gap}`}</p> : null}
+      <div className="ln-schedule-card-top">
+        <span className="ln-schedule-time" data-i18n-ignore>{block.allDay ? (zh ? "全天" : "All day") : labClock(block.startAt)}{block.estimatedMinutes ? <small>{formatDuration(block.estimatedMinutes)}</small> : null}</span>
+        {blockMarks.length ? <span className="ln-schedule-flag" title={blockMarks.map(mark => markText(mark, zh)).join("\n")} data-i18n-ignore><AlertTriangle aria-hidden />{blockMarks.length}</span> : null}
+        {editable ? <span className="ln-schedule-card-actions">
+          <button type="button" className="focus-ring" title={zh ? "编辑" : "Edit"} aria-label={zh ? `编辑：${title}` : `Edit ${title}`} onClick={event => { event.stopPropagation(); setSelectedId(block.id); }}><Pencil aria-hidden /></button>
+          {!locked.has(block.id) ? <button type="button" className="focus-ring" data-danger="" title={block.kind === "task" ? (zh ? "删除事项" : "Remove item") : (zh ? "移出日程" : "Take off the schedule")} aria-label={zh ? `删除：${title}` : `Remove ${title}`} onClick={event => { event.stopPropagation(); remove(block); }}><Trash2 aria-hidden /></button> : null}
+        </span> : null}
+      </div>
+      <h3 data-i18n-ignore>{block.kind === "task" && block.doneAt ? <Check className="ln-schedule-done-icon" aria-hidden /> : null}<span>{title}</span></h3>
+      <p className="ln-schedule-meta" data-i18n-ignore>
+        <span className="ln-schedule-pill" data-state={block.kind === "task" ? (block.doneAt ? "done" : "todo") : state}>{block.kind === "task" ? (block.doneAt ? (zh ? "已完成" : "Done") : (zh ? "事项" : "Item")) : stateText(state, zh)}</span>
+        {block.kind === "steps" && block.stepRefs.length ? <span>{zh ? `${block.stepRefs.length} 步` : `${block.stepRefs.length} step${block.stepRefs.length === 1 ? "" : "s"}`}</span> : null}
+        {block.note ? <span className="ln-schedule-note">{block.note}</span> : null}
+      </p>
     </article>;
   };
 
+  const span = `${shortDay(firstDay, zh)} → ${shortDay(lastDay, zh)}`;
+  const summary = zh
+    ? [span, `${dayCount} 天`, stepBlocks ? `${stepBlocks} 段` : "", openItems ? `${openItems} 项待办` : ""].filter(Boolean).join(" · ")
+    : [span, `${dayCount} day${dayCount === 1 ? "" : "s"}`, stepBlocks ? `${stepBlocks} block${stepBlocks === 1 ? "" : "s"}` : "", openItems ? `${openItems} open item${openItems === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ");
+
   return <div className="ln-schedule" data-has-selection={selected ? "" : undefined}>
     <div className="ln-schedule-toolbar">
-      {ordered.length ? <div role="group" aria-label="View" className="ln-schedule-tabs">
-        <button type="button" aria-pressed={view === "board"} onClick={() => changeView("board")}><Workflow aria-hidden />Flowchart</button>
-        <button type="button" aria-pressed={view === "list"} onClick={() => changeView("list")}><List aria-hidden />List</button>
-      </div> : null}
-      {editable && ordered.length ? <label className="ln-schedule-check"><input type="checkbox" checked={chain} onChange={event => setChain(event.target.checked)} />Move the blocks after it too</label> : null}
+      <div className="ln-schedule-group">
+        {ordered.length ? <div role="group" aria-label="View" className="ln-schedule-tabs">
+          <button type="button" aria-pressed={view === "board"} onClick={() => changeView("board")}><Workflow aria-hidden />Flowchart</button>
+          <button type="button" aria-pressed={view === "list"} onClick={() => changeView("list")}><List aria-hidden />List</button>
+        </div> : null}
+      </div>
+      <div className="ln-schedule-group ln-schedule-span">
+        <label className="ln-schedule-field"><span>Start</span><input type="date" value={firstDay} disabled={!editable} onChange={event => changeStart(event.target.value)} /></label>
+        <div className="ln-schedule-field">
+          <span id="ln-schedule-days-label">Days</span>
+          <div className="ln-schedule-stepper" role="group" aria-labelledby="ln-schedule-days-label">
+            <button type="button" className="focus-ring" disabled={!editable || dayCount <= minDays} aria-label={zh ? "少一天" : "One day fewer"} title={dayCount <= minDays && dayCount > 1 ? (zh ? `第 ${dayCount} 天还有事项` : `Day ${dayCount} still has blocks`) : undefined} onClick={() => resize(dayCount - 1)}><Minus aria-hidden /></button>
+            <output data-i18n-ignore>{dayCount}</output>
+            <button type="button" className="focus-ring" disabled={!editable || dayCount >= MAX_SCHEDULE_DAYS} aria-label={zh ? "多一天" : "One day more"} onClick={() => resize(dayCount + 1)}><Plus aria-hidden /></button>
+          </div>
+        </div>
+      </div>
       <span className="ln-schedule-spacer" />
-      {editable && ordered.length ? <button type="button" className="ln-schedule-button" onClick={() => addItem(selected ? labDayKey(selected.startAt) : firstDay ?? todayKey)}><Plus aria-hidden />Add item</button> : null}
-      {editable && ordered.length && !drafting ? <button type="button" className="ln-schedule-button" onClick={() => setDrafting(true)}><Wand2 aria-hidden />Redraft</button> : null}
+      <div className="ln-schedule-group">
+        {editable && ordered.length ? <label className="ln-schedule-check"><input type="checkbox" checked={chain} onChange={event => setChain(event.target.checked)} />Move the blocks after it too</label> : null}
+        {editable ? <button type="button" className="ln-schedule-button" onClick={() => addItem(selected ? labDayKey(selected.startAt) : firstDay)}><Plus aria-hidden />Add item</button> : null}
+        {editable && !drafting ? <button type="button" className="ln-schedule-button" onClick={() => setDrafting(true)}><Wand2 aria-hidden />{ordered.length ? "Redraft" : "Draft from the Protocols"}</button> : null}
+      </div>
     </div>
 
     {editable && drafting ? <section className="ln-schedule-draft" aria-label="Draft the schedule">
@@ -238,8 +325,7 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
         <p>Waits of 4 h or more, overnight steps and work that would run past the end of the day start a new block; the next block starts when the wait is over.</p>
       </div>
       <div className="ln-schedule-draft-fields">
-        <label>Start<input type="date" value={draftDay} onChange={event => setDraftDay(event.target.value)} /></label>
-        <label>Time<input type="time" value={draftClock} onChange={event => setDraftClock(event.target.value)} /></label>
+        <label>Day 1 starts at<input type="time" value={draftClock} onChange={event => setDraftClock(event.target.value)} /></label>
         <label>Working day<span className="ln-schedule-hours"><input type="time" aria-label="Work starts" value={clockOf(hours.start)} onChange={event => { const value = clockMinutes(event.target.value); if (!Number.isNaN(value)) changeHours({ ...hours, start: value }); }} />–<input type="time" aria-label="Work ends" value={clockOf(hours.end)} onChange={event => { const value = clockMinutes(event.target.value); if (!Number.isNaN(value)) changeHours({ ...hours, end: value }); }} /></span></label>
         <label className="ln-schedule-check"><input type="checkbox" checked={hours.workdays.length === 7} onChange={event => changeHours({ ...hours, workdays: event.target.checked ? [1, 2, 3, 4, 5, 6, 7] : [1, 2, 3, 4, 5] })} />Weekends are working days</label>
       </div>
@@ -253,11 +339,9 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
     {notice ? <p role="status" className="ln-schedule-notice">{notice}</p> : null}
     {error ? <p role="alert" className="ln-schedule-error">{error}</p> : null}
 
-    {!ordered.length && !drafting ? <p className="ln-schedule-hint">No schedule yet.</p> : null}
-    {!ordered.length && editable && !steps.length ? <button type="button" className="ln-schedule-button" onClick={() => addItem(labDayKey(suggestedStart))}><Plus aria-hidden />Add item</button> : null}
-
-    {ordered.length ? <div className="ln-schedule-layout">
-      {view === "board" ? <div className="ln-schedule-board" aria-label="Schedule flowchart">
+    <div className="ln-schedule-layout">
+      {view === "board" || !ordered.length ? <div className="ln-schedule-board" aria-label="Schedule flowchart">
+        <p className="ln-schedule-summary" data-i18n-ignore>{summary}</p>
         <div className="ln-schedule-track" ref={trackRef}>
           <svg className="ln-schedule-links" width={size.width} height={size.height} aria-hidden>
             <defs><marker id="ln-schedule-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 8 4 L 0 8 z" /></marker></defs>
@@ -266,13 +350,31 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
           {days.map(dayKey => {
             const dayBlocks = ordered.filter(block => labDayKey(block.startAt) === dayKey);
             const off = !hours.workdays.includes(weekday(dayKey));
-            return <section key={dayKey} className="ln-schedule-day" data-off={off ? "" : undefined} data-today={dayKey === todayKey ? "" : undefined} data-empty={dayBlocks.length ? undefined : ""}
+            const open = opened[dayKey] ?? dayBlocks.length > 0;
+            const label = scheduleDayLabel(dayIndex(dayKey), dayKey, zh);
+            return <section key={dayKey} className="ln-schedule-day" data-off={off ? "" : undefined} data-today={dayKey === todayKey ? "" : undefined} data-empty={dayBlocks.length ? undefined : ""} data-folded={open ? undefined : ""}
               onDragOver={editable ? event => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; } : undefined} onDrop={editable ? event => onDrop(event, dayKey) : undefined}>
-              <header data-i18n-ignore><strong>{scheduleDayLabel(dayIndex(dayKey), dayKey, zh)}</strong>{dayKey === todayKey ? <span>{zh ? "今天" : "Today"}</span> : null}</header>
+              <header data-i18n-ignore>
+                <button type="button" className="ln-schedule-day-fold focus-ring" aria-expanded={open} onClick={() => setOpened(current => ({ ...current, [dayKey]: !open }))}><ChevronDown aria-hidden /></button>
+                <span className="ln-schedule-day-name"><strong>{zh ? `第 ${dayIndex(dayKey)} 天` : `Day ${dayIndex(dayKey)}`}</strong><small>{shortDay(dayKey, zh)}</small></span>
+                {dayKey === todayKey ? <span className="ln-schedule-today">{zh ? "今天" : "Today"}</span> : null}
+                {!open && dayBlocks.length ? <span className="ln-schedule-count">{dayBlocks.length}</span> : null}
+                {editable ? <span className="ln-schedule-day-menu">
+                  <button type="button" className="focus-ring" aria-haspopup="menu" aria-expanded={menuDay === dayKey} aria-label={zh ? `${label} 的操作` : `Actions for ${label}`} onClick={() => { setMenuDay(menuDay === dayKey ? null : dayKey); setConfirmDay(null); }}><MoreHorizontal aria-hidden /></button>
+                  {menuDay === dayKey ? <span role="menu" className="ln-schedule-menu" onKeyDown={event => { if (event.key === "Escape") setMenuDay(null); }}>
+                    <button type="button" role="menuitem" onClick={() => putDay(dayKey)}><CalendarPlus aria-hidden />{zh ? "在前面插入一天" : "Put a day in before"}</button>
+                    <button type="button" role="menuitem" onClick={() => putDay(addDays(dayKey, 1))}><CalendarPlus aria-hidden />{zh ? "在后面插入一天" : "Put a day in after"}</button>
+                    <button type="button" role="menuitem" data-danger="" disabled={dayCount <= 1} onClick={() => takeDay(dayKey)}><Trash2 aria-hidden />{confirmDay === dayKey
+                      ? (zh ? `再点一次：连同 ${dayBlocks.length} 项删除` : `Click again: take out with ${dayBlocks.length} block${dayBlocks.length === 1 ? "" : "s"}`)
+                      : (zh ? "删除这一天" : "Take out this day")}</button>
+                  </span> : null}
+                </span> : null}
+              </header>
               <div className="ln-schedule-cards">{dayBlocks.map(card)}</div>
-              {editable ? <button type="button" className="ln-schedule-add focus-ring" onClick={() => addItem(dayKey)}><Plus aria-hidden />Add item</button> : null}
+              {editable ? <button type="button" className="ln-schedule-add focus-ring" onClick={() => addItem(dayKey)}><Plus aria-hidden />{zh ? "添加事项" : "Add item"}</button> : null}
             </section>;
           })}
+          {editable && dayCount < MAX_SCHEDULE_DAYS ? <button type="button" className="ln-schedule-add-day focus-ring" onClick={() => resize(dayCount + 1)}><CalendarPlus aria-hidden /><span>{zh ? "加一天" : "Add a day"}</span></button> : null}
         </div>
       </div> : <div className="ln-schedule-list-wrap"><table className="ln-schedule-list">
         <thead><tr><th>Day</th><th>Time</th><th>Block</th><th>Waits</th><th>Marks</th></tr></thead>
@@ -291,7 +393,7 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
           onMove={startAt => move(selected.id, startAt)} onChange={patch => update(selected.id, patch)} onSplit={index => split(selected, index)} onMerge={() => merge(selected)} onRemove={() => remove(selected)}
           onAdd={ref => addToBlock(selected, ref)} onToggleDone={() => toggleDone(selected)} pending={pending} />
       </aside> : null}
-    </div> : null}
+    </div>
 
     {unscheduled.length && ordered.length ? <details className="ln-schedule-tray">
       <summary data-i18n-ignore>{zh ? `未安排的步骤（${unscheduled.length}）` : `Steps not on the schedule (${unscheduled.length})`}</summary>
@@ -302,7 +404,7 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
     {editable && dirty ? <div className="ln-schedule-savebar" role="region" aria-label="Unsaved schedule">
       <span>Unsaved changes</span>
       {needsReason ? <input value={reason} onChange={event => setReason(event.target.value)} maxLength={500} placeholder="Why the schedule changes (the experiment is under way)" aria-label="Why the schedule changes" /> : null}
-      <button type="button" className="ln-schedule-button" disabled={pending} onClick={() => { apply(saved.blocks); setSelectedId(null); }}><Undo2 aria-hidden />Discard changes</button>
+      <button type="button" className="ln-schedule-button" disabled={pending} onClick={() => { apply(saved.blocks); setStart(saved.startDay); setLength(saved.days); setSelectedId(null); }}><Undo2 aria-hidden />Discard changes</button>
       <button type="button" className="ln-schedule-button ln-key-action" disabled={pending} onClick={save}><Check aria-hidden />{pending ? "Saving…" : "Save schedule"}</button>
     </div> : null}
   </div>;
@@ -357,6 +459,11 @@ function titleOf(block: ScheduleBlock, steps: ReadonlyMap<string, ScheduleStep>,
   return block.title?.trim() ? title : localizeBlockTitle(title, zh);
 }
 
+/** "11/03 周二", "Tue 11/03": a day in the schedule's summary line. */
+function shortDay(dayKey: string, zh: boolean) {
+  return scheduleDayLabel(1, dayKey, zh).split(" · ")[1];
+}
+
 function stateText(state: "done" | "active" | "todo", zh: boolean) {
   return state === "done" ? (zh ? "已完成" : "Done") : state === "active" ? (zh ? "进行中" : "Under way") : (zh ? "未开始" : "Not started");
 }
@@ -382,6 +489,6 @@ function markText(mark: BlockMark, zh: boolean) {
     case "order": return zh ? `比前一段结束早 ${waitText(-mark.gapMinutes)}` : `Starts ${waitText(-mark.gapMinutes)} before the block it waits for ends`;
     case "weekend": return zh ? "非工作日" : "Not a working day";
     case "hours": return zh ? "在工作时间以外" : "Outside working hours";
-    case "overlap": return zh ? `与 ${mark.with} 时间重叠` : `Overlaps ${mark.with}`;
+    case "overlap": return zh ? `与 ${localizeBlockTitle(mark.with, true)} 时间重叠` : `Overlaps ${mark.with}`;
   }
 }

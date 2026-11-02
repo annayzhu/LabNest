@@ -203,6 +203,34 @@ export function shiftSchedule(blocks: readonly ScheduleBlock[], deltaMs: number)
   return blocks.map(block => ({ ...block, startAt: iso(Date.parse(block.startAt) + deltaMs) }));
 }
 
+/** The longest a schedule may be set to, in days. */
+export const MAX_SCHEDULE_DAYS = 60;
+
+/** The fewest days a schedule starting on `startDay` can have: up to the day of its last block, and at least one. */
+export function scheduleSpan(startDay: string, blocks: readonly Pick<ScheduleBlock, "startAt">[]) {
+  return blocks.reduce((days, block) => Math.max(days, daysBetween(startDay, labDayKey(block.startAt)) + 1), 1);
+}
+
+/** A day put in before `dayKey` (Q314): every block from that day on moves one day later. */
+export function insertDay(blocks: readonly ScheduleBlock[], dayKey: string, locked: ReadonlySet<string> = new Set()) {
+  const later = (block: ScheduleBlock) => labDayKey(block.startAt) >= dayKey;
+  if (blocks.some(block => later(block) && locked.has(block.id))) throw new Error("A done block stays where it is");
+  return blocks.map(block => later(block) ? { ...block, startAt: iso(Date.parse(block.startAt) + DAY_MS) } : block);
+}
+
+/**
+ * `dayKey` taken out (Q314): its blocks go, those waiting for them wait for what they waited for, and every later block
+ * moves one day earlier.
+ */
+export function removeDay(blocks: readonly ScheduleBlock[], dayKey: string, locked: ReadonlySet<string> = new Set()) {
+  const gone = new Set(blocks.filter(block => labDayKey(block.startAt) === dayKey).map(block => block.id));
+  if (blocks.some(block => labDayKey(block.startAt) >= dayKey && locked.has(block.id))) throw new Error("A done block stays where it is");
+  const before = (id: string | null): string | null => id && gone.has(id) ? before(blocks.find(block => block.id === id)?.afterBlockId ?? null) : id;
+  return blocks.filter(block => !gone.has(block.id)).map(block => ({
+    ...block, afterBlockId: before(block.afterBlockId), startAt: labDayKey(block.startAt) > dayKey ? iso(Date.parse(block.startAt) - DAY_MS) : block.startAt,
+  }));
+}
+
 export type BlockMark =
   | { kind: "window"; gapMinutes: number; minGapMinutes: number | null; maxGapMinutes: number | null }
   | { kind: "order"; gapMinutes: number }

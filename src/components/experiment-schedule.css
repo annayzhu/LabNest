@@ -1,22 +1,34 @@
-/* 日程 (Q262): days as columns, blocks as cards, waits as connectors; below 768 px the days stack. */
+/* 日程 (Q262, Q314–Q317): a calendar-like timeline. Days are equal columns from day 1, blocks are cards with a colour edge
+   (Protocol steps vs items), waits are tags and thin connectors; below 768 px the days stack and fold. */
 .ln-schedule { display: grid; gap: 0.75rem; min-width: 0; padding-bottom: 4.5rem; }
-.ln-schedule-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
+.ln-schedule-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.75rem 1rem; }
+.ln-schedule-group { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.ln-schedule-group:empty { display: none; }
+.ln-schedule-span { gap: 0.75rem; padding-left: 1rem; border-left: 1px solid var(--hairline); }
+.ln-schedule-group:first-child:empty + .ln-schedule-span { padding-left: 0; border-left: 0; }
 .ln-schedule-spacer { flex: 1; }
-.ln-schedule-tabs { display: inline-flex; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-lg); overflow: hidden; background: var(--surface); }
-.ln-schedule-tabs button { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 2.25rem; padding: 0 0.75rem; font-size: var(--ln-control-font-size-md); color: var(--graphite); }
-.ln-schedule-tabs button svg, .ln-schedule-button svg, .ln-schedule-add svg { width: 1rem; height: 1rem; }
-.ln-schedule-tabs button[aria-pressed="true"] { background: var(--warm); color: var(--ink); font-weight: 600; }
-.ln-schedule-button { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 2.25rem; padding: 0 0.8rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-lg); background: var(--surface); color: var(--moss); font-size: var(--ln-control-font-size-md); font-weight: 500; }
-.ln-schedule-button:hover { border-color: var(--border-strong, var(--graphite)); }
+.ln-schedule-field { display: grid; gap: 0.2rem; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
+.ln-schedule-stepper { display: inline-flex; align-items: stretch; height: 2.25rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: var(--surface); overflow: hidden; }
+.ln-schedule-stepper button { display: inline-flex; width: 2.1rem; align-items: center; justify-content: center; color: var(--graphite); }
+.ln-schedule-stepper button:hover:not(:disabled) { background: var(--warm); color: var(--ink); }
+.ln-schedule-stepper button:disabled { color: var(--muted); opacity: 0.45; cursor: not-allowed; }
+.ln-schedule-stepper svg { width: 0.85rem; height: 0.85rem; }
+.ln-schedule-stepper output { display: inline-flex; min-width: 2.5rem; align-items: center; justify-content: center; border-inline: 1px solid var(--hairline); font: 600 var(--ln-control-font-size-md)/1 var(--font-data); font-variant-numeric: tabular-nums; color: var(--ink); }
+.ln-schedule-tabs { display: inline-flex; padding: 2px; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-lg); background: var(--warm); }
+.ln-schedule-tabs button { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 2rem; padding: 0 0.7rem; border-radius: calc(var(--ln-radius-control-lg) - 2px); font-size: var(--ln-control-font-size-md); color: var(--graphite); }
+.ln-schedule-tabs button svg, .ln-schedule-button svg, .ln-schedule-add svg, .ln-schedule-add-day svg, .ln-schedule-menu svg { width: 1rem; height: 1rem; }
+.ln-schedule-tabs button[aria-pressed="true"] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: var(--shadow-paper), 0 0 0 1px var(--hairline); }
+.ln-schedule-button { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 2.25rem; padding: 0 0.8rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-lg); background: var(--surface); color: var(--moss); font-size: var(--ln-control-font-size-md); font-weight: 500; box-shadow: var(--shadow-paper); transition: border-color 120ms, background 120ms; }
+.ln-schedule-button:hover { border-color: var(--border-strong, var(--graphite)); background: color-mix(in srgb, var(--warm) 45%, var(--surface)); }
 .ln-schedule-button:disabled { opacity: 0.5; cursor: not-allowed; }
 .ln-schedule-danger { color: var(--error); }
 .ln-schedule-check { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 2.25rem; font-size: var(--ln-control-font-size-md); color: var(--graphite); }
 .ln-schedule-check input { width: 1rem; height: 1rem; accent-color: var(--action, var(--moss)); }
 .ln-schedule-hint { margin: 0; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
-.ln-schedule-notice { margin: 0; font-size: var(--ln-control-font-size-md); color: var(--success); }
-.ln-schedule-error { margin: 0; font-size: var(--ln-control-font-size-md); color: var(--error); }
+.ln-schedule-notice { margin: 0; padding: 0.45rem 0.7rem; border-radius: var(--ln-radius-control-lg); background: var(--success-surface); font-size: var(--ln-control-font-size-md); color: var(--success); }
+.ln-schedule-error { margin: 0; padding: 0.45rem 0.7rem; border-radius: var(--ln-radius-control-lg); background: var(--error-surface); font-size: var(--ln-control-font-size-md); color: var(--error); }
 
-.ln-schedule-draft { display: grid; gap: 0.75rem; padding: 0.9rem 1rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel); background: var(--surface); }
+.ln-schedule-draft { display: grid; gap: 0.75rem; padding: 0.9rem 1rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel); background: var(--surface); box-shadow: var(--shadow-paper); }
 .ln-schedule-draft h2 { margin: 0; font-size: 1rem; font-weight: 600; color: var(--ink); }
 .ln-schedule-draft p { margin: 0.25rem 0 0; font-size: var(--ln-control-font-size-md); color: var(--graphite); }
 .ln-schedule-draft-fields { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.75rem 1rem; }
@@ -25,46 +37,83 @@
 .ln-schedule-hours { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--graphite); }
 .ln-schedule-draft-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; }
 .ln-schedule input[type="date"], .ln-schedule input[type="time"], .ln-schedule input[type="number"], .ln-schedule-panel-body input:not([type]), .ln-schedule-panel-body textarea, .ln-schedule-panel-body select, .ln-schedule-savebar input {
-  min-height: 2.25rem; padding: 0.3rem 0.5rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: var(--surface); color: var(--ink); font-size: var(--ln-control-font-size-md);
+  min-height: 2.25rem; padding: 0.3rem 0.5rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: var(--surface); color: var(--ink); font-size: var(--ln-control-font-size-md); font-variant-numeric: tabular-nums;
 }
 
 .ln-schedule-layout { display: grid; gap: 0.75rem; min-width: 0; }
 .ln-schedule[data-has-selection] .ln-schedule-layout { grid-template-columns: minmax(0, 1fr) 20rem; align-items: start; }
-.ln-schedule-board { min-width: 0; overflow-x: auto; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel); background: var(--surface); }
+/* The board scrolls both ways inside the page, so the day headers stay in view while the cards scroll under them. */
+.ln-schedule-board { position: relative; min-width: 0; max-height: max(28rem, calc(100dvh - 15rem)); overflow: auto; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel); background: var(--surface); box-shadow: var(--shadow-paper); overscroll-behavior: contain; }
+.ln-schedule-summary { position: sticky; left: 0; z-index: 4; margin: 0; padding: 0.55rem 1rem; border-bottom: 1px solid var(--hairline); background: color-mix(in srgb, var(--warm) 40%, var(--surface)); font: 500 var(--ln-control-font-size-xs)/1.4 var(--font-data); font-variant-numeric: tabular-nums; color: var(--graphite); letter-spacing: 0.01em; }
 .ln-schedule-track { position: relative; display: flex; width: max-content; min-width: 100%; }
 .ln-schedule-links { position: absolute; inset: 0 auto auto 0; pointer-events: none; overflow: visible; z-index: 1; }
-.ln-schedule-links path { fill: none; stroke: var(--muted); stroke-width: 1.5; }
-.ln-schedule-links marker path { fill: var(--muted); stroke: none; }
+.ln-schedule-links path { fill: none; stroke: color-mix(in srgb, var(--muted) 70%, transparent); stroke-width: 1.25; stroke-linecap: round; }
+.ln-schedule-links marker path { fill: color-mix(in srgb, var(--muted) 70%, transparent); stroke: none; }
 .ln-schedule-links g[data-warn] path { stroke: var(--error); }
-.ln-schedule-links text { font: 500 0.7rem/1 var(--font-data); fill: var(--graphite); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; }
-.ln-schedule-links g[data-warn] text { fill: var(--error); }
-.ln-schedule-day { display: flex; flex-direction: column; gap: 0.6rem; width: 15.5rem; min-height: 14rem; padding: 0.6rem 1.25rem 0.75rem; border-right: 1px solid var(--hairline); }
-.ln-schedule-day:last-child { border-right: 0; }
-.ln-schedule-day[data-off] { background: color-mix(in srgb, var(--warm) 55%, transparent); }
-.ln-schedule-day[data-today] { box-shadow: inset 0 3px 0 var(--moss); }
-.ln-schedule-day header { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
-.ln-schedule-day header strong { color: var(--ink); font-weight: 600; font-size: var(--ln-control-font-size-md); }
-.ln-schedule-day header span { color: var(--moss); font-weight: 600; }
-.ln-schedule-cards { display: grid; gap: 1.6rem; }
-.ln-schedule-card { position: relative; z-index: 2; display: grid; gap: 0.2rem; padding: 0.6rem 0.7rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-lg); background: var(--surface); cursor: pointer; text-align: left; }
+.ln-schedule-links g[data-warn] marker path { fill: var(--error); }
+.ln-schedule-day { position: relative; display: flex; flex-direction: column; width: 15rem; min-height: 16rem; border-right: 1px solid var(--divider, var(--hairline)); }
+.ln-schedule-day[data-off] { background: repeating-linear-gradient(135deg, transparent 0 9px, color-mix(in srgb, var(--muted) 9%, transparent) 9px 10px), color-mix(in srgb, var(--muted) 5%, transparent); }
+.ln-schedule-day[data-today] { background: color-mix(in srgb, var(--moss) 4%, transparent); }
+.ln-schedule-day > header { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 0.4rem; min-height: 3rem; padding: 0.5rem 0.5rem 0.5rem 1rem; border-bottom: 1px solid var(--divider, var(--hairline)); background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(6px); }
+.ln-schedule-day[data-today] > header { box-shadow: inset 0 2px 0 var(--moss); }
+.ln-schedule-day-name { display: grid; gap: 0.05rem; min-width: 0; line-height: 1.2; }
+.ln-schedule-day-name strong { font-size: var(--ln-control-font-size-md); font-weight: 600; color: var(--ink); }
+.ln-schedule-day-name small { font: 500 0.7rem/1.2 var(--font-data); font-variant-numeric: tabular-nums; color: var(--muted); }
+.ln-schedule-today { padding: 0.1rem 0.45rem; border-radius: 999px; background: var(--moss); color: var(--warm); font-size: 0.68rem; font-weight: 600; }
+.ln-schedule-count { padding: 0 0.4rem; border-radius: 999px; background: var(--warm); color: var(--graphite); font: 600 0.7rem/1.4 var(--font-data); }
+.ln-schedule-day-fold { display: none; }
+.ln-schedule-day-menu { position: relative; margin-left: auto; }
+.ln-schedule-day-menu > button { display: inline-flex; width: 1.75rem; height: 1.75rem; align-items: center; justify-content: center; border-radius: var(--ln-radius-control-sm); color: var(--muted); opacity: 0; transition: opacity 120ms, background 120ms; }
+.ln-schedule-day-menu > button svg { width: 1rem; height: 1rem; }
+.ln-schedule-day:hover .ln-schedule-day-menu > button, .ln-schedule-day-menu > button:focus-visible, .ln-schedule-day-menu > button[aria-expanded="true"] { opacity: 1; }
+.ln-schedule-day-menu > button:hover, .ln-schedule-day-menu > button[aria-expanded="true"] { background: var(--warm); color: var(--ink); }
+.ln-schedule-menu { position: absolute; top: calc(100% + 0.25rem); right: 0; z-index: 6; display: grid; min-width: 13rem; padding: 0.3rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-lg); background: var(--surface); box-shadow: var(--shadow-soft), 0 2px 6px rgb(0 0 0 / 0.06); }
+.ln-schedule-menu button { display: flex; align-items: center; gap: 0.5rem; min-height: 2.1rem; padding: 0 0.6rem; border-radius: var(--ln-radius-control-sm); font-size: var(--ln-control-font-size-md); color: var(--ink); text-align: left; }
+.ln-schedule-menu button:hover:not(:disabled) { background: var(--warm); }
+.ln-schedule-menu button[data-danger] { color: var(--error); }
+.ln-schedule-menu button[data-danger]:hover:not(:disabled) { background: var(--error-surface); }
+.ln-schedule-menu button:disabled { opacity: 0.45; cursor: not-allowed; }
+.ln-schedule-cards { display: grid; gap: 1.75rem; padding: 0.85rem 1rem 0.5rem; }
+.ln-schedule-card { position: relative; z-index: 2; display: grid; gap: 0.3rem; padding: 0.6rem 0.65rem 0.6rem 0.85rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-lg); background: var(--surface); box-shadow: var(--shadow-paper); cursor: pointer; text-align: left; transition: border-color 120ms, box-shadow 160ms, transform 160ms; }
+/* The colour edge: Protocol steps in the action colour, the author's own items in the info colour. */
+.ln-schedule-card::before { content: ""; position: absolute; inset: 0.45rem auto 0.45rem 0.3rem; width: 3px; border-radius: 3px; background: var(--action, var(--moss)); opacity: 0.85; }
+.ln-schedule-card[data-kind="task"]::before { background: var(--info); }
+.ln-schedule-card[data-state="done"]::before { background: var(--success); }
 .ln-schedule-card[draggable="true"] { cursor: grab; }
-.ln-schedule-card:hover { border-color: var(--border-strong, var(--graphite)); }
-.ln-schedule-card[aria-current="true"] { border-color: var(--moss); box-shadow: 0 0 0 2px color-mix(in srgb, var(--moss) 25%, transparent); }
-.ln-schedule-card[data-state="done"] { background: color-mix(in srgb, var(--success, var(--moss)) 8%, var(--surface)); }
-.ln-schedule-card[data-state="active"] { border-left: 3px solid var(--moss); }
-.ln-schedule-card[data-kind="task"] { border-style: dashed; }
-.ln-schedule-card[data-marked] { border-color: color-mix(in srgb, var(--warning) 60%, var(--hairline)); }
-.ln-schedule-card h3 { display: flex; align-items: center; gap: 0.3rem; margin: 0; font-size: var(--ln-control-font-size-md); font-weight: 600; line-height: 1.35; color: var(--ink); overflow-wrap: anywhere; }
-.ln-schedule-time { display: flex; align-items: center; gap: 0.35rem; margin: 0; font: 500 0.72rem/1.2 var(--font-data); color: var(--graphite); }
-.ln-schedule-grip { width: 0.9rem; height: 0.9rem; margin-left: auto; color: var(--muted); }
-.ln-schedule-meta { margin: 0; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
+.ln-schedule-card:hover { border-color: color-mix(in srgb, var(--graphite) 35%, var(--hairline)); box-shadow: var(--shadow-soft); transform: translateY(-1px); }
+.ln-schedule-card[aria-current="true"] { border-color: var(--moss); box-shadow: 0 0 0 3px color-mix(in srgb, var(--moss) 18%, transparent), var(--shadow-soft); }
+.ln-schedule-card[data-state="done"] { background: color-mix(in srgb, var(--success-surface) 55%, var(--surface)); }
+.ln-schedule-card[data-marked] { border-color: color-mix(in srgb, var(--warning) 45%, var(--hairline)); }
+.ln-schedule-card-top { display: flex; align-items: center; gap: 0.4rem; min-height: 1.5rem; }
+.ln-schedule-time { display: inline-flex; align-items: baseline; gap: 0.35rem; font: 600 0.75rem/1.2 var(--font-data); font-variant-numeric: tabular-nums; color: var(--ink); }
+.ln-schedule-time small { font-weight: 500; color: var(--muted); }
+.ln-schedule-flag { display: inline-flex; align-items: center; gap: 0.2rem; padding: 0.05rem 0.4rem; border-radius: 999px; background: var(--warning-surface); color: var(--warning); font: 600 0.68rem/1.4 var(--font-data); cursor: help; }
+.ln-schedule-flag svg { width: 0.75rem; height: 0.75rem; }
+.ln-schedule-card-actions { display: inline-flex; gap: 0.1rem; margin-left: auto; opacity: 0; transition: opacity 120ms; }
+.ln-schedule-card:hover .ln-schedule-card-actions, .ln-schedule-card:focus-within .ln-schedule-card-actions, .ln-schedule-card[aria-current="true"] .ln-schedule-card-actions { opacity: 1; }
+.ln-schedule-card-actions button { display: inline-flex; width: 1.6rem; height: 1.6rem; align-items: center; justify-content: center; border-radius: var(--ln-radius-control-sm); color: var(--muted); }
+.ln-schedule-card-actions button:hover { background: var(--warm); color: var(--ink); }
+.ln-schedule-card-actions button[data-danger]:hover { background: var(--error-surface); color: var(--error); }
+.ln-schedule-card-actions svg { width: 0.85rem; height: 0.85rem; }
+.ln-schedule-card h3 { display: flex; align-items: flex-start; gap: 0.3rem; margin: 0; font-size: var(--ln-control-font-size-md); font-weight: 600; line-height: 1.4; color: var(--ink); overflow-wrap: anywhere; }
+.ln-schedule-card h3 span { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.ln-schedule-done-icon { flex: none; width: 0.9rem; height: 0.9rem; margin-top: 0.2rem; color: var(--success); }
+.ln-schedule-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.45rem; margin: 0; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
+.ln-schedule-pill { padding: 0.05rem 0.45rem; border-radius: 999px; background: var(--warm); color: var(--graphite); font-size: 0.68rem; font-weight: 600; }
+.ln-schedule-pill[data-state="active"] { background: color-mix(in srgb, var(--moss) 14%, var(--surface)); color: var(--moss); }
+.ln-schedule-pill[data-state="done"] { background: var(--success-surface); color: var(--success); }
+.ln-schedule-note { flex-basis: 100%; overflow: hidden; color: var(--graphite); text-overflow: ellipsis; white-space: nowrap; }
+.ln-schedule-wait { justify-self: start; display: inline-flex; margin: 0 0 0.1rem; padding: 0.1rem 0.5rem; border: 1px solid var(--hairline); border-radius: 999px; background: color-mix(in srgb, var(--warm) 60%, var(--surface)); font: 500 0.68rem/1.4 var(--font-data); font-variant-numeric: tabular-nums; color: var(--graphite); }
+.ln-schedule-wait[data-warn] { border-color: color-mix(in srgb, var(--error) 35%, transparent); background: var(--error-surface); color: var(--error); }
 .ln-schedule-marks { display: grid; gap: 0.15rem; margin: 0.15rem 0 0; padding: 0; list-style: none; font-size: var(--ln-control-font-size-xs); color: var(--warning); }
 .ln-schedule-marks li { display: flex; align-items: flex-start; gap: 0.3rem; }
 .ln-schedule-marks svg { flex: none; width: 0.8rem; height: 0.8rem; margin-top: 0.1rem; }
-.ln-schedule-gap-inline { margin: 0 0 0.15rem; padding-bottom: 0.2rem; border-bottom: 1px dashed var(--hairline); font: 500 0.7rem/1.3 var(--font-data); color: var(--graphite); }
-.ln-schedule-gap-inline[data-warn] { color: var(--error); }
-.ln-schedule-add { display: inline-flex; align-items: center; gap: 0.3rem; align-self: flex-start; min-height: 2rem; margin-top: auto; padding: 0 0.4rem; border-radius: var(--ln-radius-control-md); font-size: var(--ln-control-font-size-xs); color: var(--muted); opacity: 0; transition: opacity 120ms; }
-.ln-schedule-day:hover .ln-schedule-add, .ln-schedule-add:focus-visible { opacity: 1; }
+.ln-schedule-add { display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem; min-height: 2.25rem; margin: auto 1rem 0.85rem; border: 1px dashed var(--hairline); border-radius: var(--ln-radius-control-lg); font-size: var(--ln-control-font-size-xs); color: var(--muted); transition: border-color 120ms, color 120ms, background 120ms; }
+.ln-schedule-day[data-empty] .ln-schedule-cards { display: none; }
+.ln-schedule-day[data-empty] .ln-schedule-add { margin-top: 0.85rem; min-height: 4.5rem; }
+.ln-schedule-add:hover { border-color: var(--moss); background: color-mix(in srgb, var(--moss) 5%, transparent); color: var(--moss); }
+.ln-schedule-add-day { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.35rem; width: 7.5rem; margin: 3.5rem 0.75rem 0.85rem; border: 1px dashed var(--hairline); border-radius: var(--ln-radius-panel-inner, var(--ln-radius-control-lg)); color: var(--muted); font-size: var(--ln-control-font-size-xs); transition: border-color 120ms, color 120ms, background 120ms; }
+.ln-schedule-add-day:hover { border-color: var(--moss); background: color-mix(in srgb, var(--moss) 5%, transparent); color: var(--moss); }
 
 .ln-schedule-list-wrap { min-width: 0; overflow-x: auto; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel); background: var(--surface); }
 .ln-schedule-list { width: 100%; border-collapse: collapse; font-size: var(--ln-control-font-size-md); }
@@ -98,7 +147,7 @@
 .ln-schedule-tray summary { cursor: pointer; color: var(--ink); font-weight: 500; }
 .ln-schedule-tray ul { margin: 0.4rem 0; padding-left: 1.1rem; }
 
-.ln-schedule-savebar { position: fixed; inset: auto 1rem 1rem auto; z-index: 40; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.5rem; max-width: calc(100vw - 2rem); padding: 0.6rem 0.75rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel); background: color-mix(in srgb, var(--surface) 94%, transparent); box-shadow: 0 8px 24px rgb(0 0 0 / 0.12); backdrop-filter: blur(6px); font-size: var(--ln-control-font-size-md); color: var(--graphite); }
+.ln-schedule-savebar { position: fixed; inset: auto 1.25rem 1.25rem auto; z-index: 40; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.5rem; max-width: calc(100vw - 2rem); padding: 0.6rem 0.75rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel); background: color-mix(in srgb, var(--surface) 94%, transparent); box-shadow: 0 8px 24px rgb(0 0 0 / 0.12); backdrop-filter: blur(6px); font-size: var(--ln-control-font-size-md); color: var(--graphite); }
 .ln-schedule-savebar input { min-width: 16rem; }
 
 @media (max-width: 1279px) {
@@ -106,14 +155,27 @@
   .ln-schedule-panel { position: fixed; inset: auto 0 0 0; z-index: 45; max-height: 72dvh; overflow-y: auto; border-radius: var(--ln-radius-panel) var(--ln-radius-panel) 0 0; padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)); box-shadow: 0 -8px 24px rgb(0 0 0 / 0.14); }
 }
 @media (max-width: 767px) {
-  .ln-schedule-board { overflow: visible; border: 0; background: transparent; }
-  .ln-schedule-track { flex-direction: column; width: auto; gap: 0.75rem; }
+  .ln-schedule-toolbar { align-items: stretch; }
+  .ln-schedule-span { padding-left: 0; border-left: 0; }
+  .ln-schedule-spacer { display: none; }
+  .ln-schedule-board { max-height: none; overflow: visible; border: 0; background: transparent; box-shadow: none; }
+  .ln-schedule-summary { position: static; margin-bottom: 0.5rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel); }
+  .ln-schedule-track { flex-direction: column; width: auto; gap: 0.5rem; }
   .ln-schedule-links { display: none; }
-  .ln-schedule-day { width: auto; min-height: 0; padding: 0.6rem 0.75rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel); background: var(--surface); }
-  .ln-schedule-day[data-empty] { display: none; }
-  .ln-schedule-cards { gap: 0.5rem; }
-  .ln-schedule-add { opacity: 1; }
-  .ln-schedule-grip { display: none; }
+  .ln-schedule-day { width: auto; min-height: 0; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel); background: var(--surface); overflow: clip; }
+  .ln-schedule-day[data-off] { background: color-mix(in srgb, var(--muted) 6%, var(--surface)); }
+  .ln-schedule-day > header { position: static; padding-left: 0.4rem; border-bottom: 0; backdrop-filter: none; }
+  .ln-schedule-day:not([data-folded]) > header { border-bottom: 1px solid var(--divider, var(--hairline)); }
+  .ln-schedule-day-fold { display: inline-flex; width: 2rem; height: 2rem; align-items: center; justify-content: center; border-radius: var(--ln-radius-control-sm); color: var(--muted); }
+  .ln-schedule-day-fold svg { width: 1rem; height: 1rem; transition: transform 160ms; }
+  .ln-schedule-day[data-folded] .ln-schedule-day-fold svg { transform: rotate(-90deg); }
+  .ln-schedule-day[data-folded] .ln-schedule-cards, .ln-schedule-day[data-folded] .ln-schedule-add { display: none; }
+  .ln-schedule-day-menu > button { opacity: 1; }
+  .ln-schedule-cards { gap: 0.5rem; padding: 0.6rem 0.75rem 0.25rem; }
+  .ln-schedule-add, .ln-schedule-day[data-empty] .ln-schedule-add { min-height: 2.5rem; margin: 0.5rem 0.75rem 0.75rem; }
+  .ln-schedule-card-actions { opacity: 1; }
+  .ln-schedule-card:hover { transform: none; }
+  .ln-schedule-add-day { flex-direction: row; width: auto; min-height: 2.75rem; margin: 0; }
   .ln-schedule-savebar { inset: auto 0.75rem calc(4.75rem + env(safe-area-inset-bottom)) 0.75rem; justify-content: stretch; }
   .ln-schedule-savebar input { min-width: 0; flex: 1 1 100%; }
 }

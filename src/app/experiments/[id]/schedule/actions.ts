@@ -6,7 +6,7 @@ import type { ScheduleBlock } from "@/lib/experiment-schedule";
 import { saveExperimentSchedule, saveScheduleInput, setScheduleItemDone } from "@/lib/experiment-schedule.server";
 import { formActionErrorMessage } from "@/lib/form-actions";
 
-export type ScheduleSaveResult = { ok: true; token: string; blocks: ScheduleBlock[] } | { ok: false; error: string };
+export type ScheduleSaveResult = { ok: true; token: string; blocks: ScheduleBlock[]; startDay?: string; days?: number } | { ok: false; error: string };
 
 function revalidateSchedule(experimentId: string) {
   revalidatePath(`/experiments/${experimentId}`);

@@ -7,7 +7,7 @@ import { experimentStepGroupHeading } from "./experiment-planning";
 import { assertRecordEditable } from "./record-lifecycle";
 import { stepVersion, structuredRunView, type StructuredRunView } from "./structured-run";
 import {
-  blockEnd, blockState, blockTitle, daysBetween, draftSchedule, labDayKey, nextWorkMoment, overnightWindow, saysOvernight, scheduleProblems, sortBlocks, textTimes,
+  blockEnd, blockState, blockTitle, daysBetween, draftSchedule, labDayKey, MAX_SCHEDULE_DAYS, nextWorkMoment, overnightWindow, saysOvernight, scheduleProblems, scheduleSpan, sortBlocks, textTimes,
   type ScheduleBlock, type ScheduleStep, type ScheduleWait,
 } from "./experiment-schedule";
 
@@ -115,6 +115,9 @@ export const saveScheduleInput = z.object({
   experimentId: z.string().min(1),
   token: z.string().min(1),
   blocks: z.array(blockInput).max(200),
+  /** Day 1 and how many days the author gave the schedule; blocks before day 1 or past the last day stretch it. */
+  startDay: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  days: z.number().int().min(1).max(MAX_SCHEDULE_DAYS),
   reason: z.string().trim().max(500).optional(),
 });
 
@@ -130,8 +133,8 @@ async function lockedExperiment(tx: Tx, experimentId: string) {
 
 /**
  * Save a whole schedule (Q263, Q264). The page must have read the current one; a done block keeps its place and its
- * steps; moving blocks of a running experiment needs a reason, kept in the activity history. The experiment's date
- * follows its first block.
+ * steps; moving blocks of a running experiment needs a reason, kept in the activity history. The experiment's date is
+ * day 1, moved earlier if a block comes before it, and its schedule length stretches to reach the last block (Q314).
  */
 export async function saveExperimentSchedule(raw: z.input<typeof saveScheduleInput>) {
   const input = saveScheduleInput.parse(raw);
@@ -162,14 +165,16 @@ export async function saveExperimentSchedule(raw: z.input<typeof saveScheduleInp
       else await tx.experimentScheduleBlock.create({ data: { id: block.id, experimentId: experiment.id, ...data } });
     }
     const first = sortBlocks(blocks)[0];
-    const firstDay = first ? labDayKey(first.startAt) : undefined;
-    if (firstDay && labDayKey(experiment.date) !== firstDay) await tx.experiment.update({ where: { id: experiment.id }, data: { date: experimentDateOf(firstDay) } });
+    const firstDay = first && labDayKey(first.startAt) < input.startDay ? labDayKey(first.startAt) : input.startDay;
+    const days = Math.max(input.days - daysBetween(input.startDay, firstDay), scheduleSpan(firstDay, blocks));
+    if (days > MAX_SCHEDULE_DAYS) throw new Error(`A schedule spans ${MAX_SCHEDULE_DAYS} days at most.`);
+    if (labDayKey(experiment.date) !== firstDay || experiment.scheduleDays !== days) await tx.experiment.update({ where: { id: experiment.id }, data: { date: experimentDateOf(firstDay), scheduleDays: days } });
     // Activity entries print their fields as text: keep them flat.
     await tx.activityLog.create({ data: { action: "experiment_schedule_saved", targetType: "experiment", targetId: experiment.id, metadataJson: {
-      blocks: blocks.length, created: strangers.length, removed: removed.length, moved: moved.length, firstDay: firstDay ?? null, reason: input.reason ?? null,
+      blocks: blocks.length, created: strangers.length, removed: removed.length, moved: moved.length, firstDay, days, reason: input.reason ?? null,
     } } });
     const rows = await tx.experimentScheduleBlock.findMany({ where: { experimentId: experiment.id } });
-    return { token: scheduleToken(rows), blocks: sortBlocks(rows.map(blockView)) };
+    return { token: scheduleToken(rows), blocks: sortBlocks(rows.map(blockView)), startDay: firstDay, days };
   });
 }
 
@@ -187,13 +192,13 @@ export async function setScheduleItemDone(experimentId: string, blockId: string,
 }
 
 /**
- * The experiment form's date is the first day (Q263): changing it moves the whole schedule by whole days. Once a block
- * is done the schedule cannot move that way; it is changed on the schedule itself.
+ * The experiment form's date is day 1 (Q263): changing it moves the whole schedule by the same number of days. Once a
+ * block is done the schedule cannot move that way; it is changed on the schedule itself.
  */
-export async function shiftScheduleToDate(tx: Tx, experiment: { id: string; protocolSnapshotJson: unknown; protocolRun: { executionPlanJson: unknown } | null; steps: StepRow[] }, date: Date) {
+export async function shiftScheduleToDate(tx: Tx, experiment: { id: string; date: Date; protocolSnapshotJson: unknown; protocolRun: { executionPlanJson: unknown } | null; steps: StepRow[] }, date: Date) {
   const rows = await tx.experimentScheduleBlock.findMany({ where: { experimentId: experiment.id }, orderBy: { startAt: "asc" } });
   if (!rows.length) return;
-  const days = daysBetween(labDayKey(rows[0].startAt), labDayKey(date));
+  const days = daysBetween(labDayKey(experiment.date), labDayKey(date));
   if (!days) return;
   const steps = new Map(scheduleSteps(experiment).map(step => [step.ref, step]));
   if (rows.some(row => blockState(blockView(row), steps) === "done")) throw new Error("Part of the schedule is done: change the days on the schedule itself.");

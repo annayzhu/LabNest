@@ -1,5 +1,9 @@
 /** Chinese for 整理说明书 in two passes (Q291–Q299): the scope form, the draft beside the original, the anchor check. */
 export const recognitionZh: Record<string, string> = {
+  "Not recommended for organizing manuals": "不推荐用于整理说明书",
+  ": not recommended for organizing manuals.": "：不推荐用于整理说明书。",
+  "In the evaluation it refused to write a lentivirus manual’s steps and gave only an outline.": "评测中它拒绝写出慢病毒说明书的操作步骤，只给了概述。",
+  "Choose another default service": "换一个默认服务",
   // The source and the request
   "Goal (optional; sent to the model with the name)": "目标（可留空；与规程名称一起发给模型）",
   "e.g. Extract plasmid DNA from 100 mL of culture for transfection": "例如：从 100 mL 菌液提取质粒，用于转染",

@@ -16,6 +16,7 @@ import { describeEncryptionKey } from "@/lib/ai-crypto";
 import { visionFromSettings, type AIProviderRecord } from "@/lib/ai-server";
 import { chatGPTSignInMessages, loopbackPort, readRegistration, type ChatGPTModel } from "@/lib/chatgpt-auth";
 import { prisma } from "@/lib/db";
+import { recognitionWarning } from "@/lib/recognition-fit";
 import { localeCookieName, resolveAppLocale, translateUiText } from "@/lib/i18n";
 import { deleteAIProvider, setAIProviderEnabled, signOutOfChatGPT } from "../settings/actions";
 
@@ -72,7 +73,7 @@ export default async function AIPage({ searchParams }: { searchParams?: Promise<
 /** One model service: name, role and state; what it is; where it connects; then its buttons, the one that removes it on the right. */
 function ServiceCard({ id, name, badges, meta, detail, children, actions, remove }: { id: string; name: string; badges: ReactNode; meta: string; detail: ReactNode; children?: ReactNode; actions: ReactNode; remove?: ReactNode }) {
   return <article data-provider-row={id} className="flex min-w-0 flex-col gap-2 rounded-[var(--ln-radius-panel-inner)] border border-hairline p-3">
-    <div className="flex flex-wrap items-center gap-2"><h3 className="min-w-0 flex-1 break-words text-sm font-semibold">{name}</h3>{badges}</div>
+    <div className="flex flex-wrap items-center gap-2"><h3 className="min-w-[10rem] flex-1 break-words text-sm font-semibold">{name}</h3>{badges}</div>
     <p className="text-xs text-muted">{meta}</p>
     {detail}
     {children}
@@ -87,7 +88,7 @@ function KeyServiceCard({ provider, roles }: { provider: KeyProviderRow; roles: 
   const connected = isConnectedProviderType(provider.type);
   const label = providerTypeLabels[provider.type as AIProviderType];
   return <ServiceCard id={provider.id} name={provider.name}
-    badges={<>{roles}{connected && !provider.apiKeyEncrypted ? <Badge tone="warning">No key saved</Badge> : null}<Badge tone={provider.enabled ? "neutral" : "warning"}>{provider.enabled ? "Service enabled" : "Service disabled"}</Badge></>}
+    badges={<>{roles}<RecognitionBadge type={provider.type} />{connected && !provider.apiKeyEncrypted ? <Badge tone="warning">No key saved</Badge> : null}<Badge tone={provider.enabled ? "neutral" : "warning"}>{provider.enabled ? "Service enabled" : "Service disabled"}</Badge></>}
     meta={provider.defaultModel ? `${label} · ${provider.defaultModel}` : label}
     detail={<p className="break-all font-mono text-xs text-muted">{provider.baseUrl ?? (connected ? "Default service URL" : "Manual mode")}</p>}
     actions={<>
@@ -100,15 +101,24 @@ function KeyServiceCard({ provider, roles }: { provider: KeyProviderRow; roles: 
 
 type ChatGPTProviderRow = { id: string; name: string; enabled: boolean; defaultModel: string | null; reasoningEffort: string | null; apiKeyEncrypted: string | null; updatedAt: Date; session: { modelsJson: unknown } | null };
 
+/** "Not recommended for organizing manuals" (Q299), on the card of a service below the evaluation's bar. */
+function RecognitionBadge({ type }: { type: string }) {
+  return recognitionWarning(type) ? <Badge tone="warning">Not recommended for organizing manuals</Badge> : null;
+}
+function RecognitionNote({ type }: { type: string }) {
+  const warning = recognitionWarning(type);
+  return warning ? <p className="text-xs leading-5 text-warning">{warning}</p> : null;
+}
+
 /** A ChatGPT subscription service: the signed-in account and its models, signing in again and out instead of a key form. */
 function ChatGPTServiceCard({ provider, roles }: { provider: ChatGPTProviderRow; roles: ReactNode }) {
   const account = readRegistration(provider.apiKeyEncrypted);
   const models = Array.isArray(provider.session?.modelsJson) ? provider.session.modelsJson as ChatGPTModel[] : [];
   const signedIn = Boolean(provider.session && account);
   return <ServiceCard id={provider.id} name={provider.name}
-    badges={<>{roles}<Badge tone={provider.enabled && signedIn ? "neutral" : "warning"}>{!signedIn ? "Sign in again" : provider.enabled ? "Service enabled" : "Service disabled"}</Badge></>}
+    badges={<>{roles}<Badge tone={provider.enabled && signedIn ? "neutral" : "warning"}>{!signedIn ? "Sign in again" : provider.enabled ? "Service enabled" : "Service disabled"}</Badge><RecognitionBadge type="chatgpt_subscription" /></>}
     meta={[providerTypeLabels.chatgpt_subscription, provider.defaultModel, provider.reasoningEffort].filter(Boolean).join(" · ")}
-    detail={<p className="text-xs text-muted">{signedIn ? "Uses your ChatGPT plan; no API key." : "The ChatGPT sign-in has ended; sign in again to keep using this service."}</p>}
+    detail={<><p className="text-xs text-muted">{signedIn ? "Uses your ChatGPT plan; no API key." : "The ChatGPT sign-in has ended; sign in again to keep using this service."}</p><RecognitionNote type="chatgpt_subscription" /></>}
     actions={<>
       {signedIn ? <AiProviderTestButton inline providerId={provider.id} revision={provider.updatedAt.toISOString()} enabled={provider.enabled} usageNote="Sends one short test message, which counts toward the ChatGPT plan’s usage." /> : null}
       <a href={`/api/ai/chatgpt/start?provider=${provider.id}`} className={buttonStyles({ size: "sm", variant: signedIn ? "secondary" : "primary" })}>Sign in again</a>

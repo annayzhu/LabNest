@@ -30,6 +30,7 @@ services:
     environment:
       DATABASE_URL: postgresql://labnest:labnest@postgres:5432/labnest?schema=public
       LABNEST_ATTACHMENT_ROOT: /app/storage/attachments
+      LABNEST_NETWORK_FILE: /host-network/addresses.json
       LABNEST_AI_ENCRYPTION_KEY: ${LABNEST_AI_ENCRYPTION_KEY:?LABNEST_AI_ENCRYPTION_KEY must be set in .env}
       NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-LabNest}
       VISUALIZATION_STUDIO_URL: ${VISUALIZATION_STUDIO_URL:-}
@@ -45,6 +46,7 @@ services:
       - "${LABNEST_HOST_PORT:-3001}:3000"
     volumes:
       - labnest-attachments:/app/storage/attachments
+      - ${LABNEST_NETWORK_DIR:-${HOME}/.labnest/network}:/host-network:ro
       - ${LABNEST_BACKUP_HOST_DIR:-${HOME}/LabNest备份}:/backups
     command: sh scripts/docker-start.sh
     healthcheck:

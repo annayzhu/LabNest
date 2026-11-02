@@ -4,15 +4,14 @@ import { createPortal } from 'react-dom';
 import QRCode from 'qrcode';
 import { Check, Copy, QrCode, Watch } from 'lucide-react';
 import { connectWatchRun, disconnectWatchRun, watchRunConnection } from '@/app/experiments/[id]/run/actions';
-import { fieldRunUrl, isLocalHost, lanOrigin, watchPairingLink } from '@/lib/field-mode';
+import { fieldRunUrl, isLocalHost, lanPortOrigin, watchPairingLink } from '@/lib/field-mode';
+import { isLanIpv4 } from '@/lib/lan-addresses.mjs';
 import { inNativeApp, onNativeEvent, postNative, type NativeEvent } from '@/lib/native-bridge';
 import { Button } from './ui/Button';
 import './field-devices.css';
 
 /** Whether a watch can follow the run: ready, or why not (a Protocol not in step blocks, or a record that can no longer change). */
 type WatchSupport = 'ready' | 'legacy' | 'locked';
-
-const lanKey = 'labnest:lan-origin';
 
 /** "Other devices": the same panel from the run mode list and from the run page. */
 export function FieldDevices({ experimentId, title, watch }: { experimentId: string; title: string; watch: WatchSupport }) {
@@ -26,37 +25,55 @@ export function FieldDevices({ experimentId, title, watch }: { experimentId: str
 function FieldDevicesDialog({ experimentId, title, watch, onClose }: { experimentId: string; title: string; watch: WatchSupport; onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => { const element = dialog.current; if (element && !element.open) element.showModal(); return () => element?.close(); }, []);
-  // Only mounted after a click, so the browser's own address and storage are available here.
-  const [local] = useState(() => isLocalHost(window.location.hostname));
-  const [saved, setSaved] = useState(() => { try { return lanOrigin(localStorage.getItem(lanKey) ?? ''); } catch { return undefined; } });
-  const origin = local ? saved : window.location.origin;
-  const remember = (value: string) => { try { localStorage.setItem(lanKey, value); } catch {} setSaved(value); };
+  const [local] = useState(() => isLocalHost(window.location.hostname) || isLanIpv4(window.location.hostname));
+  const [addresses, setAddresses] = useState<string[]>([]);
+  const [selected, setSelected] = useState('');
+  const [port, setPort] = useState(() => window.location.port || (window.location.protocol === 'https:' ? '443' : '80'));
+  const [loading, setLoading] = useState(local);
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    if (!local) return;
+    let alive = true;
+    let controller: AbortController | undefined;
+    const refresh = async () => {
+      controller = new AbortController();
+      const timeout = window.setTimeout(() => controller?.abort(), 4000);
+      try {
+        const response = await fetch('/api/network-addresses', { cache: 'no-store', signal: controller.signal });
+        if (!response.ok) throw new Error('Discovery unavailable');
+        const result = await response.json();
+        if (alive) setAddresses(Array.isArray(result.addresses) ? result.addresses.filter(isLanIpv4) : []);
+      } catch { if (alive) setAddresses([]); }
+      finally { window.clearTimeout(timeout); if (alive) setLoading(false); }
+    };
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 5000);
+    return () => { alive = false; controller?.abort(); window.clearInterval(timer); };
+  }, [local, attempt]);
+  const address = addresses.includes(selected) ? selected : addresses.includes(window.location.hostname) ? window.location.hostname : addresses[0];
+  const origin = local ? lanPortOrigin(address, port, window.location.protocol) : window.location.origin;
   return createPortal(<dialog ref={dialog} aria-labelledby="field-devices-title" className="ln-field-devices bg-surface text-ink" onCancel={event => { event.preventDefault(); onClose(); }}>
     <header>
       <div className="min-w-0"><h2 id="field-devices-title">Continue on another device</h2><p>{title}</p></div>
       <Button type="button" variant="ghost" onClick={onClose}>Close</Button>
     </header>
-    {local ? <LanAddress saved={saved} onSave={remember} /> : null}
+    {local ? <div className="ln-field-lan is-asking">
+      <p>LAN address is detected automatically. No IP address is needed.</p>
+      {loading ? <p role="status">Detecting the current network…</p> : address ? <>
+        <p>Current LAN address: <strong data-i18n-ignore>{address}</strong></p>
+        {addresses.length > 1 ? <label>Detected networks<select value={address} onChange={event => setSelected(event.target.value)}>{addresses.map(value => <option key={value} value={value}>{value}</option>)}</select></label> : null}
+        <label>Port<input value={port} onChange={event => setPort(event.target.value)} inputMode="numeric" pattern="[0-9]*" placeholder="3001" aria-invalid={!origin || undefined} /></label>
+        <p>For example: 3001. Use the port configured for LabNest.</p>
+        {!origin ? <p role="alert" className="text-error">Enter a port from 1 to 65535.</p> : null}
+      </> : <p role="alert">Could not detect a current LAN address. Check this computer’s Wi-Fi or Ethernet connection, then retry.</p>}
+      <Button type="button" onClick={() => { setAddresses([]); setLoading(true); setAttempt(value => value + 1); }}>Detect again</Button>
+      <p>Connect your phone to the same local network as this computer. If the link still will not open, check guest Wi-Fi isolation, VPN and firewall settings.</p>
+    </div> : null}
     <div className="ln-field-devices-cards">
       <TabletCard origin={origin} experimentId={experimentId} />
       <WatchCard origin={origin} experimentId={experimentId} watch={watch} />
     </div>
   </dialog>, document.body);
-}
-
-/** Opened as localhost, the computer cannot tell other devices its own address; asked once and remembered on this computer. */
-function LanAddress({ saved, onSave }: { saved?: string; onSave: (value: string) => void }) {
-  const [editing, setEditing] = useState(!saved);
-  const [draft, setDraft] = useState(saved ?? '');
-  const [invalid, setInvalid] = useState(false);
-  if (saved && !editing) return <p className="ln-field-lan">LAN address <strong>{saved}</strong> <button type="button" className="text-moss underline" onClick={() => setEditing(true)}>Change</button></p>;
-  const save = () => { const value = lanOrigin(draft); setInvalid(!value); if (value) { onSave(value); setEditing(false); } };
-  return <form className="ln-field-lan is-asking" onSubmit={event => { event.preventDefault(); save(); }}>
-    <p>This computer opened LabNest as localhost. Tablets, phones and watches need the computer’s LAN address to connect.</p>
-    <label>LAN address<input value={draft} onChange={event => { setDraft(event.target.value); setInvalid(false); }} placeholder="e.g. http://192.168.0.102:3001" inputMode="url" autoComplete="off" aria-invalid={invalid || undefined} /></label>
-    <Button type="submit" variant="primary">Use this address</Button>
-    {invalid ? <p role="alert" className="text-error">Invalid address: enter the computer’s LAN IP and port, e.g. 192.168.0.102:3001.</p> : null}
-  </form>;
 }
 
 function TabletCard({ origin, experimentId }: { origin?: string; experimentId: string }) {
@@ -70,7 +87,7 @@ function TabletCard({ origin, experimentId }: { origin?: string; experimentId: s
       <QrImage text={url} />
       <p className="ln-field-url" data-i18n-ignore>{url}</p>
       <Button type="button" onClick={() => void copy()}>{copied ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}{copied ? 'Copied' : 'Copy link'}</Button>
-    </> : <p className="ln-field-wait">Enter the LAN address above first.</p>}
+    </> : <p className="ln-field-wait">Waiting for a current LAN address and valid port.</p>}
   </section>;
 }
 
@@ -154,7 +171,7 @@ function WatchCard({ origin, experimentId, watch }: { origin?: string; experimen
           <p className="text-muted">也可以在手表上手动输入：</p>
           <ol className="ln-field-steps">
             <li>On the watch, open LabNest and tap “连接设置” (connection settings).</li>
-            <li>Server address: {origin ? <strong data-i18n-ignore>{origin}</strong> : 'the computer’s LAN address (enter it above first)'}</li>
+            <li>Server address: {origin ? <strong data-i18n-ignore>{origin}</strong> : 'the automatically detected LAN address'}</li>
             <li>Pairing code: the 4 digits above, then tap “配对本次实验” (pair this experiment).</li>
           </ol>
         </> : <Button type="button" variant="primary" disabled={busy} onClick={() => void create()}>{pairing ? 'Code expired. Generate a new one' : 'Generate pairing code'}</Button>}

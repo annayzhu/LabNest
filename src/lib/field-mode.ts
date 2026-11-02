@@ -33,3 +33,9 @@ export function watchPairingLink(origin: string, rawCode: string) {
   if (parsed.username || parsed.password) return undefined;
   return `labnest://watch-pair?${new URLSearchParams({ server, code })}`;
 }
+
+/** Keep the host automatic; only the externally published port is editable. */
+export function lanPortOrigin(address: string | undefined, port: string, protocol = 'http:') {
+  if (!address || !/^\d{1,5}$/.test(port) || Number(port) < 1 || Number(port) > 65535) return undefined;
+  return lanOrigin(`${protocol}//${address}:${Number(port)}`);
+}

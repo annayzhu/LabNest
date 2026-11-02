@@ -142,7 +142,6 @@ export function ToolsCatalog({ tools }: { tools: LabToolManifestItem[] }) {
             <section key={category} aria-labelledby={`tools-${category.toLowerCase()}`} className="space-y-2">
               <div className="flex items-center gap-3">
                 <h2 id={`tools-${category.toLowerCase()}`} className="text-sm font-semibold text-ink">{category}</h2>
-                <span className="text-xs tabular-nums text-muted">{categoryTools.length} {categoryTools.length === 1 ? "tool" : "tools"}</span>
                 <span className="h-px flex-1 bg-hairline" aria-hidden />
               </div>
 
@@ -159,10 +158,6 @@ export function ToolsCatalog({ tools }: { tools: LabToolManifestItem[] }) {
                       <div className="mt-3 flex-1">
                         <h3 className="text-base font-semibold leading-tight tracking-[-0.01em] text-ink">{tool.name}</h3>
                         <p className="mt-1 max-w-[66ch] text-sm leading-5 text-graphite">{tool.description}</p>
-                      </div>
-                      <div className="mt-3 grid gap-x-2 gap-y-0.5 border-t border-hairline/80 pt-2 text-xs leading-4 text-muted sm:grid-cols-[42px_minmax(0,1fr)]">
-                        <span className="font-semibold text-graphite">Input</span><span>{tool.accepts.join(", ")}</span>
-                        <span className="font-semibold text-graphite">Output</span><span>{tool.produces.join(", ")}</span>
                       </div>
                       <div className="mt-2 flex min-h-7 items-end justify-between gap-2">
                         <button type="button" className="ln-tool-preview-trigger relative z-10 focus-ring inline-flex h-7 items-center gap-1.5 rounded-[var(--ln-radius-control-md)] px-1.5 text-xs font-semibold text-graphite hover:bg-stone hover:text-ink" onClick={(event) => openPreview(tool, event.currentTarget)}>

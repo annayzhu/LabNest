@@ -37,7 +37,10 @@ export function ProtocolChip({ view, lens, calculated = false }: { view: ChipVie
   if (view.type === 'missing') return <span className="ln-chip" data-state="missing" title={t('The referenced parameter was deleted')}>{t('Parameter deleted')}</span>;
   if (view.type === 'pending') {
     const Icon = calculated ? Calculator : kindIcons[view.kind];
-    return <span className="ln-chip" data-state="pending" title={label}><Icon aria-hidden className="ln-chip-icon" /><span>{view.range ?? t(protocolLabelText(view.name))}</span><span className="ln-chip-reason">{t(pendingReasons[view.reason])}</span></span>;
+    const reason = t(pendingReasons[view.reason]);
+    // A range already reads as a value still to choose; its reason moves to the tooltip and the screen reader (Q320).
+    const quiet = view.reason === '待选采用值' && Boolean(view.range);
+    return <span className="ln-chip" data-state="pending" title={quiet ? `${view.range} · ${reason}` : label}><Icon aria-hidden className="ln-chip-icon" /><span>{view.range ?? t(protocolLabelText(view.name))}</span><span className={quiet ? 'sr-only' : 'ln-chip-reason'}>{reason}</span></span>;
   }
   if (view.type === 'tool') {
     const Icon = toolIcons[view.tool];

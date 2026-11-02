@@ -5,8 +5,9 @@ import { useActionState } from "react";
 import { useI18n } from "./I18nProvider";
 import { addAnalysisResult, type AnalysisUploadState } from "@/app/experiments/analysis-actions";
 import { analysisTools } from "@/lib/analysis-results";
-import { formInputClass } from "./forms";
+import { formFilePickerClass, formInputClass } from "./forms";
 import { Button } from "./ui/Button";
+import { FilePicker } from "./ui/FilePicker";
 
 /** Add an analysis result (添加分析结果): pick the tool and the workbook it exported; the result starts as a draft to complete from there. */
 /** The analysis tools as their workbench is called on screen. */
@@ -19,7 +20,7 @@ export function AnalysisResultUpload({ experimentId }: { experimentId: string })
     <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-graphite">Add an analysis result</summary>
     <form action={action} className="space-y-2 border-t border-hairline px-3 py-2 text-xs text-graphite">
       <label className="block">Exported from<select name="tool" defaultValue="qpcr-analysis" className={formInputClass}>{Object.keys(analysisTools).map(key => <option key={key} value={key}>{analysisWorkbenchNames[key as keyof typeof analysisTools]}</option>)}</select></label>
-      <label className="block">Exported workbook (.xlsx, .xls or .csv)<input name="file" type="file" accept=".xlsx,.xls,.csv" required className="mt-1 block w-full text-xs" /></label>
+      <div><span className="block">Exported workbook (.xlsx, .xls or .csv)</span><FilePicker name="file" accept=".xlsx,.xls,.csv" required className={formFilePickerClass} /></div>
       <label className="block">Result name (optional)<input name="title" placeholder="e.g. GAPDH relative expression" className={formInputClass} /></label>
       <p className="text-muted">The workbook goes into a new result as a file; LabNest neither reads nor changes its values.</p>
       <Button type="submit" size="sm" variant="primary" disabled={pending} aria-busy={pending}>{pending ? "Adding the result…" : "Add"}</Button>

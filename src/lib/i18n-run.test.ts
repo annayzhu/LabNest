@@ -139,7 +139,8 @@ describe('Run page and mix card translations', () => {
     expect([zh('Skip reason not submitted · 样本污染'), zh('Skipped · 样本污染 (not counted as complete)'), zh('Last saved value 12 µL')])
       .toEqual(['未提交原因：样本污染', '已跳过 · 样本污染（不计为完成）', '上次保存：12 µL']);
     expect(zh('3 records on this device waiting to sync, 1 in conflict. The completion count below does not cover them all yet.')).toBe('本机待同步 3 条，其中冲突 1 条。下方完成计数尚未代表全部已同步。');
-    expect(zh('Required 3/5 done · optional 0/1 · skipped 1 · to be determined 0')).toBe('必需操作：3/5 完成 · 可选：0/1 · 跳过：1 · 待确定：0');
+    expect(zh('Required 3/5 done · optional 0/1 · skipped 1')).toBe('必需操作：3/5 完成 · 可选：0/1 · 跳过：1');
+    expect(zh('Required 9/18 done')).toBe('必需操作：9/18 完成');
     expect([zh('Run completed. This run’s use is recorded and deducted from stock.'), zh(' This run’s use is recorded.')]).toEqual(['已完成执行。 已记录本次用量并扣减库存。', ' 已记录本次用量。']);
     expect(zh('The run is complete, but not all of its use was written · record it under “Reagents and consumables used in this run”')).toBe('实验已完成，但用量未全部写入：请在“本次使用的试剂与耗材”中登记');
     expect(zh('The run is complete, but not all of its use was written · Some deductions did not go through · 库存不足; 已锁定. The use records are kept; retry under “Reagents and consumables used in this run”.'))

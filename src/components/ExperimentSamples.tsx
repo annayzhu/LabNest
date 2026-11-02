@@ -25,7 +25,7 @@ export type ExperimentSampleRow = {
 type Option = { value: string; label: string };
 type Panel = "choose" | "groups" | "plates" | null;
 
-const field = cn(formInlineInputClass, "h-8 text-sm");
+const field = cn(formInlineInputClass, "h-8 text-[length:var(--ln-ui-body-font-size)]");
 const iconButton = "focus-ring inline-flex h-6 w-6 items-center justify-center rounded-[var(--ln-radius-control-sm)] text-muted hover:bg-stone hover:text-ink disabled:opacity-40";
 
 /**
@@ -76,9 +76,10 @@ export function ExperimentSamples({ experimentId, editable, inputs, outputs, gro
   const selected = inputs.filter((row) => checked.has(row.linkId)).map((row) => row.linkId);
 
   return (
-    <div className="ln-experiment-samples mb-5 space-y-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm/40 p-3">
+    <div className="ln-experiment-samples mb-5 space-y-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm/40 p-3 font-sans text-[length:var(--ln-ui-body-font-size)]">
       <div className="flex flex-wrap items-center gap-2">
-        <p className="text-sm text-graphite"><span>Samples used</span> <strong className="tabular-nums text-ink">{inputs.length}</strong> · <span>Samples produced</span> <strong className="tabular-nums text-ink">{outputs.length}</strong>{groups.length ? <> · <span>Groups</span> <strong className="tabular-nums text-ink">{groups.length}</strong></> : null}</p>
+        {inputs.length || outputs.length ? <p className="text-graphite"><span>Samples used</span> <strong className="tabular-nums text-ink">{inputs.length}</strong> · <span>Samples produced</span> <strong className="tabular-nums text-ink">{outputs.length}</strong>{groups.length ? <> · <span>Groups</span> <strong className="tabular-nums text-ink">{groups.length}</strong></> : null}</p>
+          : <p className="text-xs text-muted">{editable ? "No samples chosen yet" : "No samples chosen"}</p>}
         {editable ? (
           <div className="ml-auto flex flex-wrap gap-1 print:hidden">
             <Button type="button" size="sm" variant={panel === "choose" ? "secondary" : "ghost"} onClick={() => setPanel(panel === "choose" ? null : "choose")}><ListChecks className="h-3.5 w-3.5" aria-hidden />Choose samples…</Button>
@@ -91,7 +92,7 @@ export function ExperimentSamples({ experimentId, editable, inputs, outputs, gro
       {notice ? <p role="status" className="whitespace-pre-wrap text-xs text-moss">{notice}</p> : null}
 
       {editable && unlisted.length ? (
-        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface px-2 py-1.5 text-sm print:hidden">
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface px-2 py-1.5 print:hidden">
           <span className="text-graphite">{t("Named in the record but not added")}</span>
           <span className="record-identifier text-xs" data-i18n-ignore>{unlisted.map((sample) => sample.code).join("、")}</span>
           <Button type="button" size="sm" variant="secondary" className="ml-auto" disabled={pending} onClick={() => act(() => addExperimentSamples({ experimentId, sampleIds: unlisted.map((sample) => sample.id) }))}>Add as samples used</Button>
@@ -100,7 +101,7 @@ export function ExperimentSamples({ experimentId, editable, inputs, outputs, gro
       {panel === "choose" ? <ChoosePanel types={types} locations={locations} pending={pending} onAdd={(input) => act(() => addExperimentSamples({ experimentId, ...input }))} /> : null}
       {panel === "groups" ? <GroupsPanel key={groups.map((group) => `${group.id}:${group.label}`).join("|")} groups={groups} pending={pending} onSave={(list) => act(() => saveExperimentSampleGroups({ experimentId, groups: list }), () => setPanel(null))} onPaste={(text) => act(() => assignExperimentGroups({ experimentId, text }))} /> : null}
       {panel === "plates" ? (
-        <div className="space-y-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-3 text-sm print:hidden">
+        <div className="space-y-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-3 print:hidden">
           <p className="text-xs text-muted">Plate layouts are written in the experiment record: type “/” and choose Plate layout. The planners below open with this experiment’s samples, grouped and in order. Their Excel exports go into the record with File attachment; a free plate planner project backup goes into a plate with Import a backup. Wells that hold a sample show beside it.</p>
           <div className="flex flex-wrap gap-2">
             <Link href={`/tools/qpcr-plate-layout?experiment=${experimentId}`} className={buttonStyles({ size: "sm", variant: "secondary" })}>qPCR plate planner</Link>
@@ -112,7 +113,7 @@ export function ExperimentSamples({ experimentId, editable, inputs, outputs, gro
       {inputs.length ? (
         <div className="space-y-2">
           {editable && selected.length ? (
-            <div className="flex flex-wrap items-center gap-2 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface px-2 py-1.5 text-sm print:hidden">
+            <div className="flex flex-wrap items-center gap-2 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface px-2 py-1.5 print:hidden">
               <span className="text-graphite"><span>Selected</span> <strong className="tabular-nums text-ink">{selected.length}</strong></span>
               <select aria-label="Set group" value="" disabled={pending} onChange={async (event) => {
                 const value = event.target.value;
@@ -133,7 +134,7 @@ export function ExperimentSamples({ experimentId, editable, inputs, outputs, gro
             </div>
           ) : null}
           <div className="relative min-w-0 max-w-full overflow-x-auto editorial-scrollbar [contain:inline-size]">
-            <table className="w-full min-w-[480px] text-sm">
+            <table className="w-full min-w-[480px]">
               <caption className="pb-1 text-left text-xs font-medium text-muted">Samples used</caption>
               <thead className="text-left text-xs text-muted"><tr>
                 {editable ? <th className="w-8 py-1 print:hidden"><input type="checkbox" aria-label="Select all" checked={selected.length === inputs.length} onChange={(event) => setChecked(event.target.checked ? new Set(inputs.map((row) => row.linkId)) : new Set())} /></th> : null}
@@ -160,11 +161,11 @@ export function ExperimentSamples({ experimentId, editable, inputs, outputs, gro
             </table>
           </div>
         </div>
-      ) : <p className="text-sm text-muted">No samples chosen yet.{editable ? " Choose them from the sample list, by pasting codes, or a whole box." : ""}</p>}
+      ) : null}
 
       {outputs.length ? (
         <div className="relative min-w-0 max-w-full overflow-x-auto editorial-scrollbar [contain:inline-size]">
-          <table className="w-full min-w-[440px] text-sm">
+          <table className="w-full min-w-[440px]">
             <caption className="pb-1 text-left text-xs font-medium text-muted">Samples produced</caption>
             <thead className="text-left text-xs text-muted"><tr><th className="w-8 py-1">#</th><th className="py-1">Sample</th><th className="py-1">Parent sample</th><th className="py-1">Group</th><th className="py-1">Place</th></tr></thead>
             <tbody className="divide-y divide-hairline border-t border-hairline">
@@ -220,7 +221,7 @@ function ChoosePanel({ types, locations, pending, onAdd }: { types: Option[]; lo
     setPicked(box ? new Set((found.samples ?? []).map((sample) => sample.id)) : new Set());
   });
   return (
-    <div className="space-y-2 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-3 text-sm print:hidden">
+    <div className="space-y-2 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-3 print:hidden">
       <div role="tablist" className="flex gap-4 border-b border-hairline text-[13px]">
         {([["search", "Search"], ["paste", "Paste codes"], ["box", "Whole box"]] as const).map(([key, label]) => <button key={key} type="button" role="tab" aria-selected={mode === key} onClick={() => { setMode(key); setResults(null); }} className={`focus-ring -mb-px border-b-2 pb-1.5 ${mode === key ? "border-moss text-moss" : "border-transparent text-muted hover:text-ink"}`}>{label}</button>)}
       </div>
@@ -259,7 +260,7 @@ function GroupsPanel({ groups, pending, onSave, onPaste }: { groups: Array<{ id:
   const [text, setText] = useState("");
   const move = (index: number, by: number) => setDraft((current) => { const next = [...current]; const [item] = next.splice(index, 1); next.splice(index + by, 0, item); return next; });
   return (
-    <div className="grid gap-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-3 text-sm md:grid-cols-2 print:hidden">
+    <div className="grid gap-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-3 md:grid-cols-2 print:hidden">
       <div className="space-y-2">
         <p className="text-xs text-muted">Design groups (control / treated, tumour / normal). They do not split the Protocol’s steps; a run that needs different systems per group sets that up in its preparation.</p>
         {draft.map((group, index) => (

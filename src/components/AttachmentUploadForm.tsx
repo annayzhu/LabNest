@@ -4,8 +4,9 @@ import { newClientMutationId } from "@/lib/client-mutation-id";
 
 import { FileUp } from "lucide-react";
 import { useState } from "react";
-import { formFileInputClass, formInputClass, formLabelClass } from "@/components/forms";
+import { formFilePickerClass, formInputClass, formLabelClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
+import { FilePicker } from "@/components/ui/FilePicker";
 import type { ResultTemplateArtifact } from "@/lib/types";
 import { enqueueMobileMutation } from "@/lib/mobile-mutation-queue";
 
@@ -28,6 +29,8 @@ export function AttachmentUploadForm({
 }) {
   const [status, setStatus] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
+  // FilePicker shows the chosen name until it remounts.
+  const [picker, setPicker] = useState(0);
 
   async function upload(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -60,6 +63,7 @@ export function AttachmentUploadForm({
         });
         setStatus(`${file.name} saved on this device · waiting to sync.`);
         form.reset();
+        setPicker((key) => key + 1);
         return;
       }
       const response = await fetch("/api/attachments", {
@@ -84,16 +88,10 @@ export function AttachmentUploadForm({
 
   return (
     <form onSubmit={upload} className={`grid gap-3 ${hideTargetFields ? expectedArtifacts.length ? "md:grid-cols-[0.8fr_1.2fr_auto]" : "md:grid-cols-[1fr_auto]" : "md:grid-cols-[1.2fr_0.6fr_0.8fr_auto]"}`}>
-      {hideTargetFields ? <><input type="hidden" name="targetType" value={targetType} /><input type="hidden" name="targetId" value={targetId} />{expectedArtifacts.length ? <label className="block min-w-0"><span className={formLabelClass}>Expected file</span><select name="linkType" className={formInputClass}><option value="attached_to">Additional file</option>{expectedArtifacts.map((artifact) => <option key={artifact.key} value={`template_artifact:${artifact.key}`}>{artifact.label}{artifact.required ? " · required" : ""}</option>)}</select></label> : <input type="hidden" name="linkType" value={linkType} />}<label className="block min-w-0"><span className={formLabelClass}>{fileLabel}</span><input required name="file" type="file" accept={accept} className={formFileInputClass} /></label></> : <><label className="block min-w-0">
+      {hideTargetFields ? <><input type="hidden" name="targetType" value={targetType} /><input type="hidden" name="targetId" value={targetId} />{expectedArtifacts.length ? <label className="block min-w-0"><span className={formLabelClass}>Expected file</span><select name="linkType" className={formInputClass}><option value="attached_to">Additional file</option>{expectedArtifacts.map((artifact) => <option key={artifact.key} value={`template_artifact:${artifact.key}`}>{artifact.label}{artifact.required ? " · required" : ""}</option>)}</select></label> : <input type="hidden" name="linkType" value={linkType} />}<div className="min-w-0"><span className={formLabelClass}>{fileLabel}</span><FilePicker key={picker} required name="file" accept={accept} className={formFilePickerClass} /></div></> : <><div className="min-w-0">
         <span className={formLabelClass}>File</span>
-        <input
-          required
-          name="file"
-          type="file"
-          accept={accept}
-          className={formFileInputClass}
-        />
-      </label>
+        <FilePicker key={picker} required name="file" accept={accept} className={formFilePickerClass} />
+      </div>
       <label className="block min-w-0">
         <span className={formLabelClass}>Target type</span>
         <input

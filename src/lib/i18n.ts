@@ -151,6 +151,7 @@ export const zhUi: Record<string, string> = {
   "Deleted draft records will appear here and can be restored.": "删除的草稿记录会出现在这里，并且可以恢复。",
   "Deleted draft records remain recoverable here until you explicitly delete their recovery snapshot forever.": "删除的草稿记录会保留在这里，直到你明确永久删除其恢复快照。",
   "Restoring keeps the original record ID, code, scientific content, template snapshot, and recoverable links. Restore may be blocked if another record has reused the same unique code or a required parent record was later removed.": "恢复会保留原始记录 ID、编号、科研内容、模板快照以及可恢复的关联。如果唯一编号已被复用，或必需的上级记录后来被删除，恢复可能会被阻止。",
+  "Restoring keeps the original code and links; a record that others still link to cannot be deleted forever.": "恢复后保留原编号和关联；仍被其他记录引用的不能永久删除。",
   "Attachments": "附件",
   "Samples": "样本",
   "Sequences": "序列",
@@ -1378,7 +1379,6 @@ export const zhUi: Record<string, string> = {
   "Evidence review": "证据复核",
   "I reviewed the run evidence and unresolved deviations.": "我已检查本次实验的证据和未解决偏差。",
   "This locked Protocol step does not allow a deviation record.": "锁定的实验规程规定本步骤不允许记录偏差。",
-  "Deviation recording is disabled by the locked Protocol step.": "锁定的实验规程已关闭本步骤的偏差记录。",
   "No step-linked evidence has been recorded. Confirm this is appropriate before completing the run.": "尚未记录与步骤关联的证据；完成实验前请确认这符合实际情况。",
   "This step is complete.": "本步骤已完成。",
   "Movement *": "流水类型 *",
@@ -1530,6 +1530,8 @@ export const zhUi: Record<string, string> = {
   "Short value": "简短值",
   "Datasets": "数据集",
   "Download original": "下载原始文件",
+  "Your browser cannot play this file; download the original.": "浏览器无法播放，请下载原文件。",
+  "This format has no preview; download it to open.": "此格式不支持在线预览，请下载后打开。",
   "Used in Reports": "用于报告",
   "Downstream synthesis": "下游汇总",
   "Included": "纳入时间",
@@ -1612,6 +1614,9 @@ export const zhUi: Record<string, string> = {
   "Before the experiment": "实验前",
   "Planning": "规划",
   "Design sample, target, control, and replicate placement before a qPCR run.": "在 qPCR 实验前设计样本、靶标、对照和重复孔布局。",
+  "Plan independent multi-plate experiments, shared liquid preparation, and execution-ready Excel workbooks.": "规划多块板的实验、共用的配液，并导出可直接执行的 Excel 工作簿。",
+  "Run 31 browser-local wet-lab calculations with bilingual methods, presets, and reviewable results.": "31 项湿实验计算，在浏览器本地运行，附中英文方法、预设和可复核的结果。",
+  "Create compact, publication-ready figures with editable journal palettes, mappings, and export settings.": "制作可直接投稿的图，期刊配色、映射和导出设置都可调整。",
   "Input:": "输入：",
   "Output:": "输出：",
   "Not connected": "未连接",
@@ -1926,6 +1931,7 @@ export const zhUi: Record<string, string> = {
   "Protocol steps": "实验规程步骤",
   "Changes save to the Experiment record": "修改将保存到实验记录",
   "Deviation or incident": "偏差或异常",
+  "Record a deviation…": "记录偏差…",
   "Only record what differed from the locked ProtocolVersion": "仅记录与锁定实验规程版本不一致的内容",
   "Quick observation": "快速观察",
   "What happened just now? This is appended with a timestamp and never replaces earlier observations.": "刚才发生了什么？内容将带时间戳追加，不会覆盖之前的观察记录。",
@@ -2064,7 +2070,6 @@ export const zhUi: Record<string, string> = {
   "Item name *": "物品名称 *",
   "Key numeric summary": "关键数值摘要",
   "LabNest home": "LabNest 首页",
-  "LabNest revalidates the original file at confirmation and keeps it with a SHA-256 checksum.": "确认导入时，LabNest 会重新校验原始文件，并连同 SHA-256 校验值一起保存。",
   "Linked records": "关联记录",
   "Loading entry": "正在载入记录",
   "Location name *": "位置名称 *",
@@ -2505,6 +2510,18 @@ export const zhUi: Record<string, string> = {
   "Stable key": "稳定键",
   "Remove data table": "删除数据表",
   "Table name": "数据表名称",
+  "Result files": "结果文件",
+  "Table data": "表格数据",
+  "Original & supporting files": "原始与支持文件",
+  "Expected table": "对应的表",
+  "Upload a file": "上传文件",
+  "Additional table": "另加的表",
+  "Link existing data": "链接已有数据",
+  "Original / supporting file": "原始或支持文件",
+  "Add data": "添加数据",
+  "Expected file": "对应的文件",
+  "Additional file": "另加的文件",
+  "Choose files": "选择文件",
   "Column name": "列名",
   "Column type": "列类型",
   "Column unit": "列单位",
@@ -2544,6 +2561,20 @@ export const zhUi: Record<string, string> = {
   "Read-only while submitted or reviewed. Reopening needs a reason and is kept in the activity history.": "已提交或已审核的记录为只读。重新打开需填写原因，并保留在活动记录中。",
   "This run is submitted or reviewed and read-only. Reopen it from the experiment record to change steps or deviations.": "本次执行已提交或已审核，当前只读。如需修改步骤或偏差，请先在实验记录页重新打开。",
   "· revision kept": "· 已保留修订",
+  "Run started": "开始执行",
+  "Run saved": "保存执行记录",
+  "Run completed": "完成执行",
+  "Recognized from a document": "从文档识别整理",
+  "Execution record repaired": "修复执行记录",
+  "Execution structure confirmed": "确认执行结构",
+  "Step recorded": "记录步骤",
+  "Ranges merged": "合并范围值",
+  "Range corrected": "修正范围值",
+  "Revision created": "建立修订",
+  "Attachment removed": "移除附件",
+  "ai recognized": "AI 识别",
+  "ai design": "AI 设计",
+  "derived": "派生",
   "Give a reason for reopening a submitted or reviewed record.": "重新打开已提交或已审核的记录时需填写原因。",
   "reopen": "重新打开",
   // Editors ("/" menu, ＋ and ⋮⋮ handles, block menu, selection bubble, table bar), run preparation, the stock deduction
@@ -2842,7 +2873,6 @@ export const zhUi: Record<string, string> = {
   "protocols.io developer token (saved; leave empty to keep it)": "protocols.io 开发者令牌（已保存，留空则不变）",
   "Request one at protocols.io → Settings → Developer": "在 protocols.io → Settings → Developer 申请",
   "Clear the saved token": "清除已保存的令牌",
-  "Every outside search and fetch is written to the activity log (source, query, number of results).": "每次外部检索与抓取都会记入活动日志（来源、查询词、结果数）。",
   "Saving settings…": "保存中…",
   "Fetch the original text first": "请先抓取原文",
   "The fetched original can’t be read; fetch it again": "原文附件不可读，请重新抓取",
@@ -2973,6 +3003,7 @@ export const zhUi: Record<string, string> = {
   "Design from a goal": "按目标设计",
   "Protocol import template": "规程导入模板",
   "Write it the way you usually do, or import an existing Protocol": "按平常的写法写，或导入现有规程",
+  "How to write it": "写法说明",
   "Download the Word template": "下载 Word 模板",
   "One paragraph per step, numbers written as they are; for different systems write “350/600 µL” and put the line “体系：350 µL / 600 µL” before the first step; start an operation for some samples only with “仅…：”; write what to record as “记录：浓度 ng/µL、A260/280、胶图”. On import, steps become step blocks and numbers become parameter blocks, to check in the editor. For instructions or a Protocol not written to the template (PDF, Word or pasted text), use “Organize instructions or a non-template Protocol”: it is first read as written, and organized with AI only if that reads badly.": "一步一段，数值直接写；不同体系写“350/600 µL”，并在第一步前写一行“体系：350 µL / 600 µL”；只对部分样本的操作写“仅…：”；要记录的写“记录：浓度 ng/µL、A260/280、胶图”。导入后步骤成为步骤块、数值成为参数块，在编辑器里核对。说明书或没按模板写的规程（PDF、Word 或粘贴的文字），用“整理说明书或非模板规程”：先按写法读取，读得不好再用 AI 整理。",
   "One paragraph per step, numbers written as they are; for different systems write “350/600 µL” and put the line “体系：350 µL / 600 µL” before the first step; start an operation for some samples only with “仅…：”; write what to record as “记录：浓度 ng/µL、A260/280、胶图”. On import, steps become step blocks and numbers become parameter blocks, to check in the editor. For instructions or a Protocol not written to the template (PDF, Word, pasted text or pictures), use “Organize instructions or a non-template Protocol”: it is first read as written, and organized with AI only if that reads badly.": "一步一段，数值直接写；不同体系写“350/600 µL”，并在第一步前写一行“体系：350 µL / 600 µL”；只对部分样本的操作写“仅…：”；要记录的写“记录：浓度 ng/µL、A260/280、胶图”。导入后步骤成为步骤块、数值成为参数块，在编辑器里核对。说明书或没按模板写的规程（PDF、Word、粘贴的文字或图片），用“整理说明书或非模板规程”：先按写法读取，读得不好再用 AI 整理。",
@@ -3351,7 +3382,6 @@ export const zhUi: Record<string, string> = {
   "AI feature settings": "AI 功能设置",
   "Enable AI": "启用 AI",
   "AI is used only when you act; turning it on does not scan or process past records.": "仅按你的操作使用 AI；开启不会扫描或处理历史记录。",
-  "Applies to this LabNest workspace, the same scope as before; Visualization Studio uses its own settings.": "作用于当前 LabNest 工作空间，与原设置范围一致；Visualization Studio 使用自己的设置。",
   "Next: add a model service, then choose it as the default service.": "下一步：添加一个模型服务，再选择为默认服务。",
   "Next: choose the default service below and click “Save feature settings”. A service card being enabled does not do this step for you.": "下一步：在下方选择默认服务，点击“保存功能设置”。服务卡片的启用状态不会替你完成这一步。",
   "Next: turn on the “Enable AI” switch above. The default service is kept.": "下一步：打开上方“启用 AI”总开关。默认服务已保留。",
@@ -3368,7 +3398,7 @@ export const zhUi: Record<string, string> = {
   "Open the AI workbench": "打开 AI 工作台",
   "Generate suggestions from entries": "从记录生成建议",
   "Import a protocol and extract parameters": "导入规程并提取参数",
-  "AI suggestions need a human check; turning AI on does not process past records. Protocol systems, ordinary calculations and runs all work with AI off.": "AI 建议需要人工核对；开启不会处理历史记录。规程体系、普通计算和实验执行均可在 AI 关闭时使用。",
+  "AI suggestions need a human check. Protocol systems, ordinary calculations and runs all work with AI off.": "AI 建议需要人工核对。规程体系、普通计算和实验执行在 AI 关闭时都能使用。",
   "AI settings · LabNest": "AI 设置 · LabNest",
   "Model connections and AI feature settings.": "模型连接与 AI 功能设置。",
   "Cannot read the connection settings; saved settings are unchanged.": "无法读取连接设置，已保存的设置未改变。",
@@ -4272,8 +4302,8 @@ function translateDynamic(value: string): string {
   if (match) return `上次保存：${match[1]}`;
   match = value.match(/^(\d+) records? on this device waiting to sync, (\d+) in conflict\. The completion count below does not cover them all yet\.$/);
   if (match) return `本机待同步 ${match[1]} 条，其中冲突 ${match[2]} 条。下方完成计数尚未代表全部已同步。`;
-  match = value.match(/^Required (\d+)\/(\d+) done · optional (\d+)\/(\d+) · skipped (\d+) · to be determined (\d+)$/);
-  if (match) return `必需操作：${match[1]}/${match[2]} 完成 · 可选：${match[3]}/${match[4]} · 跳过：${match[5]} · 待确定：${match[6]}`;
+  match = value.match(/^Required (\d+)\/(\d+) done(?: · optional (\d+)\/(\d+))?(?: · skipped (\d+))?(?: · to be determined (\d+))?$/);
+  if (match) return [`必需操作：${match[1]}/${match[2]} 完成`, match[3] ? `可选：${match[3]}/${match[4]}` : "", match[5] ? `跳过：${match[5]}` : "", match[6] ? `待确定：${match[6]}` : ""].filter(Boolean).join(" · ");
   match = value.match(/^(?:([\s\S]+?) )?This run’s use is recorded( and deducted from stock)?\.$/);
   if (match) return `${match[1] ? `${zhUi[match[1]] ?? match[1]} ` : ""}已记录本次用量${match[2] ? "并扣减库存" : ""}。`;
   match = value.match(/^The run is complete, but not all of its use was written · ([\s\S]+)$/);
@@ -4457,8 +4487,6 @@ function translateDynamic(value: string): string {
   if (value.includes(" / ")) {
     return value.split(" / ").map((part) => zhUi[part] ?? part).join(" / ");
   }
-  match = value.match(/^Structured (.+) input$/);
-  if (match) return `结构化${zhUi[match[1]] ?? match[1]}导入`;
   match = value.match(/^Export (.+) with stable field names$/);
   if (match) return `使用稳定字段名导出${zhUi[match[1]] ?? match[1]}`;
   // A yes/no condition answered no (conditionTagLabel): "not fatty tissue" reads 非富脂组织.

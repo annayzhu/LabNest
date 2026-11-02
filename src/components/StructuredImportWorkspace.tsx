@@ -347,7 +347,6 @@ export function StructuredImportWorkspace({ module, columnHelper }: { module: St
               <div key={format} className="flex items-start justify-between gap-3 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-3">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-ink">{formatLabel(format)}</p>
-                  <p className="mt-1 text-xs text-muted">Structured {definition.singular} input</p>
                   {showCompactGuidance ? controlledFields.map((field) => (
                     <p key={field.key} className="mt-1 truncate text-xs text-muted">
                       <span>{field.label}</span>: {(field.optionLabels ? Object.values(field.optionLabels) : field.allowedValues ?? []).map((choice, index) => <span key={choice}>{index ? " · " : ""}<span>{choice}</span></span>)}
@@ -400,7 +399,6 @@ export function StructuredImportWorkspace({ module, columnHelper }: { module: St
                 <span className="shrink-0 text-xs text-muted">{formatFileSize(file.size)}</span>
               </div>
             ) : null}
-            <p className="mt-3 text-xs leading-5 text-muted">LabNest revalidates the original file at confirmation and keeps it with a SHA-256 checksum.</p>
           </div>
           <div className="flex justify-end">
             <Button type="button" variant="secondary" onClick={() => requestPreview({ fresh: true })} disabled={!file || Boolean(pending)}>

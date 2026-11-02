@@ -1,0 +1,20 @@
+{
+  "base": "http://127.0.0.1:3004",
+  "passed": true,
+  "checks": [
+    "Q319 samples panel: 12px interface font (record body 13.3333px); one line when empty",
+    "Q320 range chips without 待选采用值; Q328 source 和活动名为中文, no scroll hint on a fitting table",
+    "Q321 run list: 4 tools on one row; 0 deviation boxes open by default, toggle opens one",
+    "Q322 tools: no tagline, footer or Input/Output lines; descriptions in Chinese",
+    "Q323/Q330 result files: notes removed, headings in Chinese, FilePicker",
+    "Q330 experiment attachments: FilePicker",
+    "Q324 trash: one-line Chinese intro; quiet row actions",
+    "Q325 imports: no SHA-256 or template card lines; writing rules folded",
+    "Q326 AI settings: one past-records note; method design: no email, no activity-log note",
+    "Q327 settings: no repeated or history notes",
+    "Q329 attachment page: one language",
+    "390: experiment, tools, trash, result without horizontal scroll"
+  ],
+  "errors": [],
+  "mutations": []
+}

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { FileUp } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { formInputClass, formLabelClass } from "@/components/forms";
+import { FilePicker } from "@/components/ui/FilePicker";
+import { formFilePickerClass, formInputClass, formLabelClass } from "@/components/forms";
 import type { ResultTemplateDataset } from "@/lib/types";
 
 export function DatasetUploadForm({ resultId, expectedDatasets = [] }: { resultId: string; expectedDatasets?: ResultTemplateDataset[] }) {
@@ -25,7 +26,7 @@ export function DatasetUploadForm({ resultId, expectedDatasets = [] }: { resultI
     <label><span className={formLabelClass}>Source</span><select name="storageMode" value={mode} onChange={(event) => setMode(event.target.value as typeof mode)} className={formInputClass}><option value="managed_file">Upload a file</option><option value="external_reference">Link existing data</option></select></label>
     <label><span className={formLabelClass}>Expected table</span><select name="templateDatasetKey" className={formInputClass}><option value="">Additional table</option>{expectedDatasets.map((dataset) => <option key={dataset.key} value={dataset.key}>{dataset.label}{dataset.required ? " · required" : ""}</option>)}</select></label>
     <label><span className={formLabelClass}>Table name</span><input required name="name" className={formInputClass} placeholder="Normalized Cq table" /></label>
-    {mode === "managed_file" ? <label><span className={formLabelClass}>CSV / TSV / TXT / XLSX · max 25 MB</span><input required name="file" type="file" accept=".csv,.tsv,.txt,.xlsx" className={`${formInputClass} py-2`} /></label> : <label><span className={formLabelClass}>External URI or server path</span><input required name="externalUri" className={formInputClass} placeholder="s3://…, smb://…, /data/…" /></label>}
+    {mode === "managed_file" ? <div className="min-w-0"><span className={formLabelClass}>CSV / TSV / TXT / XLSX · max 25 MB</span><FilePicker required name="file" accept=".csv,.tsv,.txt,.xlsx" className={formFilePickerClass} /></div> : <label><span className={formLabelClass}>External URI or server path</span><input required name="externalUri" className={formInputClass} placeholder="s3://…, smb://…, /data/…" /></label>}
     <div className="flex items-end"><Button type="submit" variant="primary" disabled={busy}><FileUp className="h-4 w-4" />{busy ? "Adding…" : "Add data"}</Button></div>
     {status ? <p className="text-sm text-graphite md:col-span-2 xl:col-span-5">{status}</p> : null}
   </form>;

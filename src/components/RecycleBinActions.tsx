@@ -29,9 +29,9 @@ export function RecycleBinActions({ id, identifier, title, associationsPreserved
     <div className="flex flex-wrap items-center justify-end gap-2">
       <form action={restoreAction}>
         <input type="hidden" name="id" value={id} />
-        <Button type="submit" variant="primary" disabled={restoring || purging}><RotateCcw className="h-4 w-4" aria-hidden />{restoring ? locale === "zh" ? "恢复中…" : "Restoring…" : locale === "zh" ? "恢复" : "Restore"}</Button>
+        <Button type="submit" size="sm" variant="secondary" disabled={restoring || purging}><RotateCcw className="h-3.5 w-3.5" aria-hidden />{restoring ? locale === "zh" ? "恢复中…" : "Restoring…" : locale === "zh" ? "恢复" : "Restore"}</Button>
       </form>
-      {associationsPreserved ? <span className="inline-flex min-h-9 items-center gap-1.5 rounded-[var(--ln-radius-control-md)] border border-warning/30 bg-warning-surface px-2.5 text-xs font-medium text-warning"><Link2 className="h-3.5 w-3.5" aria-hidden />{locale === "zh" ? "关联保留中，不可永久删除" : "Protected while linked"}</span> : <Button type="button" variant="destructive" disabled={restoring || purging} onClick={() => setOpen(true)}><Trash2 className="h-4 w-4" aria-hidden />{locale === "zh" ? "永久删除" : "Delete forever"}</Button>}
+      {associationsPreserved ? <span className="inline-flex min-h-8 items-center gap-1.5 px-1 text-xs text-muted"><Link2 className="h-3.5 w-3.5" aria-hidden />{locale === "zh" ? "关联保留中，不可永久删除" : "Protected while linked"}</span> : <Button type="button" size="sm" variant="ghost" className="text-error hover:bg-error-surface hover:text-error" disabled={restoring || purging} onClick={() => setOpen(true)}><Trash2 className="h-3.5 w-3.5" aria-hidden />{locale === "zh" ? "永久删除" : "Delete forever"}</Button>}
       {restoreState.error ? <p role="alert" className="w-full text-right text-xs text-error">{restoreState.error}</p> : null}
 
       {open && !associationsPreserved ? (

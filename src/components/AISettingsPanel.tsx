@@ -55,7 +55,6 @@ export function AISettingsPanel({ providers, services }: { providers: { id: stri
         </div>
       </div>
       <p id="ai-switch-help" className="mt-2 text-xs leading-5 text-muted">{saved && !saved.enabled ? "AI is off; existing records stay as they are." : "AI is used only when you act; turning it on does not scan or process past records."}</p>
-      <p className="mt-1 text-xs leading-5 text-muted">Applies to this LabNest workspace, the same scope as before; Visualization Studio uses its own settings.</p>
       {saved && !error ? <p className="mt-3 text-sm font-medium" role="status">{!providers.length ? 'Next: add a model service, then choose it as the default service.' : !saved.defaultProviderId ? 'Next: choose the default service below and click “Save feature settings”. A service card being enabled does not do this step for you.' : !saved.enabled ? 'Next: turn on the “Enable AI” switch above. The default service is kept.' : !saved.availability.connected ? saved.availability.reason : 'Ready. Choose one of the entry points below to start an AI action yourself.'}</p> : null}
       {failure || error ? <div role="alert" className="mt-2 text-sm text-error">{failure || error} <button type="button" className="focus-ring underline" onClick={() => { setFailure(undefined); void refresh(); }}>Read again</button></div> : null}
       {message ? <p role="status" className="mt-2 text-xs text-muted">{message}</p> : null}
@@ -76,7 +75,7 @@ export function AISettingsPanel({ providers, services }: { providers: { id: stri
     <nav aria-label="Use AI" className="space-y-2 border-t border-hairline pt-4">
       <h2 className="text-base font-semibold">Use AI</h2>
       <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm"><Link prefetch={false} className="focus-ring inline-flex min-h-11 items-center font-medium text-moss underline" href="/actions/manual">Open the AI workbench</Link><Link prefetch={false} className="focus-ring inline-flex min-h-11 items-center text-moss underline" href="/entries">Generate suggestions from entries</Link><Link prefetch={false} className="focus-ring inline-flex min-h-11 items-center text-moss underline" href="/protocols/import">Import a protocol and extract parameters</Link></div>
-      <p className="text-xs text-muted">AI suggestions need a human check; turning AI on does not process past records. Protocol systems, ordinary calculations and runs all work with AI off.</p>
+      <p className="text-xs text-muted">AI suggestions need a human check. Protocol systems, ordinary calculations and runs all work with AI off.</p>
     </nav>
   </section>;
 }

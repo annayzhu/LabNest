@@ -27,20 +27,11 @@ export default function ToolsPage() {
   return (
     <AppShell>
       <div className="space-y-5">
-        <div>
-          <h1 className="tools-page-title text-[length:var(--ln-page-title-size)] font-semibold leading-[1.25] tracking-[-0.018em] text-ink">
-            Tools
-          </h1>
-          <p className="mt-1 max-w-[65ch] text-sm leading-6 text-muted">
-            Planning, calculation, and analysis tools in one compact workspace.
-          </p>
-        </div>
+        <h1 className="tools-page-title text-[length:var(--ln-page-title-size)] font-semibold leading-[1.25] tracking-[-0.018em] text-ink">
+          Tools
+        </h1>
 
         <ToolsCatalog tools={orderedTools} />
-
-        <p className="text-xs leading-5 text-muted">
-          External applications open in a separate tab. LabNest-managed tools stay in this workspace.
-        </p>
       </div>
     </AppShell>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useContext, useMemo, useState, useSyncExternalStore } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { ProtocolSourcesView } from './ProtocolSourcesView';
 import { RecordTemplateSummary } from './protocol/RecordTemplate';
 import { useI18n } from './I18nProvider';
@@ -369,8 +369,25 @@ function PerReactionUsage({ rows }: { rows: ReturnType<typeof protocolUsage> }) 
   </figure>;
 }
 
-/** Interface words inside the author's content, which the page translator leaves alone, are translated here. */
+/**
+ * Interface words inside the author's content, which the page translator leaves alone, are translated here. The hint
+ * shows only while the table below is wider than its frame (Q328).
+ */
 function ScrollHint() {
   const { t } = useI18n();
-  return <p className="text-xs text-muted">{t("Scroll sideways for all columns")}</p>;
+  const hint = useRef<HTMLParagraphElement>(null);
+  const [wide, setWide] = useState(false);
+  useEffect(() => {
+    const table = hint.current?.parentElement?.querySelector("table");
+    const frame = table?.parentElement;
+    if (!table || !frame) return;
+    // A few pixels of border spill hide nothing, so they are not worth a hint.
+    const check = () => setWide(frame.scrollWidth - frame.clientWidth > 24);
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(frame);
+    observer.observe(table);
+    return () => observer.disconnect();
+  }, []);
+  return <p ref={hint} hidden={!wide} className="text-xs text-muted">{t("Scroll sideways for all columns")}</p>;
 }

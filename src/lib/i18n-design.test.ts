@@ -29,7 +29,6 @@ const fixed: Array<[string, string]> = [
   ["protocols.io developer token (saved; leave empty to keep it)", "protocols.io 开发者令牌（已保存，留空则不变）"],
   ["Request one at protocols.io → Settings → Developer", "在 protocols.io → Settings → Developer 申请"],
   ["Clear the saved token", "清除已保存的令牌"],
-  ["Every outside search and fetch is written to the activity log (source, query, number of results).", "每次外部检索与抓取都会记入活动日志（来源、查询词、结果数）。"],
   ["Saving settings…", "保存中…"],
   ["Fetch the original text first", "请先抓取原文"],
   ["The fetched original can’t be read; fetch it again", "原文附件不可读，请重新抓取"],

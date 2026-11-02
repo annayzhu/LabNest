@@ -45,7 +45,6 @@ export function SystemThemePicker() {
           );
         })}
       </div>
-      <p className="mt-3 text-xs leading-5 text-muted">即时应用于整个系统，并保存在当前浏览器中；不会改变科研图表的配色方案。</p>
     </fieldset>
   );
 }

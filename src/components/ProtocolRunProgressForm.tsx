@@ -172,6 +172,12 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   };
   const originalButton = (step: RunStep) => referenceGroups.length ? <button type="button" className="focus-ring ln-original-link" onClick={() => setReferenceFor(step.protocolStepRef ?? null)}><BookOpen aria-hidden />{zh ? "原文" : "Original"}</button> : null;
   const [reviewConfirmed, setReviewConfirmed] = useState(false);
+  const [deviationOpen, setDeviationOpen] = useState<Set<string>>(new Set());
+  // Counts that are zero say nothing, so only the required count is always shown.
+  const progressSummary = () => {
+    const optional = steps.filter(s => structured?.steps[s.id]?.optional), skipped = Object.keys(structured?.plan.skips ?? {}).length, blocked = steps.filter(s => structured?.steps[s.id]?.blocked).length;
+    return [`Required ${requiredCompleted}/${requiredSteps.length} done`, optional.length ? `optional ${optional.filter(s => completedIds.has(s.id)).length}/${optional.length}` : "", skipped ? `skipped ${skipped}` : "", blocked ? `to be determined ${blocked}` : ""].filter(Boolean).join(" · ");
+  };
   const selectedStep = steps.find((step) => step.id === selectedStepId) ?? currentStep ?? steps[0];
   useEffect(()=>{
     if(draftInitialized.current)return;draftInitialized.current=true;
@@ -278,7 +284,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     {structured ? <input type="hidden" name="executionPlanRevision" value={structured.plan.revision}/> : null}
     {queued.length ? <p role="status" className="text-warning">{`${queued.length} record${queued.length === 1 ? "" : "s"} on this device waiting to sync, ${queued.filter(item => item.state === "conflict").length} in conflict. The completion count below does not cover them all yet.`}</p> : null}
     {/* 现场模式's step rail already counts progress. */}
-    {structured && !bench ? <p role="status" data-structured-progress>{`Required ${requiredCompleted}/${requiredSteps.length} done · optional ${steps.filter(s => structured.steps[s.id]?.optional && completedIds.has(s.id)).length}/${steps.filter(s => structured.steps[s.id]?.optional).length} · skipped ${Object.keys(structured.plan.skips).length} · to be determined ${steps.filter(s => structured.steps[s.id]?.blocked).length}`}</p> : null}
+    {structured && !bench ? <p role="status" data-structured-progress>{progressSummary()}</p> : null}
     <input type="hidden" name="clientMutationId" />
     <input type="hidden" name="deviceCreatedAt" />
     {olderDraft ? <aside className="m-3 border border-warning p-3" role="status"><p>The run record was updated. Compare the server record with the older draft before deciding whether to keep using it.</p><details><summary>Show the older draft</summary>{Object.entries(olderDraft).map(([key,value]) => <p key={key} className="whitespace-pre-wrap">{value}</p>)}</details><button type="button" className="focus-ring min-h-11 text-moss" onClick={() => { setDraftFields(olderDraft); setOlderDraft(null); setDraftNotice('Checked draft restored, not saved yet'); }}>Checked; keep using these drafts</button></aside> : null}
@@ -403,7 +409,6 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     <section className={`${bench ? "hidden" : "hidden lg:block"} overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface`}>
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline px-4 py-3">
         <h2 className="text-lg font-semibold text-ink">Execution record</h2>
-        <span className="text-xs text-muted">{hasSteps ? "Check planned execution steps or log deviations by step." : "No fixed steps configured; use freeform execution notes."}</span>
       </div>
       {hasSteps ? <div className="divide-y-4 divide-stone/70">
         {groups.map((group) => {
@@ -425,13 +430,18 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
                 {step.richContent?.blocks.length ? <div className={step.richContent.derivedTitle ? "run-step-content mt-1 space-y-3 pl-9" : "run-step-content mt-3 space-y-3"} data-run-step-content><RunChipContext.Provider value={runChips.get(step.id) ?? null}><ChipRenderContext.Provider value={chipContexts[step.richContent.chipVersion ?? ''] ?? null}>{step.richContent.blocks.map(block => <ProtocolContentBlockView key={block.id} block={block} executionContext />)}{runChips.get(step.id) ? <RunStepMixes step={runChips.get(step.id)!} mixes={structured?.plan.runMixes[step.id] ?? []} /> : null}</ChipRenderContext.Provider></RunChipContext.Provider></div> : null}
                 </div>
                 <div>
+                  <div className="ln-step-tools-row" data-step-tools>
+                    {structured?.steps[step.id] ? <StepTimerControls compact experimentId={experimentId} step={step} executionPlanRevision={structured.plan.revision} disabled={!editable || step.completed || structured.steps[step.id].blocked}/> : null}
+                    {editable ? <StepCalculator experimentId={experimentId} stepId={step.id}/> : null}
+                    <Link onClick={() => window.dispatchEvent(new Event("labnest:preserve-run-draft"))} href={`/entries/new?mode=capture&experiment=${experimentId}&step=${step.id}`} className="focus-ring ln-original-link">Jot a note</Link>
+                    {originalButton(step)}
+                  </div>
                   {stepNote(step.id)}
                   <StructuredStepRecord key={`${step.id}:${structured?.plan.revision}`} experimentId={experimentId} stepId={step.id} structured={structured} editable={editable} completed={step.completed}/>
-                  {structured?.steps[step.id] ? <StepTimerControls compact experimentId={experimentId} step={step} executionPlanRevision={structured.plan.revision} disabled={!editable || step.completed || structured.steps[step.id].blocked}/> : null}
-                  {editable ? <StepCalculator experimentId={experimentId} stepId={step.id}/> : null}
-                  <Link onClick={() => window.dispatchEvent(new Event("labnest:preserve-run-draft"))} href={`/entries/new?mode=capture&experiment=${experimentId}&step=${step.id}`} className="focus-ring inline-flex min-h-9 items-center text-sm text-moss">Jot a note</Link>
-                  {originalButton(step)}
-                  {step.allowsDeviation ? <><label><span className={formLabelClass}>Deviation or incident</span><textarea name={`deviation:${step.id}`} value={draftFields[`deviation:${step.id}`] ?? step.deviationNote ?? ""} onChange={e => setDraftFields(current => ({ ...current, [`deviation:${step.id}`]: e.target.value }))} disabled={!editable || pending} placeholder="Only record what differed from the planned method" className={`${fieldClass} min-h-20 resize-y`} /></label></> : <p className="rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-xs text-muted">Deviation recording is disabled by the locked Protocol step.</p>}
+                  {/* The box stays mounted once it holds text, so saving never drops a note it no longer shows (Q321). */}
+                  {step.allowsDeviation ? deviationOpen.has(step.id) || step.deviationNote || draftFields[`deviation:${step.id}`] !== undefined
+                    ? <label className="mt-2 block"><span className={formLabelClass}>Deviation or incident</span><textarea name={`deviation:${step.id}`} autoFocus={deviationOpen.has(step.id) && !step.deviationNote} value={draftFields[`deviation:${step.id}`] ?? step.deviationNote ?? ""} onChange={e => setDraftFields(current => ({ ...current, [`deviation:${step.id}`]: e.target.value }))} disabled={!editable || pending} placeholder="Only record what differed from the planned method" className={`${fieldClass} min-h-20 resize-y`} /></label>
+                    : editable ? <button type="button" className="ln-step-deviation-toggle" onClick={() => setDeviationOpen(current => new Set(current).add(step.id))}>Record a deviation…</button> : null : null}
                 </div>
               </div>{step.richContent?.notesAfter?.length ? <div className="px-4 py-3"><RunStepNotes blocks={step.richContent.notesAfter} /></div> : null}</div></Fragment>; })}
             </div>

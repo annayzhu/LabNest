@@ -4,8 +4,9 @@ import { FileUp, LoaderCircle, Plus, Sparkles, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { importInventoryDraft, readInventoryDocuments } from "@/app/inventory/import/actions";
-import { formInlineInputClass, formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
+import { formFilePickerClass, formInlineInputClass, formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
+import { FilePicker } from "@/components/ui/FilePicker";
 import { takeHandedPhotos } from "@/lib/inventory-photo-handoff";
 import type { DraftLine } from "@/lib/inventory-recognition.server";
 import { isPdf } from "@/lib/inventory-recognition";
@@ -96,12 +97,11 @@ export function InventoryDocumentImport({ source, pictures, text, locations }: {
     <div className="space-y-4">
       <section className="space-y-3 rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4">
         {source === "documents" ? (
-          <label className="block">
+          <div>
             <span className={formLabelClass}>Invoices, delivery notes or labels (pictures or PDF, up to 10)</span>
-            <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,application/pdf" onChange={(event) => void choose(event.target.files ?? [])} className={`${formInputClass} py-1.5`} />
-            {/* Photos handed over from the inventory home never pass through the input, so the names are listed here. */}
-            {files.length ? <span className="mt-1 block truncate text-xs text-muted">{files.map((file) => file.name).join(" · ")}</span> : null}
-          </label>
+            {/* Photos handed over from the inventory home never pass through the input, so the label names them. */}
+            <FilePicker multiple accept="image/jpeg,image/png,image/webp,image/heic,application/pdf" label={files.length ? files.map((file) => file.name).join(" · ") : "Choose files"} onFiles={(chosen) => void choose(chosen)} className={formFilePickerClass} />
+          </div>
         ) : (
           <label className="block">
             <span className={formLabelClass}>Text of an order, invoice or email</span>

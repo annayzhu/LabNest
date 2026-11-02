@@ -19,7 +19,7 @@ export default async function MethodDesignPage() {
         <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4" aria-label="Experiment goal"><MethodDesignStart /></section>
         <aside className="space-y-3">
           <MethodSearchSettingsForm settings={settings} />
-          <p className="ln-design-note px-1">{ai.enabled && ai.connected ? `Method cards are summarized by ${ai.providerName}${ai.model ? ` · ${ai.model}` : ""}; every statement is checked against the original, and those that don’t match are marked unverified.` : `No model connected (${ai.reason ?? "turn it on in AI settings"}): you can still search and fetch the original texts, and fill in method cards by hand.`}</p>
+          <p className="ln-design-note px-1">{ai.enabled && ai.connected ? `Method cards are summarized by ${ai.model ?? ai.providerName}; every statement is checked against the original, and those that don’t match are marked unverified.` : `No model connected (${ai.reason ?? "turn it on in AI settings"}): you can still search and fetch the original texts, and fill in method cards by hand.`}</p>
         </aside>
       </div>
       {sessions.length ? <section className="space-y-2" aria-label="Recent designs">

@@ -47,14 +47,14 @@ const groupCopy = {
   cjk: {
     zh: "中文字体",
     en: "Chinese fonts",
-    noteZh: "中文按正文和标题分别设置；英文字符不会再沿用宋体。",
-    noteEn: "Choose Chinese fonts separately for body and headings. Latin text no longer inherits a Chinese serif.",
+    noteZh: "中文按正文和标题分别设置。",
+    noteEn: "Choose Chinese fonts separately for body and headings.",
   },
   latin: {
     zh: "英文字体",
     en: "English fonts",
-    noteZh: "可为正文和标题使用完整的英文字体目录，也可扫描本机字体或导入字体族。",
-    noteEn: "Use the complete Latin catalog for body and headings, or discover/import additional families.",
+    noteZh: "英文按正文和标题分别设置。",
+    noteEn: "Choose English fonts separately for body and headings.",
   },
 } as const;
 
@@ -347,7 +347,6 @@ export function TypographySettingsPanel() {
       <div className="typography-import-row">
         <div className="min-w-0">
           <p className="text-sm font-medium text-ink">{copy("本机字体", "Device fonts")}</p>
-          <p className="mt-0.5 text-xs leading-5 text-muted">{copy("经浏览器授权后读取可用字体族；字体文件不会上传。发现的字体可用于中文或英文的正文和标题。", "With browser permission, discover installed families without uploading font files. Use them for Chinese or English body and headings.")}</p>
         </div>
         <button type="button" className="focus-ring typography-import-button" disabled={discoveringFonts} onClick={() => void discoverFonts()}>
           <Laptop aria-hidden />{discoveringFonts ? copy("正在读取…", "Discovering…") : localFonts.length ? copy("重新扫描", "Scan again") : copy("扫描本机字体", "Find device fonts")}
@@ -357,7 +356,7 @@ export function TypographySettingsPanel() {
       <div className="typography-import-row">
         <div className="min-w-0">
           <p className="text-sm font-medium text-ink">{copy("我的字体", "My fonts")}</p>
-          <p className="mt-0.5 text-xs leading-5 text-muted">{copy(`按字体族同时选择 Regular、Bold、Italic 等文件；单个文件不超过 10 MB，最多 ${maxCustomFontCount} 个字体族。`, `Select Regular, Bold, Italic, and other faces together; 10 MB per file and up to ${maxCustomFontCount} families.`)}</p>
+          <p className="mt-0.5 text-xs leading-5 text-muted">{copy(`同时选择 Regular、Bold、Italic 等文件；每个不超过 10 MB，最多 ${maxCustomFontCount} 个字体族。`, `Select Regular, Bold, Italic and other faces together; 10 MB per file, up to ${maxCustomFontCount} families.`)}</p>
         </div>
         <label className="focus-ring typography-import-button" data-busy={importing ? "true" : undefined} aria-disabled={importing || customFonts.length >= maxCustomFontCount}>
           <Upload aria-hidden />{importing ? copy("正在导入…", "Importing…") : copy("导入字体族", "Import family")}
@@ -391,7 +390,7 @@ export function TypographySettingsPanel() {
       ) : null}
 
       <div className="typography-portability-note">
-        {copy("网页显示与浏览器打印会使用所选字体。导出 DOCX 后，其他设备仍需安装该字体，否则会自动回退；请仅导入你有权使用的字体文件。", "The selected font is used on screen and in browser printing. DOCX recipients still need the font installed or it will fall back. Import only fonts you are licensed to use.")}
+        {copy("字体文件只在本浏览器使用，不上传；导出的 DOCX 在没有安装该字体的电脑上会换用其他字体。请只导入有使用权的字体。", "Font files stay in this browser and are never uploaded; an exported DOCX falls back on computers without the font. Import only fonts you are licensed to use.")}
       </div>
       {error || message ? <p className="typography-feedback" data-tone={error ? "error" : "success"} role={error ? "alert" : "status"} aria-live={error ? "assertive" : "polite"}>{error || message}</p> : null}
     </div>

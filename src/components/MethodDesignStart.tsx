@@ -31,7 +31,6 @@ export function MethodSearchSettingsForm({ settings }: { settings: MethodSearchS
     {methodSourceIds.filter(id => id !== 'local').map(id => <label key={id} className="is-check"><input type="checkbox" name="sources" value={id} defaultChecked={settings.sources.includes(id)} />{methodSourceNames[id]}</label>)}
     <label>{`protocols.io developer token${settings.hasProtocolsIoToken ? ' (saved; leave empty to keep it)' : ''}`}<input type="password" name="protocolsIoToken" autoComplete="off" placeholder="Request one at protocols.io → Settings → Developer" /></label>
     {settings.hasProtocolsIoToken ? <label className="is-check"><input type="checkbox" name="clearToken" />Clear the saved token</label> : null}
-    <p className="ln-design-note">Every outside search and fetch is written to the activity log (source, query, number of results).</p>
     {state.error ? <p role="alert" className="text-sm text-error">{state.error}</p> : null}{state.message ? <p role="status" className="text-sm text-success">{state.message}</p> : null}
     <div><Button type="submit" size="sm" disabled={pending}>{pending ? 'Saving settings…' : 'Save settings'}</Button></div>
   </form>;

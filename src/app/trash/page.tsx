@@ -5,7 +5,6 @@ import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { RecycleBinActions } from "@/components/RecycleBinActions";
 import { Badge } from "@/components/ui/Badge";
-import { Card, CardBody } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
 import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
@@ -33,7 +32,7 @@ export default async function TrashPage({ searchParams }: { searchParams?: PageS
   return (
     <AppShell><div className="space-y-5">
       <PageHeader title="Recycle Bin" description="Removed records remain recoverable here. Linked scientific records retain their associations and provenance until restored." />
-      <Card><CardBody><p className="text-sm leading-6 text-graphite">Restoring keeps the original record ID, code, scientific content, template snapshot, and recoverable links. Records marked “Associations preserved” cannot be permanently deleted while live scientific links depend on them.</p></CardBody></Card>
+      <p className="-mt-2 text-xs text-muted">Restoring keeps the original code and links; a record that others still link to cannot be deleted forever.</p>
       <CollectionToolbar
         path="/trash"
         query={query}
@@ -44,7 +43,7 @@ export default async function TrashPage({ searchParams }: { searchParams?: PageS
       />
       {records.length ? <DataTable rows={records} getRowKey={(row) => row.id} columns={[
         { key: "record", header: "Deleted record", render: (row) => <div><p className="font-semibold text-ink">{row.title}</p><p className="record-identifier mt-1 text-xs text-muted">{row.identifier}</p></div> },
-        { key: "type", header: "Type", render: (row) => <div className="flex flex-wrap gap-1"><Badge tone="sage">{recycleBinTypeLabel(row.targetType)}</Badge>{isAssociationPreservingSnapshot(row.snapshotJson) ? <Badge tone="warning">Associations preserved</Badge> : null}</div> },
+        { key: "type", header: "Type", render: (row) => <Badge tone="sage">{recycleBinTypeLabel(row.targetType)}</Badge> },
         { key: "deleted", header: "Deleted", render: (row) => <time dateTime={row.deletedAt.toISOString()}>{format(row.deletedAt, "yyyy-MM-dd HH:mm")}</time> },
         { key: "actions", header: "Actions", className: "text-right", render: (row) => <RecycleBinActions id={row.id} identifier={row.identifier} title={row.title} associationsPreserved={isAssociationPreservingSnapshot(row.snapshotJson)} /> },
       ]} /> : <EmptyState title="Recycle Bin is empty" body="Removed records will appear here and can be restored." actionLabel="Browse results" actionHref="/results" />}

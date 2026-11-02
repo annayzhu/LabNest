@@ -42,6 +42,7 @@ export const scheduleZh: Record<string, string> = {
   "All day": "全天",
   // Entry points
   "Day plan": "日程",
+  "Plan the days": "安排日程",
   "Arrange each day": "安排每天的事",
   "Start date": "开始日期",
   // What the server says back

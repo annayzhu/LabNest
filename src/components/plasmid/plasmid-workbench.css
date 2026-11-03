@@ -191,7 +191,7 @@
 .ln-pw-bases-row { display: flex; line-height: 20px; white-space: pre; }
 .ln-pw-bases-cells { display: flex; }
 .ln-pw-bases-cells > span { cursor: pointer; text-align: center; width: 1ch; }
-.ln-pw-bases-row > .ln-pw-bases-name { color: var(--muted); flex: 0 0 9rem; font-family: var(--font-ui); font-size: 11px; overflow: hidden; text-align: left; text-overflow: ellipsis; }
+.ln-pw-bases-row > .ln-pw-bases-name { background: var(--surface); color: var(--muted); flex: 0 0 9rem; font-family: var(--font-ui); font-size: 11px; left: 0; overflow: hidden; position: sticky; text-align: left; text-overflow: ellipsis; z-index: 1; }
 .ln-pw-bases-ruler { color: var(--muted); font-size: 11px; padding-left: 9rem; }
 .ln-pw-bases-ruler > span { width: auto; }
 .ln-pw-bases-cells > span[data-kind="match"] { color: var(--muted); }

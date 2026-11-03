@@ -133,6 +133,7 @@ export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSection
   const [initialContent] = useState(() => scientificDocumentToTiptap(document, hiddenSectionKeys));
   const [mediaDraftId] = useState(newClientMutationId);
   const originalRef = useRef(document);
+  const lastEmittedDocument = useRef<ScientificDocument | null>(null);
   const hiddenSectionKeysRef = useRef(hiddenSectionKeys);
   const hiddenSectionSignature = hiddenSectionKeys.join("\u0000");
   const previousHiddenSectionSignatureRef = useRef(hiddenSectionSignature);
@@ -200,9 +201,15 @@ export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSection
     editorProps: {
       attributes: { class: "ln-protocol-tiptap ln-scientific-tiptap", spellcheck: "true", "aria-label": "Scientific document body" },
     },
-    onUpdate: ({ editor: nextEditor }) => onChangeRef.current(tiptapToScientificDocument(nextEditor.getJSON(), originalRef.current)),
+    onUpdate: ({ editor: nextEditor }) => {
+      const nextDocument = tiptapToScientificDocument(nextEditor.getJSON(), originalRef.current);
+      lastEmittedDocument.current = nextDocument;
+      onChangeRef.current(nextDocument);
+    },
   });
   useEffect(() => {
+    // Local typing already lives in the editor; resetting it would move the caret.
+    if (document === lastEmittedDocument.current) return;
     if (editor && JSON.stringify(tiptapToScientificDocument(editor.getJSON(),document)) !== JSON.stringify(document)) { let active=true; queueMicrotask(()=>{if(active&&!editor.isDestroyed)editor.commands.setContent(scientificDocumentToTiptap(document,hiddenSectionKeysRef.current),{emitUpdate:false});}); return ()=>{active=false;}; }
   }, [document,editor]);
   useDocumentMediaUploads(editor, mediaDraftId);

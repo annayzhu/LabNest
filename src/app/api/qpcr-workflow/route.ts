@@ -79,7 +79,7 @@ export async function POST(request: Request) {
             await tx.$executeRaw `SELECT pg_advisory_xact_lock(hashtext(${data.owner.ownerId ?? data.draftId}))`;
             const record = await ownerRecord(tx, data.owner);
             const draft = await tx.qpcrWorkflowDraft.findUnique({ where: { id: data.draftId } });
-            if (draft && (draft.ownerType !== data.owner.ownerType || draft.ownerId !== (data.owner.ownerId ?? null)))
+            if (draft && (draft.ownerType !== data.owner.ownerType || draft.ownerId !== (data.owner.ownerId ?? null) || draft.experimentId !== (data.owner.experimentId ?? null)))
                 throw new Error('草稿归属不匹配');
             if (draft?.boundRecordId && !data.owner.ownerId)
                 throw new Error('此草稿已保存，请打开原记录');

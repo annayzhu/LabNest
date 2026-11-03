@@ -94,7 +94,7 @@ export function ResultForm({ action, experiments, resultTypes, quickEntries = []
 
   useEffect(()=>{
     try {
-      const saved=JSON.parse(localStorage.getItem(`labnest:qpcr-record:result:${initial.id ?? initial.experimentId ?? 'new'}`) ?? '{}').form;
+      const saved=JSON.parse(localStorage.getItem(`labnest:qpcr-record:result:${initial.id ?? new URLSearchParams(location.search).get('qpcrDraft') ?? 'new'}`) ?? '{}').form;
       if(!saved)return;
       if(saved.title)setTitle(saved.title);
       if(saved.experimentId)setExperimentId(saved.experimentId);

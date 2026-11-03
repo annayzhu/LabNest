@@ -5,7 +5,7 @@ Acceptance target: 3002 only. Production 3001 and remote main are outside this a
 ## Observed checks
 
 - Planner: 110 public-behavior unit tests passed. Portable packaging checks passed. At 1366×768 the complete current 96-well plate fits its viewport (446 px high, no vertical overflow). Ordinary wheel handler removed; explicit zoom retained.
-- Analyzer: 95 unit tests passed. Five offline browser workflows passed (Cq edits/undo/apply, ΔCq, ΔΔCq, 45 samples, Tm-only).
+- Analyzer: 96 unit tests passed. Five offline browser workflows passed (Cq edits/undo/apply, ΔCq, ΔΔCq, 45 samples, Tm-only).
 - Host: new tests cover output insertion/retry/revision conflicts, independent paragraph merge, and preservation of custom sections. Main full suite initially found a LAN-HTTP UUID compatibility issue; fixed to use the existing mutation-ID helper. Final suite result recorded below after review.
 - Public API synthetic check: revision1→revision2→replay revision1 preserves revision2; stale mutation rejected; custom manual text retained.
 - New Result browser workflow: typed title/manual paragraph → 45-category ΔΔCq import → return → refresh → restore → insert all8 facets/45 rows → refresh → final save succeeds on a formal Result URL. Minimum measured visible chart text14.2 CSS px at desktop.
@@ -26,3 +26,11 @@ Use an isolated acceptance database. `scripts/seed-qpcr-acceptance.ts` refuses a
 4. Run `npm test` and `npm run typecheck` in LabNest. Apply source/*.patch to each documented tool baseline for tool checks.
 
 Source patches contain the tool commits. `public/tools/*/release.json` records source revision, lock hash and exact embedded/offline artifact hashes. No numerical algorithms or significance tests were introduced; identity handling and presentation were extended. Offline package-to-record import remains P1.
+
+## Final regression and review
+
+LabNest:234 test files passed;1,971 tests passed,7 skipped. Typecheck passed. Analyzer:96 unit tests and all5 offline browser workflows passed; typecheck passed. Planner:110 tests and portable packaging passed.
+
+Focused code reviews found2 standards-axis lifecycle issues and5 spec-axis issues (one overlapping). Fixed and reviewers marked all original findings resolved at source-review level. Browser regression additionally passed distinct new drafts, saved-plan cleanup, and preservation of unfinished edits across two output blocks. Analysis inputs now retain stable ID/name separation, applied-input revision and supplied-source provenance.
+
+Design review report: both visual fixes resolved; scope-limited disposition ship. All reports refer to synthetic test data.

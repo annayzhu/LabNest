@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/annayzhu/qPCR-analysis-studio",
-  "commit": "5422f42ad08846c56851a693f2f36934574d1779",
+  "commit": "7f9a5cdcb125b930e13dfada04213ed862866312",
   "baseline": "7e812fc2ed899a16ce8410edaebfeaf6fcc8b36b",
   "publication": "local acceptance commit; not pushed",
   "sourcePatch": "docs/modules/qpcr/workflow-20261103/source/analysis.patch",
@@ -9,12 +9,12 @@
   "lockfileSha256": "12e268ee5314b955bd0eaeda46785f4673c00dc1431bd01690a3c57af363931c",
   "files": {
     "index.html": {
-      "sha256": "55360df390fb3f34de5f5b1483f19705289e65c8de714e568b55004cc08b132c",
-      "bytes": 2533179
+      "sha256": "527f24989fe4bac3733f295631d3e1713c5d6148ac8b8f3925edb92cd00a8a59",
+      "bytes": 2534784
     },
     "offline.zip": {
-      "sha256": "c7a9179c5130a21286cdcfee02754c20c47684a33914122700ce425535148475",
-      "bytes": 734461
+      "sha256": "21eecc67def63009bd632b848bcf764937405e130c2c67ac459ac2d8a0e1606f",
+      "bytes": 735003
     }
   }
 }

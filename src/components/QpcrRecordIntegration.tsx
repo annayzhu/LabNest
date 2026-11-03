@@ -49,9 +49,19 @@ export function QpcrRecordIntegration({ owner, title, document, onChange, childr
     const returnFocus = useRef<HTMLElement | null>(null);
     const closing = useRef(false);
     const [pendingApply, setPendingApply] = useState(false);
-    const storageKey = `labnest:qpcr-record:${owner.ownerType}:${owner.ownerId ?? owner.experimentId ?? owner.researchPlanId ?? 'new'}`;
+    const [newRecordKey,setNewRecordKey]=useState('');
+    const draftContext=useRef('');
+    useEffect(()=>{
+        if(owner.ownerId)return;
+        const context=JSON.stringify(owner);
+        const query=new URLSearchParams(location.search);
+        const key=(!draftContext.current || draftContext.current===context)?query.get('qpcrDraft') || newClientMutationId():newClientMutationId();
+        draftContext.current=context;query.set('qpcrDraft',key);history.replaceState(null,'',location.pathname+'?'+query);setNewRecordKey(key);setDraftId('');
+    },[owner.ownerId,owner.ownerType,owner.experimentId,owner.researchPlanId]);
+    const storageKey = `labnest:qpcr-record:${owner.ownerType}:${owner.ownerId ?? newRecordKey}`;
     const formValues = useCallback(() => Object.fromEntries(new FormData(host.current?.closest('form') ?? undefined).entries()), []);
     useEffect(() => {
+        if(!owner.ownerId && !newRecordKey)return;
         let saved: {
             id?: string;
             document?: ScientificDocument;
@@ -62,7 +72,7 @@ export function QpcrRecordIntegration({ owner, title, document, onChange, childr
             saved = JSON.parse(localStorage.getItem(storageKey) ?? '{}');
         }
         catch { }
-        const id = saved.id ?? newClientMutationId();
+        const id = saved.id ?? (owner.ownerId?newClientMutationId():newRecordKey);
         setDraftId(id);
         if (saved.document) {
             latest.current.onChange(saved.document);
@@ -92,7 +102,7 @@ export function QpcrRecordIntegration({ owner, title, document, onChange, childr
                     control.dispatchEvent(new Event('change', { bubbles: true }));
                 }
             }
-    }, [storageKey]);
+    }, [storageKey,newRecordKey,owner.ownerId]);
     const persist = useCallback(async (state?: unknown, sessionId?: string) => {
         if (!draftId)
             return;
@@ -141,7 +151,8 @@ export function QpcrRecordIntegration({ owner, title, document, onChange, childr
             if (!response.ok)
                 throw new Error('无法读取实验样本，请重试');
             const context = await response.json();
-            const pendingEntry = Object.entries(sessions.current).at(-1);
+            const desiredTool=block?.toolId ?? (current.owner.ownerType==='result'?'qpcr-analysis':'qpcr-plate-layout');
+            const pendingEntry = Object.entries(sessions.current).find(([,value])=>{const pending=value as {artifactId?:string;toolId?:string};return pending.toolId===desiredTool && (block?pending.artifactId===block.id:!current.document.sections.some(section=>section.blocks.some(item=>item.id===pending.artifactId)));});
             const pending = pendingEntry?.[1] as {
                 state?: unknown;
                 artifactId?: string;
@@ -149,14 +160,13 @@ export function QpcrRecordIntegration({ owner, title, document, onChange, childr
                 submissionId?: string;
                 toolId?: QpcrOutputBlock["toolId"];
             } | undefined;
-            if (pendingEntry)
-                delete sessions.current[pendingEntry[0]];
+
             returnFocus.current = window.document.activeElement as HTMLElement;
             const state = pending?.state && (!block || pending.artifactId === block.id) ? pending.state : block ? await fetch(`/api/attachments/${block.sessionAttachmentId}`).then(r => { if (!r.ok)
                 throw new Error('方案读取失败，请重试'); return r.json(); }).then(r => r.state) : pending?.state;
             setReady(false);
             setConflict(false);
-            setLaunch({ submissionId: pending?.submissionId ?? newClientMutationId(), owner: { ...current.owner }, id: newClientMutationId(), artifactId: block?.id ?? pending?.artifactId ?? newClientMutationId(), baseRevision: block?.revision ?? pending?.baseRevision ?? 0, toolId: block?.toolId ?? (current.owner.ownerType === 'result' ? 'qpcr-analysis' : 'qpcr-plate-layout'), state, anchorId, samples: context.samples, layouts: context.layouts, planLayouts: context.planLayouts ?? [] });
+            setLaunch({ submissionId: pending?.submissionId ?? newClientMutationId(), owner: { ...current.owner }, id: pendingEntry?.[0] ?? newClientMutationId(), artifactId: block?.id ?? pending?.artifactId ?? newClientMutationId(), baseRevision: pending?.baseRevision ?? block?.revision ?? 0, toolId: block?.toolId ?? (current.owner.ownerType === 'result' ? 'qpcr-analysis' : 'qpcr-plate-layout'), state, anchorId, samples: context.samples, layouts: context.layouts, planLayouts: context.planLayouts ?? [] });
         }
         catch (e) {
             setError(e instanceof Error ? e.message : '尚未打开，请重试');

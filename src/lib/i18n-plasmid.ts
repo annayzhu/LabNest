@@ -141,6 +141,8 @@ export const plasmidZh: Record<string, string> = {
   "Known variant": "已知变体",
   "Matches the annotated variant: ": "与注释的变体一致：",
   "Annotated variant here: ": "此处注释的变体：",
+  "Matches the annotated variant:": "与注释的变体一致：",
+  "Annotated variant here:": "此处注释的变体：",
   "Reference direction": "参考方向",
   "As recorded": "原始方向",
   "Zoom in": "放大",

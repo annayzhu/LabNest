@@ -16,6 +16,9 @@ export type Channel = "A" | "C" | "G" | "T";
 /** 序列完整性 (F12): a Sanger read is never taken as the whole molecule. */
 export const completenessKinds = ["full_length", "partial", "unknown"] as const;
 export type Completeness = (typeof completenessKinds)[number];
+/** Who said how complete a record is (Q370); null when nobody did, or nobody recorded it. */
+export const completenessSources = ["file", "user"] as const;
+export type CompletenessSource = (typeof completenessSources)[number];
 
 /**
  * 0-based, half-open on the top strand. A segment never wraps: a feature across a

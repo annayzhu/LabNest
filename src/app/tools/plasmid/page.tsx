@@ -22,7 +22,7 @@ export default async function PlasmidWorkbenchPage({ searchParams }: { searchPar
     productId ? loadExpectedStructure(productId) : [],
   ]);
   const initial = opened?.version
-    ? { record: opened.version.record, label: `${opened.version.label} · From inventory`, productId: opened.product.id, completeness: opened.version.completeness, structure }
+    ? { record: opened.version.record, label: `${opened.version.label} · From inventory`, productId: opened.product.id, versionId: opened.version.id, completeness: opened.version.completeness, completenessSource: opened.version.completenessSource, structure }
     : undefined;
   return (
     <AppShell>

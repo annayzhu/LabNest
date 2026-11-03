@@ -38,7 +38,6 @@ export function SearchPanel({ record, onSelect }: { record: SequenceRecord; onSe
         value={query}
         placeholder="Bases or a peptide"
         aria-label="Search for bases or a peptide"
-        data-i18n-ignore
         onChange={(event) => { setQuery(event.target.value); setAt(-1); }}
         onKeyDown={(event) => { if (event.key === "Enter") go(event.shiftKey ? (at < 0 ? -1 : at - 1) : at + 1); }}
       />

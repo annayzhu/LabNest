@@ -41,7 +41,7 @@ export async function saveProductSequences(tx: Tx, product: { name: string; enti
   const entityId = product.entityId ?? (await tx.entity.create({ data: { name: product.name, type: kind.entity } })).id;
   const links = await tx.entitySequenceLink.findMany({
     where: { entityId },
-    include: { sequenceVersion: { select: { sequence: true, topology: true, completeness: true, features: { orderBy: { order: "asc" } } } } },
+    include: { sequenceVersion: { select: { sequence: true, topology: true, completeness: true, completenessSource: true, features: { orderBy: { order: "asc" } } } } },
   });
   for (const [order, strand] of strands.entries()) {
     const link = links.find((entry) => entry.role === strand.role);
@@ -72,6 +72,7 @@ export async function saveProductSequences(tx: Tx, product: { name: string; enti
           checksum,
           topology: before.topology,
           completeness: before.completeness,
+          completenessSource: before.completenessSource,
           features: { create: features },
           changeSummary: dropped ? `Changed on the product page; ${dropped} feature(s) on the changed bases were dropped.` : "Changed on the product page.",
         },

@@ -254,12 +254,33 @@ export type GroupReason = "identical-file" | "paired-export" | "identical-bases"
 
 export type EvidenceGroup = { id: string; readIds: string[]; reasons: GroupReason[] };
 
+/** Names one read of one file by its bytes, wherever the file sits. */
+export function copyKey(item: Pick<ReadEvidence, "source" | "read">) {
+  return `${item.source.sha256}#${item.source.reads.indexOf(item.read)}`;
+}
+
+/**
+ * Groups for reads added to ones already open (R04): `found` comes from one folder, `known` maps the copy keys of the
+ * open reads to their groups. A group that holds a file already open joins that file's group, so the same original saved
+ * in two folders counts once; the others get `prefix` to keep them apart from groups of other folders.
+ */
+export function joinKnownCopies(found: ReadEvidence[], known: Map<string, string>, prefix: string) {
+  const joined = new Map<string, string>();
+  for (const item of found) {
+    const group = known.get(copyKey(item));
+    if (group) joined.set(item.group, group);
+  }
+  return found.map((item) => joined.get(item.group) ?? `${prefix}:${item.group}`);
+}
+
 /**
  * Groups reads that are not independent evidence (F06, A14): byte copies, an `.ab1` and
  * the `.seq` exported from it (same folder and stem, same or trimmed bases), and reads
- * with identical base strings. A group counts as one read.
+ * with identical base strings. A group counts as one read. Identical bases alone only
+ * suggest the same run (Q371): reads in `apart` were split off by a person and are not
+ * joined for that reason.
  */
-export function groupReadEvidence(sources: ImportedSource[]) {
+export function groupReadEvidence(sources: ImportedSource[], apart: ReadonlySet<string> = new Set()) {
   const reads: ReadEvidence[] = [];
   for (const source of sources) source.reads.forEach((read, index) => reads.push({ id: readId(source.path, index), source, read, group: "" }));
   const parent = new Map(reads.map((item) => [item.id, item.id]));
@@ -306,7 +327,8 @@ export function groupReadEvidence(sources: ImportedSource[]) {
     }
   }
   for (const sameBases of byKey((item) => item.read.bases).values()) {
-    for (const item of sameBases.slice(1)) union(sameBases[0].id, item.id, "identical-bases");
+    const joinable = sameBases.filter((item) => !apart.has(item.id));
+    for (const item of joinable.slice(1)) union(joinable[0].id, item.id, "identical-bases");
   }
 
   const groups = new Map<string, EvidenceGroup>();

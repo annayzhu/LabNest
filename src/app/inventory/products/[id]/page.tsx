@@ -21,6 +21,8 @@ import { inventoryGroupName, inventoryTypeFields } from "@/lib/inventory-types";
 import { sequenceKind } from "@/lib/product-sequences";
 import { readProductSequences } from "@/lib/product-sequences.server";
 import { loadExpectedStructure } from "@/lib/plasmid/structure.server";
+import { listVerifications } from "@/lib/plasmid/verification.server";
+import { VerificationList } from "@/components/plasmid/VerificationList";
 import { labDate } from "@/lib/lab-time";
 import { recordMentions } from "@/lib/record-mentions.server";
 import { RecordMentionList } from "@/components/RecordMentions";
@@ -43,12 +45,15 @@ export default async function InventoryProductPage({ params }: { params: Promise
     },
   });
   if (!product) notFound();
-  const [documents, sequences, mentions, structure] = await Promise.all([
+  const plasmid = product.type?.key === "plasmid";
+  const [documents, sequences, mentions, structure, checks, primaryLink] = await Promise.all([
     prisma.attachmentLink.findMany({ where: { targetType: "inventory_product", targetId: id }, include: { attachment: { select: { originalFilename: true, size: true } } }, orderBy: { createdAt: "asc" } }),
     readProductSequences(prisma, product.entityId, product.type?.key),
     // The product's own tags and those of each of its lots.
     recordMentions([product.id, ...product.items.map((lot) => lot.id)]),
-    product.type?.key === "plasmid" ? loadExpectedStructure(product.id) : [],
+    plasmid ? loadExpectedStructure(product.id) : [],
+    plasmid ? listVerifications({ productId: product.id }) : Promise.resolve([]),
+    plasmid && product.entityId ? prisma.entitySequenceLink.findFirst({ where: { entityId: product.entityId, role: "primary" }, select: { sequenceVersionId: true } }) : null,
   ]);
 
   const fields = product.type ? inventoryTypeFields(product.type.fieldDefinitions) : [];
@@ -142,6 +147,12 @@ export default async function InventoryProductPage({ params }: { params: Promise
                         </li>
                       ))}
                     </ol>
+                  </div>
+                ) : null}
+                {plasmid ? (
+                  <div className="mt-4">
+                    <p className="text-xs font-semibold text-muted">Sequencing checks, by tube</p>
+                    <div className="mt-1"><VerificationList rows={checks} currentVersionId={primaryLink?.sequenceVersionId} /></div>
                   </div>
                 ) : null}
               </Panel>

@@ -1,0 +1,27 @@
+LOCUS       SIM-A01            400 bp ds-DNA     linear SYN 02-NOV-2026
+DEFINITION  软件测试用模拟序列 A01, linear.
+ACCESSION   .
+VERSION     .
+KEYWORDS    .
+SOURCE      synthetic DNA construct
+  ORGANISM  synthetic DNA construct
+COMMENT     软件测试用模拟序列. Not a real construct or result.
+FEATURES             Location/Qualifiers
+     CDS             61..210
+                     /codon_start=1
+                     /label="SIM A01 CDS"
+                     /translation="MQTRAKHCWTQHRNKRARSTGVTSTYQPAEERGGQPYTTVHIIC
+                     TAKAK"
+     misc_feature    complement(<300..>340)
+                     /label="SIM partial reverse"
+                     /note="软件测试用模拟序列; this note is long enough to wrap onto a
+                     second qualifier line in the file"
+ORIGIN
+        1 ctctgcagtt caaggcccgg cgattacctt tacttgttaa acggaggtgg gaggtcacat
+       61 atgcagacca gagccaagca ctgctggaca caacatcgga acaaaagagc tcggagcacc
+      121 ggcgtgacat ccacctacca gcccgccgag gaaagaggag gccaacctta tacaaccgtc
+      181 cacatcattt gtacagctaa ggccaaatga gggactcgtt ctattggaac taggggtgcg
+      241 tgcttggaca gtatttgtcc acagccctgt ttttaggtta aattggcttt acagctcgta
+      301 ccagtttcct tatggtaaga attaactcac gtctcggccc catgaacctc agcgtcatgt
+      361 aatatagtac gagcgtctaa gcgtaatcta gccctcagag
+//

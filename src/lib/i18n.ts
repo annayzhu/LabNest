@@ -6,6 +6,7 @@ import { scheduleZh, translateScheduleDynamic } from "./i18n-schedule";
 import { designZh, translateDesignDynamic } from "./i18n-design";
 import { copilotZh, translateCopilotDynamic } from "./i18n-copilot";
 import { recognitionZh, translateRecognitionDynamic } from "./i18n-recognition";
+import { plasmidZh, translatePlasmidDynamic } from "./i18n-plasmid";
 
 export type AppLocale = "en" | "zh";
 
@@ -57,6 +58,7 @@ export const zhUi: Record<string, string> = {
   ...designZh,
   ...copilotZh,
   ...recognitionZh,
+  ...plasmidZh,
   "The page is still loading; try again.": "正文还在加载，请稍后再试。",
   "Verification": "验证",
   "Backup": "备份",
@@ -4502,7 +4504,8 @@ export function translateUiText(input: string, locale: AppLocale): string {
   const value = input.trim();
   if (!value) return input;
   // Import checks come before the general patterns, which would otherwise take “Line 3: …” for a “key: value” list.
-  const dynamic: string = zhUi[value] ?? translateImportDynamic(value, (text) => translateUiText(text, "zh")) ?? translateRecognitionDynamic(value) ?? translateDesignDynamic(value) ?? translateCopilotDynamic(value) ?? translateDynamic(value);
+  // Plasmid parser messages ("pUC19: the record has no ORIGIN section.") come before the general "key: value" pattern too.
+  const dynamic: string = zhUi[value] ?? translateImportDynamic(value, (text) => translateUiText(text, "zh")) ?? translateRecognitionDynamic(value) ?? translateDesignDynamic(value) ?? translateCopilotDynamic(value) ?? translatePlasmidDynamic(value) ?? translateDynamic(value);
   // Sample messages come last, so their general patterns never take over text another module already translates.
   const translated = dynamic === value ? translateSamplesDynamic(value) ?? translateInventoryDynamic(value) ?? translateScheduleDynamic(value) ?? value : dynamic;
   return translated === value ? input : `${leading}${translated}${trailing}`;

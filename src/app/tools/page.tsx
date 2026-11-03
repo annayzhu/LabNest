@@ -4,6 +4,7 @@ import { ToolsCatalog } from "@/components/ToolsCatalog";
 import { labToolManifest, type LabToolManifestItem } from "@/lib/tool-manifest";
 
 const toolOrder = [
+  "plasmid-workbench",
   "free-plate-layout",
   "qpcr-plate-layout",
   "cnv-plate-layout",

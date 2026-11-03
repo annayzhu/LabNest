@@ -12,6 +12,7 @@ import {
   Dna,
   Eye,
   Grid3X3,
+  Orbit,
   Table2,
   Wrench,
   X,
@@ -33,6 +34,7 @@ const defaultToolPresentation: ToolPresentation = {
 };
 
 const toolPresentation: Partial<Record<string, ToolPresentation>> = {
+  "plasmid-workbench": { icon: Orbit, iconClassName: "bg-action-surface text-moss", tileClassName: "md:col-span-2 xl:col-span-2" },
   calculator: { icon: Calculator, iconClassName: "bg-action-surface text-moss", tileClassName: "md:col-span-2 xl:col-span-4" },
   "free-plate-layout": { icon: Table2, iconClassName: "bg-action-surface text-moss", tileClassName: "md:col-span-2 xl:col-span-2" },
   "qpcr-plate-layout": { icon: Grid3X3, iconClassName: "bg-action-surface text-moss", tileClassName: "xl:col-span-1" },
@@ -42,7 +44,7 @@ const toolPresentation: Partial<Record<string, ToolPresentation>> = {
   "cnv-analysis": { icon: Binary, iconClassName: "bg-action-surface text-moss", tileClassName: "xl:col-span-1" },
 };
 
-const categoryOrder: LabToolCategory[] = ["Planning", "Calculators", "Analysis"];
+const categoryOrder: LabToolCategory[] = ["Molecular", "Planning", "Calculators", "Analysis"];
 
 function ToolPreviewModal({ tool, onClose }: { tool: LabToolManifestItem; onClose: () => void }) {
   const closeRef = useRef<HTMLButtonElement>(null);

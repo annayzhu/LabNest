@@ -1,0 +1,52 @@
+LOCUS       SIM-ORI-PLUS       500 bp ds-DNA     circular SYN 02-NOV-2026
+DEFINITION  软件测试用模拟序列 A04, plus-strand CDS across the origin.
+ACCESSION   .
+VERSION     .
+KEYWORDS    .
+SOURCE      synthetic DNA construct
+  ORGANISM  synthetic DNA construct
+COMMENT     软件测试用模拟序列. Not a real construct or result.
+FEATURES             Location/Qualifiers
+     CDS             join(451..500,1..70)
+                     /codon_start=1
+                     /label="SIM origin CDS plus"
+ORIGIN
+        1 cggccggaca cacggaatgt ttatcgagct ccatgccgtg gaagctcagc tgctcagctt
+       61 cagactgtga gctgagcgtc atgcagggac tagacaatga atctccaagg agacgtgacc
+      121 agggtatcta aaccgtagtc gagtatgtcg cgcgcctgtt cgcagcttac tataggacag
+      181 cagtctcatc aggttagcaa ggcccaatgt aagccccgcc tccgggaccc gaagcacaga
+      241 ccgttcatgt tcagtacgtc ttgaaaggtt tgttgcctgc tgctacaagg ttcgacaacc
+      301 ggttaggccc cccagcgggc aaatatcgat acaggattgt gtgaaaacgg gtaccctgat
+      361 tcgttggtcc tggggtttcg gtctctccgt gtgactccgt ggattgcact gccgggaaaa
+      421 cttgaacgct gttcagaccc ggcgatgtaa atggtgatgc ccatggtcct gtggaagtgc
+      481 agaacccacc attacaaatt
+//
+LOCUS       SIM-ORI-MINUS      500 bp ds-DNA     circular SYN 02-NOV-2026
+DEFINITION  软件测试用模拟序列 A04, minus-strand features.
+ACCESSION   .
+VERSION     .
+KEYWORDS    .
+SOURCE      synthetic DNA construct
+  ORGANISM  synthetic DNA construct
+COMMENT     软件测试用模拟序列. Not a real construct or result.
+FEATURES             Location/Qualifiers
+     CDS             complement(join(461..500,1..80))
+                     /codon_start=1
+                     /label="SIM origin CDS minus"
+     CDS             complement(join(101..130,201..260))
+                     /codon_start=1
+                     /label="SIM two-exon minus"
+     CDS             <301..>350
+                     /codon_start=3
+                     /label="SIM partial codon_start 3"
+ORIGIN
+        1 ttgggaatcc agcagaacca ttgctggatg cccagacacc agactccctc cacgcaggct
+       61 ctacagcaca tgccgtacat tgtagacaat tagctatagg tcagtattta taaatacacc
+      121 agtggagcat cacgaagctc tagctcactc gtctcgctat gtaaacggag ttagcacgtg
+      181 ggtgcacaat tttacctccc catgggctta gctgtggtgt aggcgccgct agggatcatc
+      241 aggggtgtgc actcggtcat ctgcgctagg actttggcgg cacaagacgg tcccatccat
+      301 gaatggcctg gagcatcctg ctcgctagaa actcccagtg gcacgacatg cataatgaaa
+      361 cccccagtgg tctgactaat cgtcgttata ctgcatgccc cggtccggga cttgcccacg
+      421 agtggtgcaa tccatgatgg cgcgcgcacc ggcattaaga tcaccacatc actgtagcaa
+      481 agtttccata aggctgggtc
+//

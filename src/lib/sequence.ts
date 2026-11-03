@@ -4,7 +4,7 @@ export type SequenceValidationOptions = {
   allowTerminalDeoxythymidineOverhang?: boolean;
 };
 
-const dnaComplement: Record<string, string> = {
+export const dnaComplement: Record<string, string> = {
   A: "T",
   T: "A",
   G: "C",

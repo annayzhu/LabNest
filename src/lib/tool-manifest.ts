@@ -1,5 +1,5 @@
 import { visualizationStudioUrl } from "./visualization-link";
-export type LabToolCategory = "Planning" | "Calculators" | "Analysis";
+export type LabToolCategory = "Molecular" | "Planning" | "Calculators" | "Analysis";
 
 export type LabToolManifestItem = {
   id: string;
@@ -94,5 +94,16 @@ export const labToolManifest: LabToolManifestItem[] = [
     produces: ["SVG", "600 dpi PNG", "reproducible config"],
     launchUrl: visualizationStudioUrl(process.env.VISUALIZATION_STUDIO_URL) ?? "/tools/visualization",
     external: Boolean(visualizationStudioUrl(process.env.VISUALIZATION_STUDIO_URL)),
+  },
+  {
+    id: "plasmid-workbench",
+    name: "Plasmid Workbench",
+    version: "0.1",
+    category: "Molecular",
+    description: "Open plasmid maps and Sanger reads, look through features, and save a sequence to a plasmid in inventory.",
+    accepts: ["FASTA", "GenBank", "SnapGene .dna", "Sanger .ab1", ".seq"],
+    produces: ["plasmid map", "sequence version", "FASTA / GenBank export"],
+    launchUrl: "/tools/plasmid",
+    external: false,
   },
 ];

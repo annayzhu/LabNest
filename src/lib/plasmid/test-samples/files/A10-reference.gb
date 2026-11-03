@@ -1,0 +1,79 @@
+LOCUS       SIM-SRGN-3xFLAG   2949 bp ds-DNA     circular SYN 02-NOV-2026
+DEFINITION  软件测试用模拟序列: SRGN signal peptide, 3xFLAG, mature SRGN (protein from UniProt P10124).
+ACCESSION   .
+VERSION     .
+KEYWORDS    .
+SOURCE      synthetic DNA construct
+  ORGANISM  synthetic DNA construct
+COMMENT     软件测试用模拟序列. Not a real construct or result.
+FEATURES             Location/Qualifiers
+     CDS             607..1149
+                     /codon_start=1
+                     /label="SIM SRGN signal-3xFLAG-mature"
+                     /translation="MMQKLLKCSRLVLALALILVLESSVQGDYKDHDGDYKDHDIDYK
+                     DDDDKYPTRRARYQWVRCNPDSNSANCLEEKGPMFELLPGESNKIPRLRTDLFPKTRI
+                     QDLNRIFPLSEDYSGSGFGSGSGSGSGSGSGFLTEMEQDYQLVDESDAFHDNLRSLDR
+                     NLPSDSQDLGQHGLEEDFML"
+     sig_peptide     607..687
+                     /label="SRGN signal peptide 1-27"
+     misc_feature    688..753
+                     /label="3xFLAG"
+     mature_peptide  754..1146
+                     /label="SRGN mature chain 28-158"
+     variation       764
+                     /replace="a"
+                     /note="R31Q, UniProt VAR_032761 natural variant"
+     misc_feature    complement(1801..2300)
+                     /label="SIM backbone reverse"
+ORIGIN
+        1 ggggtgaggc ctcggaaccc gaggctttcg cagtcagcgg tattcaatcg cggagacgtc
+       61 ccagctcgct aaggaccttg ctgccgatcc aagggaggtt gggcaggtga agtctctgac
+      121 gcgagcagca tttactggga ccataatggt ttaagccgaa cccgccgctc cagcggaaat
+      181 atagtgtaag aacatgggtg ctaaagagtt gtagtctatc ttcccaaaat ggatatcacc
+      241 acatgctcgg cgtcccaaga agaactgggc ttcgaaggat tatcggttca cggagactct
+      301 gaaaatcgcc gtgtgtgcct agcggagcca tcagcaaact ctccgacgtg gtgaaaataa
+      361 atgacaatca aacgattaca aacttctccg ggcgccctcg agagatgatc caatagttat
+      421 cgccaacacg caggttacag cagcagaaaa aacgctggcg ctctaatcat tcaacagggg
+      481 attgaccgtt acctgcaggc tctaagtcca cttcccccga cataagaatg ataaaaattt
+      541 ggtcacaccc atctgaggac gtcgcagtaa cccttccagc caagagctta cccatagagg
+      601 gccaccatga tgcagaagct gctcaaatgc agcagactgg tgctcgccct ggctctcatc
+      661 ctggtcctcg agtccagcgt gcaaggcgac tacaaggatc acgacggaga ttataaagac
+      721 catgatattg actacaagga tgacgatgac aaatatccca cccggagagc ccggtaccag
+      781 tgggtcagat gtaaccctga ttccaatagc gctaactgcc tggaagagaa gggccccatg
+      841 ttcgaactcc tgcctggaga gtccaataaa atcccccggc tcagaacaga cctgtttcct
+      901 aagacccgga ttcaagatct caacagaatc ttccccctga gcgaagacta ttccggcagc
+      961 ggatttggct ccggaagcgg ctccggaagc ggctccggaa gcggcttcct cacagagatg
+     1021 gaacaggatt accaactggt ggacgagtcc gatgcctttc acgacaatct ccggagcctg
+     1081 gatagaaacc tcccttccga cagccaggat ctgggacaac atggcctcga agaggacttc
+     1141 atgctgtgag cctagctggg gaccgcgggt agtggaagac caactgtaaa gtgaccactc
+     1201 cagctcatga acgttagggt gtcatgaaac ggcgggcata gtttcctggt acgccggtaa
+     1261 gggtaatgcc ggtccaagat gtcagtgcca cgagagtttc tgctaggtca aggtcactgg
+     1321 tgagaaggca acagtgagaa ccaataataa taatggtttt acctaagcca cgatcacata
+     1381 gcttatacta atggggcgtt cttaagatgg gcttctaaac gcaggtctat aagctttgtt
+     1441 attcggtcgc gatataagag tttcttggcc gcgtacgcct ctgcaatact gtcgtggagc
+     1501 acctgactgc ccttccccag aagccgcttt cgtccaggtc cccattacct cttaccaaaa
+     1561 acatacgcct cggcggtatt gataatactg tatagtattc ctgagctatt tgctctacca
+     1621 cagcgataac taagatactt gattatgaat gctaacgcgc acccacctct agcgggtctg
+     1681 atctcaacgg ataagtggaa aataatttgc gtggcgttgt ttgtaaataa cccgtcaacc
+     1741 ttggagctga tcagccaact cggtttctct cggactaatt tcaattgcgg ttgcaatgga
+     1801 taccttaaaa atcggtctag ggtgccatga gaaggggacc ctatcgggca taggagcatg
+     1861 acactttgat caatatatca gcttagctct tacgtggaaa gcaattccag attacatttg
+     1921 attgttgcag aattgatcca aataccttcc gcgattagat ggggtttagt agagtgtaca
+     1981 cacgatacga cgtgttttct aatcctaaga taatttctct taggtagcca cctgggtaga
+     2041 cagctagact tagcagatca gtgacctttg caccggggag gttgctcaga agagtgaaag
+     2101 ggaagcgagg ggtgaaagca aatggcctgc tagaggccag ctcagcaagg ccgcatcttc
+     2161 ttggtaacgc ttctgattta aagtctaatg taccataaca cagcgtgcgc ctcgttgcga
+     2221 tatagtggat atcgtcgggt aagacaacgg attggcggag tagactaagg ctgcttgccg
+     2281 gcatttcttc cctcctagac ccgccagaag gaggatcagg aacgcaattc cacttagacc
+     2341 gtctatgata aagtttgtca agatatgact taatcggaca agacgtgctg tgatagttgt
+     2401 gccaccggaa gagtttggga cattgccgcc cccttcccgc tgttgttcca tgggggggcc
+     2461 cagtggtgca ctgtgtacct gaaatccaaa agagccattt gcaagtagca cacttcagcc
+     2521 gatatagtgg acgggagctg atccaggggc cgtcgacttg aaattaagca tccggtgtta
+     2581 aacaggcacc acacgtggag cctgtatagt ttcccgcgcg gctttccggg atatctaacc
+     2641 tctggtctac gtgtctggcc tgagcagcct ggacaactcg ccggtctcag ccaaggcacc
+     2701 gcccccgctt tgatcgcgtc catgaacctt ggacggagag cttcttcccg cacggcacaa
+     2761 gatgatggag cagcaacacc cgacgctcca ctattggcca agctagttca agtcacgcga
+     2821 ttcagtctac ccacgggcaa gcacgttcct caactcagag cttctccaga ggggatttgt
+     2881 caaaggtccg gccgctggcc ttaggtttgc ggcgcgtatt tgttggcgcc cgtcaaaaca
+     2941 ccccagact
+//

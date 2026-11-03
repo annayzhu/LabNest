@@ -280,6 +280,8 @@ enum SequenceValidationStatus {
 enum SequenceTopology {
   linear
   circular
+  /// FASTA and plain sequences say nothing about topology (F12).
+  unknown
 }
 
 enum SequenceStrandedness {
@@ -293,6 +295,17 @@ enum SequenceSourceType {
   fasta_import
   csv_import
   xlsx_import
+  genbank_import
+  snapgene_import
+  abif_import
+  seq_import
+}
+
+/// 序列完整性 (F12): a Sanger read is never taken as the whole molecule.
+enum SequenceCompleteness {
+  full_length
+  partial
+  unknown
 }
 
 enum SequenceCollectionType {
@@ -734,6 +747,7 @@ model Entity {
   inventoryItems    InventoryItem[]
   inventoryProducts InventoryProduct[]
   sequenceLinks     EntitySequenceLink[]
+  sequencingFolders SequencingFolder[]
   results           Result[]
 
   @@index([type])
@@ -1389,6 +1403,7 @@ model SequenceVersion {
   sequence          String
   checksum          String
   topology          SequenceTopology         @default(linear)
+  completeness      SequenceCompleteness     @default(unknown)
   strandedness      SequenceStrandedness     @default(unknown)
   orientation       String                   @default("5to3")
   validationStatus  SequenceValidationStatus @default(unverified)
@@ -1499,12 +1514,64 @@ model SequenceFeature {
   sequenceVersion   SequenceVersion @relation(fields: [sequenceVersionId], references: [id], onDelete: Cascade)
   name              String
   type              String
+  /// Overall span, 1-based and closed; `segmentsJson` holds the exact parts.
   start             Int
   end               Int
   strand            String?
   note              String?
+  /// [{start, end, openStart?, openEnd?}] 0-based, half-open, in biological order (joins, origin crossing).
+  segmentsJson      Json?
+  codonStart        Int?
+  qualifiersJson    Json?
+  color             String?
+  /// file | user | reference-match | prediction (F03, F12)
+  evidence          String          @default("file")
+  sourceLabel       String?
+  order             Int             @default(0)
 
   @@index([sequenceVersionId])
+}
+
+/// 测序资料夹 (Q273): one import of sequencing files; it need not belong to a plasmid yet.
+model SequencingFolder {
+  id        String           @id @default(cuid())
+  name      String
+  notes     String?
+  entityId  String?
+  entity    Entity?          @relation(fields: [entityId], references: [id], onDelete: SetNull)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  reads     SequencingRead[]
+
+  @@index([entityId])
+}
+
+/// One Sanger read. The original file stays an attachment; trace channels are read from it when needed.
+model SequencingRead {
+  id            String           @id @default(cuid())
+  folderId      String
+  folder        SequencingFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  attachmentId  String?
+  relativePath  String
+  memberPath    String?
+  format        String
+  name          String
+  bases         String
+  /// Phred values, or null when the file provides none (未提供).
+  qualityJson   Json?
+  peaksJson     Json?
+  fileSha256    String
+  basesSha256   String
+  /// Reads in one group (copies, paired exports, same bases) count as one piece of evidence.
+  evidenceGroup String
+  metadataJson  Json?
+  warningsJson  Json?
+  parserVersion String
+  order         Int              @default(0)
+  createdAt     DateTime         @default(now())
+
+  @@index([folderId, order])
+  @@index([fileSha256])
 }
 
 model SequenceModification {

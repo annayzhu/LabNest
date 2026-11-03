@@ -2,16 +2,17 @@ import { describe, expect, it, vi } from "vitest";
 import { labToolManifest } from "./tool-manifest";
 
 describe("lab tool manifest", () => {
-  it("lists the six studios plus Calculator in the requested groups", () => {
-    expect(labToolManifest).toHaveLength(7);
+  it("lists the six studios, Calculator and the plasmid workbench in the requested groups", () => {
+    expect(labToolManifest).toHaveLength(8);
+    expect(labToolManifest.filter((tool) => tool.category === "Molecular")).toHaveLength(1);
     expect(labToolManifest.filter((tool) => tool.category === "Planning")).toHaveLength(3);
     expect(labToolManifest.filter((tool) => tool.category === "Calculators")).toHaveLength(1);
     expect(labToolManifest.filter((tool) => tool.category === "Analysis")).toHaveLength(3);
   });
 
-  it("opens all six bundled tools in the current LabNest deployment", () => {
+  it("opens all seven bundled tools in the current LabNest deployment", () => {
     const bundledTools = labToolManifest.filter((tool) => tool.id !== "visualization-studio");
-    expect(bundledTools).toHaveLength(6);
+    expect(bundledTools).toHaveLength(7);
     for (const tool of bundledTools) {
       expect(tool.launchUrl).toMatch(/^\/tools\//);
       expect(tool.external).toBe(false);
@@ -26,6 +27,11 @@ describe("lab tool manifest", () => {
 
   it("connects Calculator to its internal catalog", () => {
     expect(labToolManifest.find((tool) => tool.id === "calculator")?.launchUrl).toBe("/tools/calculator");
+  });
+
+  it("keeps the editors' default tool first and opens the plasmid workbench in the app", () => {
+    expect(labToolManifest[0].id).toBe("qpcr-plate-layout");
+    expect(labToolManifest.find((tool) => tool.id === "plasmid-workbench")?.launchUrl).toBe("/tools/plasmid");
   });
 });
 

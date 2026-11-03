@@ -124,6 +124,9 @@ export default async function InventoryProductPage({ params }: { params: Promise
 
             {sequenceKind(product.type?.key) || sequences.length ? (
               <Panel title="Sequences">
+                {product.type?.key === "plasmid" ? (
+                  <Link href={`/tools/plasmid?product=${product.id}`} className="mb-3 inline-flex text-sm font-medium text-moss underline-offset-2 hover:underline">Open in the plasmid workbench</Link>
+                ) : null}
                 <ProductSequences productId={product.id} strands={sequences} />
               </Panel>
             ) : null}

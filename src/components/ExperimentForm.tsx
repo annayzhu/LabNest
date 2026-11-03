@@ -7,7 +7,7 @@ import { isRecordLocked } from "@/lib/record-lifecycle";
 import { labDate } from "@/lib/lab-time";
 import { newClientMutationId } from "@/lib/client-mutation-id";
 import { runProgressFromSource, structuredRunView } from '@/lib/structured-run';
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { ExperimentProtocolPicker, type ExperimentProtocolVersionOption } from "@/components/ExperimentProtocolPicker";
 import { ScientificDocumentEditor } from "@/components/ScientificDocumentEditor";
@@ -46,7 +46,7 @@ export function ExperimentForm({ intro, action, plans, protocolVersions = [], in
     executionPlan?: unknown; executionParameters?: unknown; protocolSnapshotJson?: unknown; selectedProtocolVersionIds?: string[]; steps?: StepOption[]; document: ScientificDocument;
   };
 }) {
-  const [creationKey]=useState(()=>newClientMutationId());
+  const [creationKey,setCreationKey]=useState(()=>newClientMutationId());
   const [state, formAction, pending] = useActionState(action, initialState);
   const initialPlan = initial.researchPlanId ?? "";
   const [planId, setPlanId] = useState(initialPlan);
@@ -64,6 +64,12 @@ export function ExperimentForm({ intro, action, plans, protocolVersions = [], in
   const [recordStatus, setRecordStatus] = useState(initial.recordStatus ?? "draft");
   const [purpose, setPurpose] = useState(initial.purpose ?? "");
   const [customChecklistEnabled, setCustomChecklistEnabled] = useState(false);
+  const [restoredProtocols,setRestoredProtocols]=useState<string[]|undefined>();
+  useEffect(()=>{try{const saved=JSON.parse(localStorage.getItem(`labnest:qpcr-record:experiment:${initial.id ?? new URLSearchParams(location.search).get('qpcrDraft')}`) ?? '{}').form;if(!saved)return;
+    for(const [key,setter] of Object.entries({title:setTitle,runCodeSuffix:setRunCodeSuffix,date:setDate,status:setStatus,recordStatus:setRecordStatus,purpose:setPurpose,creationKey:setCreationKey}))if(typeof saved[key]==='string')setter(saved[key]);
+    if(!initial.id && ['protocol','custom'].includes(saved.methodMode))setMethodMode(saved.methodMode);
+    if(saved.protocolVersionIds){const ids=Array.isArray(saved.protocolVersionIds)?saved.protocolVersionIds:[saved.protocolVersionIds];setRestoredProtocols(ids);setSelectedIds(ids);}
+  }catch{}},[initial.id]);
   const statusSummary = `${status} · ${recordStatus}`;
   const identifier = initial.runCode ?? (runCodeSuffix ? `EXP-${runCodeSuffix}` : "Draft Experiment");
   const lockedMethodMode = initialSelectedIds.length ? "protocol" : "custom";
@@ -102,7 +108,7 @@ export function ExperimentForm({ intro, action, plans, protocolVersions = [], in
         <button type="button" aria-pressed={methodMode === "custom"} onClick={() => setMethodMode("custom")} className="focus-ring">Write my own steps</button>
       </div></div>
         {methodMode === "protocol" ? <>
-        <ExperimentProtocolPicker versions={[...protocolVersions].sort((a,b)=>Number(b.researchPlanIds?.includes(planId)??false)-Number(a.researchPlanIds?.includes(planId)??false))} initialSelectedIds={initialSelectedIds} onSelectionChange={setSelectedIds} />
+        <ExperimentProtocolPicker key={restoredProtocols?.join(",") ?? "initial"} versions={[...protocolVersions].sort((a,b)=>Number(b.researchPlanIds?.includes(planId)??false)-Number(a.researchPlanIds?.includes(planId)??false))} initialSelectedIds={restoredProtocols ?? initialSelectedIds} onSelectionChange={setSelectedIds} />
       </> : <>
         <label className="flex items-start gap-2.5 text-sm">
           <input

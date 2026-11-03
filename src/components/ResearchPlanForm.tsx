@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useId, useState } from "react";
+import { useActionState, useEffect, useId, useState } from "react";
 import { ScientificDocumentEditor } from "@/components/ScientificDocumentEditor";
 import { DocumentEditorLayout } from "@/components/DocumentEditorLayout";
 import { RecordCodeField } from "@/components/RecordCodeField";
@@ -59,6 +59,13 @@ export function ResearchPlanForm({
   const [objective, setObjective] = useState(initial.objective ?? "");
   const [hypothesis, setHypothesis] = useState(initial.hypothesis ?? "");
   const [rationale, setRationale] = useState(initial.rationale ?? "");
+  const [restoredProtocols,setRestoredProtocols]=useState<string[]|undefined>();
+  const [restoredPrimary,setRestoredPrimary]=useState<string|undefined>();
+  useEffect(()=>{try{const saved=JSON.parse(localStorage.getItem(`labnest:qpcr-record:research_plan:${initial.id ?? new URLSearchParams(location.search).get('qpcrDraft')}`) ?? '{}').form;if(!saved)return;
+    for(const [key,setter] of Object.entries({title:setTitle,projectId:setProjectId,status:setStatus,codeSuffix:setCodeSuffix,objective:setObjective,hypothesis:setHypothesis,rationale:setRationale}))if(typeof saved[key]==='string')setter(saved[key]);
+    if(saved.protocolIds)setRestoredProtocols(Array.isArray(saved.protocolIds)?saved.protocolIds:[saved.protocolIds]);
+    if(saved.primaryProtocolId)setRestoredPrimary(saved.primaryProtocolId);
+  }catch{}},[initial.id]);
   const project = projects.find((item) => item.id === projectId);
   const statusLabel = researchPlanStatusOptions.find((option) => option.value === status)?.label ?? status;
   const identifier = initial.code ?? (codeSuffix ? `RP-${codeSuffix}` : "Draft Research Plan");
@@ -87,7 +94,7 @@ export function ResearchPlanForm({
           <Disclosure title="Scientific premise" summary={objective.trim() || "Objective, hypothesis, rationale"} defaultOpen={Boolean(objective.trim() || hypothesis.trim() || rationale.trim())}>
             <ResearchPlanPremiseEditor objective={objective} hypothesis={hypothesis} rationale={rationale} onObjectiveChange={setObjective} onHypothesisChange={setHypothesis} onRationaleChange={setRationale} />
           </Disclosure>
-          <ResearchPlanProtocolPicker workspaceId={workspaceId} protocols={protocols} initialSelectedIds={initial.selectedProtocolIds} initialPrimaryProtocolId={initial.primaryProtocolId} />
+          <ResearchPlanProtocolPicker key={restoredProtocols?.join(",") ?? "initial"} workspaceId={workspaceId} protocols={protocols} initialSelectedIds={restoredProtocols ?? initial.selectedProtocolIds} initialPrimaryProtocolId={restoredPrimary ?? initial.primaryProtocolId} />
         </aside>
       </DocumentEditorLayout>
       <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">

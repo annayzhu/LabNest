@@ -59,7 +59,7 @@ export function QpcrRecordIntegration({ owner, title, document, onChange, childr
         draftContext.current=context;query.set('qpcrDraft',key);history.replaceState(null,'',location.pathname+'?'+query);setNewRecordKey(key);setDraftId('');
     },[owner.ownerId,owner.ownerType,owner.experimentId,owner.researchPlanId]);
     const storageKey = `labnest:qpcr-record:${owner.ownerType}:${owner.ownerId ?? newRecordKey}`;
-    const formValues = useCallback(() => Object.fromEntries(new FormData(host.current?.closest('form') ?? undefined).entries()), []);
+    const formValues = useCallback(() => {const data=new FormData(host.current?.closest('form') ?? undefined);return Object.fromEntries([...new Set(data.keys())].map(key=>[key,data.getAll(key).length>1?data.getAll(key):data.get(key)]));}, []);
     useEffect(() => {
         if(!owner.ownerId && !newRecordKey)return;
         let saved: {

@@ -34,3 +34,5 @@ LabNest:234 test files passed;1,971 tests passed,7 skipped. Typecheck passed. An
 Focused code reviews found2 standards-axis lifecycle issues and5 spec-axis issues (one overlapping). Fixed and reviewers marked all original findings resolved at source-review level. Browser regression additionally passed distinct new drafts, saved-plan cleanup, and preservation of unfinished edits across two output blocks. Analysis inputs now retain stable ID/name separation, applied-input revision and supplied-source provenance.
 
 Design review report: both visual fixes resolved; scope-limited disposition ship. All reports refer to synthetic test data.
+
+Plan metadata restoration was additionally verified through the visible metadata drawer: title, selected project and manual document survive refresh, then formal save clears the draft. Experiment drafts restore controlled title/date/status/method fields and protocol selection. Repeated form values are retained as arrays. Final host suite remains1,971 passed/7 skipped; typecheck passes.

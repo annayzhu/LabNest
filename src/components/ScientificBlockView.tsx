@@ -1,3 +1,4 @@
+import { QpcrOutput } from "./QpcrOutput";
 import { ProtocolRichTextContent } from "./ProtocolDocumentView";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -8,6 +9,7 @@ import { ExecutionStepLine } from "./ExecutionRecordSteps";
 import type { ScientificContentBlock } from "@/lib/scientific-document";
 
 export function ScientificBlockView({ block }: { block: ScientificContentBlock }) {
+  if (block.type === "qpcr") return <QpcrOutput block={block} />;
   if (block.execution) {
     const execution=block.execution;
     if(execution.role==="group")return execution.index!==undefined

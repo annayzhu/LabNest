@@ -41,6 +41,7 @@ async function persistNewResult(formData: FormData) {
   const data = fields(formData);
   return prisma.$transaction((tx) => createResultInTransaction(tx, {
     experimentId: data.parsed.experimentId,
+    qpcrDraftId: optionalText(formData.get("qpcrDraftId")),
     title: data.parsed.title,
     resultType: data.parsed.resultType,
     recordStatus: data.parsed.recordStatus,
@@ -78,7 +79,7 @@ export async function createResult(
   revalidatePath("/results");
   revalidatePath(`/experiments/${saved.experimentId}`);
   if (saved.researchPlanId) revalidatePath(`/research-plans/${saved.researchPlanId}`);
-  redirect(`/results/${saved.resultId}`);
+  redirect(`/results/${saved.resultId}${formData.get("qpcrDraftId") ? `?qpcrSaved=${encodeURIComponent(String(formData.get("qpcrDraftId")))}${formData.get("printAfterSave") === "1" ? "&print=1" : ""}` : formData.get("printAfterSave") === "1" ? "?print=1" : ""}`);
 }
 
 async function persistResultUpdate(formData: FormData) {
@@ -136,7 +137,7 @@ export async function updateResult(
   revalidatePath("/results");
   revalidatePath(`/results/${saved.resultId}`);
   if (saved.experimentId) revalidatePath(`/experiments/${saved.experimentId}`);
-  redirect(`/results/${saved.resultId}`);
+  redirect(`/results/${saved.resultId}${formData.get("qpcrDraftId") ? `?qpcrSaved=${encodeURIComponent(String(formData.get("qpcrDraftId")))}${formData.get("printAfterSave") === "1" ? "&print=1" : ""}` : formData.get("printAfterSave") === "1" ? "?print=1" : ""}`);
 }
 
 export async function archiveResult(

@@ -1,5 +1,6 @@
 "use client";
 
+import { QpcrOutput, QpcrEditContext } from "./QpcrOutput";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useI18n } from "@/components/I18nProvider";
 import { newClientMutationId } from "@/lib/client-mutation-id";
@@ -33,7 +34,7 @@ import { scientificSectionAnchorId } from "@/lib/document-outline";
 import { scientificDocumentToTiptap, tiptapToScientificDocument } from "@/lib/scientific-tiptap";
 import { createDocumentBlockLineHeightExtension, createDocumentLegacyAttributesExtension, createDocumentSectionExtension, createDocumentWidgetExtension, createResizableDocumentTableExtension } from "@/lib/tiptap-document-extensions";
 
-type ScientificWidgetBlock = Extract<ScientificContentBlock, { type: "callout" | "metric" | "media" | "dataset" }>;
+type ScientificWidgetBlock = Extract<ScientificContentBlock, { type: "callout" | "metric" | "media" | "dataset" | "qpcr" }>;
 
 function uniqueBlockId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -45,6 +46,7 @@ export const ScientificSectionAddons = createContext<Record<string, ReactNode>>(
 function ScientificSectionNodeView({ node }: NodeViewProps) {
   const { t } = useI18n();
   const addon = useContext(ScientificSectionAddons)[node.attrs.sectionKey];
+  const openQpcr = useContext(QpcrEditContext);
   // Section titles are stored in English; the page translator skips editable content, so translate here.
   return <NodeViewWrapper as="section" id={scientificSectionAnchorId(node.attrs.sectionKey)} className="ln-protocol-section ln-scientific-section" data-section-key={node.attrs.sectionKey}>
     <header className="ln-protocol-section-heading" contentEditable={false}>
@@ -52,6 +54,7 @@ function ScientificSectionNodeView({ node }: NodeViewProps) {
       <h2 style={node.attrs.titleFontSizePt ? {fontSize: `${node.attrs.titleFontSizePt}pt`} : undefined}>{t(node.attrs.sectionTitle)}</h2>
       {node.attrs.sectionKey === "quality_limitations" ? <small>{t("Only record deviations, failed QC, missing data, or limits that change interpretation.")}</small> : null}
     </header>
+    {openQpcr && ["setup","material_methods","analysis"].includes(node.attrs.sectionKey) ? <button type="button" className="focus-ring qpcr-section-action" contentEditable={false} onClick={()=>openQpcr()}>{node.attrs.sectionKey === "analysis" ? "qPCR 分析" : "qPCR 板布局"}</button> : null}
     {addon ? <div className="ln-scientific-section-addon" contentEditable={false}>{addon}</div> : null}
     <NodeViewContent as="div" className="ln-protocol-section-content" />
   </NodeViewWrapper>;
@@ -59,6 +62,7 @@ function ScientificSectionNodeView({ node }: NodeViewProps) {
 
 function ScientificWidgetNodeView({ node, updateAttributes, selected }: NodeViewProps) {
   const block = node.attrs.block as ScientificWidgetBlock;
+  if (block.type === "qpcr") return <NodeViewWrapper contentEditable={false}><QpcrOutput block={block} /></NodeViewWrapper>;
   const updateBlock = (next: ScientificWidgetBlock) => updateAttributes({ block: next });
   return <NodeViewWrapper className={cn("ln-protocol-widget ln-scientific-widget", selected && "is-selected")} data-widget-type={block.type}>
     <div className="document-print-only"><ScientificBlockView block={block} /></div>
@@ -135,7 +139,8 @@ export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSection
   const hiddenSectionSignature = hiddenSectionKeys.join("\u0000");
   const previousHiddenSectionSignatureRef = useRef(hiddenSectionSignature);
   const onChangeRef = useRef(onChange);
-  const [inserts] = useState(() => scientificInserts(insertProfile));
+  const openQpcr = useContext(QpcrEditContext);
+  const inserts = [...scientificInserts(insertProfile), ...(openQpcr ? [{id:"qpcr",label:insertProfile === "scientific-result" ? "qPCR 分析" : "qPCR 板布局",hint:"",keywords:"qpcr 排板 分析",icon:BarChart3,insert:(editor:Editor)=>{ const anchorId=editor.state.selection.$from.parent.attrs.scientificBlockId; openQpcr(undefined,anchorId); }}] : [])];
   useEffect(() => { originalRef.current = document; }, [document]);
   useEffect(() => { hiddenSectionKeysRef.current = hiddenSectionKeys; }, [hiddenSectionSignature, hiddenSectionKeys]);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
@@ -168,6 +173,9 @@ export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSection
     },
     onUpdate: ({ editor: nextEditor }) => onChangeRef.current(tiptapToScientificDocument(nextEditor.getJSON(), originalRef.current)),
   });
+  useEffect(() => {
+    if (editor && JSON.stringify(tiptapToScientificDocument(editor.getJSON(),document)) !== JSON.stringify(document)) { let active=true; queueMicrotask(()=>{if(active&&!editor.isDestroyed)editor.commands.setContent(scientificDocumentToTiptap(document,hiddenSectionKeysRef.current),{emitUpdate:false});}); return ()=>{active=false;}; }
+  }, [document,editor]);
   useDocumentMediaUploads(editor, mediaDraftId);
   const commands = useCommandMenu(editor);
 

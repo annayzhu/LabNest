@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ScientificDocumentEditor } from "@/components/ScientificDocumentEditor";
 import { DocumentEditorLayout } from "@/components/DocumentEditorLayout";
@@ -92,6 +92,20 @@ export function ResultForm({ action, experiments, resultTypes, quickEntries = []
   const visibleValidation = template && (!initial.id || availableModules.length) ? liveValidation : validation;
   const document = useMemo(() => initial.legacyValuesPromoted ? initial.document : resultDocumentWithLegacyValues(initial.document, initial), [initial]);
 
+  useEffect(()=>{
+    try {
+      const saved=JSON.parse(localStorage.getItem(`labnest:qpcr-record:result:${initial.id ?? initial.experimentId ?? 'new'}`) ?? '{}').form;
+      if(!saved)return;
+      if(saved.title)setTitle(saved.title);
+      if(saved.experimentId)setExperimentId(saved.experimentId);
+      if(saved.resultType)setResultType(saved.resultType);
+      if(saved.sourceType)setSourceType(saved.sourceType);
+      if(saved.recordStatus)setRecordStatus(saved.recordStatus);
+      if(saved.qualityStatus)setQualityStatus(saved.qualityStatus);
+      if(saved.templateValuesJson){const values=JSON.parse(saved.templateValuesJson);setTemplateValues(normalizeResultValues(values));setDatasetValues(resultDatasetValuesFromResultValues(values));}
+    }catch{}
+  },[initial.id,initial.experimentId]);
+
   const missingModuleSelection = availableModules.length > 0 && selectedModuleIds.length === 0;
 
   return <form inert={pending} aria-busy={pending} action={formAction} onKeyDown={preventImplicitEnterSubmit} className="space-y-5">
@@ -110,7 +124,7 @@ export function ResultForm({ action, experiments, resultTypes, quickEntries = []
     {template && initial.templateProtocolVersionId ? <input type="hidden" name="templateProtocolVersionId" value={initial.templateProtocolVersionId} /> : null}
     {!template ? <><input type="hidden" name="templateInstanceKey" value="" /><input type="hidden" name="templateInstanceLabel" value="" /></> : null}
     <DocumentEditorLayout>
-      <div className="document-editor-main"><ScientificDocumentEditor initialDocument={document} documentType="Result" title={title} titlePlaceholder="Untitled Result" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Result" aria-label="Result title" />} headerFacts={availableModules.length ? [
+      <div className="document-editor-main"><ScientificDocumentEditor qpcrOwner={{ownerType:"result",ownerId:initial.id,experimentId}} initialDocument={document} documentType="Result" title={title} titlePlaceholder="Untitled Result" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Result" aria-label="Result title" />} headerFacts={availableModules.length ? [
         { label: "Experiment", value: experiment ? `${experiment.runCode ?? experiment.title} · ${experiment.project?.name ?? "No project"}` : "Not selected" },
       ] : [
         { label: "Experiment", value: experiment ? `${experiment.runCode ?? experiment.title} · ${experiment.project?.name ?? "No project"}` : "Not selected" },

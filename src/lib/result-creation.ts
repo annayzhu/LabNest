@@ -1,3 +1,5 @@
+import { scientificDocumentSchema } from './scientific-document';
+import { qpcrOutputs } from './qpcr-workflow';
 import type { Prisma } from "@/generated/prisma/client";
 import { associateDocumentMedia } from "@/lib/document-media.server";
 import type { RecordLifecycleStatus, ResultQualityStatus, ResultSourceType } from "@/generated/prisma/enums";
@@ -12,6 +14,7 @@ type ResultOrigin =
 
 export type ResultCreationRequest = {
   experimentId: string;
+  qpcrDraftId?: string;
   title: string;
   resultType: string;
   recordStatus: RecordLifecycleStatus;
@@ -42,6 +45,14 @@ export async function createResultInTransaction(
   tx: Prisma.TransactionClient,
   request: ResultCreationRequest,
 ) {
+  if (request.qpcrDraftId) {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${request.qpcrDraftId}))`;
+    const replay=await tx.result.findUnique({where:{clientMutationId:request.qpcrDraftId}});
+    if(replay){if(replay.experimentId!==request.experimentId)throw new Error('草稿归属不匹配');return {resultId:replay.id,experimentId:replay.experimentId,researchPlanId:replay.researchPlanId};}
+    const draft=await tx.qpcrWorkflowDraft.findUnique({where:{id:request.qpcrDraftId}});
+    if(draft && (draft.ownerType!=="result" || draft.ownerId || draft.experimentId!==request.experimentId)) throw new Error("草稿归属不匹配");
+    if(draft?.boundRecordId){const existing=await tx.result.findUniqueOrThrow({where:{id:draft.boundRecordId}});return {resultId:existing.id,experimentId:existing.experimentId,researchPlanId:existing.researchPlanId,attachmentCount:0};}
+  }
   const experiment = await tx.experiment.findUnique({
     where: { id: request.experimentId },
     select: {
@@ -129,6 +140,7 @@ export async function createResultInTransaction(
   const sourceMetadata = request.origin.kind === "structured_import" ? request.origin.sourceMetadata : {};
   const result = await tx.result.create({
     data: {
+      clientMutationId: request.qpcrDraftId,
       experimentId: experiment.id,
       projectId: experiment.projectId,
       researchPlanId: experiment.researchPlanId,
@@ -171,6 +183,14 @@ export async function createResultInTransaction(
   });
 
   await associateDocumentMedia(tx, request.contentJson, "result", result.id);
+  if(request.qpcrDraftId){
+    await tx.qpcrWorkflowDraft.updateMany({where:{id:request.qpcrDraftId},data:{boundRecordId:result.id}});
+    await tx.attachmentLink.updateMany({where:{targetType:"qpcr_draft",targetId:request.qpcrDraftId},data:{targetType:"result",targetId:result.id}});
+  }
+  const qpcrDocument=scientificDocumentSchema.safeParse(request.contentJson);
+  if(qpcrDocument.success)for(const block of qpcrOutputs(qpcrDocument.data))if(block.dataset){
+    await tx.resultDataset.create({data:{resultId:result.id,name:`qPCR · ${block.id} · r${block.revision}`,storageMode:'external_reference',externalUri:`/api/attachments/${block.dataset.attachmentId}`,rowCount:block.dataset.rowCount,columnCount:block.dataset.headers.length,columnsJson:jsonValue(block.dataset.headers.map((name,index)=>({name,index,inferredType:'text'}))),previewJson:jsonValue(block.dataset.preview),schemaJson:jsonValue({artifactId:block.id,revision:block.revision})}});
+  }
   const itemLinks: Prisma.ItemLinkCreateManyInput[] = [{
     sourceType: "result",
     sourceId: result.id,

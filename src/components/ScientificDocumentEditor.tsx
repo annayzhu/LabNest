@@ -1,5 +1,7 @@
 "use client";
 
+import { QpcrRecordIntegration } from "./QpcrRecordIntegration";
+import type { QpcrOwner } from "@/lib/qpcr-workflow";
 import { useId, useMemo, useState, type ReactNode } from "react";
 import { StandaloneDocumentEditorViewport } from "@/components/DocumentEditorViewport";
 import { DocumentPageHeader, type DocumentPageHeaderFact } from "@/components/DocumentPageHeader";
@@ -32,8 +34,10 @@ export function ScientificDocumentEditor({
   insertProfile,
   checklist,
   sectionAddons,
+  qpcrOwner,
 }: {
   initialDocument: ScientificDocument;
+  qpcrOwner?: QpcrOwner;
   name?: string;
   compact?: boolean;
   documentType?: string;
@@ -56,7 +60,7 @@ export function ScientificDocumentEditor({
   const outline = useMemo(() => scientificDocumentOutline(document, hiddenSectionKeys), [document, hiddenSectionKeys]);
   const actionsHostId = `${useId()}-scientific-document-actions`;
 
-  return <>
+  const content = <>
     <input type="hidden" name={name} value={serialized} />
     <StandaloneDocumentEditorViewport
         label={title?.trim() || "Structured scientific document editor"}
@@ -86,4 +90,5 @@ export function ScientificDocumentEditor({
         {trailingContent}
     </StandaloneDocumentEditorViewport>
   </>;
+  return qpcrOwner ? <QpcrRecordIntegration owner={qpcrOwner} title={title} document={document} onChange={setDocument}>{content}</QpcrRecordIntegration> : content;
 }

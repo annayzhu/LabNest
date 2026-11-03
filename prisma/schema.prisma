@@ -2108,3 +2108,16 @@ model InventoryDuplicateDismissal {
 
   @@id([firstId, secondId])
 }
+
+// A record editor draft retains its tool sessions until the record is formally saved.
+model QpcrWorkflowDraft {
+  id              String   @id
+  ownerType       String
+  ownerId         String?
+  experimentId    String?
+  documentJson    Json
+  formJson        Json     @default("{}")
+  sessionsJson    Json     @default("{}")
+  boundRecordId   String?
+  updatedAt       DateTime @updatedAt
+}

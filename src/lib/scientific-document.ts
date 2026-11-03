@@ -1,3 +1,4 @@
+import { qpcrOutputFields } from "./qpcr-workflow";
 import { protocolRichTextNodeSchema, richTextPlainText } from "./protocol-document";
 import {decodeDocumentTableToken} from "./document-table-token";
 import { stripParagraphLayoutMarkup } from "./document-paragraph-layout";
@@ -25,6 +26,7 @@ const baseBlockSchema = z.object({ id: z.string().min(1), execution: z.object({
 }).optional() });
 
 export const scientificContentBlockSchema = z.discriminatedUnion("type", [
+  baseBlockSchema.extend(qpcrOutputFields),
   baseBlockSchema.extend({ type: z.literal("heading"), text: z.string() }),
   baseBlockSchema.extend({ type: z.literal("text"), text: z.string() }),
   baseBlockSchema.extend({ type: z.literal("rich_text"), nodes: z.array(protocolRichTextNodeSchema) }),
@@ -254,7 +256,7 @@ export function normalizeScientificDocument(
   const sections = new Map(parsed.data.sections.map((section) => [section.key, section]));
   return {
     schemaVersion: 1,
-    sections: definitions.map(({ key, title, aliases }) => {
+    sections: [...definitions.map(({ key, title, aliases }) => {
       const existing = sections.get(key) ?? aliases?.map((alias) => sections.get(alias)).find(Boolean);
       return existing
         ? {
@@ -264,7 +266,7 @@ export function normalizeScientificDocument(
             blocks: existing.blocks.flatMap((block) => block.type === "text" ? scientificBlocksFromText(block.text, block.id) : [block]),
           }
         : { key, title, blocks: [] };
-    }),
+    }), ...parsed.data.sections.filter(section => !definitions.some(definition => definition.key === section.key || definition.aliases?.includes(section.key)))],
   };
 }
 

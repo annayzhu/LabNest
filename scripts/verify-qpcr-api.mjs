@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+const endpoint='http://127.0.0.1:3002/api/qpcr-workflow';
+const draftId=randomUUID(),id=randomUUID();
+const document={schemaVersion:1,sections:[{key:'analysis',title:'Analysis',blocks:[]},{key:'custom',title:'Notes',blocks:[{id:'manual',type:'text',text:'Preserve this observation'}]}]};
+const post=async body=>{const r=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});return {status:r.status,...await r.json()};};
+const payload={draftId,owner:{ownerType:'result'},document,session:{synthetic:true},output:{id,submissionId:randomUUID(),baseRevision:0,toolId:'qpcr-analysis',sectionKey:'analysis',label:'Synthetic output',images:[],table:{headers:['Sample','Value'],rows:[['S1','2']]},method:'Synthetic fixture'}};
+const first=await post(payload);assert.equal(first.status,200,JSON.stringify(first));
+const next=await post({...payload,document:first.document,output:{...payload.output,baseRevision:1,submissionId:randomUUID()}});assert.equal(next.block.revision,2);
+const replay=await post(payload);assert.equal(replay.status,200,JSON.stringify(replay));assert.equal(replay.document.sections[0].blocks.length,1);assert.equal(replay.document.sections[0].blocks[0].revision,2);
+const conflict=await post({...payload,document:first.document,output:{...payload.output,submissionId:randomUUID(),baseRevision:1}});assert.equal(conflict.status,409);
+assert.equal(next.document.sections[1].blocks[0].text,'Preserve this observation');
+console.log('PASS atomic revision, historical retry, stale conflict, custom text');

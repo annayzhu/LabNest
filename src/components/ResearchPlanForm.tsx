@@ -68,7 +68,7 @@ export function ResearchPlanForm({
       {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
     {initial.updatedAt ? <input type="hidden" name="expectedUpdatedAt" value={new Date(initial.updatedAt).toISOString()} /> : null}
       <DocumentEditorLayout>
-        <div className="document-editor-main"><div id={workspaceId} /><ScientificDocumentEditor initialDocument={initial.document} documentType="Research Plan" identifier={identifier} title={title} titlePlaceholder="Untitled Research Plan" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Research Plan" aria-label="Research Plan title" />} headerFacts={[
+        <div className="document-editor-main"><div id={workspaceId} /><ScientificDocumentEditor qpcrOwner={{ownerType:"research_plan",ownerId:initial.id}} initialDocument={initial.document} documentType="Research Plan" identifier={identifier} title={title} titlePlaceholder="Untitled Research Plan" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Research Plan" aria-label="Research Plan title" />} headerFacts={[
           { label: "Project", value: project?.name ?? "Not selected" },
           { label: "Status", value: status.replaceAll("_", " ") },
         ]} leadingContent={<div className="document-print-only"><ResearchPlanPremiseView objective={objective} hypothesis={hypothesis} rationale={rationale} /></div>} /></div>

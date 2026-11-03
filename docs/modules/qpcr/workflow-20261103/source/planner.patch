@@ -1,0 +1,312 @@
+From d95aea3c0b0385142ca062d892ed1e94f32954a8 Mon Sep 17 00:00:00 2001
+From: annayzhu <annazhuyun@gmail.com>
+Date: Tue, 3 Nov 2026 07:38:15 -0800
+Subject: [PATCH] feat: integrate planner outputs and full-plate workflow
+
+---
+ app/PlateViewport.tsx         | 20 +++-------
+ app/QpcrPlanner.tsx           | 29 +++++++++++++-
+ app/SampleFileImport.tsx      | 18 +++++++++
+ app/globals.css               | 13 +++++++
+ app/workflow-bridge.ts        | 71 +++++++++++++++++++++++++++++++++++
+ lib/workflowOutput.ts         | 26 +++++++++++++
+ tests/workflow-output.test.ts | 14 +++++++
+ 7 files changed, 175 insertions(+), 16 deletions(-)
+ create mode 100644 app/SampleFileImport.tsx
+ create mode 100644 app/workflow-bridge.ts
+ create mode 100644 lib/workflowOutput.ts
+ create mode 100644 tests/workflow-output.test.ts
+
+diff --git a/app/PlateViewport.tsx b/app/PlateViewport.tsx
+index 8b5e5fc..bab72fe 100644
+--- a/app/PlateViewport.tsx
++++ b/app/PlateViewport.tsx
+@@ -55,8 +55,8 @@ export function PlateViewport({
+   const viewportRef = useRef<HTMLDivElement>(null);
+   const gridRef = useRef<HTMLDivElement>(null);
+   const zoomRef = useRef(1);
+-  // Start at readable size. Fitting every well on screen is an explicit overview action.
+-  const fitRef = useRef(false);
++  // Fit the current complete plate until the user explicitly changes the scale.
++  const fitRef = useRef(true);
+   const dragRef = useRef<Drag | null>(null);
+   const suppressClickRef = useRef(false);
+   const cancelPercentRef = useRef(false);
+@@ -141,23 +141,13 @@ export function PlateViewport({
+         if (fitRef.current) fitPlate();
+       });
+     });
++    fitRef.current = true;
+     observer.observe(viewport);
+-    const wheel = (event: WheelEvent) => {
+-      if (!event.deltaY || dragRef.current) return;
+-      event.preventDefault();
+-      event.stopPropagation();
+-      fitRef.current = false;
+-      const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? viewport.clientHeight : 1);
+-      changeZoom(zoomRef.current * Math.exp(-Math.max(-150, Math.min(150, delta)) * 0.002), {
+-        x: event.clientX, y: event.clientY,
+-      });
+-    };
+-    // A native, non-passive listener prevents the page from scrolling during zoom.
+-    viewport.addEventListener("wheel", wheel, { passive: false });
++    requestAnimationFrame(fitPlate);
+     return () => {
+       observer.disconnect();
+       cancelAnimationFrame(resizeFrame);
+-      viewport.removeEventListener("wheel", wheel);
++
+     };
+   }, [fitPlate, changeZoom, rows, columns]);
+ 
+diff --git a/app/QpcrPlanner.tsx b/app/QpcrPlanner.tsx
+index 7204b4e..39a6f7f 100644
+--- a/app/QpcrPlanner.tsx
++++ b/app/QpcrPlanner.tsx
+@@ -1,4 +1,8 @@
+ "use client";
++import { SampleFileImport } from "./SampleFileImport";
++import { useWorkflowBridge } from "./workflow-bridge";
++import { plannerWorkflowOutput } from "@/lib/workflowOutput";
++import { serializePlannerSession, restorePlannerSession } from "@/lib/plannerSession";
+ 
+ import {
+   AlertTriangle,
+@@ -342,6 +346,20 @@ export function QpcrPlanner() {
+   useEffect(() => {
+     plannerSessionRef.current = plannerSession;
+   }, [plannerSession]);
++  const [mixCopied,setMixCopied]=useState(false);
++  const [copyFallback,setCopyFallback]=useState('');
++  const bridgeState=useMemo(()=>JSON.parse(serializePlannerSession(plannerSession)),[plannerSession]);
++  useWorkflowBridge(bridgeState,context=>{
++    if(context.state){const restored=restorePlannerSession(JSON.stringify(context.state));if(!restored.ok)throw new Error('方案格式不兼容');replacePlannerSession(restored.session);}
++    else if(context.samples?.length){const names=context.samples.map(sample=>sample.name);replacePlannerSession(createPlannerSession({samples:context.samples.map(sample=>({...sample,name:names.filter(name=>name===sample.name).length>1?`${sample.name} [${sample.id.slice(-6)}]`:sample.name}))}));}
++    setHydrated(true);
++  },()=>plannerWorkflowOutput(plannerSessionRef.current));
++  async function copyMix(){
++    try{const result=plannerWorkflowOutput(plannerSessionRef.current);const html='<table>'+result.mixTsv.split('\n').map(line=>line.split('\t')).map(row=>'<tr>'+row.map(cell=>'<td>'+cell.replaceAll('&','&amp;').replaceAll('<','&lt;')+'</td>').join('')+'</tr>').join('')+'</table>';
++      if(navigator.clipboard?.write && typeof ClipboardItem!=='undefined')await navigator.clipboard.write([new ClipboardItem({'text/plain':new Blob([result.mixTsv],{type:'text/plain'}),'text/html':new Blob([html+'<p>'+result.method+'</p>'],{type:'text/html'})})]);else await navigator.clipboard.writeText(result.mixTsv);
++      setMixCopied(true);setTimeout(()=>setMixCopied(false),2000);
++    }catch{try{setCopyFallback(plannerWorkflowOutput(plannerSessionRef.current).mixTsv);}catch{}}
++  }
+   const [draggedEntry, setDraggedEntry] = useState<DraggedEntry | null>(null);
+   const [dropTarget, setDropTarget] = useState<DraggedEntry | null>(null);
+   const [sampleInput, setSampleInput] = useState("");
+@@ -729,6 +747,7 @@ export function QpcrPlanner() {
+   );
+ 
+   useEffect(() => {
++    if (new URLSearchParams(location.search).has("session")) { setHydrated(true); return; }
+     const restoreTimer = window.setTimeout(() => {
+       try {
+         const restored = loadPlannerDraft(window.localStorage);
+@@ -2225,6 +2244,7 @@ export function QpcrPlanner() {
+                     }`,
+                   )}
+                 </button>
++                <SampleFileImport onImport={names=>setSamplePaste(names.join("\n"))}/>
+                 <form className="quick-fill-row" onSubmit={submitQuickSamples}>
+                   <input
+                     className="quick-fill-input"
+@@ -3269,7 +3289,7 @@ export function QpcrPlanner() {
+                 onClick={() => reactionDialogRef.current?.showModal()}
+               >
+                 <Calculator size={15} />
+-                {tr("反应体系", "Reaction setup")}
++                {tr("配液", "Reaction mix")}
+               </button>
+               </div>
+             </div>
+@@ -4042,7 +4062,14 @@ export function QpcrPlanner() {
+                       ))}
+                   </PlateViewport>
+ 
++                  <div className="workflow-mix-summary">
++                    <span>{tr(`全部 ${layout.plates.length} 板 · ${reactionCalculation.totalWells} 反应 · ${reactionCalculation.totals.recommendedReactionUl.toFixed(1)} µL（含余量）`, `All ${layout.plates.length} plates · ${reactionCalculation.totalWells} reactions · ${reactionCalculation.totals.recommendedReactionUl.toFixed(1)} µL with overage`)}</span>
++                    <button type="button" className="button button-soft" onClick={()=>reactionDialogRef.current?.showModal()}>{tr('查看配液','Reaction mix')}</button>
++                    <button type="button" className="button button-soft" disabled={settingsStale || !reactionCalculation.valid} onClick={()=>void copyMix()}>{mixCopied?tr('已复制','Copied'):tr('复制配液','Copy mix')}</button>
++                    {copyFallback?<label>{tr('复制文本','Copy text')}<textarea readOnly value={copyFallback} onFocus={event=>event.target.select()}/></label>:null}
++                  </div>
+                   <div
++                    hidden={!settingsStale && activeIssues.length === 0}
+                     className={`validation-bar ${
+                       activeInvalid
+                         ? "invalid"
+diff --git a/app/SampleFileImport.tsx b/app/SampleFileImport.tsx
+new file mode 100644
+index 0000000..dd20903
+--- /dev/null
++++ b/app/SampleFileImport.tsx
+@@ -0,0 +1,18 @@
++import { useState } from 'react';
++import XLSX from 'xlsx-js-style';
++export function SampleFileImport({ onImport }: {
++    onImport: (names: string[]) => void;
++}) {
++    const [rows, setRows] = useState<string[][]>([]), [column, setColumn] = useState(0), [header, setHeader] = useState(true), [error, setError] = useState('');
++    const names = rows.slice(header ? 1 : 0).map(row => row[column]?.trim()).filter(Boolean);
++    return <details className="workflow-sample-file"><summary>从文件导入样本</summary><input type="file" accept=".csv,.tsv,.txt,.xlsx" aria-label="样本名单文件" onChange={async (event) => { const file = event.target.files?.[0]; if (!file)
++        return; try {
++        const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array' });
++        setRows(XLSX.utils.sheet_to_json<unknown[]>(workbook.Sheets[workbook.SheetNames[0]], { header: 1, defval: '' }).map(row => row.map(String)));
++        setColumn(0);
++        setError('');
++    }
++    catch {
++        setError('文件无法读取，请选择 CSV、TSV 或 XLSX');
++    } }}/>{rows.length ? <><label><input type="checkbox" checked={header} onChange={event => setHeader(event.target.checked)}/>第一行为标题</label><label>样本名称列<select value={column} onChange={event => setColumn(Number(event.target.value))}>{rows[0].map((name, index) => <option key={index} value={index}>{index + 1} · {name}</option>)}</select></label><p>{names.length} 个样本 · {names.slice(0, 3).join('、')}</p><button type="button" className="button button-soft" disabled={!names.length} onClick={() => { onImport(names); setRows([]); }}>载入样本名称</button></> : null}{error ? <p role="alert">{error}</p> : null}</details>;
++}
+diff --git a/app/globals.css b/app/globals.css
+index 32363fa..ef0135b 100644
+--- a/app/globals.css
++++ b/app/globals.css
+@@ -3162,3 +3162,16 @@ select:focus-visible,
+     animation-iteration-count: 1 !important;
+   }
+ }
++
++/* Full plate first; ordinary scrolling continues to the mix below it. */
++.plate-scroll{height:clamp(220px,calc(100dvh - 395px),620px);min-height:220px;overscroll-behavior:auto}
++.workflow-mix-summary{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:12px 16px;border-top:1px solid var(--border);font-size:13px}
++.workflow-mix-summary>span{flex:1}.workflow-mix-summary>label{width:100%}.workflow-mix-summary textarea{width:100%;min-height:140px}
++@media(min-width:1181px){.workspace{grid-template-columns:320px minmax(0,1fr)}.plate-viewport-tools{position:static}.main-area{padding:16px}.plate-scroll{overflow:auto}.plate-view-help{display:none}}
++html:has(body .app-shell) .topbar .brand-subtitle{display:none}
++:root{--canvas:#f5f7f4;--surface:#fff;--surface-soft:#eef1ec;--surface-raised:#fafbf8;--ink:#202825;--ink-secondary:#4d5955;--ink-tertiary:#6f7a76;--border:#dfe5e1;--border-strong:#c8d2cd;--action:#3f625d;--action-hover:#34534f;--action-soft:#eaf1ef;--manual:#526d73;--focus:#3f625d;--radius-card:8px;--radius-control:6px;--shadow:none}
++html[data-labnest-embedded] .topbar,html[data-labnest-embedded] .app-footer{display:none}
++html[data-labnest-embedded] .workspace{height:100dvh}
++.validation-bar[hidden]{display:none!important}
++
++.workflow-sample-file{font-size:12px;margin:8px 0}.workflow-sample-file label{display:block;margin:8px 0}.workflow-sample-file input[type=checkbox]{width:auto}.workflow-sample-file input[type=file]{max-width:100%}
+diff --git a/app/workflow-bridge.ts b/app/workflow-bridge.ts
+new file mode 100644
+index 0000000..2a8d6ca
+--- /dev/null
++++ b/app/workflow-bridge.ts
+@@ -0,0 +1,71 @@
++import { useEffect, useRef } from 'react';
++export type WorkflowContext = {
++    sessionId: string;
++    state?: unknown;
++    samples?: Array<{
++        id: string;
++        name: string;
++        comparisonGroup?: string;
++        kind: 'sample';
++    }>;
++    layouts?: Array<{
++        id: string;
++        revision: number;
++        sessionAttachmentId: string;
++    }>;
++    title?: string;
++};
++export function useWorkflowBridge(state: unknown, restore: (context: WorkflowContext) => void, output: () => unknown | Promise<unknown>) {
++    const callbacks = useRef({ state, restore, output });
++    callbacks.current = { state, restore, output };
++    const sessionId = useRef('');
++    useEffect(() => {
++        if (window.parent === window)
++            return;
++        const send = (message: object) => window.parent.postMessage({ protocol: 'labnest-qpcr-v1', sessionId: sessionId.current, ...message }, window.location.origin);
++        const receive = async (event: MessageEvent) => {
++            if (event.origin !== location.origin || event.source !== window.parent || event.data?.protocol !== 'labnest-qpcr-v1')
++                return;
++            if (event.data.type === 'CONTEXT_INIT') {
++                sessionId.current = event.data.sessionId;
++                document.documentElement.dataset.labnestEmbedded = 'true';
++                let state = event.data.state;
++                if (!state)
++                    try {
++                        state = JSON.parse(localStorage.getItem(`labnest-qpcr:${sessionId.current}`) ?? 'null');
++                    }
++                    catch { }
++                try {
++                    callbacks.current.restore({ ...event.data, state });
++                    send({ type: 'CONTEXT_READY' });
++                }
++                catch (error) {
++                    send({ type: 'SAVE_ERROR', error: error instanceof Error ? error.message : '方案读取失败' });
++                }
++            }
++            if (event.data.type === 'REQUEST_DRAFT' && event.data.sessionId === sessionId.current)
++                send({ type: 'DRAFT_FLUSH', state: callbacks.current.state });
++            if (event.data.type === 'REQUEST_OUTPUT' && event.data.sessionId === sessionId.current)
++                try {
++                    const output = await callbacks.current.output();
++                    send({ type: 'OUTPUT_SUBMIT', state: callbacks.current.state, output });
++                }
++                catch (error) {
++                    send({ type: 'SAVE_ERROR', error: error instanceof Error ? error.message : '请检查当前输入' });
++                }
++        };
++        window.addEventListener('message', receive);
++        send({ type: 'TOOL_READY' });
++        return () => window.removeEventListener('message', receive);
++    }, []);
++    useEffect(() => {
++        if (!sessionId.current)
++            return;
++        const timer = setTimeout(() => { try {
++            localStorage.setItem(`labnest-qpcr:${sessionId.current}`, JSON.stringify(state));
++            window.parent.postMessage({ protocol: 'labnest-qpcr-v1', type: 'DRAFT_CHANGED', sessionId: sessionId.current, state }, location.origin);
++        }
++        catch { } }, 250);
++        return () => clearTimeout(timer);
++    }, [state]);
++}
+diff --git a/lib/workflowOutput.ts b/lib/workflowOutput.ts
+new file mode 100644
+index 0000000..37b3e19
+--- /dev/null
++++ b/lib/workflowOutput.ts
+@@ -0,0 +1,26 @@
++import { plannerSessionIsStale, plannerSessionReactionCalculation, type PlannerSession } from './plannerSession';
++const escapeXml = (value: unknown) => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
++export function plannerWorkflowOutput(session: PlannerSession) {
++    const plan = session.plateEditing?.plan;
++    if (!plan || plannerSessionIsStale(session))
++        throw new Error('请先更新排布');
++    const calculation = plannerSessionReactionCalculation(session);
++    if (!calculation.valid)
++        throw new Error(calculation.errors[0]);
++    const system = session.reactionSystem;
++    const number = (value: number) => String(Math.round(value * 1000) / 1000);
++    const headers = ['基因', '实际反应数', '其中空白孔', '预混液 / µL', 'Master mix / µL', 'F primer / µL', 'R primer / µL', 'Water / µL'];
++    const rows = calculation.geneRequirements.map(g => [g.gene, String(g.wellCount), String(g.blankWellCount), number(g.mixExcludingCdnaUl), number(g.masterMixUl), number(g.forwardPrimerUl), number(g.reversePrimerUl), number(g.waterUl)]);
++    const method = `全部 ${plan.plates.length} 板 · ${calculation.totalWells} 反应 · 每反应 ${system.totalPerWellUl} µL · 余量 ${system.overagePercent}%（已计入备液量）；模板单独加入，每孔 ${system.cdnaPerWellUl} µL。`;
++    const perWell = [['组分', '每反应 / µL'], ...calculation.perWellRows.map(row => [row.key, number(row.volumeUl)])];
++    const templates = [['样本', '实际反应数', '模板备液 / µL', '空白替代水 / µL'], ...calculation.sampleRequirements.map(row => [row.sample, String(row.wellCount), number(row.recommendedCdnaUl), number(row.replacementWaterUl)])];
++    const mixTsv = [method, perWell.map(row => row.join('\t')).join('\n'), [headers, ...rows].map(row => row.join('\t')).join('\n'), templates.map(row => row.join('\t')).join('\n')].join('\n\n');
++    const images = plan.plates.map(plate => {
++        const cell = plate.columns === 24 ? 26 : 48, width = plate.columns * cell + 56, height = plate.rows * cell + 64;
++        const labels = Array.from({ length: plate.columns }, (_, i) => `<text x="${46 + i * cell}" y="36" text-anchor="middle">${i + 1}</text>`).join('') + Array.from({ length: plate.rows }, (_, i) => `<text x="12" y="${57 + i * cell}">${String.fromCharCode(65 + i)}</text>`).join('');
++        const wells = plate.wells.map(well => `<g><title>${escapeXml(`${well.wellId}: ${well.sample ?? ''} / ${well.gene ?? ''}`)}</title><rect x="${34 + well.column * cell}" y="${44 + well.row * cell}" width="${cell - 3}" height="${cell - 3}" rx="3" fill="${well.sample ? '#eaf1ef' : '#fafbf8'}" stroke="#cadbd6"/><text x="${46 + well.column * cell}" y="${59 + well.row * cell}" text-anchor="middle" font-size="${plate.columns === 24 ? 8 : 11}">${escapeXml(well.sample ? well.wellId : '')}</text></g>`).join('');
++        return { caption: `${plate.name} · ${plate.rows * plate.columns} 孔`, svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" font-family="Arial,sans-serif" font-size="12" fill="#202825"><rect width="100%" height="100%" fill="white"/><text x="12" y="18">${escapeXml(plate.name)}</text>${labels}${wells}</svg>` };
++    });
++    const fullTable = { headers: ['板', '孔位', '样本', '基因', '复孔'], rows: plan.plates.flatMap(plate => plate.wells.filter(well => well.sample).map(well => [plate.name, well.wellId, well.sample ?? '', well.gene ?? '', String(well.replicateIndex ?? '')])) };
++    return { label: '板布局与配液', images, fullTable, table: { headers, rows }, method, mixTsv };
++}
+diff --git a/tests/workflow-output.test.ts b/tests/workflow-output.test.ts
+new file mode 100644
+index 0000000..2606467
+--- /dev/null
++++ b/tests/workflow-output.test.ts
+@@ -0,0 +1,14 @@
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { createPlannerSession, dispatchPlannerSession } from '../lib/plannerSession';
++import { plannerWorkflowOutput } from '../lib/workflowOutput';
++test('complete mix copy uses actual wells, includes units and cannot publish stale layout',()=>{
++ let session=createPlannerSession({samples:[{id:'s1',name:'S1',kind:'sample'}],genes:[{id:'g1',name:'G1',role:'target'},{id:'r1',name:'REF',role:'reference'}],replicates:3});
++ session=dispatchPlannerSession(session,{type:'generate-layout',generatedAt:'2026-11-03T00:00:00.000Z'}).session;
++ const result=plannerWorkflowOutput(session);
++ assert.match(result.mixTsv,/µL/);
++ assert.equal(result.images.length,1);
++ assert.equal(result.table.rows[0][1],'3');
++ session=dispatchPlannerSession(session,{type:'patch-setup',patch:{replicates:2}}).session;
++ assert.throws(()=>plannerWorkflowOutput(session));
++});
+-- 
+2.50.1 (Apple Git-155)
+

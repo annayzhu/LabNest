@@ -66,6 +66,12 @@ export function collectDocumentMedia(value: unknown): DocumentMedia[] {
   if (Array.isArray(value)) return value.flatMap(collectDocumentMedia);
   if (!value || typeof value !== "object") return [];
   const candidate = value as Record<string, unknown>;
+  if (candidate.type === "qpcr") {
+    const images = (candidate.images ?? []) as Array<{url:string;caption:string}>;
+    const dataset=candidate.dataset as {attachmentId:string}|undefined;
+    const raw=(candidate.rawAttachments ?? []) as Array<{id:string}>;
+    return [...[...(dataset?[dataset.attachmentId]:[]),...raw.map(file=>file.id)].map(id=>({id,type:"media" as const,mediaType:"file" as const,url:`/api/attachments/${id}`,attachmentId:id})),{id:String(candidate.id)+"-state",type:"media",mediaType:"file",url:`/api/attachments/${candidate.sessionAttachmentId}`,attachmentId:String(candidate.sessionAttachmentId)},...images.map((image,index)=>({id:`${candidate.id}-${index}`,type:"media" as const,mediaType:"image" as const,url:image.url,caption:image.caption}))];
+  }
   if (candidate.type === "media") {
     const parsed = documentMediaSchema.safeParse(value);
     if (!parsed.success) throw new Error("附件信息不完整 / Invalid attachment reference");

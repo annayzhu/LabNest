@@ -5,30 +5,42 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { copyCalculation } from "@/lib/calculators/clipboard";
 import { reverseComplement } from "@/lib/sequence";
+import { builtInElements, codonMarks, detectFeatures, openReadingFrames, type LibraryElement } from "@/lib/plasmid/feature-library";
 import { expandZip, groupReadEvidence, importSequenceFiles, type ImportedSource, type SourceFile } from "@/lib/plasmid/files";
 import { formatGenbank } from "@/lib/plasmid/genbank";
 import { clockwiseSegments, formatSegments, selectionSegments } from "@/lib/plasmid/layout";
-import { completenessKinds, featureLength, type Completeness, type Segment, type SequenceRecord } from "@/lib/plasmid/model";
+import { completenessKinds, featureLength, type Completeness, type Segment, type SequenceFeature, type SequenceRecord } from "@/lib/plasmid/model";
 import type { PlasmidChoice, SavedFolder } from "@/lib/plasmid/store.server";
+import type { StoredStructureElement } from "@/lib/plasmid/structure.server";
+import { sixFrameTranslations, translate } from "@/lib/plasmid/translate";
 import { completenessLabels, downloadText, exportFasta, genbankNotes, readAsRecord, readSummary, strandArrow, strandName, topologyLabels, workbenchItems, type WorkbenchItem } from "@/lib/plasmid/workbench";
+import { AlignmentView } from "./AlignmentView";
 import { FeatureTable } from "./FeatureTable";
 import { ImportDropZone, ImportResults } from "./ImportPanel";
+import { AddToLibrary, LibraryList } from "./LibraryPanel";
 import { PlasmidMap } from "./PlasmidMap";
 import { SaveFolder, SavedFolders, SaveToInventory } from "./SavePanels";
-import { SequenceView } from "./SequenceView";
+import { SearchPanel } from "./SearchPanel";
+import { SequenceView, type CodingTrack } from "./SequenceView";
+import { StructurePanel } from "./StructurePanel";
 import "./plasmid-workbench.css";
 
 type Selection = { segments: Segment[]; feature?: number };
+type Tab = "map" | "sequence" | "features" | "structure" | "alignment";
+
+const tabLabels: Record<Tab, string> = { map: "Map", sequence: "Sequence", features: "Features", structure: "Structure", alignment: "Sequencing alignment" };
 
 /**
  * 质粒工作台 (Q271): open files in the browser, look at a sequence as a map, as bases and
  * as a feature table with one shared selection, and export it. Reads open as linear
  * fragments.
  */
-export function PlasmidWorkbench({ initial, plasmids = [], folders = [] }: {
-  initial?: { record: SequenceRecord; label: string; productId: string; completeness: Completeness };
+export function PlasmidWorkbench({ initial, plasmids = [], folders = [], library = [] }: {
+  initial?: { record: SequenceRecord; label: string; productId: string; completeness: Completeness; structure: StoredStructureElement[] };
   plasmids?: PlasmidChoice[];
   folders?: SavedFolder[];
+  /** The lab's own feature-library entries (Q362). */
+  library?: LibraryElement[];
 }) {
   const [sources, setSources] = useState<ImportedSource[]>([]);
   const [files, setFiles] = useState<SourceFile[]>([]);
@@ -36,10 +48,15 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [] }: {
   const [importError, setImportError] = useState<string>();
   const [showImport, setShowImport] = useState(!initial);
   const [activeKey, setActiveKey] = useState<string | undefined>(initial ? "initial" : undefined);
-  const [tab, setTab] = useState<"map" | "sequence" | "features">("map");
+  const [tab, setTab] = useState<Tab>("map");
+  const [allFrames, setAllFrames] = useState(false);
+  // Plasmids the open items were saved to in this visit, so their expected structure can be kept on them.
+  const [savedTo, setSavedTo] = useState<Record<string, string>>({});
   const [shape, setShape] = useState<"circular" | "linear">();
   const [selection, setSelection] = useState<Selection>({ segments: [] });
   const [completeness, setCompleteness] = useState<Record<string, Completeness>>(initial ? { initial: initial.completeness } : {});
+  // Detected features taken out, per open item; they stay out until the files are opened again.
+  const [removed, setRemoved] = useState<Record<string, string[]>>({});
 
   const evidence = useMemo(() => groupReadEvidence(sources), [sources]);
   const items = useMemo(() => {
@@ -47,13 +64,21 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [] }: {
     return initial ? [{ kind: "record" as const, key: "initial", record: initial.record }, ...opened] : opened;
   }, [sources, initial]);
   const active = items.find((item) => item.key === activeKey);
-  const record = active ? (active.kind === "record" ? active.record : readAsRecord(active.read)) : undefined;
+  const opened = useMemo(() => (active ? (active.kind === "record" ? active.record : readAsRecord(active.read)) : undefined), [active]);
+  const elements = useMemo(() => [...builtInElements(), ...library], [library]);
+  const detected = useMemo(() => (opened ? detectFeatures(opened, elements) : []), [opened, elements]);
+  const kept = useMemo(() => detected.filter((item) => !(removed[activeKey ?? ""] ?? []).includes(item.key)), [detected, removed, activeKey]);
+  // What every view shows and what is saved or exported: the file's features, then the library's matches (Q363).
+  const record = useMemo(() => (opened ? { ...opened, features: [...opened.features, ...kept.map((item) => item.feature)] } : undefined), [opened, kept]);
+  const coding = useMemo(() => (record ? codingTracks(record, allFrames) : []), [record, allFrames]);
   const source = active?.source ? sources.find((item) => item.path === active.source) : undefined;
   const circular = record?.topology === "circular";
   const currentShape = shape ?? (circular ? "circular" : "linear");
   const currentCompleteness = active ? completeness[active.key] ?? defaultCompleteness(active) : "unknown";
   const original = source ? files.find((file) => file.path === (source.container ?? source.path)) : undefined;
-  const view = active?.kind === "read" ? "sequence" : tab;
+  const tabs: Tab[] = active?.kind === "read" ? ["sequence", "structure"] : ["map", "sequence", "features", "structure", "alignment"];
+  const view = tabs.includes(tab) ? tab : tabs[0];
+  const productId = active?.key === "initial" ? initial?.productId : activeKey ? savedTo[activeKey] : undefined;
   const notes = active?.kind === "record" && record ? genbankNotes(record) : [];
 
   const load = useCallback(async (next: SourceFile[]) => {
@@ -78,10 +103,11 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [] }: {
     if (!imported) return;
     setShowImport(false);
     // Open a whole sequence first when there is one; reads are fragments of it.
-    const opened = workbenchItems(imported);
-    setActiveKey((opened.find((item) => item.kind === "record") ?? opened[0])?.key);
+    const choices = workbenchItems(imported);
+    setActiveKey((choices.find((item) => item.kind === "record") ?? choices[0])?.key);
     setSelection({ segments: [] });
     setShape(undefined);
+    setRemoved({});
   }, [load]);
 
   // A ZIP member cannot be swapped inside its archive, so the archive is unpacked into its members first.
@@ -120,6 +146,17 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [] }: {
   const groupSize = (key: string) => evidence.groups.find((group) => group.readIds.includes(key))?.readIds.length ?? 1;
   const selectedBases = record ? selection.segments.map((segment) => record.sequence.slice(segment.start, segment.end)).join("") : "";
   const feature = record && selection.feature !== undefined ? record.features[selection.feature] : undefined;
+  const autoFrom = opened?.features.length ?? 0;
+  const auto = {
+    from: autoFrom,
+    identities: kept.map((item) => item.identity),
+    onRemove: (index: number) => {
+      const key = kept[index - autoFrom]?.key;
+      if (!key || !activeKey) return;
+      setRemoved((current) => ({ ...current, [activeKey]: [...(current[activeKey] ?? []), key] }));
+      setSelection({ segments: [] });
+    },
+  };
 
   return (
     <div className="ln-pw">
@@ -216,17 +253,23 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [] }: {
                     original={original}
                     plasmids={plasmids}
                     defaultProductId={active.key === "initial" ? initial?.productId : undefined}
+                    onSaved={(id) => setSavedTo((current) => ({ ...current, [active.key]: id }))}
                   />
                 ) : null}
               </div>
             </header>
 
             <div className="ln-pw-tabs" role="tablist" aria-label="Views">
-              {(active.kind === "record" ? (["map", "sequence", "features"] as const) : (["sequence"] as const)).map((value) => (
+              {tabs.map((value) => (
                 <button key={value} type="button" role="tab" aria-selected={view === value} onClick={() => setTab(value)}>
-                  {value === "map" ? "Map" : value === "sequence" ? "Sequence" : `Features (${record.features.length})`}
+                  {value === "features" ? `Features (${record.features.length})` : tabLabels[value]}
                 </button>
               ))}
+              {view === "sequence" ? (
+                <label className="ln-pw-choice ln-pw-shape">
+                  <input type="checkbox" checked={allFrames} onChange={(event) => setAllFrames(event.target.checked)} />All six reading frames
+                </label>
+              ) : null}
               {view === "map" && circular ? (
                 <span className="ln-pw-shape">
                   <button type="button" aria-pressed={currentShape === "circular"} onClick={() => setShape("circular")}>Circular</button>
@@ -240,20 +283,45 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [] }: {
             <div className="ln-pw-view">
               {view === "map" ? (
                 <>
-                  <div className="ln-pw-map"><PlasmidMap record={record} shape={currentShape} selection={selection.segments} selectedFeature={selection.feature} onSelectFeature={selectFeature} /></div>
-                  <FeatureTable record={record} selectedFeature={selection.feature} onSelectFeature={selectFeature} />
+                  <div className="ln-pw-map"><PlasmidMap record={record} shape={currentShape} selection={selection.segments} selectedFeature={selection.feature} autoFrom={autoFrom} onSelectFeature={selectFeature} /></div>
+                  <FeatureTable record={record} selectedFeature={selection.feature} onSelectFeature={selectFeature} auto={auto} />
                 </>
               ) : null}
               {view === "sequence" ? (
-                <SequenceView record={record} selection={selection.segments} selectedFeature={selection.feature} onSelectRange={selectRange} onSelectFeature={selectFeature} />
+                <SequenceView record={record} coding={coding} autoFrom={autoFrom} selection={selection.segments} selectedFeature={selection.feature} onSelectRange={selectRange} onSelectFeature={selectFeature} />
               ) : null}
-              {view === "features" ? <FeatureTable record={record} selectedFeature={selection.feature} onSelectFeature={selectFeature} /> : null}
+              {view === "features" ? (
+                <>
+                  <FeatureTable record={record} selectedFeature={selection.feature} onSelectFeature={selectFeature} auto={auto} />
+                  <LibraryList entries={library} />
+                </>
+              ) : null}
+              {view === "structure" ? (
+                <StructurePanel
+                  key={`${active.key}:${productId ?? ""}`}
+                  record={record}
+                  quality={active.kind === "read" ? active.read.quality : null}
+                  productId={productId}
+                  initial={active.key === "initial" ? initial?.structure ?? [] : []}
+                  peptides={elements.filter((element) => element.kind === "protein")}
+                  selectionPeptide={selectionPeptide(record, selection, feature)}
+                />
+              ) : null}
+              {view === "alignment" ? (
+                <AlignmentView
+                  key={active.key}
+                  record={record}
+                  reads={reads.map((item) => ({ key: item.key, read: item.read, group: evidence.reads.find((read) => read.id === item.key)?.group ?? item.key }))}
+                  folders={folders}
+                />
+              ) : null}
             </div>
           </>
         )}
       </section>
 
       <aside className="ln-pw-side" aria-label="Selection">
+        {record ? <SearchPanel key={active?.key} record={record} onSelect={(segments) => setSelection({ segments })} /> : null}
         <h2>Selection</h2>
         {feature ? (
           <dl className="ln-pw-facts">
@@ -268,6 +336,7 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [] }: {
             ))}
           </dl>
         ) : null}
+        {feature && record && feature.type === "CDS" && feature.strand !== 0 ? <ProteinFacts record={record} feature={feature} /> : null}
         {selection.segments.length && record ? (
           <dl className="ln-pw-facts">
             <dt>Range</dt><dd className="ln-pw-mono">{formatSegments(selection.segments)}</dd>
@@ -279,6 +348,7 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [] }: {
           <div className="ln-pw-actions">
             <Button type="button" variant="ghost" size="sm" onClick={() => void copyCalculation(selectedBases)}>Copy bases</Button>
             <Button type="button" variant="ghost" size="sm" onClick={() => void copyCalculation(reverseComplement(selectedBases))}>Copy reverse complement</Button>
+            {selectedBases.length >= 8 ? <AddToLibrary key={formatSegments(selection.segments)} bases={selectedBases.replace(/[^ACGT]/g, "")} protein={feature?.type === "CDS" && record ? selectionPeptide(record, selection, feature)?.protein : undefined} /> : null}
           </div>
         ) : null}
       </aside>
@@ -291,6 +361,56 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [] }: {
       </footer>
     </div>
   );
+}
+
+/** A CDS's protein (Q368), with the places it differs from the file's own /translation marked. */
+function ProteinFacts({ record, feature }: { record: SequenceRecord; feature: SequenceFeature }) {
+  const protein = codonMarks(record, feature).map((mark) => mark.aminoAcid).join("").replace(/\*$/, "");
+  const stated = feature.qualifiers.translation?.[0]?.replace(/\s+/g, "");
+  const differing = stated ? [...protein].filter((aminoAcid, at) => aminoAcid !== stated[at]).length + Math.abs(protein.length - stated.length) : 0;
+  return (
+    <div className="ln-pw-facts">
+      <dt>Protein</dt>
+      <dd>{`${protein.length} aa${stated ? (differing ? ` · ${differing} differ from the file's /translation` : " · same as the file's /translation") : ""}`}</dd>
+      <p className="ln-pw-protein" data-i18n-ignore>
+        {[...protein].map((aminoAcid, at) => (stated && aminoAcid !== stated[at] ? <mark key={at}>{aminoAcid}</mark> : aminoAcid))}
+      </p>
+    </div>
+  );
+}
+
+/** The peptide the structure panel offers to add: the selected CDS's protein, or the translation of the selected bases. */
+function selectionPeptide(record: SequenceRecord, selection: Selection, feature?: SequenceFeature) {
+  if (feature?.type === "CDS" && feature.strand !== 0) return { name: feature.name, protein: codonMarks(record, feature).map((mark) => mark.aminoAcid).join("").replace(/\*$/, "") };
+  const bases = selection.segments.map((segment) => record.sequence.slice(segment.start, segment.end)).join("");
+  const protein = translate(bases).replace(/\*$/, "");
+  return bases.length >= 6 && !protein.includes("*") ? { name: `Bases ${formatSegments(selection.segments)}`, protein } : undefined;
+}
+
+/**
+ * Coding stretches to write amino acids under (Q368): every CDS, then open reading frames of 100 aa or more that no
+ * CDS already covers for most of their length; with `allFrames`, every codon of the six frames as well.
+ */
+function codingTracks(record: SequenceRecord, allFrames = false): CodingTrack[] {
+  const covered = (segments: Segment[]) => {
+    const size = segments.reduce((total, segment) => total + segment.end - segment.start, 0);
+    let shared = 0;
+    for (const feature of record.features) {
+      if (feature.type !== "CDS") continue;
+      for (const a of feature.segments) for (const b of segments) shared += Math.max(0, Math.min(a.end, b.end) - Math.max(a.start, b.start));
+    }
+    return shared >= size / 2;
+  };
+  const cds = record.features.flatMap((feature, featureIndex) => (feature.type === "CDS" && feature.strand !== 0 ? [{ marks: codonMarks(record, feature), featureIndex }] : []));
+  const frames = openReadingFrames(record)
+    .filter((frame) => !covered(frame.segments))
+    .map((frame) => ({ marks: codonMarks(record, { strand: frame.strand, segments: frame.strand === -1 ? [...frame.segments].reverse() : frame.segments }) }));
+  if (!allFrames) return [...cds, ...frames];
+  const length = record.sequence.length;
+  const every = sixFrameTranslations(record.sequence).map((frame) => ({
+    marks: [...frame.protein].map((aminoAcid, at) => ({ aminoAcid, position: frame.strand === 1 ? frame.offset + at * 3 + 1 : length - 1 - (frame.offset + at * 3 + 1) })),
+  }));
+  return [...cds, ...frames, ...every];
 }
 
 function ReadFacts({ item, groupSize }: { item: Extract<WorkbenchItem, { kind: "read" }>; groupSize: number }) {

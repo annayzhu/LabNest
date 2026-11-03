@@ -385,3 +385,17 @@ function differencesOf(columns: AlignmentColumn[], minQuality: number, circularL
   }
   return differences;
 }
+
+/** One place "next difference" stops (Q367): a difference in one read. */
+export type DifferenceStop = { read: number; difference: AlignmentDifference };
+
+/**
+ * The order "next difference" walks (Q367): by reference position from left to right across every read, then by read.
+ * It stops at high-quality differences and homopolymer flags; low-quality and ambiguous ones only with `includeLow`.
+ */
+export function differenceStops(alignments: Array<ReadAlignment | undefined>, includeLow = false): DifferenceStop[] {
+  const stops = alignments.flatMap((alignment, read) => (alignment?.differences ?? [])
+    .filter((difference) => includeLow || difference.confidence === "high" || difference.homopolymer)
+    .map((difference) => ({ read, difference })));
+  return stops.sort((left, right) => left.difference.referenceStart - right.difference.referenceStart || left.read - right.read);
+}

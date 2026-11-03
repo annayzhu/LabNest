@@ -10,6 +10,8 @@ type MapProps = {
   shape: "circular" | "linear";
   selection: Segment[];
   selectedFeature?: number;
+  /** Features from this index on were found by the library; they are drawn dashed. */
+  autoFrom?: number;
   onSelectFeature: (index: number) => void;
 };
 
@@ -21,7 +23,7 @@ export function PlasmidMap(props: MapProps) {
   return props.shape === "circular" ? <CircularMap {...props} /> : <LinearMap {...props} />;
 }
 
-function CircularMap({ record, selection, selectedFeature, onSelectFeature }: MapProps) {
+function CircularMap({ record, selection, selectedFeature, autoFrom = Number.POSITIVE_INFINITY, onSelectFeature }: MapProps) {
   const length = record.sequence.length;
   const { pieces, laneCount } = useMemo(() => stackFeatures(record.features, length), [record.features, length]);
   const shown = useMemo(() => labelled(record), [record]);
@@ -65,6 +67,7 @@ function CircularMap({ record, selection, selectedFeature, onSelectFeature }: Ma
             fill={featureColor(feature)}
             className="ln-pw-feature"
             data-selected={piece.featureIndex === selectedFeature || undefined}
+            data-auto={piece.featureIndex >= autoFrom || undefined}
             onClick={() => onSelectFeature(piece.featureIndex)}
           >
             <title>{`${feature.name} (${feature.type})`}</title>
@@ -89,7 +92,7 @@ function CircularMap({ record, selection, selectedFeature, onSelectFeature }: Ma
   );
 }
 
-function LinearMap({ record, selection, selectedFeature, onSelectFeature }: MapProps) {
+function LinearMap({ record, selection, selectedFeature, autoFrom = Number.POSITIVE_INFINITY, onSelectFeature }: MapProps) {
   const length = record.sequence.length;
   const { pieces, laneCount } = useMemo(() => stackFeatures(record.features, length), [record.features, length]);
   const shown = useMemo(() => labelled(record), [record]);
@@ -115,7 +118,7 @@ function LinearMap({ record, selection, selectedFeature, onSelectFeature }: MapP
         const top = laneTop(piece.lane);
         const fits = shown.has(piece.featureIndex) && piece.arrow && x(piece.end) - x(piece.start) > feature.name.length * 6.5;
         return (
-          <g key={`piece-${index}`} className="ln-pw-feature" data-selected={piece.featureIndex === selectedFeature || undefined} onClick={() => onSelectFeature(piece.featureIndex)}>
+          <g key={`piece-${index}`} className="ln-pw-feature" data-selected={piece.featureIndex === selectedFeature || undefined} data-auto={piece.featureIndex >= autoFrom || undefined} onClick={() => onSelectFeature(piece.featureIndex)}>
             <polygon points={arrow(piece, x, top, 10)} fill={featureColor(feature)} />
             {fits ? <text x={(x(piece.start) + x(piece.end)) / 2} y={top - 3} textAnchor="middle" className="ln-pw-linear-label">{feature.name}</text> : null}
             <title>{`${feature.name} (${feature.type})`}</title>

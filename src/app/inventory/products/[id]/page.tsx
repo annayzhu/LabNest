@@ -20,6 +20,7 @@ import { controlLevelName, deleteBlockers, heldCount, isStrictlyControlled, lotR
 import { inventoryGroupName, inventoryTypeFields } from "@/lib/inventory-types";
 import { sequenceKind } from "@/lib/product-sequences";
 import { readProductSequences } from "@/lib/product-sequences.server";
+import { loadExpectedStructure } from "@/lib/plasmid/structure.server";
 import { labDate } from "@/lib/lab-time";
 import { recordMentions } from "@/lib/record-mentions.server";
 import { RecordMentionList } from "@/components/RecordMentions";
@@ -42,11 +43,12 @@ export default async function InventoryProductPage({ params }: { params: Promise
     },
   });
   if (!product) notFound();
-  const [documents, sequences, mentions] = await Promise.all([
+  const [documents, sequences, mentions, structure] = await Promise.all([
     prisma.attachmentLink.findMany({ where: { targetType: "inventory_product", targetId: id }, include: { attachment: { select: { originalFilename: true, size: true } } }, orderBy: { createdAt: "asc" } }),
     readProductSequences(prisma, product.entityId, product.type?.key),
     // The product's own tags and those of each of its lots.
     recordMentions([product.id, ...product.items.map((lot) => lot.id)]),
+    product.type?.key === "plasmid" ? loadExpectedStructure(product.id) : [],
   ]);
 
   const fields = product.type ? inventoryTypeFields(product.type.fieldDefinitions) : [];
@@ -128,6 +130,20 @@ export default async function InventoryProductPage({ params }: { params: Promise
                   <Link href={`/tools/plasmid?product=${product.id}`} className="mb-3 inline-flex text-sm font-medium text-moss underline-offset-2 hover:underline">Open in the plasmid workbench</Link>
                 ) : null}
                 <ProductSequences productId={product.id} strands={sequences} />
+                {structure.length ? (
+                  <div className="mt-4">
+                    <p className="text-xs font-semibold text-muted">Expected structure</p>
+                    <ol className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                      {structure.map((element, index) => (
+                        <li key={index} className="flex items-center gap-2">
+                          {index ? <span className="text-muted" aria-hidden>→</span> : null}
+                          <span data-i18n-ignore>{element.name}</span>
+                          <span className="font-mono text-xs text-muted">{`${element.protein[0]?.length ?? 0} aa`}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                ) : null}
               </Panel>
             ) : null}
 

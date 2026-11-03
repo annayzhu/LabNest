@@ -2,12 +2,19 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { dnaComplement } from "@/lib/sequence";
+import type { CodonMark } from "@/lib/plasmid/feature-library";
 import { sequenceRows } from "@/lib/plasmid/layout";
 import type { Segment, SequenceRecord } from "@/lib/plasmid/model";
 import { featureColor } from "@/lib/plasmid/workbench";
 
+/** A coding stretch whose amino acids are written under the DNA: a CDS feature, or an open reading frame without one. */
+export type CodingTrack = { marks: CodonMark[]; featureIndex?: number };
+
 type SequenceViewProps = {
   record: SequenceRecord;
+  coding?: CodingTrack[];
+  /** Features from this index on were found by the library rather than read from the file. */
+  autoFrom?: number;
   selection: Segment[];
   selectedFeature?: number;
   onSelectRange: (start: number, end: number) => void;
@@ -18,8 +25,22 @@ type SequenceViewProps = {
 const LINE = 18;
 const LANE = 14;
 
-function rowHeight(laneCount: number) {
-  return LINE * 2 + laneCount * LANE + 14;
+function rowHeight(laneCount: number, tracks: number) {
+  return LINE * 2 + tracks * LINE + laneCount * LANE + 14;
+}
+
+/** Puts overlapping coding stretches on separate lines, first come first served. */
+function codingLines(coding: CodingTrack[]) {
+  const ends: number[] = [];
+  return coding.map((track) => {
+    const positions = track.marks.map((mark) => mark.position);
+    const start = Math.min(...positions);
+    const end = Math.max(...positions);
+    let line = ends.findIndex((last) => last < start);
+    if (line < 0) line = ends.push(end) - 1;
+    else ends[line] = end;
+    return line;
+  });
 }
 
 /**
@@ -27,7 +48,7 @@ function rowHeight(laneCount: number) {
  * position maps straight to a base; only the rows in view are rendered, which keeps a
  * 100 kb sequence usable (PRD §9).
  */
-export function SequenceView({ record, selection, selectedFeature, onSelectRange, onSelectFeature }: SequenceViewProps) {
+export function SequenceView({ record, coding = [], autoFrom = Number.POSITIVE_INFINITY, selection, selectedFeature, onSelectRange, onSelectFeature }: SequenceViewProps) {
   const scroller = useRef<HTMLDivElement>(null);
   const probe = useRef<HTMLSpanElement>(null);
   const [width, setWidth] = useState(720);
@@ -52,11 +73,27 @@ export function SequenceView({ record, selection, selectedFeature, onSelectRange
   // Whole tens of bases per row, from the width left after the two position columns.
   const basesPerRow = Math.max(10, Math.floor((width - 16 * charWidth - 24) / charWidth / 10) * 10);
   const rows = useMemo(() => sequenceRows(record.sequence.length, record.features, basesPerRow), [record, basesPerRow]);
+  // Per row, the amino-acid lines that have letters in it, with the letters at their offset in the row.
+  const translations = useMemo(() => {
+    const lines = codingLines(coding);
+    return rows.map((row) => {
+      const inRow = new Map<number, { marks: Array<{ offset: number; aminoAcid: string }>; orf: boolean }>();
+      coding.forEach((track, index) => {
+        for (const mark of track.marks) {
+          if (mark.position < row.start || mark.position >= row.end) continue;
+          const line = inRow.get(lines[index]) ?? { marks: [], orf: track.featureIndex === undefined };
+          line.marks.push({ offset: mark.position - row.start, aminoAcid: mark.aminoAcid });
+          inRow.set(lines[index], line);
+        }
+      });
+      return [...inRow.entries()].sort(([left], [right]) => left - right).map(([, line]) => line);
+    });
+  }, [coding, rows]);
   const offsets = useMemo(() => {
     const result = [0];
-    for (const row of rows) result.push(result[result.length - 1] + rowHeight(row.laneCount));
+    rows.forEach((row, index) => result.push(result[result.length - 1] + rowHeight(row.laneCount, translations[index].length)));
     return result;
-  }, [rows]);
+  }, [rows, translations]);
   const complement = useMemo(() => [...record.sequence].map((base) => dnaComplement[base] ?? "N").join(""), [record.sequence]);
 
   useEffect(() => {
@@ -86,7 +123,7 @@ export function SequenceView({ record, selection, selectedFeature, onSelectRange
         {rows.slice(first, last).map((row, index) => {
           const rowIndex = first + index;
           return (
-            <div key={row.start} className="ln-pw-row" style={{ top: offsets[rowIndex], height: rowHeight(row.laneCount) }}>
+            <div key={row.start} className="ln-pw-row" style={{ top: offsets[rowIndex], height: rowHeight(row.laneCount, translations[rowIndex].length) }}>
               <span className="ln-pw-pos">{(row.start + 1).toLocaleString("en-US")}</span>
               <div
                 className="ln-pw-strands"
@@ -122,6 +159,11 @@ export function SequenceView({ record, selection, selectedFeature, onSelectRange
                 })}
                 <div className="ln-pw-top">{record.sequence.slice(row.start, row.end)}</div>
                 <div className="ln-pw-bottom">{complement.slice(row.start, row.end)}</div>
+                {translations[rowIndex].map((line, at) => (
+                  <div key={at} className="ln-pw-aa" data-orf={line.orf || undefined} style={{ top: LINE * 2 + at * LINE }}>
+                    {line.marks.map((mark) => <span key={mark.offset} data-stop={mark.aminoAcid === "*" || undefined} style={{ left: `${mark.offset}ch` }}>{mark.aminoAcid}</span>)}
+                  </div>
+                ))}
                 {row.pieces.map((piece, at) => {
                   const feature = record.features[piece.featureIndex];
                   const span = piece.end - piece.start;
@@ -133,7 +175,9 @@ export function SequenceView({ record, selection, selectedFeature, onSelectRange
                       data-strand={piece.strand}
                       data-arrow={piece.arrow || undefined}
                       data-selected={piece.featureIndex === selectedFeature || undefined}
-                      style={{ left: `${piece.start - row.start}ch`, width: `${span}ch`, top: LINE * 2 + 6 + piece.lane * LANE, background: featureColor(feature) }}
+                      data-auto={piece.featureIndex >= autoFrom || undefined}
+                      // The bar's own font is smaller than the bases', so it is placed in pixels of the measured base width.
+                      style={{ left: (piece.start - row.start) * charWidth, width: span * charWidth, top: LINE * 2 + translations[rowIndex].length * LINE + 6 + piece.lane * LANE, background: featureColor(feature) }}
                       title={`${feature.name} (${feature.type})`}
                       onClick={() => onSelectFeature(piece.featureIndex)}
                     >

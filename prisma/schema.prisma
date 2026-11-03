@@ -1574,6 +1574,34 @@ model SequencingRead {
   @@index([fileSha256])
 }
 
+/// 期望结构 (Q277, Q360): what a plasmid product should encode, element by element from N to C. It belongs to the
+/// product, not to a sequence version: it says what is wanted, which does not change when the sequence does.
+model PlasmidExpectedStructure {
+  id           String           @id @default(cuid())
+  productId    String           @unique
+  product      InventoryProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  /// [{ name, protein: string[], maxGapBefore? }]
+  elementsJson Json
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+/// The lab's own entries in the plasmid feature library (Q362), found next to the built-in ones.
+model PlasmidLibraryEntry {
+  id        String   @id @default(cuid())
+  name      String
+  /// GenBank feature key a match is annotated with.
+  type      String   @default("misc_feature")
+  /// dna | protein
+  kind      String
+  sequence  String
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([kind, sequence])
+}
+
 model SequenceModification {
   id                String          @id @default(cuid())
   sequenceVersionId String
@@ -2046,8 +2074,9 @@ model InventoryProduct {
   createdAt        DateTime                    @default(now())
   updatedAt        DateTime                    @updatedAt
 
-  items         InventoryItem[]
-  kitComponents InventoryKitComponent[]
+  items             InventoryItem[]
+  kitComponents     InventoryKitComponent[]
+  expectedStructure PlasmidExpectedStructure?
 
   @@index([groupKey])
   @@index([typeId])

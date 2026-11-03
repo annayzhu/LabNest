@@ -92,3 +92,26 @@ export function mottTrim(quality: number[], cutoff = 0.05) {
   }
   return { start, end };
 }
+
+/**
+ * Double peaks (Q365): bases whose second-highest channel at the called peak reaches `ratio` of the highest, at or above
+ * `minQuality` (a weak call's second peak is expected noise). Returns the base indices as stored in the file, and
+ * `runs`, the stretches of three or more in a row, which hint at a mixed clone. Only a hint: a person decides.
+ */
+export function mixedPeaks(read: SangerRead, ratio = 0.3, minQuality = 20) {
+  const indices: number[] = [];
+  if (read.traces && read.peaks) {
+    read.peaks.forEach((scan, index) => {
+      if (read.quality && read.quality[index] < minQuality) return;
+      const heights = channels.map((channel) => read.traces![channel][scan] ?? 0).sort((left, right) => right - left);
+      if (heights[0] > 0 && heights[1] >= ratio * heights[0]) indices.push(index);
+    });
+  }
+  const runs: Array<{ start: number; end: number }> = [];
+  for (const index of indices) {
+    const last = runs[runs.length - 1];
+    if (last && last.end === index) last.end = index + 1;
+    else runs.push({ start: index, end: index + 1 });
+  }
+  return { indices, runs: runs.filter((run) => run.end - run.start >= 3) };
+}

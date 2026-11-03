@@ -99,7 +99,7 @@ export function checkStructure(input: StructureCheckInput): StructureCheck {
         id: "order",
         element: element.name,
         status: !found || previousEnd === undefined ? "not-applicable" : inOrder ? "pass" : "fail",
-        detail: !found ? "" : previousEnd === undefined ? `Not checked: ${input.elements[index - 1].name} is not placed in the coding frame.` : inOrder ? `After ${input.elements[index - 1].name}.` : `Before ${input.elements[index - 1].name}.`,
+        detail: !found ? "" : previousEnd === undefined ? `Not checked: ${input.elements[index - 1].name} is not placed in the coding frame.` : inOrder ? `Placed after ${input.elements[index - 1].name}.` : `Placed before ${input.elements[index - 1].name}.`,
       });
       if (inOrder && previousEnd !== undefined) {
         const gap = inOrder.aaStart - previousEnd;

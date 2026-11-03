@@ -142,6 +142,13 @@ export function selectionSegments(start: number, end: number, length: number, ci
   return [{ start, end: length }, { start: 0, end }];
 }
 
+/** A stretch of an origin-extended (doubled) sequence, folded back onto a molecule of `length`: two segments when it crosses the origin. */
+export function foldSegments(start: number, end: number, length: number): Segment[] {
+  if (end <= length) return [{ start, end }];
+  if (start >= length) return [{ start: start - length, end: end - length }];
+  return [{ start, end: length }, { start: 0, end: end - length }];
+}
+
 /** Segments in top-strand (clockwise) order, as people read a location and as copied bases run. */
 export function clockwiseSegments(feature: Pick<SequenceFeature, "segments" | "strand">) {
   return feature.strand === -1 ? [...feature.segments].reverse() : feature.segments;

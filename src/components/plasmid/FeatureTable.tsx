@@ -2,12 +2,21 @@
 
 import { clockwiseSegments, formatSegments } from "@/lib/plasmid/layout";
 import { featureLength, type SequenceRecord } from "@/lib/plasmid/model";
+import { X } from "lucide-react";
 import { featureColor, strandArrow, strandName } from "@/lib/plasmid/workbench";
 
 const evidenceLabels = { file: "From the file", user: "Added by hand", "reference-match": "Reference match", prediction: "Prediction" } as const;
 
-/** Every feature, even those the map has no room to label (F03). Rows select like the map does. */
-export function FeatureTable({ record, selectedFeature, onSelectFeature }: { record: SequenceRecord; selectedFeature?: number; onSelectFeature: (index: number) => void }) {
+/**
+ * Every feature, even those the map has no room to label (F03). Rows select like the map does. Features from `auto.from`
+ * on were found by the library this time; they say how close the match is and can be taken out.
+ */
+export function FeatureTable({ record, selectedFeature, onSelectFeature, auto }: {
+  record: SequenceRecord;
+  selectedFeature?: number;
+  onSelectFeature: (index: number) => void;
+  auto?: { from: number; identities: number[]; onRemove: (index: number) => void };
+}) {
   if (!record.features.length) return <p className="ln-pw-note">This sequence has no annotated features.</p>;
   return (
     <div className="ln-pw-table-wrap">
@@ -35,7 +44,14 @@ export function FeatureTable({ record, selectedFeature, onSelectFeature }: { rec
               <td className="ln-pw-mono">{formatSegments(clockwiseSegments(feature))}</td>
               <td aria-label={strandName(feature.strand)}>{strandArrow(feature.strand)}</td>
               <td className="ln-pw-mono">{`${featureLength(feature).toLocaleString("en-US")} bp`}</td>
-              <td>{evidenceLabels[feature.evidence]}</td>
+              <td>
+                {auto && index >= auto.from ? (
+                  <span className="ln-pw-auto">
+                    <span>{auto.identities[index - auto.from] < 1 ? `Detected · ${(Math.floor(auto.identities[index - auto.from] * 1000) / 10).toFixed(1)}%` : "Detected"}</span>
+                    <button type="button" className="ln-pw-link" aria-label="Remove this detected feature" onClick={(event) => { event.stopPropagation(); auto.onRemove(index); }}><X className="h-3 w-3" aria-hidden /></button>
+                  </span>
+                ) : evidenceLabels[feature.evidence]}
+              </td>
             </tr>
           ))}
         </tbody>

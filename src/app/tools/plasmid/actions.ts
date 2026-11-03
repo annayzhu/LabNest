@@ -8,6 +8,8 @@ import { prisma } from "@/lib/db";
 import { formActionErrorMessage } from "@/lib/form-actions";
 import { completenessKinds, evidenceKinds, readableFormats, topologies } from "@/lib/plasmid/model";
 import { createSequencingFolder, saveFolderReads, savePlasmidVersion } from "@/lib/plasmid/store.server";
+import { addLibraryEntry, removeLibraryEntry } from "@/lib/plasmid/library.server";
+import { saveExpectedStructure } from "@/lib/plasmid/structure.server";
 
 const segment = z.object({ start: z.number().int().min(0), end: z.number().int().min(0), openStart: z.boolean().optional(), openEnd: z.boolean().optional() });
 const feature = z.object({
@@ -124,5 +126,50 @@ export async function saveSequencingReads(folderId: string, raw: unknown): Promi
     return { saved: reads.length };
   } catch (error) {
     return { error: formActionErrorMessage(error, "The reads were not saved.") };
+  }
+}
+
+const peptide = z.string().trim().toUpperCase().regex(/^[ACDEFGHIKLMNPQRSTVWY]+$/, "A peptide uses the 20 amino-acid letters only.").min(2).max(5_000);
+const structurePayload = z.array(z.object({
+  name: z.string().trim().min(1, "Give each element a name.").max(200),
+  protein: z.array(peptide).min(1).max(10),
+  maxGapBefore: z.number().int().min(0).max(10_000).optional(),
+})).max(30);
+
+/** Writes a plasmid product's expected structure (Q360); the elements come in N→C order. */
+export async function saveStructure(productId: string, raw: unknown): Promise<{ error?: string; saved?: boolean }> {
+  try {
+    await saveExpectedStructure(z.string().min(1).parse(productId), structurePayload.parse(raw));
+    revalidatePath(`/inventory/products/${productId}`);
+    revalidatePath("/tools/plasmid");
+    return { saved: true };
+  } catch (error) {
+    return { error: formActionErrorMessage(error, "The expected structure was not saved.") };
+  }
+}
+
+const libraryPayload = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("dna"), sequence: z.string().trim().toUpperCase().regex(/^[ACGT]+$/, "DNA entries use A, C, G and T only.").min(8, "A DNA entry needs at least 8 bases.").max(10_000) }),
+  z.object({ kind: z.literal("protein"), sequence: peptide }),
+]).and(z.object({ name: z.string().trim().min(1, "Give the entry a name.").max(200), type: z.string().trim().min(1).max(60), note: z.string().trim().max(500).optional() }));
+
+/** Adds the lab's own element to the feature library (Q362); everyone's detection finds it from then on. */
+export async function addToLibrary(raw: unknown): Promise<{ error?: string; id?: string }> {
+  try {
+    const id = await addLibraryEntry(libraryPayload.parse(raw));
+    revalidatePath("/tools/plasmid");
+    return { id };
+  } catch (error) {
+    return { error: formActionErrorMessage(error, "The entry was not added.") };
+  }
+}
+
+export async function removeFromLibrary(id: string): Promise<{ error?: string }> {
+  try {
+    await removeLibraryEntry(z.string().min(1).parse(id));
+    revalidatePath("/tools/plasmid");
+    return {};
+  } catch (error) {
+    return { error: formActionErrorMessage(error, "The entry was not removed.") };
   }
 }

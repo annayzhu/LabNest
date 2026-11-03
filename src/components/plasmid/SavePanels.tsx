@@ -23,13 +23,15 @@ function fileFrom(source: SourceFile) {
 }
 
 /** 保存到库存 (F10): a new plasmid, or a new version of one; the original file goes with the version. */
-export function SaveToInventory({ record, completeness, format, original, plasmids, defaultProductId }: {
+export function SaveToInventory({ record, completeness, format, original, plasmids, defaultProductId, onSaved }: {
   record: SequenceRecord;
   completeness: Completeness;
   format?: ReadableFormat;
   original?: SourceFile;
   plasmids: PlasmidChoice[];
   defaultProductId?: string;
+  /** Called with the plasmid the sequence now lives on. */
+  onSaved?: (productId: string) => void;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -60,6 +62,7 @@ export function SaveToInventory({ record, completeness, format, original, plasmi
     if (mode === "new") setCreated((list) => [...list, { id: saved.productId!, name }]);
     setMode("existing");
     setProductId(saved.productId);
+    onSaved?.(saved.productId);
     router.refresh();
   });
 

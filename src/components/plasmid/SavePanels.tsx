@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { MAX_ATTACHMENT_BYTES } from "@/lib/attachment-limits";
 import { labDate } from "@/lib/lab-time";
 import { groupReadEvidence, type ImportedSource, type SourceFile } from "@/lib/plasmid/files";
-import { PLASMID_PARSER_VERSION, type Completeness, type ReadableFormat, type SequenceRecord } from "@/lib/plasmid/model";
+import { PLASMID_PARSER_VERSION, type Completeness, type CompletenessSource, type ReadableFormat, type SequenceRecord } from "@/lib/plasmid/model";
 import { sha256Hex } from "@/lib/plasmid/sha256";
 import type { PlasmidChoice, SavedFolder } from "@/lib/plasmid/store.server";
 import { completenessLabels, topologyLabels } from "@/lib/plasmid/workbench";
@@ -23,15 +23,16 @@ function fileFrom(source: SourceFile) {
 }
 
 /** 保存到库存 (F10): a new plasmid, or a new version of one; the original file goes with the version. */
-export function SaveToInventory({ record, completeness, format, original, plasmids, defaultProductId, onSaved }: {
+export function SaveToInventory({ record, completeness, completenessSource, format, original, plasmids, defaultProductId, onSaved }: {
   record: SequenceRecord;
   completeness: Completeness;
+  completenessSource: CompletenessSource | null;
   format?: ReadableFormat;
   original?: SourceFile;
   plasmids: PlasmidChoice[];
   defaultProductId?: string;
   /** Called with the plasmid the sequence now lives on. */
-  onSaved?: (productId: string) => void;
+  onSaved?: (saved: { productId: string; versionId: string }) => void;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -51,6 +52,7 @@ export function SaveToInventory({ record, completeness, format, original, plasmi
       target: mode === "new" ? { kind: "new", name } : { kind: "existing", productId },
       record: { sequence: record.sequence, topology: record.topology, features: record.features },
       completeness,
+      completenessSource,
       ...(format ? { sourceFormat: format } : {}),
       ...(original ? { sourceFileName: baseName(original.path) } : {}),
     }));
@@ -62,7 +64,7 @@ export function SaveToInventory({ record, completeness, format, original, plasmi
     if (mode === "new") setCreated((list) => [...list, { id: saved.productId!, name }]);
     setMode("existing");
     setProductId(saved.productId);
-    onSaved?.(saved.productId);
+    if (saved.versionId) onSaved?.({ productId: saved.productId, versionId: saved.versionId });
     router.refresh();
   });
 

@@ -4,7 +4,7 @@ import type { SequenceSourceType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { reserveRecordCode } from "@/lib/record-codes";
 import { featureRow, storedFeature } from "./feature-rows";
-import type { Completeness, ReadableFormat, SequenceRecord, Topology } from "./model";
+import type { Completeness, CompletenessSource, ReadableFormat, SequenceRecord, Topology } from "./model";
 
 type Tx = Prisma.TransactionClient;
 
@@ -12,10 +12,11 @@ export type PlasmidChoice = Awaited<ReturnType<typeof listPlasmidProducts>>[numb
 export type SavedFolder = Awaited<ReturnType<typeof listSequencingFolders>>[number];
 
 /**
- * What makes two saves the same version: bases, topology, completeness and the features.
- * Qualifier keys are sorted because JSONB does not keep key order.
+ * What makes two saves the same version: bases, topology, completeness and who said it, and the features. A person
+ * confirming a completeness nobody had recorded is a new version (Q370). Qualifier keys are sorted because JSONB does
+ * not keep key order.
  */
-export function versionFingerprint(record: Pick<SequenceRecord, "sequence" | "topology" | "features">, completeness: Completeness) {
+export function versionFingerprint(record: Pick<SequenceRecord, "sequence" | "topology" | "features">, completeness: Completeness, completenessSource: CompletenessSource | null = null) {
   const features = record.features.map((feature) => [
     feature.name,
     feature.type,
@@ -26,7 +27,9 @@ export function versionFingerprint(record: Pick<SequenceRecord, "sequence" | "to
     feature.color ?? null,
     feature.evidence,
   ]);
-  return createHash("sha256").update(JSON.stringify([record.sequence, record.topology, completeness, features])).digest("hex");
+  // An unrecorded source leaves the hash as it was before sources were kept.
+  const said = completenessSource ? [completeness, completenessSource] : completeness;
+  return createHash("sha256").update(JSON.stringify([record.sequence, record.topology, said, features])).digest("hex");
 }
 
 const sourceTypes: Record<ReadableFormat, SequenceSourceType> = {
@@ -41,6 +44,8 @@ export type PlasmidSaveInput = {
   target: { kind: "new"; name: string } | { kind: "existing"; productId: string };
   record: Pick<SequenceRecord, "sequence" | "topology" | "features">;
   completeness: Completeness;
+  /** Ignored when the completeness is unknown: there is then nothing anyone said. */
+  completenessSource?: CompletenessSource | null;
   sourceFormat?: ReadableFormat;
   sourceFileName?: string;
 };
@@ -68,7 +73,8 @@ export async function savePlasmidVersion(tx: Tx, input: PlasmidSaveInput) {
 
   const link = await primaryLink(tx, entityId);
   const current = link?.sequenceVersion;
-  if (current && versionFingerprint({ sequence: current.sequence, topology: current.topology, features: current.features.map(storedFeature) }, current.completeness) === versionFingerprint(input.record, input.completeness)) {
+  const completenessSource = input.completeness === "unknown" ? null : (input.completenessSource ?? null);
+  if (current && versionFingerprint({ sequence: current.sequence, topology: current.topology, features: current.features.map(storedFeature) }, current.completeness, current.completenessSource) === versionFingerprint(input.record, input.completeness, completenessSource)) {
     return { productId: product.id, versionId: current.id, versionLabel: `v${current.displayVersion}`, unchanged: true };
   }
   const data = {
@@ -77,6 +83,7 @@ export async function savePlasmidVersion(tx: Tx, input: PlasmidSaveInput) {
     checksum: createHash("sha256").update(input.record.sequence).digest("hex"),
     topology: input.record.topology,
     completeness: input.completeness,
+    completenessSource,
     sourceType: input.sourceFormat ? sourceTypes[input.sourceFormat] : ("manual" as const),
     sourceFileName: input.sourceFileName ?? null,
     changeSummary: input.sourceFileName ? `Saved from ${input.sourceFileName} in the plasmid workbench.` : "Saved in the plasmid workbench.",
@@ -112,7 +119,7 @@ export async function savePlasmidVersion(tx: Tx, input: PlasmidSaveInput) {
 
 export type PlasmidProductView = {
   product: { id: string; name: string };
-  version: { id: string; label: string; record: SequenceRecord; completeness: Completeness } | null;
+  version: { id: string; label: string; record: SequenceRecord; completeness: Completeness; completenessSource: CompletenessSource | null } | null;
 };
 
 /** The plasmid product's current sequence (its primary link), ready for the workbench. */
@@ -128,6 +135,7 @@ export async function loadPlasmidProduct(productId: string): Promise<PlasmidProd
         label: `v${version.displayVersion}`,
         record: { name: product.name, sequence: version.sequence, topology: version.topology as Topology, features: version.features.map(storedFeature) },
         completeness: version.completeness,
+        completenessSource: version.completenessSource,
       }
       : null,
   };

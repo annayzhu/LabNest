@@ -190,6 +190,15 @@ export function createAligner(reference: string, topology: Topology, parameters 
   return { align };
 }
 
+/**
+ * The same placement judged at another quality threshold (R03): one threshold must drive coverage, the differences'
+ * confidence, "next difference" and every view, so changing it rescores the columns without aligning again.
+ */
+export function rescore(alignment: ReadAlignment, minQuality: number, circularLength?: number): ReadAlignment {
+  if (alignment.parameters.minQuality === minQuality) return alignment;
+  return { ...alignment, differences: differencesOf(alignment.columns, minQuality, circularLength), parameters: { ...alignment.parameters, minQuality } };
+}
+
 /** The reference position each column speaks for; an insertion speaks for the base after it (null when none follows). */
 export function columnPositions(columns: AlignmentColumn[]) {
   const positions: Array<number | null> = new Array(columns.length).fill(null);

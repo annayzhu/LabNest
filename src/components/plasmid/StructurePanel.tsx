@@ -9,8 +9,8 @@ import type { LibraryElement } from "@/lib/plasmid/feature-library";
 import type { SequenceRecord } from "@/lib/plasmid/model";
 import type { StoredStructureElement } from "@/lib/plasmid/structure.server";
 
-const itemLabels: Record<StructureCheckItem["id"], string> = { present: "Present anywhere", "in-frame": "In frame", order: "In order", gap: "Gap", "no-stop": "No stop before it", "junction-quality": "Junction quality" };
-const statusLabels: Record<CheckStatus, string> = { pass: "✓ Pass", fail: "✗ Fail", unknown: "? Unknown", "not-applicable": "— Not applicable" };
+export const itemLabels: Record<StructureCheckItem["id"], string> = { present: "Present anywhere", "in-frame": "In frame", order: "In order", gap: "Gap", "no-stop": "No stop before it", "junction-quality": "Junction quality" };
+export const statusLabels: Record<CheckStatus, string> = { pass: "✓ Pass", fail: "✗ Fail", unknown: "? Unknown", "not-applicable": "— Not applicable" };
 
 /**
  * 期望结构 (Q277, Q360, Q361): what the plasmid should encode on the left, what this sequence actually holds on the right;

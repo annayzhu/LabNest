@@ -15,6 +15,8 @@ import { Badge, StatusPill } from "@/components/ui/Badge";
 import { buttonStyles } from "@/components/ui/Button";
 import { DataTable } from "@/components/ui/DataTable";
 import { Panel, QuantityText, Row, SideSection } from "@/components/InventoryDetail";
+import { VerificationList } from "@/components/plasmid/VerificationList";
+import { listVerifications } from "@/lib/plasmid/verification.server";
 import { ExperimentStatus, PurchaseStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import {
@@ -59,13 +61,14 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
   });
   if (!item) notFound();
 
-  const [experiments, purchases, documents, blockers, allLocations, mentions] = await Promise.all([
+  const [experiments, purchases, documents, blockers, allLocations, mentions, checks] = await Promise.all([
     prisma.experiment.findMany({ where: { status: { in: [ExperimentStatus.planned, ExperimentStatus.running, ExperimentStatus.completed] } }, select: { id: true, title: true, project: { select: { name: true } } }, orderBy: { updatedAt: "desc" }, take: 100 }),
     prisma.purchaseRequest.findMany({ where: { OR: [{ linkedInventoryItemId: id }, { status: { in: [PurchaseStatus.planned, PurchaseStatus.ordered, PurchaseStatus.received] } }] }, select: { id: true, title: true, status: true }, orderBy: { updatedAt: "desc" }, take: 100 }),
     item.productId ? prisma.attachmentLink.findMany({ where: { targetType: "inventory_product", targetId: item.productId }, include: { attachment: { select: { originalFilename: true } } }, orderBy: { createdAt: "asc" } }) : Promise.resolve([]),
     stockItemBlockers(prisma, id),
     prisma.inventoryLocation.findMany({ select: { id: true, name: true, parentLocationId: true, status: true } }),
     recordMentions([id]),
+    item.product?.type?.key === "plasmid" ? listVerifications({ inventoryItemId: id }) : Promise.resolve([]),
   ]);
 
   const product = item.product;
@@ -147,6 +150,12 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
                   : <p className="text-sm text-graphite"><span>The remaining amount is not managed. To deduct use, edit the item and enter a counted balance.</span> <Link href={`/inventory/${item.id}/edit`} className="text-moss underline">Edit</Link></p>}
               </Panel>
             )}
+
+            {item.product?.type?.key === "plasmid" ? (
+              <Panel title="Sequencing checks of this tube">
+                <VerificationList rows={checks} showTube={false} />
+              </Panel>
+            ) : null}
 
             <Panel title="Mentioned in records">
               <RecordMentionList mentions={mentions} />

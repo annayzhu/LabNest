@@ -6,15 +6,16 @@ import { Button } from "@/components/ui/Button";
 import { copyCalculation } from "@/lib/calculators/clipboard";
 import { reverseComplement } from "@/lib/sequence";
 import { builtInElements, codonMarks, detectFeatures, openReadingFrames, type LibraryElement } from "@/lib/plasmid/feature-library";
-import { expandZip, groupReadEvidence, importSequenceFiles, type ImportedSource, type SourceFile } from "@/lib/plasmid/files";
+import { copyKey, expandZip, groupReadEvidence, importSequenceFiles, type ImportedSource, type SourceFile } from "@/lib/plasmid/files";
 import { formatGenbank } from "@/lib/plasmid/genbank";
 import { clockwiseSegments, formatSegments, selectionSegments } from "@/lib/plasmid/layout";
-import { completenessKinds, featureLength, type Completeness, type Segment, type SequenceFeature, type SequenceRecord } from "@/lib/plasmid/model";
+import { completenessKinds, featureLength, type Completeness, type CompletenessSource, type Segment, type SequenceFeature, type SequenceRecord } from "@/lib/plasmid/model";
 import type { PlasmidChoice, SavedFolder } from "@/lib/plasmid/store.server";
 import type { StoredStructureElement } from "@/lib/plasmid/structure.server";
 import { sixFrameTranslations, translate } from "@/lib/plasmid/translate";
-import { completenessLabels, downloadText, exportFasta, genbankNotes, readAsRecord, readSummary, strandArrow, strandName, topologyLabels, workbenchItems, type WorkbenchItem } from "@/lib/plasmid/workbench";
+import { completenessLabels, declaredCompleteness, defaultCompleteness, downloadText, exportFasta, genbankNotes, readAsRecord, readSummary, strandArrow, strandName, topologyLabels, workbenchItems, type WorkbenchItem } from "@/lib/plasmid/workbench";
 import { AlignmentView } from "./AlignmentView";
+import { MapExport } from "./MapExport";
 import { FeatureTable } from "./FeatureTable";
 import { ImportDropZone, ImportResults } from "./ImportPanel";
 import { AddToLibrary, LibraryList } from "./LibraryPanel";
@@ -36,7 +37,7 @@ const tabLabels: Record<Tab, string> = { map: "Map", sequence: "Sequence", featu
  * fragments.
  */
 export function PlasmidWorkbench({ initial, plasmids = [], folders = [], library = [] }: {
-  initial?: { record: SequenceRecord; label: string; productId: string; completeness: Completeness; structure: StoredStructureElement[] };
+  initial?: { record: SequenceRecord; label: string; productId: string; versionId: string; completeness: Completeness; completenessSource: CompletenessSource | null; structure: StoredStructureElement[] };
   plasmids?: PlasmidChoice[];
   folders?: SavedFolder[];
   /** The lab's own feature-library entries (Q362). */
@@ -51,14 +52,17 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [], library
   const [tab, setTab] = useState<Tab>("map");
   const [allFrames, setAllFrames] = useState(false);
   // Plasmids the open items were saved to in this visit, so their expected structure can be kept on them.
-  const [savedTo, setSavedTo] = useState<Record<string, string>>({});
+  const [savedTo, setSavedTo] = useState<Record<string, { productId: string; versionId: string }>>({});
   const [shape, setShape] = useState<"circular" | "linear">();
   const [selection, setSelection] = useState<Selection>({ segments: [] });
-  const [completeness, setCompleteness] = useState<Record<string, Completeness>>(initial ? { initial: initial.completeness } : {});
+  // What each open item's completeness is and who said so; a choice in the header is a person's (Q370).
+  const [completeness, setCompleteness] = useState<Record<string, { completeness: Completeness; source: CompletenessSource | null }>>(initial ? { initial: { completeness: initial.completeness, source: initial.completenessSource } } : {});
   // Detected features taken out, per open item; they stay out until the files are opened again.
   const [removed, setRemoved] = useState<Record<string, string[]>>({});
 
-  const evidence = useMemo(() => groupReadEvidence(sources), [sources]);
+  // Reads a person split off a "same bases" group, with the reason they gave (Q371).
+  const [apart, setApart] = useState<Record<string, string>>({});
+  const evidence = useMemo(() => groupReadEvidence(sources, new Set(Object.keys(apart))), [sources, apart]);
   const items = useMemo(() => {
     const opened = workbenchItems(sources);
     return initial ? [{ kind: "record" as const, key: "initial", record: initial.record }, ...opened] : opened;
@@ -74,11 +78,15 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [], library
   const source = active?.source ? sources.find((item) => item.path === active.source) : undefined;
   const circular = record?.topology === "circular";
   const currentShape = shape ?? (circular ? "circular" : "linear");
-  const currentCompleteness = active ? completeness[active.key] ?? defaultCompleteness(active) : "unknown";
+  const said = active ? completeness[active.key] ?? defaultCompleteness(active) : { completeness: "unknown" as const, source: null };
+  const currentCompleteness = said.completeness;
+  const declared = active?.kind === "record" ? declaredCompleteness(active.record) : undefined;
   const original = source ? files.find((file) => file.path === (source.container ?? source.path)) : undefined;
   const tabs: Tab[] = active?.kind === "read" ? ["sequence", "structure"] : ["map", "sequence", "features", "structure", "alignment"];
   const view = tabs.includes(tab) ? tab : tabs[0];
-  const productId = active?.key === "initial" ? initial?.productId : activeKey ? savedTo[activeKey] : undefined;
+  // The saved version the open record is, if any: a check can only be kept against one (C1).
+  const saved = active?.key === "initial" && initial ? { productId: initial.productId, versionId: initial.versionId } : activeKey ? savedTo[activeKey] : undefined;
+  const productId = saved?.productId;
   const notes = active?.kind === "record" && record ? genbankNotes(record) : [];
 
   const load = useCallback(async (next: SourceFile[]) => {
@@ -143,7 +151,10 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [], library
 
   const records = items.filter((item): item is Extract<WorkbenchItem, { kind: "record" }> => item.kind === "record");
   const reads = items.filter((item): item is Extract<WorkbenchItem, { kind: "read" }> => item.kind === "read");
-  const groupSize = (key: string) => evidence.groups.find((group) => group.readIds.includes(key))?.readIds.length ?? 1;
+  const groupOf = (key: string) => evidence.groups.find((group) => group.readIds.includes(key));
+  const groupSize = (key: string) => groupOf(key)?.readIds.length ?? 1;
+  // Identical bases alone only suggest one run; a person may split such a read off.
+  const onlySameBases = (key: string) => groupOf(key)?.reasons.every((reason) => reason === "identical-bases") ?? false;
   const selectedBases = record ? selection.segments.map((segment) => record.sequence.slice(segment.start, segment.end)).join("") : "";
   const feature = record && selection.feature !== undefined ? record.features[selection.feature] : undefined;
   const autoFrom = opened?.features.length ?? 0;
@@ -186,7 +197,7 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [], library
                 <li key={item.key}>
                   <button type="button" data-active={item.key === activeKey || undefined} onClick={() => choose(item.key)}>
                     <span data-i18n-ignore>{item.read.name}</span>
-                    <small>{`${item.read.bases.length} nt${item.read.quality ? "" : " · no quality values"}${groupSize(item.key) > 1 ? ` · same run as ${groupSize(item.key) - 1} other file(s)` : ""}`}</small>
+                    <small>{`${item.read.bases.length} nt${item.read.quality ? "" : " · no quality values"}${groupSize(item.key) > 1 ? (onlySameBases(item.key) ? ` · possibly the same run as ${groupSize(item.key) - 1} other file(s)` : ` · same run as ${groupSize(item.key) - 1} other file(s)`) : ""}`}</small>
                   </button>
                 </li>
               ))}
@@ -219,12 +230,13 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [], library
                   <span>{topologyLabels[record.topology]}</span>
                   <label className="ln-pw-inline">
                     <span className="sr-only">Completeness</span>
-                    <select value={currentCompleteness} onChange={(event) => setCompleteness({ ...completeness, [active.key]: event.target.value as Completeness })}>
+                    <select value={currentCompleteness} onChange={(event) => setCompleteness({ ...completeness, [active.key]: { completeness: event.target.value as Completeness, source: "user" } })}>
                       {completenessKinds.map((value) => <option key={value} value={value}>{completenessLabels[value]}</option>)}
                     </select>
                   </label>
                   {active.source ? <span className="ln-pw-path" data-i18n-ignore>{active.source}</span> : initial ? <span>{initial.label}</span> : null}
                 </p>
+                {active.kind !== "read" ? <CompletenessNote completeness={currentCompleteness} source={said.source} circular={record.topology === "circular"} declared={declared?.text} onConfirm={() => setCompleteness({ ...completeness, [active.key]: { completeness: currentCompleteness, source: "user" } })} /> : null}
                 {source?.unsupported.length ? (
                   <details className="ln-pw-compat">
                     <summary>{`Not read from this file (${source.unsupported.length})`}</summary>
@@ -249,11 +261,12 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [], library
                     key={active.key}
                     record={record}
                     completeness={currentCompleteness}
+                    completenessSource={said.source}
                     format={source && source.format !== "zip" && source.format !== "attachment" && source.format !== "unknown" ? source.format : undefined}
                     original={original}
                     plasmids={plasmids}
                     defaultProductId={active.key === "initial" ? initial?.productId : undefined}
-                    onSaved={(id) => setSavedTo((current) => ({ ...current, [active.key]: id }))}
+                    onSaved={(where) => setSavedTo((current) => ({ ...current, [active.key]: where }))}
                   />
                 ) : null}
               </div>
@@ -276,9 +289,10 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [], library
                   <button type="button" aria-pressed={currentShape === "linear"} onClick={() => setShape("linear")}>Linear</button>
                 </span>
               ) : null}
+              {view === "map" ? <MapExport name={record.name} /> : null}
             </div>
 
-            {active.kind === "read" ? <ReadFacts item={active} groupSize={groupSize(active.key)} /> : null}
+            {active.kind === "read" ? <ReadFacts key={active.key} item={active} groupSize={groupSize(active.key)} onlySameBases={onlySameBases(active.key)} apartReason={apart[active.key]} onSplit={(reason) => setApart({ ...apart, [active.key]: reason })} onJoin={() => setApart(Object.fromEntries(Object.entries(apart).filter(([key]) => key !== active.key)))} /> : null}
 
             <div className="ln-pw-view">
               {view === "map" ? (
@@ -311,8 +325,14 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [], library
                 <AlignmentView
                   key={active.key}
                   record={record}
-                  reads={reads.map((item) => ({ key: item.key, read: item.read, group: evidence.reads.find((read) => read.id === item.key)?.group ?? item.key }))}
+                  reads={reads.map((item) => {
+                    const found = evidence.reads.find((read) => read.id === item.key);
+                    return { key: item.key, read: item.read, group: found?.group ?? item.key, copy: found ? copyKey(found) : undefined };
+                  })}
                   folders={folders}
+                  saved={saved}
+                  structure={active.key === "initial" ? (initial?.structure ?? []) : []}
+                  splits={apart}
                 />
               ) : null}
             </div>
@@ -413,24 +433,53 @@ function codingTracks(record: SequenceRecord, allFrames = false): CodingTrack[] 
   return [...cds, ...frames, ...every];
 }
 
-function ReadFacts({ item, groupSize }: { item: Extract<WorkbenchItem, { kind: "read" }>; groupSize: number }) {
+function ReadFacts({ item, groupSize, onlySameBases, apartReason, onSplit, onJoin }: {
+  item: Extract<WorkbenchItem, { kind: "read" }>;
+  groupSize: number;
+  onlySameBases: boolean;
+  apartReason?: string;
+  onSplit: (reason: string) => void;
+  onJoin: () => void;
+}) {
   const summary = readSummary(item.read);
+  const [reason, setReason] = useState("");
   return (
     <dl className="ln-pw-facts ln-pw-read-facts">
       <dt>Quality</dt>
       <dd>{summary.quality ? `median Q${summary.quality.median} · ${(summary.quality.q20 * 100).toFixed(0)}% of bases ≥ Q20` : "Not provided by the file"}</dd>
       {summary.quality ? <><dt>Good stretch</dt><dd className="ln-pw-mono">{`${summary.quality.trimmed.start + 1}–${summary.quality.trimmed.end} (Mott, cutoff 0.05)`}</dd></> : null}
       <dt>Trace</dt><dd>{item.read.traces ? `${item.read.traces.A.length.toLocaleString("en-US")} scans, channel order ${item.read.metadata.baseOrder}` : "No chromatogram"}</dd>
-      <dt>Evidence</dt><dd>{groupSize > 1 ? `Same run as ${groupSize - 1} other file(s); counts once` : "Independent read"}</dd>
+      <dt>Evidence</dt>
+      <dd>
+        {apartReason ? <>Counted on its own; split off a group of identical bases: <span data-i18n-ignore>{apartReason}</span> <button type="button" className="ln-pw-link" onClick={onJoin}>Count with the group again</button></>
+          : groupSize <= 1 ? "Independent read"
+          : !onlySameBases ? `Same run as ${groupSize - 1} other file(s); counts once`
+          : (
+            <>
+              {`Possibly the same run as ${groupSize - 1} other file(s): the bases are identical; counts once`}
+              <span className="ln-pw-actions">
+                <input className="ln-pw-input" value={reason} placeholder="Why it is a separate run" aria-label="Why it is a separate run" onChange={(event) => setReason(event.target.value)} />
+                <button type="button" className="ln-pw-link" disabled={!reason.trim()} onClick={() => onSplit(reason.trim())}>Count it on its own</button>
+              </span>
+            </>
+          )}
+      </dd>
       {item.read.editedBases ? <><dt>Edited calls</dt><dd>The file holds hand-edited base calls; the original calls are shown.</dd></> : null}
     </dl>
   );
 }
 
-/** Sanger reads are local fragments; only a circular record is taken as a whole molecule (F12). */
-function defaultCompleteness(item: WorkbenchItem): Completeness {
-  if (item.kind === "read") return "partial";
-  return item.record.topology === "circular" ? "full_length" : "unknown";
+/** Who said how complete the record is (R01, Q369, Q370), or what is missing. */
+function CompletenessNote({ completeness, source, circular, declared, onConfirm }: { completeness: Completeness; source: CompletenessSource | null; circular: boolean; declared?: string; onConfirm: () => void }) {
+  if (completeness === "unknown") return circular ? <p className="ln-pw-note">Circular does not mean complete: choose “Known full length” only when the whole plasmid was sequenced or the source says so.</p> : null;
+  if (source === "file" && declared) return <p className="ln-pw-note">Stated in the file: <span data-i18n-ignore>{declared}</span></p>;
+  if (source === "user") return null;
+  return (
+    <p className="ln-pw-warn">
+      Nobody recorded where this completeness came from. Check it; confirming records that you said so, and saving then makes a new version.
+      {" "}<button type="button" className="ln-pw-link" onClick={onConfirm}>Confirm</button>
+    </p>
+  );
 }
 
 function gcPercent(sequence: string) {

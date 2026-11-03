@@ -1,6 +1,6 @@
 import { toFasta } from "@/lib/sequence";
 import { readId, type ImportedSource } from "./files";
-import type { Completeness, SangerRead, SequenceFeature, SequenceRecord, Topology } from "./model";
+import type { Completeness, CompletenessSource, SangerRead, SequenceFeature, SequenceRecord, Topology } from "./model";
 import { mottTrim } from "./trace";
 
 /** What the workbench can open: a whole sequence, or one Sanger read. */
@@ -18,6 +18,27 @@ export function workbenchItems(sources: ImportedSource[]): WorkbenchItem[] {
 
 export const topologyLabels: Record<Topology, string> = { circular: "Circular", linear: "Linear", unknown: "Topology unknown" };
 export const completenessLabels: Record<Completeness, string> = { full_length: "Known full length", partial: "Partial fragment", unknown: "Completeness unknown" };
+
+export const completenessSourceLabels: Record<CompletenessSource, string> = { file: "Stated in the file", user: "Confirmed by a person" };
+
+/**
+ * The completeness a file states itself (Q369): an NCBI-style "complete sequence" (or "complete genome") in the
+ * definition line, and nothing there saying "partial". `text` is the line, shown as the evidence.
+ */
+export function declaredCompleteness(record: Pick<SequenceRecord, "description">): { completeness: Completeness; text: string } | undefined {
+  const text = record.description?.trim();
+  if (!text || /\bpartial\b/i.test(text) || !/\bcomplete (sequence|genome)\b/i.test(text)) return undefined;
+  return { completeness: "full_length", text };
+}
+
+/**
+ * What an opened item starts as, and who said so. Sanger reads are local fragments. A circular map does not make a
+ * record the whole molecule (R01): only the file's own statement does, until a person chooses.
+ */
+export function defaultCompleteness(item: WorkbenchItem): { completeness: Completeness; source: CompletenessSource | null } {
+  if (item.kind === "read") return { completeness: "partial", source: null };
+  return declaredCompleteness(item.record) ? { completeness: "full_length", source: "file" } : { completeness: "unknown", source: null };
+}
 
 /** A read seen as a linear sequence, so the map and sequence views can show it too (F03). */
 export function readAsRecord(read: SangerRead): SequenceRecord {

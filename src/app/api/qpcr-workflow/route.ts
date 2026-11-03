@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import type { Prisma } from '@/generated/prisma/client';
@@ -58,13 +60,14 @@ export async function POST(request: Request) {
         if (output && data.session === undefined)
             throw new Error('缺少可恢复方案');
         if (output) {
+            const build=JSON.parse(await readFile(path.join(process.cwd(),"public/tools",output.toolId,"release.json"),"utf8"));
             const fullTable = output.fullTable ?? output.table;
             const cell = (value: string) => /[\t\r\n"]/.test(value) ? '"' + value.replaceAll('"', '""') + '"' : value;
             const fullTsv = [fullTable.headers, ...fullTable.rows].map(row => row.map(cell).join('\t')).join('\n');
             const rawSources = z.object({ sources: z.array(z.object({ fileName: z.string(), metadata: z.object({ originalBytesBase64: z.string().optional() }) })).optional() }).passthrough().safeParse(data.session);
             const originals = rawSources.success ? rawSources.data.sources?.filter(source => source.metadata.originalBytesBase64) ?? [] : [];
             files = await Promise.all([
-                prepareAttachmentFile(new File([JSON.stringify({ schemaVersion: 1, toolId: output.toolId, state: data.session })], `${output.id}-r${output.baseRevision + 1}.json`, { type: 'application/json' })),
+                prepareAttachmentFile(new File([JSON.stringify({ schemaVersion: 1, toolId: output.toolId, build, hostCommit:process.env.LABNEST_SOURCE_REVISION ?? "development", state: data.session })], `${output.id}-r${output.baseRevision + 1}.json`, { type: 'application/json' })),
                 ...output.images.map(image => {
                     if (!/^\s*<svg[\s>]/.test(image.svg) || /<script|<foreignObject|\bon\w+\s*=|(?:href|src)\s*=\s*["'](?!#)/i.test(image.svg))
                         throw new Error('图资源格式无效');

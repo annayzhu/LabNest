@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { validateAIRequest } from "@/lib/ai-request";
+import { relations } from "@/lib/copilot/plan-design/evidence";
 import { designSteps, tiers } from "@/lib/copilot/plan-design/spec";
 import { actOnDesignRun, listDesignRuns, removeDesignRun } from "@/lib/copilot/plan-design/runs.server";
 
@@ -17,6 +18,10 @@ const action = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("reopen"), step: z.enum(designSteps) }),
   z.object({ kind: z.literal("finding"), findingId: z.string().max(20), status: z.enum(["open", "resolved", "waived"]), reason: z.string().max(600).optional() }),
   z.object({ kind: z.literal("waive"), key: z.string().max(60), reason: z.string().max(600) }),
+  z.object({ kind: z.literal("hypotheses"), hypotheses: z.unknown() }),
+  z.object({ kind: z.literal("queries"), queries: z.array(z.string().max(200)).max(5) }),
+  z.object({ kind: z.literal("evidence"), entryId: z.string().max(12), patch: z.object({ target: z.string().max(24).optional(), relation: z.enum(relations).optional(), system: z.string().max(300).optional(), note: z.string().max(600).optional(), confirmed: z.boolean().optional() }).strict() }),
+  z.object({ kind: z.literal("evidence-remove"), entryId: z.string().max(12) }),
 ]);
 
 export async function GET(_request: Request, { params }: Params) {

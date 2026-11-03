@@ -29,7 +29,7 @@ export function DesignReviewStep(props: StepProps & { protocols: ProtocolChoice[
   const blockers = signBlockers(run.state);
   const unreviewed = rounds.length >= MAX_REVIEW_ROUNDS ? changedSinceReview(run.state) : [];
   const [preview, setPreview] = useState<Preview>();
-  const [choices, setChoices] = useState<{ premise: string[]; keepPrevious: boolean; experiments: string[] }>();
+  const [choices, setChoices] = useState<{ premise: string[]; sections: string[]; keepPrevious: boolean; experiments: string[] }>();
   const [signing, setSigning] = useState<string>();
   const [signError, setSignError] = useState<string>();
   const open = async () => {
@@ -37,7 +37,7 @@ export function DesignReviewStep(props: StepProps & { protocols: ProtocolChoice[
     try {
       const next = await callApi<Preview>(`${base}/sign`, 'GET');
       setPreview(next);
-      setChoices({ premise: next.premise.filter(change => change.apply).map(change => change.field), keepPrevious: false, experiments: next.experiments.map(item => item.blockId) });
+      setChoices({ premise: next.premise.filter(change => change.apply).map(change => change.field), sections: next.sections.map(section => section.key), keepPrevious: false, experiments: next.experiments.map(item => item.blockId) });
     } catch (failure) { setSignError(failure instanceof Error ? failure.message : 'Could not preview'); } finally { setSigning(undefined); }
   };
   const sign = async () => {
@@ -61,14 +61,16 @@ export function DesignReviewStep(props: StepProps & { protocols: ProtocolChoice[
       </div>
       {round ? <>
         <p className="ln-dw-verdict" data-verdict={round.verdict}>{`Round ${rounds.length}: ${verdictNames[round.verdict]} · ${round.provider}${round.model ? ` (${round.model})` : ''}`}</p>
+        {round.supports ? <p className="ln-dw-supports"><span>The strongest conclusion this design can support</span>{round.supports}</p> : null}
+        {round.strengths?.length ? <details><summary className="ln-dw-note">{`Strengths (${round.strengths.length})`}</summary><ul className="ln-dw-list">{round.strengths.map(item => <li key={item}>{item}</li>)}</ul></details> : null}
         {round.dimensions.length ? <ul className="ln-dw-dimensions">{round.dimensions.map(item => <li key={item.key} data-verdict={item.verdict}><strong>{dimensionLabels[item.key]}</strong><span>{dimensionVerdicts[item.verdict]}</span>{item.note ? <small>{item.note}</small> : null}</li>)}</ul> : null}
         <ul className="ln-dw-findings">{round.findings.map(finding => <Finding key={finding.id} finding={finding} busy={busy} chainTitle={run.state.chain?.draft?.blocks.find(block => block.id === finding.blockId)?.title}
           onDecide={(status, reason) => act({ kind: 'finding', findingId: finding.id, status, reason })} />)}</ul>
         {!round.findings.length ? <p className="ln-dw-note">No findings beyond the rule checks.</p> : null}
-        {unreviewed.length ? <p className="ln-dw-warn">{`Changed after the last review and not reviewed again: ${unreviewed.map(card => card.title).join(', ')}. Signing writes this into the limitations.`}</p> : null}
+        {unreviewed.length ? <p className="ln-dw-warn">{`Changed after the last review and not reviewed again: ${unreviewed.join(', ')}. Signing writes this into the limitations.`}</p> : null}
       </> : null}
     </div>
-    {rules.length ? <div className="ln-dw-box"><h3>Rule checks</h3><ul className="ln-dw-findings">{rules.map(finding => <RuleRow key={finding.key} text={`Rule ${finding.rule} · ${run.state.chain?.draft?.blocks.find(block => block.id === finding.blockId)?.title ?? finding.blockId}: ${finding.text}`} severity={finding.severity}
+    {rules.length ? <div className="ln-dw-box"><h3>Rule checks</h3><ul className="ln-dw-findings">{rules.map(finding => <RuleRow key={finding.key} text={`Rule ${finding.rule} · ${run.state.chain?.draft?.blocks.find(block => block.id === finding.blockId)?.title ?? 'Whole design'}: ${finding.text}`} severity={finding.severity}
       reason={run.state.waivers?.[finding.key]} busy={busy} onWaive={reason => act({ kind: 'waive', key: finding.key, reason })} />)}</ul></div> : null}
     <details className="ln-dw-box"><summary>Revise the design cards</summary><DesignCardsStep {...props} embedded /></details>
     <div className="ln-dw-box">
@@ -81,7 +83,12 @@ export function DesignReviewStep(props: StepProps & { protocols: ProtocolChoice[
           <input type="checkbox" checked={choices.premise.includes(change.field)} onChange={event => setChoices({ ...choices, premise: toggle(choices.premise, change.field, event.target.checked) })} />
           <span><strong>{premiseNames[change.field]}</strong><del>{change.before || '(empty)'}</del><ins>{change.after}</ins></span>
         </label>)}</fieldset> : null}
-        <fieldset className="ln-dw-records"><legend>Plan sections</legend><ul className="ln-dw-list">{preview.sections.map(section => <li key={section.key}><strong>{sectionNames[section.key] ?? section.key}</strong><span className="ln-dw-note">{`${section.blocks.length} blocks added${section.replaced ? `, ${section.replaced} from the last signed design replaced` : ''}`}</span></li>)}</ul>
+        <fieldset className="ln-dw-records"><legend>Plan sections</legend>
+          <p className="ln-dw-note">Untick a section to leave it as it is.</p>
+          {preview.sections.map(section => <label key={section.key} className="ln-dw-check">
+            <input type="checkbox" checked={choices.sections.includes(section.key)} onChange={event => setChoices({ ...choices, sections: toggle(choices.sections, section.key, event.target.checked) })} />
+            <span><strong>{sectionNames[section.key] ?? section.key}</strong><small>{`${section.blocks.length} blocks added${section.replaced ? `, ${section.replaced} from the last signed design replaced` : ''}`}</small></span>
+          </label>)}
           {preview.sections.some(section => section.replaced) ? <label className="ln-dw-check"><input type="checkbox" checked={choices.keepPrevious} onChange={event => setChoices({ ...choices, keepPrevious: event.target.checked })} />Keep the last signed design as well</label> : null}
         </fieldset>
         <fieldset className="ln-dw-records"><legend>Planned experiments</legend>{preview.experiments.map(item => <label key={item.blockId} className="ln-dw-check">

@@ -5,8 +5,10 @@ import { joinSections, plainTitle, stripHtml, textOf } from '../method-sources/t
 /** One paper as the Copilot reads it. */
 export type Paper = {
   /** "PMC123456" for an open-access paper, "MED:12345678" otherwise: stable across searches. */
-  key: string; title: string; authors?: string; year?: string; venue?: string; url?: string; doi?: string;
+  key: string; title: string; authors?: string; year?: string; venue?: string; url?: string; doi?: string; pmid?: string; pmcid?: string;
   openAccess: boolean; abstract?: string; source?: 'europe_pmc' | 'pubmed';
+  /** The record is a retracted publication, or a retraction notice points to it. */
+  retracted?: boolean;
   why?: string; subQuestionIds?: string[];
   /** What was read: the Methods and Results of the full text, or only the abstract. */
   basis?: 'fulltext' | 'abstract';
@@ -24,7 +26,11 @@ export function paperFromResult(item: unknown): Paper | undefined {
   const title = plainTitle(textOf(record.title));
   if (!key || !title) return undefined;
   const abstract = stripHtml(textOf(record.abstractText));
-  return { key, title, source: 'europe_pmc', ...(textOf(record.authorString) ? { authors: plainTitle(textOf(record.authorString)) } : {}), ...(textOf(record.pubYear) ? { year: textOf(record.pubYear) } : {}),
+  const types = (record.pubTypeList as { pubType?: unknown } | undefined)?.pubType;
+  const corrections = (record.commentCorrectionList as { commentCorrection?: unknown } | undefined)?.commentCorrection;
+  const retracted = [types].flat().some(type => /retracted publication|retraction of publication/i.test(textOf(type)))
+    || [corrections].flat().some(item => item && typeof item === 'object' && /^retraction in$/i.test(textOf((item as Record<string, unknown>).type)));
+  return { key, title, source: 'europe_pmc', ...(pmid ? { pmid } : {}), ...(pmcid ? { pmcid } : {}), retracted, ...(textOf(record.authorString) ? { authors: plainTitle(textOf(record.authorString)) } : {}), ...(textOf(record.pubYear) ? { year: textOf(record.pubYear) } : {}),
     ...(textOf(record.journalTitle) ? { venue: plainTitle(textOf(record.journalTitle)) } : {}), ...(textOf(record.doi) ? { doi: textOf(record.doi) } : {}),
     url: openAccess ? `https://europepmc.org/article/PMC/${pmcid}` : pmid ? `https://europepmc.org/article/MED/${pmid}` : undefined, openAccess, ...(abstract ? { abstract } : {}) };
 }
@@ -85,12 +91,17 @@ function fetchPubMed(url: string, fetchText: FetchText, onNotice?: (text: string
   return request;
 }
 
+export const pubmedBase = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
+
 /** PubMed metadata and abstracts from NCBI E-utilities; this does not imply full-text access. */
-export async function searchPubMed(query: string, fetchText: FetchText, onNotice?: (text: string) => void): Promise<Paper[]> {
-  const base = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
+export async function searchPubMed(query: string, fetchText: FetchText, onNotice?: (text: string) => void, base = pubmedBase): Promise<Paper[]> {
   const result = JSON.parse(await fetchPubMed(`${base}/esearch.fcgi?db=pubmed&retmode=json&retmax=10&sort=relevance&tool=LabNest&term=${encodeURIComponent(query)}`, fetchText, onNotice)) as { error?: string; esearchresult?: { idlist?: string[]; errorlist?: unknown } };
   if (result.error || !result.esearchresult?.idlist) throw new Error('PubMed 返回了无效的检索结果');
-  const ids = result.esearchresult.idlist.filter(id => /^\d+$/.test(id)).slice(0, 10);
+  return pubmedRecords(result.esearchresult.idlist.filter(id => /^\d+$/.test(id)).slice(0, 10), fetchText, onNotice, base);
+}
+
+/** PubMed records by PMID, with their publication types: a retracted one is marked. */
+export async function pubmedRecords(ids: string[], fetchText: FetchText, onNotice?: (text: string) => void, base = pubmedBase): Promise<Paper[]> {
   if (!ids.length) return [];
   const xml = await fetchPubMed(`${base}/efetch.fcgi?db=pubmed&retmode=xml&tool=LabNest&id=${ids.join(',')}`, fetchText, onNotice);
   const document = new DOMParser().parseFromString(xml, 'text/xml');
@@ -108,7 +119,9 @@ export async function searchPubMed(query: string, fetchText: FetchText, onNotice
     // Citation-level revision dates precede Article in PubMed XML; use the journal publication date only.
     const published = article.getElementsByTagName('Journal')[0]?.getElementsByTagName('PubDate')[0];
     const year = published?.getElementsByTagName('Year')[0]?.textContent?.trim() || published?.getElementsByTagName('MedlineDate')[0]?.textContent?.trim();
-    return [{ key: `MED:${pmid}`, source: 'pubmed' as const, title, authors, year, venue: get('Title'), url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`, doi, abstract, openAccess: false }];
+    const retracted = Array.from(article.getElementsByTagName('PublicationType')).some(node => /retracted publication|retraction of publication/i.test(node.textContent ?? ''))
+      || Array.from(article.getElementsByTagName('CommentsCorrections')).some(node => node.getAttribute('RefType') === 'RetractionIn');
+    return [{ key: `MED:${pmid}`, source: 'pubmed' as const, pmid, title, authors, year, venue: get('Title'), url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`, doi, abstract, openAccess: false, retracted }];
   });
 }
 
@@ -137,4 +150,23 @@ export function literatureSearcher(fetchText: FetchText, base: string) {
       throw new Error(`Europe PMC 和 PubMed 均未能完成检索，已暂停：${error instanceof Error ? error.message : '请求失败'}`);
     }
   };
+}
+
+export type PaperId = { kind: 'pmid' | 'pmcid' | 'doi'; value: string };
+
+/**
+ * One paper by its identifier: Europe PMC first, PubMed when Europe PMC fails. Undefined means neither database has a
+ * record for it; a thrown error means neither could be asked, which is not the same as "not found".
+ */
+export async function lookupPaper(id: PaperId, fetchText: FetchText, europePmcBase: string, pubmed = pubmedBase): Promise<{ paper?: Paper; database: 'europe_pmc' | 'pubmed' }> {
+  const query = id.kind === 'pmid' ? `EXT_ID:${id.value} AND SRC:MED` : id.kind === 'pmcid' ? `PMCID:${id.value}` : `DOI:"${id.value}"`;
+  try {
+    const payload = JSON.parse(await fetchText(`${europePmcBase}/europepmc/webservices/rest/search?query=${encodeURIComponent(query)}&format=json&pageSize=1&resultType=core`, { headers: { Accept: 'application/json' } })) as { resultList?: { result?: unknown[] } };
+    if (!Array.isArray(payload.resultList?.result)) throw new Error('Europe PMC 返回了无效的检索结果');
+    return { paper: payload.resultList.result.map(paperFromResult).find(Boolean), database: 'europe_pmc' };
+  } catch (error) {
+    if (id.kind === 'pmcid') throw error;
+    const ids = id.kind === 'pmid' ? [id.value] : (JSON.parse(await fetchPubMed(`${pubmed}/esearch.fcgi?db=pubmed&retmode=json&retmax=1&tool=LabNest&term=${encodeURIComponent(`${id.value}[doi]`)}`, fetchText)) as { esearchresult?: { idlist?: string[] } }).esearchresult?.idlist?.filter(item => /^\d+$/.test(item)) ?? [];
+    return { paper: (await pubmedRecords(ids.slice(0, 1), fetchText, undefined, pubmed))[0], database: 'pubmed' };
+  }
 }

@@ -17,7 +17,9 @@ import { visionFromSettings, type AIProviderRecord } from "@/lib/ai-server";
 import { chatGPTSignInMessages, loopbackPort, readRegistration, type ChatGPTModel } from "@/lib/chatgpt-auth";
 import { moduleLabels, taskSpecs, type SpecId } from "@/lib/copilot/specs";
 import { adoptionRate, ignoreReasonLabels, type AdoptionNumbers, type IgnoreReason } from "@/lib/copilot/suggestions";
+import { MethodSearchSettingsForm } from "@/components/MethodDesignStart";
 import { adoptionSummary } from "@/lib/copilot/suggestions.server";
+import { readMethodSearchSettings } from "@/lib/method-sources/index.server";
 import { prisma } from "@/lib/db";
 import { recognitionWarning } from "@/lib/recognition-fit";
 import { localeCookieName, resolveAppLocale, translateUiText } from "@/lib/i18n";
@@ -39,7 +41,7 @@ export default async function AIPage({ searchParams }: { searchParams?: Promise<
   }
   catch { return <AppShell><PageHeader title="AI settings" description="Model connections and AI feature settings." /><p role="alert" className="mt-4 text-sm text-error">Cannot read the connection settings; saved settings are unchanged.<Link prefetch={false} className="focus-ring ml-2 underline" href="/ai">Try again</Link></p></AppShell>; }
   // The numbers only add to the page: without them the settings still show.
-  const adoption = await adoptionSummary().catch(() => undefined);
+  const [adoption, search] = await Promise.all([adoptionSummary().catch(() => undefined), readMethodSearchSettings().catch(() => undefined)]);
   const editing = providers.find(provider => provider.id === query?.provider && provider.type !== "chatgpt_subscription");
   const values: AiProviderFormValues | undefined = editing ? { id: editing.id, revision: editing.updatedAt.toISOString(), name: editing.name, type: editing.type as AiProviderFormValues["type"], baseUrl: editing.baseUrl ?? "", defaultModel: editing.defaultModel ?? "", enabled: editing.enabled, hasStoredKey: Boolean(editing.apiKeyEncrypted) } : undefined;
   const encryption = describeEncryptionKey();
@@ -75,6 +77,11 @@ export default async function AIPage({ searchParams }: { searchParams?: Promise<
     <PageHeader title="AI settings" />
     <p className="text-sm text-muted">Model connections and AI feature settings. Suggestions waiting for you are shown on each entry and experiment.</p>
     <AISettingsPanel providers={providers.map(({ id, name }) => ({ id, name }))} services={services} />
+    {search ? <section id="external-search" className="scroll-mt-20 space-y-2 border-t border-hairline pt-4" aria-label="External search">
+      <h2 className="text-base font-semibold text-ink">External search</h2>
+      <p className="text-xs leading-5 text-muted">Design from a goal searches these sources for methods. The design workbench’s evidence ledger searches Europe PMC, and PubMed when Europe PMC fails, and looks up the papers you add. While this is off, nothing is searched outside LabNest; every outside request is logged.</p>
+      <MethodSearchSettingsForm settings={search} />
+    </section> : null}
   </div></AppShell>;
 }
 

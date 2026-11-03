@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { validateAIRequest } from "@/lib/ai-request";
 import { previewSignOff, signDesignRun } from "@/lib/copilot/plan-design/runs.server";
-import { premiseFields } from "@/lib/copilot/plan-design/write-back";
+import { designSections, premiseFields } from "@/lib/copilot/plan-design/write-back";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ export async function GET(_request: Request, { params }: Params) {
 }
 
 const choices = z.object({
-  premise: z.array(z.enum(premiseFields)).max(3), keepPrevious: z.boolean(), experiments: z.array(z.string().max(24)).max(12),
+  premise: z.array(z.enum(premiseFields)).max(3), sections: z.array(z.enum(designSections)).max(designSections.length), keepPrevious: z.boolean(), experiments: z.array(z.string().max(24)).max(12),
   planSeen: z.string().max(40), runSeen: z.string().max(40),
 }).strict();
 

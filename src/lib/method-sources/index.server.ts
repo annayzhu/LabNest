@@ -8,7 +8,9 @@ import { methodSourceIds, type MethodHit, type MethodSourceAdapter, type MethodS
 /** Only these hosts are ever contacted, and only when the user searches or fetches. */
 /** Browser checks may point Europe PMC at a local stand-in; a production build never does. */
 export const europePmcBase = process.env.NODE_ENV !== 'production' && process.env.LABNEST_EUROPE_PMC_BASE ? process.env.LABNEST_EUROPE_PMC_BASE : `https://${europePmcHost}`;
-const allowedHosts = new Set(['eutils.ncbi.nlm.nih.gov', protocolsIoHost, europePmcHost, new URL(europePmcBase).hostname]);
+/** PubMed E-utilities, likewise replaceable by a local stand-in outside production. */
+export const pubmedSearchBase = process.env.NODE_ENV !== 'production' && process.env.LABNEST_PUBMED_BASE ? process.env.LABNEST_PUBMED_BASE : 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
+const allowedHosts = new Set(['eutils.ncbi.nlm.nih.gov', protocolsIoHost, europePmcHost, new URL(europePmcBase).hostname, new URL(pubmedSearchBase).hostname]);
 const timeoutMs = 15_000, maxBytes = 2_000_000;
 
 export async function fetchLimited(url: string, init?: RequestInit) {

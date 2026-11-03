@@ -1,8 +1,9 @@
 import { chineseNumbers, parseTidy, tidyMarkdown, tidyPrompt, unsupportedTokens, type EntryTidy } from '../entry-tidy';
-import { srgnCards, srgnChain, srgnContext } from './plan-design/fixtures';
-import { cardPrompt, chainPrompt, contextPrompt, parseCard, parseChain, parseContext, parseReview, reviewPrompt } from './plan-design/prompts';
-import { checkCards } from './plan-design/rules';
-import { reviewDimensions, type Chain, type ContextCard, type DesignCard } from './plan-design/spec';
+import { ledgerStatements, readingReader, readPrompt, type Reading } from './plan-design/evidence';
+import { srgnCards, srgnChain, srgnContext, srgnHypotheses } from './plan-design/fixtures';
+import { cardPrompt, chainPrompt, contextPrompt, hypothesesPrompt, parseCard, parseChain, parseContext, parseHypotheses, parseReview, reviewPrompt } from './plan-design/prompts';
+import { checkCards, checkHypotheses } from './plan-design/rules';
+import { reviewDimensions, type Chain, type ContextCard, type DesignCard, type Hypotheses } from './plan-design/spec';
 import { templateById } from './plan-design/templates';
 import type { SpecId } from './specs';
 
@@ -40,6 +41,23 @@ function chainChecks(chain: Chain): Check[] {
     { name: 'minimum evidence stated', pass: chain.minimumEvidence.length > 0 },
   ];
 }
+function hypothesesChecks(hypotheses: Hypotheses): Check[] {
+  const ruled = hypotheses.rivals.filter(rival => rival.exclude);
+  return [
+    { name: 'no serious check on the prediction table', pass: !checkHypotheses(hypotheses, 'necessity').some(finding => finding.severity === 'serious') },
+    { name: 'rivals from at least two classes', pass: new Set(ruled.map(rival => rival.kind)).size >= 2 },
+    { name: 'off-target effects named as a rival', pass: ruled.some(rival => has(/脱靶|off-target/i, rival.statement)) },
+    { name: 'every rival has a test that tells it apart', pass: ruled.length > 0 && ruled.every(rival => rival.test.trim() && rival.ifMain.trim() && rival.ifRival.trim() && rival.ifMain.trim() !== rival.ifRival.trim()) },
+  ];
+}
+function readingChecks(reading: Reading): Check[] {
+  return [
+    { name: 'relevant, about the main hypothesis', pass: reading.relevant && reading.target === 'main' },
+    { name: 'supports it', pass: reading.relation === 'subject' },
+    { name: 'the quote is in the abstract word for word', pass: reading.quoteFound },
+    { name: 'names the system it studied', pass: has(/KYSE|ESCC|食管/i, reading.system) },
+  ];
+}
 function cardChecks(card: DesignCard): Check[] {
   return [
     { name: 'no serious rule finding', pass: !checkCards([card], srgnChain, 'standard').some(finding => finding.severity === 'serious') },
@@ -47,6 +65,7 @@ function cardChecks(card: DesignCard): Check[] {
     { name: 'two independent siRNAs', pass: (card.manipulation.independentReagents ?? 0) >= 2 },
     { name: 'migration is read out', pass: card.readouts.some(readout => readout.assay === 'migration' || has(/迁移|transwell|migration/i, `${readout.name} ${readout.method}`)) },
     { name: 'at least two groups and a criterion', pass: card.groups.length >= 2 && card.criteria.length > 0 },
+    { name: 'n left to the program: no effect, no n', pass: card.sampleSize.basis !== 'pending' || card.sampleSize.n === null },
   ];
 }
 function tidyChecks(words: string, expect: { values: number[]; experiment?: string; unclear?: boolean }) {
@@ -68,7 +87,8 @@ const read = <T,>(parse: (text: string) => T, checks: (value: T) => Check[]) => 
 
 const purpose = '研究 SRGN 敲低是否抑制 KYSE150 细胞迁移';
 const items = [{ id: 'inventory-1', kind: 'inventory' as const, label: 'KYSE150', detail: '细胞系 · 在库 3 份', included: true }, { id: 'inventory-2', kind: 'inventory' as const, label: 'SRGN 抗体', detail: '抗体 · 在库 1 份', included: true }];
-const proliferationFinding = { verdict: 'revise', dimensions: reviewDimensions.map(key => ({ key, verdict: key === 'confounding' ? 'concern' : 'ok', note: '' })),
+const withoutProliferation = srgnCards.map(item => ({ ...item, controls: item.controls.filter(control => !control.addresses.length) }));
+const proliferationFinding = { verdict: 'revise', supports: '若结果符合预期，可支持 SRGN 对 KYSE150 迁移的必要性（仅限该细胞系和 24 h Transwell）', strengths: ['两条独立 siRNA 和同期 NC'], dimensions: reviewDimensions.map(key => ({ key, verdict: key === 'confounding' ? 'concern' : 'ok', note: '' })),
   findings: [{ severity: 'major', dimension: 'confounding', blockId: 'phenotype', field: 'readouts', problem: '迁移细胞数减少也可能来自增殖变慢，设计里没有增殖对照', suggestion: '同时做 CCK-8 增殖检测' }] };
 
 const dictations = [
@@ -83,15 +103,31 @@ const dictations = [
     answer: { title: '离心条件', done: ['离心 10 分钟，4 度'], seen: [], values: ['转速 12000 或 13000 转（记不清）'], next: [], unclear: ['离心转速是 12000 还是 13000 转'], experiment: '' } },
 ];
 
+/** A made-up abstract for the reading step; its sentences are what a quote may be copied from. */
+const abstract = 'Serglycin (SRGN) is highly expressed in esophageal squamous cell carcinoma. In KYSE150 and KYSE410 cells, knockdown of SRGN with two independent siRNAs reduced migration in Transwell assays, without changing proliferation within 24 h.';
+const statements = ledgerStatements(srgnHypotheses, srgnChain);
+const readingAnswer = { relevant: true, target: 'main', relation: 'subject', quote: 'knockdown of SRGN with two independent siRNAs reduced migration in Transwell assays', system: 'KYSE150、KYSE410（食管鳞癌）', note: '同一体系的直接证据，但只是另一组的结果' };
+
 export const evalCases: EvalCase[] = [
   { id: 'srgn-context', spec: 'plan-design.context', prompt: contextPrompt(purpose, items), checks: read(parseContext, contextChecks), expected: JSON.stringify(srgnContext), agree: text => parseContext(text).claimType },
-  { id: 'srgn-chain', spec: 'plan-design.chain', prompt: chainPrompt(srgnContext, templateById('knockdown')!), checks: read(parseChain, chainChecks), expected: JSON.stringify(srgnChain),
-    agree: text => parseChain(text).blocks.map(item => item.kind).join('→') },
+  { id: 'srgn-hypotheses', spec: 'plan-design.hypotheses', prompt: hypothesesPrompt(srgnContext), checks: read(parseHypotheses, hypothesesChecks), expected: JSON.stringify(srgnHypotheses),
+    agree: text => [...new Set(parseHypotheses(text).rivals.map(rival => rival.kind))].sort().join(',') },
+  { id: 'srgn-chain', spec: 'plan-design.chain', prompt: chainPrompt(srgnContext, templateById('knockdown')!, srgnHypotheses), checks: read(text => parseChain(text, srgnHypotheses), chainChecks), expected: JSON.stringify(srgnChain),
+    agree: text => parseChain(text, srgnHypotheses).blocks.map(item => item.kind).join('→') },
+  { id: 'srgn-evidence-abstract', spec: 'plan-design.evidence', prompt: readPrompt(statements, { title: 'SRGN in esophageal squamous cell carcinoma', year: '2024' }, abstract),
+    // The second reading of a quote not found is kept as not found, so the case reads every answer as a second try.
+    checks: read(text => { const reader = readingReader(abstract, statements.map(item => item.id)); try { return reader(text); } catch { return reader(text); } }, readingChecks),
+    expected: JSON.stringify(readingAnswer), agree: text => { const reading = JSON.parse(text) as { relation?: string; target?: string }; return `${reading.target}:${reading.relation}`; } },
   { id: 'srgn-card-phenotype', spec: 'plan-design.card', prompt: cardPrompt(srgnContext, srgnChain, 'standard', block('phenotype'), protocols),
     checks: read(text => parseCard(text, block('phenotype'), protocols), cardChecks), expected: JSON.stringify(srgnCards[1]),
     agree: text => parseCard(text, block('phenotype'), protocols).groups.map(group => group.name).join(',') },
-  { id: 'srgn-review-proliferation', spec: 'plan-design.review', prompt: reviewPrompt(srgnContext, srgnChain, 'standard', srgnCards, checkCards(srgnCards, srgnChain, 'standard'), 1),
-    checks: read(parseReview, review => [{ name: 'raises the proliferation confound', pass: review.findings.some(finding => has(/增殖|prolifera/i, `${finding.problem} ${finding.suggestion}`)) }]),
+  { id: 'srgn-review-proliferation', spec: 'plan-design.review',
+    // Without the CCK-8 control, the review has the proliferation confound to find.
+    prompt: reviewPrompt(srgnContext, srgnChain, 'standard', withoutProliferation, checkCards(withoutProliferation, srgnChain, 'standard'), 1, { hypotheses: { ...srgnHypotheses, rivals: srgnHypotheses.rivals.filter(rival => rival.id === 'r1') } }),
+    checks: read(parseReview, review => [
+      { name: 'raises the proliferation confound', pass: review.findings.some(finding => has(/增殖|prolifera/i, `${finding.problem} ${finding.suggestion}`)) },
+      { name: 'states the strongest conclusion', pass: review.supports.trim().length > 0 },
+    ]),
     expected: JSON.stringify(proliferationFinding), agree: text => parseReview(text).verdict },
   ...dictations.map((item): EvalCase => ({ id: item.id, spec: 'entry.tidy', prompt: tidyPrompt({ title: '快速记录', words: item.words }), checks: read(parseTidy, tidyChecks(item.words, item.expect)),
     expected: JSON.stringify(item.answer), agree: text => parseTidy(text).experiment || '-' })),

@@ -36,6 +36,7 @@ export async function saveMethodSearchSettings(_previous: DesignActionState, for
     const sources = formData.getAll("sources").map(String).filter((id): id is MethodSourceId => methodSourceIds.includes(id as MethodSourceId));
     await writeMethodSearchSettings({ enabled: formData.get("enabled") === "on", sources, protocolsIoToken: String(formData.get("protocolsIoToken") ?? ""), clearProtocolsIoToken: formData.get("clearToken") === "on" });
     revalidatePath("/protocols/design");
+    revalidatePath("/ai");
     return { message: "Search settings saved." };
   } catch (error) { return fail(error, "Settings not saved"); }
 }

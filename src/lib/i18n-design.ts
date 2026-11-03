@@ -6,7 +6,7 @@ export const designZh: Record<string, string> = {
   "Design this plan step by step, with an independent review": "逐步设计这份方案，并经过独立审查",
   "Design an existing plan": "设计已有方案",
   "Open the design workbench": "打开设计工作台",
-  "Context card, evidence chain, design cards, then an independent review. Each step waits for you to confirm it.": "情境卡、证据链、设计卡，然后独立审查。每一步都等你确认后才继续。",
+  "Context card, hypotheses and predictions, evidence chain, design cards with the sample size worked out, then an independent review. Each step waits for you to confirm it.": "情境卡、假设与预测、证据链、算好样本量的设计卡，然后独立审查。每一步都等你确认后才继续。",
   "e.g. Show that SRGN knockdown inhibits migration of KYSE150 cells": "例如：证明 SRGN 敲低抑制 KYSE150 细胞迁移",
   // Steps
   "Design steps": "设计步骤",
@@ -253,13 +253,158 @@ export const designZh: Record<string, string> = {
   "Service that reviews research-plan designs": "审查研究方案设计的服务",
   "Same as the default service (reviews its own drafts)": "与默认服务相同（自己审查自己的草稿）",
   "A different model than the one that drafts makes the review more independent.": "用与起草不同的模型，审查更独立。",
+  // Phase 2 (Q332): ② hypotheses and predictions
+  "Hypotheses and predictions": "假设与预测",
+  "This design started before hypotheses, the evidence ledger and the sample-size calculation were added. Start a new design to use them.": "这次设计开始于加入假设、证据账本和样本量计算之前。要使用这些，请开始一次新的设计。",
+  "Five steps: a context card from what LabNest already holds, hypotheses with the tests that tell them from their rivals, an evidence chain from a template, a design card for each required experiment with its sample size worked out, and an independent review before you sign. Papers go into an evidence ledger along the way. Each step waits for you to confirm it.": "五步：用 LabNest 里已有的记录整理情境卡，写出假设和能把它与对立解释区分开的检验，按模板起草证据链，为每个必做实验写设计卡并算出样本量，签署前做一次独立审查。过程中读到的文献记进证据账本。每一步都等你确认。",
+  "Rivals come first, then the tests that tell them apart. Every hypothesis here is a candidate: the AI lists them, you decide which ones the design must rule out.": "先列对立解释，再想区分它们的检验。这里的每个假设都只是候选：AI 只负责列出，由你决定设计要排除哪些。",
+  "Draft the hypotheses": "起草假设",
+  "Draft the hypotheses again": "重新起草假设",
+  "Draft again? Your unsaved changes are lost.": "重新起草？未保存的修改会丢失。",
+  "Candidate": "候选",
+  "What it predicts": "成立时能观察到什么",
+  "A result that would count against it": "与之不相容的结果",
+  "Proposed mechanism (optional)": "设想的机制（可选）",
+  "What is estimated": "要估计的量",
+  "The comparison, system, readout and time point": "比较什么、什么体系、什么读出、什么时间点",
+  "Counter-explanations and the tests that tell them apart": "对立解释，以及区分它们的检验",
+  "Rule out": "排除",
+  "Counter-explanation": "对立解释",
+  "Kind of explanation": "解释的类别",
+  "Remove this counter-explanation": "删除这个对立解释",
+  "Test that tells them apart": "区分两者的检验",
+  "If the main hypothesis holds": "主假设成立时",
+  "If this explanation holds": "这个解释成立时",
+  "Undecided if": "什么结果算无法判断",
+  "Add a counter-explanation": "添加对立解释",
+  "Confirm the hypotheses": "确认假设",
+  "Another mechanism": "另一种机制",
+  "Reagent or handling artifact": "试剂或操作假象",
+  "Measurement artifact": "测量假象",
+  "Confounding": "混杂",
+  "Reverse causation": "因果方向相反",
+  "Only in this system or condition": "只在这个体系或条件下成立",
+  "Chance": "随机波动",
+  "Say what result would count against the main hypothesis: without one it cannot be tested": "写明什么结果与主假设不相容：没有它，假设就无法检验",
+  "The claim is an association, but the hypothesis is worded as cause and effect": "主张是关联，但假设写成了因果",
+  "The claim is an interaction in a complex; direct binding needs purified proteins": "主张是复合物中的相互作用；直接结合需要纯化蛋白来证明",
+  "Fewer than two counter-explanations to rule out: list rivals from different classes before choosing tests": "要排除的对立解释少于两个：先从不同类别列出对立解释，再选检验",
+  "No experiment named that tells this explanation from the main hypothesis": "没有写出能把这个解释和主假设区分开的实验",
+  "Both predict the same result in this test, so it cannot tell them apart": "两者在这个检验里预测的结果相同，区分不了",
+  "Say what result would leave it undecided": "写明什么结果算无法判断",
+  "From the confirmed hypotheses; reopen step 2 to change them. Tick under each block which ones it rules out.": "来自已确认的假设；要修改请重新打开第 2 步。在每个实验块下勾选它排除哪些。",
+  "No counter-explanation": "不对应对立解释",
+  "Counter-explanation it rules out": "它排除的对立解释",
+  "Draft the hypotheses first": "请先起草假设",
+  "Confirm the hypotheses first": "请先确认假设",
+  "Two counter-explanations share an id": "有两个对立解释的编号相同",
+  // The evidence ledger (Q306, Q307)
+  "A paper counts as evidence only after three checks: it exists and is not retracted, its quote appears word for word in what was read, and you confirmed what it bears on. The rest stays listed as to check and is never written into the rationale. Without evidence the design still works; its items say common practice, not checked against the literature.": "文献要通过三项核对才算证据：确实存在且没有撤稿；引文逐字出现在读过的原文里；你确认了它关于哪一条、是什么关系。其余的列为待核实，不会写进依据。没有证据也能做设计，相应条目会注明“常规做法，未经文献核对”。",
+  "Literature search is off. Turn on Europe PMC under": "文献检索已关闭。请在",
+  "External search on the AI page": "AI 页面的“外部检索”",
+  "to search, look up a PMID or DOI, and check quotes.": "里打开 Europe PMC，才能检索、查证 PMID 或 DOI、核对引文。",
+  "Not found within the recorded search": "在记录的检索范围内未找到",
+  "Open access": "开放获取",
+  "Abstract only": "只有摘要",
+  "Retracted": "已撤稿",
+  "No papers yet.": "还没有文献。",
+  "Search terms": "检索词",
+  "English terms, one search each, at most three. LabNest searches Europe PMC, and PubMed when Europe PMC fails; the AI only proposes terms.": "用英文，每组检索一次，最多三组。由 LabNest 检索 Europe PMC，Europe PMC 不可用时改查 PubMed；AI 只提议检索词。",
+  "e.g. SRGN knockdown migration esophageal squamous": "例如：SRGN knockdown migration esophageal squamous",
+  "Remove these terms": "删除这组检索词",
+  "Add terms": "添加检索词",
+  "Draft search terms": "起草检索词",
+  "Save the terms": "保存检索词",
+  "Add a paper you know": "添加你知道的文献",
+  "PMID, PMCID or DOI": "PMID、PMCID 或 DOI",
+  "e.g. 31234567 or 10.1038/…": "例如 31234567 或 10.1038/…",
+  "What it bears on": "关于哪一条",
+  "How": "关系",
+  "System it studied": "研究体系",
+  "Cell line, species or tissue": "细胞系、物种或组织",
+  "Quote, copied word for word from the abstract or the paper": "引文：从摘要或论文中逐字复制",
+  "The paper as a PDF (optional, for a quote from the full text)": "论文 PDF（可选，用于核对全文里的引文）",
+  "Add and check": "添加并核对",
+  "LabNest looks it up in Europe PMC (PubMed if that fails), flags a retraction, and looks for the quote word for word.": "LabNest 会在 Europe PMC 查证（失败时查 PubMed），标出撤稿，并逐字查找引文。",
+  "Supports the statement": "支持这条说法",
+  "Counter-evidence": "反证",
+  "Method basis": "方法依据",
+  "Verified": "已核实",
+  "To check": "待核实",
+  "Added by you": "由你添加",
+  "Found by search": "检索所得",
+  "Found by search, read from the abstract": "检索所得，读了摘要",
+  "Found by search, read from the full text": "检索所得，读了全文",
+  "Retracted: it never counts as evidence. Remove it, or keep it here as a record.": "已撤稿：不会作为证据。可以删除，也可以留作记录。",
+  "Check the quote again": "再次核对引文",
+  "I checked what it bears on and how": "我已核对它关于哪一条、是什么关系",
+  "Not found in Europe PMC or PubMed": "在 Europe PMC 和 PubMed 都查不到",
+  "Not looked up: give its PMID or DOI": "没有查证：需要 PMID 或 DOI",
+  "No quote": "没有引文",
+  "The quote is not in the text word for word": "引文没有逐字出现在原文里",
+  "The quote was not checked: the text could not be read": "没能读取原文，引文未核对",
+  "Relation not confirmed": "还没确认关系",
+  "The evidence ledger opens with the hypotheses": "证据账本从“假设与预测”这一步开始",
+  "This paper is not in the ledger": "证据账本里没有这篇文献",
+  "This paper is not in the search results": "检索结果里没有这篇文献",
+  "Choose how the paper bears on it": "请选择这篇文献与说法的关系",
+  "Choose what the paper bears on": "请选择这篇文献关于哪一条",
+  "A search term is too long": "检索词太长",
+  "Write or draft the search terms first": "请先填写或起草检索词",
+  "Give a PMID, PMCID or DOI": "请填写 PMID、PMCID 或 DOI",
+  "Literature search is off: turn on Europe PMC under External search on the AI page": "文献检索已关闭：请在 AI 页面的“外部检索”里打开 Europe PMC",
+  "Europe PMC and PubMed both failed; the search stopped. Nothing was added.": "Europe PMC 和 PubMed 都没有完成检索，检索已停止，没有加入任何内容。",
+  "Attach a PDF of at most 40 MB": "请附上不超过 40 MB 的 PDF",
+  "The quote is not in the text word for word: copy one sentence exactly as it is written": "引文没有逐字出现在原文里：请照原文逐字复制一句",
+  // The sample size (Q305)
+  "Biological replicates per group": "每组生物学重复",
+  "Sample size": "样本量",
+  "Quoted passage": "引文",
+  "Where the effect comes from": "效应量从哪里来",
+  "Groups compared": "比较方式",
+  "Smallest difference worth finding": "值得发现的最小差异",
+  "In the readout's units": "用读出的单位",
+  "SD of the paired differences": "配对差值的标准差",
+  "SD within a group": "组内标准差",
+  "α (two-sided)": "α（双侧）",
+  "Power": "把握度",
+  "Comparisons sharing α": "共用 α 的比较次数",
+  "Replicates expected to be lost": "预计损失的重复",
+  "n per group, by convention": "每组 n（按惯例）",
+  "Where the numbers come from": "这些数字从哪里来",
+  "A pilot experiment, an earlier result, a paper in the ledger": "预实验、已有结果、证据账本里的文献",
+  "Needs a pilot experiment: n stays open, and no number is made up.": "需要预实验：n 先空着，不编数字。",
+  "One-way ANOVA needs at least three groups on this card.": "单因素方差分析需要这张卡至少有三个分组。",
+  "Give the difference and its SD, or the effect size, to work out n.": "填写差异和标准差，或直接填效应量，才能算出 n。",
+  "More than 10,000 per group": "每组超过 10,000",
+  "n per group": "每组 n",
+  "A pilot effect is usually larger than the true one, so the range looks at smaller effects.": "预实验的效应量往往比真实值大，所以范围看的是更小的效应。",
+  "Worked out by LabNest (two-sided t-test or one-way ANOVA, as in statsmodels), never by the AI.": "由 LabNest 计算（双侧 t 检验或单因素方差分析，与 statsmodels 相同），不由 AI 填写。",
+  "Convention (n not calculated)": "惯例（不计算 n）",
+  "Two independent groups": "两组独立比较",
+  "Paired samples": "配对样本",
+  "Several groups (one-way ANOVA)": "多组（单因素方差分析）",
+  "No randomization: say how dishes, wells or plate positions are assigned to the groups": "没有随机分配：写明哪些皿、孔或板位分到哪组",
+  "Batches not planned: run each independent replicate on its own day or passage, with every group in each batch": "没有安排批次：每个独立重复在不同的一天或代次完成，每批都包含全部分组",
+  "The sample size has a basis but no effect: give the difference worth finding and its SD, or the effect size": "样本量选了依据却没有效应量：请填要发现的差异和标准差，或直接填效应量",
+  // Review v3 and sign-off by section
+  "The strongest conclusion this design can support": "这份设计最多能支持的结论",
+  "Whole design": "整体设计",
+  "Untick a section to leave it as it is.": "取消勾选的栏目保持原样。",
+  "Evidence ledger": "证据账本",
+  // The external search switch, now on the AI page (Q306)
+  "External search": "外部检索",
+  "Design from a goal searches these sources for methods. The design workbench’s evidence ledger searches Europe PMC, and PubMed when Europe PMC fails, and looks up the papers you add. While this is off, nothing is searched outside LabNest; every outside request is logged.": "“按目标设计”在这些来源里检索方法；设计工作台的证据账本检索 Europe PMC（不可用时改查 PubMed），并查证你添加的文献。关闭时不会在 LabNest 以外检索任何内容；每一次对外请求都有记录。",
+  "Only the group’s Protocol library is searched": "只检索课题组规程库",
+  "Change on the AI page": "在 AI 页面修改",
 };
 
 const severity: Record<string, string> = { Serious: "严重", Important: "重要", Minor: "次要" };
-const stepZh: Record<string, string> = { "Context card": "情境卡", "Evidence chain": "证据链", "Design cards": "设计卡", "Review and sign-off": "审查与签署" };
+const stepZh: Record<string, string> = { "Context card": "情境卡", "Hypotheses and predictions": "假设与预测", "Evidence chain": "证据链", "Design cards": "设计卡", "Review and sign-off": "审查与签署" };
 const tierZh: Record<string, string> = { Light: "轻量", Standard: "标准", Publication: "发表级" };
 const verdictZh: Record<string, string> = { "Ready to sign": "可以签署", Revise: "需要修改", "Rethink the claim or the chain": "需要重新考虑主张或证据链" };
-const zh = (text: string) => designZh[text] ?? text;
+/** A fixed text, or one with a number or a name in it: rule texts nest inside other lines. */
+const zh = (text: string): string => designZh[text] ?? translateDesignDynamic(text) ?? text;
 
 /** Workbench text with a number or a name in it. */
 export function translateDesignDynamic(value: string): string | undefined {
@@ -292,7 +437,7 @@ export function translateDesignDynamic(value: string): string | undefined {
   match = value.match(/^(Serious|Important|Minor) · Rule (\d+): (.+)$/);
   if (match) return `${severity[match[1]]} · 规则 ${match[2]}：${zh(match[3])}`;
   match = value.match(/^Rule (\d+)(?: · (.+?))?: (.+)$/);
-  if (match) return `规则 ${match[1]}${match[2] ? ` · ${match[2]}` : ""}：${zh(match[3])}`;
+  if (match) return `规则 ${match[1]}${match[2] ? ` · ${zh(match[2])}` : ""}：${zh(match[3])}`;
   match = value.match(/^(\d+) rule findings$/);
   if (match) return `${match[1]} 条规则问题`;
   match = value.match(/^(\d+) groups · (\d+) controls · (\d+) readouts · n = (\S+) · (\d+) criteria$/);
@@ -332,9 +477,59 @@ export function translateDesignDynamic(value: string): string | undefined {
   match = value.match(/^Needs a group and a readout: (.+)$/);
   if (match) return `至少要有一个分组和一项读出：${match[1].split(", ").join("、")}`;
   match = value.match(/^Changed after review round (\d+), review again: (.+)$/);
-  if (match) return `第 ${match[1]} 轮审查之后改过，请再审查一轮：${match[2].split(", ").join("、")}`;
+  if (match) return `第 ${match[1]} 轮审查之后改过，请再审查一轮：${match[2].split(", ").map(zh).join("、")}`;
   match = value.match(/^Changed after the last review and not reviewed again: (.+)\. Signing writes this into the limitations\.$/);
-  if (match) return `最后一轮审查之后改过、没有再审查：${match[1].split(", ").join("、")}。签署时会写进“限制与依赖”。`;
+  if (match) return `最后一轮审查之后改过、没有再审查：${match[1].split(", ").map(zh).join("、")}。签署时会写进“限制与依赖”。`;
+  match = value.match(/^About (\d+) model calls? · from the confirmed context card and verified evidence only$/);
+  if (match) return `约调用模型 ${match[1]} 次 · 只根据已确认的情境卡和已核实的证据`;
+  match = value.match(/^(\d+) to rule out: each becomes a control or a block in the next steps\.$/);
+  if (match) return `要排除 ${match[1]} 个：后面的步骤里每个都要对应一个对照或实验块。`;
+  match = value.match(/^(Serious|Important|Minor): (.+)$/);
+  if (match) return `${severity[match[1]]}：${zh(match[2])}`;
+  match = value.match(/^Evidence ledger · (\d+) verified · (\d+) to check(?: · (\d+) retracted)?$/);
+  if (match) return `证据账本 · 已核实 ${match[1]} · 待核实 ${match[2]}${match[3] ? ` · 已撤稿 ${match[3]}` : ""}`;
+  match = value.match(/^Search record \((\d+)\)$/);
+  if (match) return `检索记录（${match[1]}）`;
+  match = value.match(/^Failed: ([\s\S]+)$/);
+  if (match) return `失败：${zh(match[1])}`;
+  match = value.match(/^(\d+) papers$/);
+  if (match) return `${match[1]} 篇`;
+  match = value.match(/^Search results to read \((\d+)\)$/);
+  if (match) return `待读的检索结果（${match[1]}）`;
+  match = value.match(/^Read (\d+) papers$/);
+  if (match) return `读这 ${match[1]} 篇`;
+  match = value.match(/^Reading (\d+) of (\d+)…$/);
+  if (match) return `正在读第 ${match[1]}/${match[2]} 篇…`;
+  match = value.match(/^About (\d+) model calls, one per paper; (\d+) more can be read in full text, the rest from their abstracts\. The quote each one gives is looked up word for word\.$/);
+  if (match) return `约调用模型 ${match[1]} 次，每篇 1 次；还能读 ${match[2]} 篇全文，其余读摘要。每篇给出的引文都会逐字核对。`;
+  match = value.match(/^(\d+) read into the ledger$/);
+  if (match) return `${match[1]} 篇已记入账本`;
+  match = value.match(/^(\d+) not relevant$/);
+  if (match) return `${match[1]} 篇无关`;
+  match = value.match(/^(\d+) could not be read$/);
+  if (match) return `${match[1]} 篇没能读取`;
+  match = value.match(/^Found by search, read from the PDF$/);
+  if (match) return "检索所得，读了 PDF";
+  match = value.match(/^Or the effect size (d|f) itself$/);
+  if (match) return `或直接填效应量 ${match[1]}`;
+  match = value.match(/^n = (\d+) per group$/);
+  if (match) return `每组 n = ${match[1]}`;
+  match = value.match(/^· (\d+) with the expected losses$/);
+  if (match) return `· 计入预计损失为 ${match[1]}`;
+  match = value.match(/^Effect (d|f)$/);
+  if (match) return `效应量 ${match[1]}`;
+  match = value.match(/^With (\d+) biological replicates per group, the smallest effect found with (\d+)% power is (d|f) ≈ ([\d.]+)(?: \(a difference of about ([\d.]+) SDs\))?\.$/);
+  if (match) return `每组 ${match[1]} 个生物学重复时，以 ${match[2]}% 把握度能发现的最小效应是 ${match[3]} ≈ ${match[4]}${match[5] ? `（约 ${match[5]} 个标准差的差异）` : ""}。`;
+  match = value.match(/^The groups cover (\d+) of the (\d+) combinations of the factors, so their effects and interaction cannot be told apart$/);
+  if (match) return `分组只覆盖了因素组合中的 ${match[1]} 种（共 ${match[2]} 种），各因素的效应和交互作用分不开`;
+  match = value.match(/^Planned (\d+) biological replicates per group; the sample-size calculation needs (\d+)$/);
+  if (match) return `每组计划 ${match[1]} 个生物学重复；样本量计算需要 ${match[2]} 个`;
+  match = value.match(/^Nothing rules out “(.+)”: tie it to a control or a required block$/);
+  if (match) return `没有对照或必做实验块排除“${match[1]}”：请把它对应到一个对照或必做实验块`;
+  match = value.match(/^Strengths \((\d+)\)$/);
+  if (match) return `做得好的地方（${match[1]}）`;
+  match = value.match(/^Searching (.+)$/);
+  if (match) return `检索：${match[1].split(", ").map(part => ({ "the group’s Protocol library": "课题组规程库" })[part] ?? part).join("、")}`;
   match = value.match(/^Gathered (\d+) LabNest records$/);
   if (match) return `读取了 ${match[1]} 条 LabNest 记录`;
   return undefined;

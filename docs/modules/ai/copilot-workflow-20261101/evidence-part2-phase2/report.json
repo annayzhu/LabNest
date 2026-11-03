@@ -1,0 +1,248 @@
+{
+  "base": "http://localhost:3002",
+  "at": "2026-11-03T00:23:09.805Z",
+  "synthetic": true,
+  "liveProviders": false,
+  "spec": "plan-design-v2",
+  "checks": [
+    {
+      "name": "a new plan from the overview opens its design workbench, with LabNest records listed and nothing sent",
+      "status": "passed"
+    },
+    {
+      "name": "① the context card marks AI suggestions, asks what is ambiguous, and confirms into ②",
+      "status": "passed"
+    },
+    {
+      "name": "② rivals with the tests that tell them apart; no confirming without a result against the main hypothesis",
+      "status": "passed"
+    },
+    {
+      "name": "the evidence ledger says when literature search is off; the switch is on the AI page",
+      "status": "passed"
+    },
+    {
+      "name": "a search through LabNest, then reading: the retracted paper never counts, the other counts once confirmed",
+      "status": "passed"
+    },
+    {
+      "name": "adding by PMID: found, but a quote not in the abstract stays to check; a made-up DOI is not found",
+      "status": "passed"
+    },
+    {
+      "name": "③ the chain is built on the confirmed rivals; each block says which ones it rules out",
+      "status": "passed"
+    },
+    {
+      "name": "④ the program works out n from the effect; wells as n and too few replicates are caught and fixed",
+      "status": "passed"
+    },
+    {
+      "name": "⑥ review v3: what the design can support; the severe finding is fixed by a control tied to its rival",
+      "status": "passed"
+    },
+    {
+      "name": "signing leaves out the section the author unticks and writes only verified papers as evidence",
+      "status": "passed"
+    },
+    {
+      "name": "each suggestion and what the author did with it is kept under its spec version, and every call asked for JSON",
+      "status": "passed"
+    },
+    {
+      "name": "the plan page shows one line for the signed design; the signed workbench fits a phone",
+      "status": "passed"
+    }
+  ],
+  "failures": [],
+  "calls": [
+    {
+      "step": "context",
+      "model": "mock-drafter",
+      "chars": 121,
+      "sentInventory": true,
+      "json": "json_object"
+    },
+    {
+      "step": "hypotheses",
+      "model": "mock-drafter",
+      "chars": 387,
+      "sentInventory": true,
+      "json": "json_object"
+    },
+    {
+      "step": "terms",
+      "model": "mock-drafter",
+      "chars": 257,
+      "sentInventory": true,
+      "json": "json_object"
+    },
+    {
+      "step": "read",
+      "model": "mock-drafter",
+      "chars": 361,
+      "sentInventory": true,
+      "json": "json_object"
+    },
+    {
+      "step": "read",
+      "model": "mock-drafter",
+      "chars": 260,
+      "sentInventory": true,
+      "json": "json_object"
+    },
+    {
+      "step": "chain",
+      "model": "mock-drafter",
+      "chars": 2398,
+      "sentInventory": true,
+      "json": "json_object"
+    },
+    {
+      "step": "card",
+      "model": "mock-drafter",
+      "chars": 1704,
+      "sentInventory": true,
+      "json": "json_object"
+    },
+    {
+      "step": "card",
+      "model": "mock-drafter",
+      "chars": 1704,
+      "sentInventory": true,
+      "json": "json_object"
+    },
+    {
+      "step": "review",
+      "model": "mock-reviewer",
+      "chars": 7187,
+      "sentInventory": true,
+      "json": "json_object"
+    },
+    {
+      "step": "review",
+      "model": "mock-reviewer",
+      "chars": 7183,
+      "sentInventory": true,
+      "json": "json_object"
+    }
+  ],
+  "outside": [
+    {
+      "path": "/europepmc/webservices/rest/search",
+      "query": "(SRGN AND knockdown AND migration AND esophageal) AND (SRC:MED OR SRC:PMC)"
+    },
+    {
+      "path": "/europepmc/webservices/rest/search",
+      "query": "(SRGN AND proliferation AND KYSE150) AND (SRC:MED OR SRC:PMC)"
+    },
+    {
+      "path": "/europepmc/webservices/rest/PMC9000001/fullTextXML",
+      "query": ""
+    },
+    {
+      "path": "/europepmc/webservices/rest/search",
+      "query": "EXT_ID:31234567 AND SRC:MED"
+    },
+    {
+      "path": "/europepmc/webservices/rest/search",
+      "query": "DOI:\"10.9999/none.2026\""
+    }
+  ],
+  "modelCalls": 10,
+  "suggestions": [
+    {
+      "kind": "context_card",
+      "subject": "context",
+      "status": "adopted",
+      "editedFields": [],
+      "ignoreReason": null,
+      "specId": "plan-design.context",
+      "specVersion": 1,
+      "provider": "Design drafter mock"
+    },
+    {
+      "kind": "hypotheses",
+      "subject": "hypotheses",
+      "status": "adopted",
+      "editedFields": [],
+      "ignoreReason": null,
+      "specId": "plan-design.hypotheses",
+      "specVersion": 1,
+      "provider": "Design drafter mock"
+    },
+    {
+      "kind": "evidence_entry",
+      "subject": "e1",
+      "status": "adopted",
+      "editedFields": [],
+      "ignoreReason": null,
+      "specId": "plan-design.evidence",
+      "specVersion": 1,
+      "provider": "Design drafter mock"
+    },
+    {
+      "kind": "evidence_entry",
+      "subject": "e2",
+      "status": "pending",
+      "editedFields": [],
+      "ignoreReason": null,
+      "specId": "plan-design.evidence",
+      "specVersion": 1,
+      "provider": "Design drafter mock"
+    },
+    {
+      "kind": "evidence_chain",
+      "subject": "chain",
+      "status": "adopted",
+      "editedFields": [],
+      "ignoreReason": null,
+      "specId": "plan-design.chain",
+      "specVersion": 2,
+      "provider": "Design drafter mock"
+    },
+    {
+      "kind": "design_card",
+      "subject": "kd-check",
+      "status": "adopted",
+      "editedFields": [],
+      "ignoreReason": null,
+      "specId": "plan-design.card",
+      "specVersion": 2,
+      "provider": "Design drafter mock"
+    },
+    {
+      "kind": "design_card",
+      "subject": "phenotype",
+      "status": "adopted",
+      "editedFields": [
+        "replicates",
+        "unit"
+      ],
+      "ignoreReason": null,
+      "specId": "plan-design.card",
+      "specVersion": 2,
+      "provider": "Design drafter mock"
+    },
+    {
+      "kind": "review_finding",
+      "subject": "1-1",
+      "status": "adopted",
+      "editedFields": [],
+      "ignoreReason": null,
+      "specId": "plan-design.review",
+      "specVersion": 3,
+      "provider": "Design reviewer mock"
+    },
+    {
+      "kind": "review_finding",
+      "subject": "1-2",
+      "status": "ignored",
+      "editedFields": [],
+      "ignoreReason": "regenerated",
+      "specId": "plan-design.review",
+      "specVersion": 3,
+      "provider": "Design reviewer mock"
+    }
+  ]
+}

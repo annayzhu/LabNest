@@ -51,7 +51,7 @@ export function CopilotLauncher({ projects, plans, defaultProjectId, closeHref }
             ? <label className="ln-copilot-lead">In project<select value={projectId} onChange={event => setProjectId(event.target.value)}>{projects.map(project => <option key={project.id} value={project.id}>{project.label}</option>)}</select></label>
             : <label className="ln-copilot-lead">Plan<select value={planId} onChange={event => setPlanId(event.target.value)}>{plans.map(plan => <option key={plan.id} value={plan.id}>{plan.label}</option>)}</select></label>}
           <Button type="submit" variant="primary" disabled={busy || (mode === 'new' ? purpose.trim().length < 4 || !projectId : !planId)}>{busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}Open the design workbench</Button>
-          <p className="ln-copilot-note">Context card, evidence chain, design cards, then an independent review. Each step waits for you to confirm it.</p>
+          <p className="ln-copilot-note">Context card, hypotheses and predictions, evidence chain, design cards with the sample size worked out, then an independent review. Each step waits for you to confirm it.</p>
         </div>
       </form>}
       {error ? <p role="alert" className="text-sm text-error">{error}</p> : null}

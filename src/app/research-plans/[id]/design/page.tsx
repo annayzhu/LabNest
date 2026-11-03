@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { buttonStyles } from "@/components/ui/Button";
 import { protocolChoices } from "@/lib/copilot/plan-design/context.server";
 import { designReadiness } from "@/lib/copilot/plan-design/deps.server";
+import { literatureAccess } from "@/lib/copilot/plan-design/evidence.server";
 import { listDesignRuns } from "@/lib/copilot/plan-design/runs.server";
 import { prisma } from "@/lib/db";
 
@@ -18,8 +19,8 @@ export default async function ResearchPlanDesignPage({ params }: { params: Promi
   const { id } = await params;
   const plan = await prisma.researchPlan.findUnique({ where: { id }, select: { id: true, code: true, title: true, objective: true, status: true, project: { select: { name: true } } } });
   if (!plan) notFound();
-  const [runs, readiness, oldRuns] = await Promise.all([
-    listDesignRuns(plan.id), designReadiness(),
+  const [runs, readiness, literature, oldRuns] = await Promise.all([
+    listDesignRuns(plan.id), designReadiness(), literatureAccess(),
     prisma.researchPlanCopilotRun.findMany({ where: { researchPlanId: plan.id }, orderBy: { createdAt: "desc" }, take: 5, select: { id: true, purpose: true, status: true, createdAt: true, suggestionsJson: true } }),
   ]);
   const current = runs.find(run => run.status !== "signed") ?? runs[0];
@@ -28,7 +29,7 @@ export default async function ResearchPlanDesignPage({ params }: { params: Promi
   return <AppShell><div className="space-y-4">
     <PageHeader identifier={plan.code} eyebrow={plan.project.name} title="Design workbench" description={plan.title}
       actions={<Link href={`/research-plans/${plan.id}`} className={secondaryButton}><ArrowLeft className="h-4 w-4" aria-hidden />Back to the plan</Link>} />
-    <DesignWorkbench planId={plan.id} defaultPurpose={plan.objective ?? ""} archived={plan.status === "archived"} initialRuns={runs} readiness={readiness} protocols={protocols}
+    <DesignWorkbench planId={plan.id} defaultPurpose={plan.objective ?? ""} archived={plan.status === "archived"} initialRuns={runs} readiness={readiness} literature={literature} protocols={protocols}
       experiments={experiments.map(row => ({ id: row.id, label: `${row.runCode ?? ""} ${row.title}`.trim(), day: row.date.toISOString().slice(0, 10), hasProtocol: Boolean(row.primaryProtocolVersionId) }))}
       oldRuns={oldRuns.map(row => ({ id: row.id, purpose: row.purpose, status: row.status, at: row.createdAt.toISOString().slice(0, 10), suggestions: Array.isArray(row.suggestionsJson) ? (row.suggestionsJson as { title?: string; status?: string }[]).map(item => `${item.title ?? ""}${item.status && item.status !== "pending" ? ` (${item.status})` : ""}`) : [] }))} />
   </div></AppShell>;

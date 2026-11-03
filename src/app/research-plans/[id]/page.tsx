@@ -15,7 +15,7 @@ import { Badge, StatusPill } from "@/components/ui/Badge";
 import { buttonStyles } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
-import { designSteps, stepLabels } from "@/lib/copilot/plan-design/spec";
+import { stepLabels, stepsOf } from "@/lib/copilot/plan-design/spec";
 import { listDesignRuns } from "@/lib/copilot/plan-design/runs.server";
 import { prisma } from "@/lib/db";
 import { Bot } from "lucide-react";
@@ -102,6 +102,6 @@ function DesignProgress({ planId, runs }: { planId: string; runs: Awaited<Return
   const step = open && open.step !== "signed" ? open.step : undefined;
   return <Link href={`/research-plans/${planId}/design`} className="ln-copilot-entry ln-design-progress focus-ring">
     <Bot className="h-4 w-4" aria-hidden /><strong>Design workbench</strong>
-    <span>{step ? `Step ${designSteps.indexOf(step) + 1} of ${designSteps.length}: ${stepLabels[step]}, ${open!.status === "failed" ? "the last step failed" : "waiting for you"}` : signed ? `Design v${signed.state.signed?.version} signed ${signed.signedAt?.slice(0, 10)} · ${signed.state.signed?.experimentIds.length ?? 0} planned experiments` : "Design this plan step by step, with an independent review"}</span>
+    <span>{step ? `Step ${stepsOf(open!.spec).indexOf(step) + 1} of ${stepsOf(open!.spec).length}: ${stepLabels[step]}, ${open!.status === "failed" ? "the last step failed" : "waiting for you"}` : signed ? `Design v${signed.state.signed?.version} signed ${signed.signedAt?.slice(0, 10)} · ${signed.state.signed?.experimentIds.length ?? 0} planned experiments` : "Design this plan step by step, with an independent review"}</span>
   </Link>;
 }

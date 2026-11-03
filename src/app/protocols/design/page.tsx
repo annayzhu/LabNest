@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
-import { MethodDesignStart, MethodSearchSettingsForm } from "@/components/MethodDesignStart";
+import { MethodDesignStart } from "@/components/MethodDesignStart";
 import { PageHeader } from "@/components/PageHeader";
 import { getAIAvailability } from "@/lib/ai-server";
 import { prisma } from "@/lib/db";
@@ -8,6 +8,7 @@ import { readMethodSearchSettings } from "@/lib/method-sources/index.server";
 
 export const dynamic = "force-dynamic";
 const statusLabels: Record<string, string> = { searching: "Searching methods", comparing: "Comparing methods", drafted: "Draft generated" };
+const sourceLabels: Record<string, string> = { local: "the group’s Protocol library", protocols_io: "protocols.io", europe_pmc: "Europe PMC" };
 
 /** 方案设计: from an experiment goal to a draft Protocol, through what the group and the open databases already know. */
 export default async function MethodDesignPage() {
@@ -18,7 +19,8 @@ export default async function MethodDesignPage() {
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4" aria-label="Experiment goal"><MethodDesignStart /></section>
         <aside className="space-y-3">
-          <MethodSearchSettingsForm settings={settings} />
+          {/* The switch lives on the AI page (Q306), with the design workbench's evidence ledger that shares it. */}
+          <p className="ln-design-settings" aria-label="Search settings"><strong>Search settings</strong><span>{settings.enabled ? `Searching ${settings.sources.map(id => sourceLabels[id] ?? id).join(", ")}` : "Only the group’s Protocol library is searched"}</span><Link href="/ai#external-search" className="text-moss underline">Change on the AI page</Link></p>
           <p className="ln-design-note px-1">{ai.enabled && ai.connected ? `Method cards are summarized by ${ai.model ?? ai.providerName}; every statement is checked against the original, and those that don’t match are marked unverified.` : `No model connected (${ai.reason ?? "turn it on in AI settings"}): you can still search and fetch the original texts, and fill in method cards by hand.`}</p>
         </aside>
       </div>

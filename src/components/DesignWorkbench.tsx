@@ -7,13 +7,15 @@ import { useI18n } from './I18nProvider';
 import type { DesignReadiness } from '@/lib/copilot/plan-design/deps.server';
 import type { ProtocolChoice } from '@/lib/copilot/plan-design/prompts';
 import {
-  blockKinds, claimTypeLabels, claimTypes, contextFields, designSteps, requiredBlocks, stepCalls, stepLabels, tierLabels, tiers,
+  blockKinds, claimTypeLabels, claimTypes, contextFields, requiredBlocks, stepCalls, stepLabels, stepsOf, tierLabels, tiers,
   type Chain, type ContextCard, type ContextField, type ContextItem, type DesignRunView, type DesignStep, type Tier,
 } from '@/lib/copilot/plan-design/spec';
-import type { DesignAction } from '@/lib/copilot/plan-design/workflow';
+import { ledgerOpen, type DesignAction } from '@/lib/copilot/plan-design/workflow';
 import { chainTemplates, templateById } from '@/lib/copilot/plan-design/templates';
 import { AiButton } from './AiAssistant';
 import { DesignCardsStep } from './DesignCardsStep';
+import { DesignEvidenceLedger, type EvidenceCall } from './DesignEvidenceLedger';
+import { DesignHypothesesStep } from './DesignHypothesesStep';
 import { DesignReviewStep } from './DesignReviewStep';
 import { Button } from './ui/Button';
 import './design-workbench.css';
@@ -32,8 +34,8 @@ export async function callApi<T>(path: string, method: 'GET' | 'POST' | 'PATCH' 
  * The research-plan design workbench (Q300): the steps on the left, the current step's artifact on the right. A model
  * step only drafts; the author edits and confirms before the next step opens (Q311). Signing writes the plan once.
  */
-export function DesignWorkbench({ planId, defaultPurpose, archived, initialRuns, readiness, protocols, experiments, oldRuns }: {
-  planId: string; defaultPurpose: string; archived: boolean; initialRuns: DesignRunView[]; readiness: DesignReadiness; protocols: ProtocolChoice[]; experiments: PlanExperiment[]; oldRuns: OldRun[];
+export function DesignWorkbench({ planId, defaultPurpose, archived, initialRuns, readiness, literature, protocols, experiments, oldRuns }: {
+  planId: string; defaultPurpose: string; archived: boolean; initialRuns: DesignRunView[]; readiness: DesignReadiness; literature: boolean; protocols: ProtocolChoice[]; experiments: PlanExperiment[]; oldRuns: OldRun[];
 }) {
   const { t } = useI18n();
   const base = `/api/research-plans/${planId}/design`;
@@ -59,6 +61,20 @@ export function DesignWorkbench({ planId, defaultPurpose, archived, initialRuns,
     return next;
   };
   const shared = { run: run!, busy, act, step: (blockId?: string) => guard(blockId ? `card:${blockId}` : 'step', async () => { await step(blockId); }), readiness };
+  /** A ledger request: search terms, a search, reading one paper, adding one, or checking a quote again. */
+  const evidence: EvidenceCall = async (label, body) => {
+    let ok = false;
+    await guard(label, async () => {
+      if (!run) return;
+      const response = await fetch(`${base}/${run.id}/evidence`, body instanceof FormData ? { method: 'POST', body } : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+      const payload = await response.json() as { run?: DesignRunView; error?: string };
+      if (!response.ok || !payload.run) throw new Error(payload.error ?? 'Something went wrong; try again');
+      put(payload.run);
+      if (payload.run.status === 'failed') throw new Error(payload.run.error ?? 'The request did not finish; try again');
+      ok = true;
+    });
+    return ok;
+  };
 
   if (!run) return <div className="ln-dw">
     {!archived ? <StartDesign defaultPurpose={defaultPurpose} busy={busy === 'start'} hasSigned={signed.length > 0} onStart={purpose => guard('start', async () => put((await callApi<{ run: DesignRunView }>(base, 'POST', { purpose })).run))} /> : <p className="ln-dw-note">This plan is archived.</p>}
@@ -68,17 +84,18 @@ export function DesignWorkbench({ planId, defaultPurpose, archived, initialRuns,
   </div>;
 
   const current = run.step as DesignStep;
+  const steps = stepsOf(run.spec);
   return <div className="ln-dw">
     <div className="ln-dw-layout">
       <nav className="ln-dw-rail" aria-label="Design steps">
-        <ol>{designSteps.map((item, index) => {
-          const state = designSteps.indexOf(current) > index ? 'done' : item === current ? 'current' : 'todo';
+        <ol>{steps.map((item, index) => {
+          const state = steps.indexOf(current) > index ? 'done' : item === current ? 'current' : 'todo';
           return <li key={item} data-state={state}>
             {state === 'done' ? <Check className="h-4 w-4" aria-hidden /> : <Circle className="h-4 w-4" aria-hidden fill={state === 'current' ? 'currentColor' : 'none'} />}
             <span><strong>{index + 1}. {stepLabels[item]}</strong>{state === 'done' && !archived ? <button type="button" className="ln-dw-link" disabled={Boolean(busy)} onClick={() => act({ kind: 'reopen', step: item })}>Reopen</button> : null}</span>
           </li>;
         })}</ol>
-        <p className="ln-dw-note">Hypotheses and predictions, the evidence ledger, sample-size calculation and the feasibility and schedule check come in phase 2.</p>
+        {steps.includes('hypotheses') ? null : <p className="ln-dw-note">This design started before hypotheses, the evidence ledger and the sample-size calculation were added. Start a new design to use them.</p>}
         <p className="ln-dw-note">{`${run.modelCalls} model calls so far${run.provider ? ` · ${run.provider}` : ''}`}</p>
         <button type="button" className="ln-dw-link ln-dw-remove" disabled={Boolean(busy)} onClick={() => { if (window.confirm(t('Remove this design? Nothing was written to the plan yet.'))) void guard('remove', async () => { await callApi(`${base}/${run.id}`, 'DELETE'); setRuns(list => list.filter(item => item.id !== run.id)); }); }}><Trash2 className="h-3.5 w-3.5" aria-hidden />Remove this design</button>
       </nav>
@@ -88,6 +105,7 @@ export function DesignWorkbench({ planId, defaultPurpose, archived, initialRuns,
         {error ? <p role="alert" className="ln-dw-error">{error}</p> : null}
         {!readiness.ready ? <p role="status" className="ln-dw-warn">{readiness.reason ?? 'AI is off.'} You can still edit and confirm what is drafted.</p> : null}
         {current === 'context' ? <ContextStep {...shared} /> : null}
+        {current === 'hypotheses' ? <DesignHypothesesStep {...shared} /> : null}
         {current === 'chain' ? <ChainStep {...shared} /> : null}
         {current === 'cards' ? <DesignCardsStep {...shared} protocols={protocols} draftAll={() => guard('cards', async () => {
           let next: DesignRunView | undefined = run;
@@ -98,6 +116,7 @@ export function DesignWorkbench({ planId, defaultPurpose, archived, initialRuns,
           }
         })} /> : null}
         {current === 'review' ? <DesignReviewStep {...shared} protocols={protocols} base={`${base}/${run.id}`} onSigned={(next, experimentIds) => { put(next); setNotice(`Signed. ${experimentIds.length} planned experiments were made.`); router.refresh(); }} /> : null}
+        {ledgerOpen(run) ? <DesignEvidenceLedger {...shared} evidence={evidence} literature={literature} /> : null}
       </section>
     </div>
     <History signed={signed} experiments={experiments} oldRuns={oldRuns} />
@@ -110,7 +129,7 @@ function StartDesign({ defaultPurpose, busy, hasSigned, onStart }: { defaultPurp
   const [purpose, setPurpose] = useState(defaultPurpose);
   return <form className="ln-dw-start" onSubmit={event => { event.preventDefault(); if (purpose.trim().length >= 4) onStart(purpose); }}>
     <h2>{hasSigned ? 'Start a new design' : 'Design this plan'}</h2>
-    <p className="ln-dw-note">Four steps: a context card from what LabNest already holds, an evidence chain from a template, a design card for each required experiment, and an independent review before you sign. Each step waits for you to confirm it.</p>
+    <p className="ln-dw-note">Five steps: a context card from what LabNest already holds, hypotheses with the tests that tell them from their rivals, an evidence chain from a template, a design card for each required experiment with its sample size worked out, and an independent review before you sign. Papers go into an evidence ledger along the way. Each step waits for you to confirm it.</p>
     <label>Research purpose<textarea rows={3} value={purpose} onChange={event => setPurpose(event.target.value)} placeholder="e.g. Show that SRGN knockdown inhibits migration of KYSE150 cells" /></label>
     <div className="ln-dw-actions">
       <Button type="submit" variant="primary" disabled={busy || purpose.trim().length < 4}>{busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}Start</Button>
@@ -132,7 +151,7 @@ function ContextStep({ run, busy, act, step }: StepProps) {
   const card = run.state.context?.card;
   const [draft, setDraft] = useState<ContextCard | undefined>(card);
   const [seenCard, setSeenCard] = useState(card);
-  if (card !== seenCard) { setSeenCard(card); setDraft(card); }
+  if (JSON.stringify(card) !== JSON.stringify(seenCard)) { setSeenCard(card); setDraft(card); }
   const dirty = Boolean(draft && card && JSON.stringify(draft) !== JSON.stringify(card));
   const kinds = [...new Set(items.map(item => item.kind))];
   const save = () => draft ? act({ kind: 'context', card: draft }) : Promise.resolve();
@@ -172,7 +191,10 @@ function ChainStep({ run, busy, act, step }: StepProps) {
   const template = templateById(chainState?.templateId ?? '') ?? chainTemplates[0];
   const [draft, setDraft] = useState<{ chain: Chain; tier: Tier } | undefined>(chainState?.draft && chainState.tier ? { chain: chainState.draft, tier: chainState.tier } : undefined);
   const [seen, setSeen] = useState(chainState?.draft);
-  if (chainState?.draft !== seen) { setSeen(chainState?.draft); setDraft(chainState?.draft && chainState.tier ? { chain: chainState.draft, tier: chainState.tier } : undefined); }
+  // Compared by content: a ledger change below must not wipe unsaved edits here.
+  if (JSON.stringify(chainState?.draft) !== JSON.stringify(seen)) { setSeen(chainState?.draft); setDraft(chainState?.draft && chainState.tier ? { chain: chainState.draft, tier: chainState.tier } : undefined); }
+  const fromHypotheses = Boolean(run.state.hypotheses?.confirmedAt);
+  const rivals = draft?.chain.alternatives.filter(item => item.exclude && item.id) ?? [];
   const dirty = Boolean(draft && (JSON.stringify(draft.chain) !== JSON.stringify(chainState?.draft) || draft.tier !== chainState?.tier));
   const required = draft ? requiredBlocks(draft.chain, draft.tier) : [];
   const setChain = (chain: Chain) => draft && setDraft({ ...draft, chain });
@@ -198,9 +220,12 @@ function ChainStep({ run, busy, act, step }: StepProps) {
         <label><span>Rationale</span><textarea rows={2} value={draft.chain.rationale} onChange={event => setChain({ ...draft.chain, rationale: event.target.value })} /></label>
         <label className="is-wide"><span>Least credible evidence (one per line)</span><textarea rows={3} value={draft.chain.minimumEvidence.join('\n')} onChange={event => setChain({ ...draft.chain, minimumEvidence: event.target.value.split('\n').map(line => line.trim()).filter(Boolean) })} /></label>
       </div>
-      <fieldset className="ln-dw-records"><legend>Counter-explanations to rule out</legend>
+      {fromHypotheses ? <fieldset className="ln-dw-records"><legend>Counter-explanations to rule out</legend>
+        <p className="ln-dw-note">From the confirmed hypotheses; reopen step 2 to change them. Tick under each block which ones it rules out.</p>
+        <ul className="ln-dw-list">{rivals.map(item => <li key={item.id}>{item.text}</li>)}</ul>
+      </fieldset> : <fieldset className="ln-dw-records"><legend>Counter-explanations to rule out</legend>
         {draft.chain.alternatives.map((item, index) => <label key={index} className="ln-dw-check"><input type="checkbox" checked={item.exclude} onChange={event => setChain({ ...draft.chain, alternatives: draft.chain.alternatives.map((alt, at) => at === index ? { ...alt, exclude: event.target.checked } : alt) })} /><span>{item.text}</span></label>)}
-      </fieldset>
+      </fieldset>}
       <fieldset className="ln-dw-tiers"><legend>Tier</legend>
         {tiers.map(tier => <label key={tier} className="ln-dw-check"><input type="radio" name="tier" checked={draft.tier === tier} onChange={() => setDraft({ ...draft, tier })} /><span>{tierLabels[tier]}{draft.chain.recommendedTier === tier ? <em data-state="ai">Recommended</em> : null}</span></label>)}
       </fieldset>
@@ -215,6 +240,7 @@ function ChainStep({ run, busy, act, step }: StepProps) {
             <button type="button" className="ln-dw-icon" aria-label="Remove this block" onClick={() => setChain({ ...draft.chain, blocks: draft.chain.blocks.filter((_, at) => at !== index).map(other => ({ ...other, dependsOn: other.dependsOn.filter(dep => dep !== block.id) })) })}><Trash2 className="h-4 w-4" aria-hidden /></button>
           </div>
           {block.dependsOn.length ? <p className="ln-dw-note">{`After ${block.dependsOn.map(dep => draft.chain.blocks.find(other => other.id === dep)?.title ?? dep).join(', ')}`}</p> : null}
+          {rivals.length ? <div className="ln-dw-addresses"><span className="ln-dw-note">Rules out</span>{rivals.map(rival => <label key={rival.id} className="ln-dw-check"><input type="checkbox" checked={block.addresses.includes(rival.id!)} onChange={event => setBlock(index, { addresses: event.target.checked ? [...block.addresses, rival.id!] : block.addresses.filter(id => id !== rival.id) })} /><span>{rival.text}</span></label>)}</div> : null}
           <details><summary>{block.success || 'Success, failure and fallback'}</summary><div className="ln-dw-fields">
             {(['purpose', 'success', 'failure', 'fallback'] as const).map(key => <label key={key}><span>{blockFieldNames[key]}</span><textarea rows={2} value={block[key]} onChange={event => setBlock(index, { [key]: event.target.value })} /></label>)}
           </div></details>

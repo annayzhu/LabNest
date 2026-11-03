@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { literatureSearcher, searchPubMed, paperDigest, paperFromResult, paperText, searchPapers } from './literature';
+import { literatureSearcher, lookupPaper, searchPubMed, paperDigest, paperFromResult, paperText, searchPapers } from './literature';
 
 const xml = `<article><body>
 <sec><title>Introduction</title><p>Background text.</p></sec>
@@ -108,4 +108,27 @@ it('spaces concurrent PubMed requests and retries rate limits at most twice', as
     await assertion;
     expect(failures).toBe(3);
   } finally { vi.useRealTimers(); }
+});
+
+describe('Retractions and lookups for the evidence ledger', () => {
+  it('flags a retracted record in Europe PMC and in PubMed', async () => {
+    expect(paperFromResult({ pmid: '5', title: 'Withdrawn', pubTypeList: { pubType: ['Journal Article', 'Retracted Publication'] } })).toMatchObject({ pmid: '5', retracted: true });
+    expect(paperFromResult({ pmid: '6', title: 'Pointed at', commentCorrectionList: { commentCorrection: [{ type: 'Retraction in', id: '9' }] } })).toMatchObject({ retracted: true });
+    expect(paperFromResult({ pmid: '7', title: 'Fine', commentCorrectionList: { commentCorrection: [{ type: 'Erratum in' }] } })).toMatchObject({ retracted: false });
+    const efetch = '<PubmedArticleSet><PubmedArticle><MedlineCitation><PMID>42</PMID><Article><ArticleTitle>Old claim</ArticleTitle><PublicationTypeList><PublicationType UI="D016441">Retracted Publication</PublicationType></PublicationTypeList></Article></MedlineCitation></PubmedArticle></PubmedArticleSet>';
+    const fetchText = async (url: string) => url.includes('esearch') ? JSON.stringify({ esearchresult: { idlist: ['42'] } }) : efetch;
+    expect((await searchPubMed('old claim', fetchText))[0]).toMatchObject({ pmid: '42', retracted: true });
+  });
+
+  it('looks a paper up in Europe PMC, and in PubMed when Europe PMC fails', async () => {
+    const urls: string[] = [];
+    const europe = async (url: string) => { urls.push(url); return JSON.stringify({ resultList: { result: [{ pmid: '31', title: 'Found', abstractText: 'A long abstract text.' }] } }); };
+    expect(await lookupPaper({ kind: 'doi', value: '10.1/x' }, europe, 'https://ebi.test')).toMatchObject({ database: 'europe_pmc', paper: { pmid: '31', title: 'Found' } });
+    expect(decodeURIComponent(urls[0])).toContain('DOI:"10.1/x"');
+    expect((await lookupPaper({ kind: 'pmid', value: '99' }, async () => JSON.stringify({ resultList: { result: [] } }), 'https://ebi.test')).paper).toBeUndefined();
+    const efetch = '<PubmedArticleSet><PubmedArticle><MedlineCitation><PMID>77</PMID><Article><ArticleTitle>From PubMed</ArticleTitle></Article></MedlineCitation></PubmedArticle></PubmedArticleSet>';
+    const fallback = async (url: string) => { if (url.includes('ebi.test')) throw new Error('ebi.test returned 503'); return url.includes('esearch') ? JSON.stringify({ esearchresult: { idlist: ['77'] } }) : efetch; };
+    expect(await lookupPaper({ kind: 'doi', value: '10.2/y' }, fallback, 'https://ebi.test', 'https://ncbi.test')).toMatchObject({ database: 'pubmed', paper: { pmid: '77', title: 'From PubMed' } });
+    await expect(lookupPaper({ kind: 'pmcid', value: 'PMC1' }, fallback, 'https://ebi.test')).rejects.toThrow(/503/);
+  });
 });

@@ -139,7 +139,7 @@ describe('the design workflow', () => {
     const signOff = buildSignOff(run.state, { objective: null, hypothesis: null, rationale: null, document: createScientificDocument(researchPlanSections) }, { runId: 'run1', version: 1, date: '2026-11-02', purpose: run.purpose, drafting: 'Fake', rules: [], protocols: new Map() });
     const text = JSON.stringify(signOff.sections);
     expect(text).toContain('最后一轮审查之后又修改了：Transwell 迁移。这些修改没有再审查。');
-    expect(text).toContain('之后修改的设计卡（Transwell 迁移）未再审查');
+    expect(text).toContain('之后修改的内容（Transwell 迁移）未再审查');
   });
 
   it('counts serious rule findings as blockers, and stops after two review rounds', async () => {
@@ -161,7 +161,7 @@ describe('signing', () => {
   it('fills the premise, writes five sections, and replaces an earlier signed design', async () => {
     const flow = await throughCards();
     flow.act({ kind: 'confirm' });
-    const run = await runModelStep(flow.get(), fakeModel({ verdict: 'ready', dimensions: judged('feasibility'), findings: [{ severity: 'minor', dimension: 'feasibility', blockId: '', field: '', problem: '时间紧', suggestion: '' }] }).deps);
+    const run = await runModelStep(flow.get(), fakeModel({ verdict: 'ready', dimensions: judged('feasibility'), findings: [{ severity: 'minor', dimension: 'feasibility', blockId: '', field: '', problem: '时间紧', suggestion: '把拯救实验留到下一期' }] }).deps);
     const document = createScientificDocument(researchPlanSections);
     document.sections[0].blocks.push({ id: `${DESIGN_BLOCK_PREFIX}old-design-1`, type: 'text', text: '旧设计' }, { id: 'mine', type: 'text', text: '作者写的' });
     const signOff = buildSignOff(run.state, { objective: run.purpose, hypothesis: '我自己的假设', rationale: null, document }, { runId: 'run1', version: 2, date: '2026-11-02', purpose: run.purpose, drafting: 'Fake', rules: [], protocols: new Map([['p1', { code: 'PRT-001', title: 'Transwell 迁移' }]]) });

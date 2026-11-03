@@ -17,6 +17,7 @@ type Launch = {
     toolId: QpcrOutputBlock['toolId'];
     state?: unknown;
     anchorId?: string;
+    insertionSection?: string;
     samples: unknown[];
     layouts: QpcrOutputBlock[];
     planLayouts: Array<QpcrOutputBlock & {
@@ -134,7 +135,7 @@ export function QpcrRecordIntegration({ owner, title, document, onChange, childr
     useEffect(() => { if (!draftId)
         return; const timer = setTimeout(() => void persist().catch(() => setStatus('待同步')), 1000); return () => clearTimeout(timer); }, [document, draftId, persist]);
     useEffect(() => { const form = host.current?.closest('form'); let timer: ReturnType<typeof setTimeout>; const changed = () => { clearTimeout(timer); timer = setTimeout(() => void persist().catch(() => setStatus('待同步')), 1000); }; form?.addEventListener('input', changed); return () => { clearTimeout(timer); form?.removeEventListener('input', changed); }; }, [persist]);
-    const open = useCallback(async (block?: QpcrOutputBlock, anchorId?: string) => {
+    const open = useCallback(async (block?: QpcrOutputBlock, anchorId?: string, insertionSection?: string) => {
         setError('');
         setStatus('正在打开');
         try {
@@ -166,7 +167,7 @@ export function QpcrRecordIntegration({ owner, title, document, onChange, childr
                 throw new Error('方案读取失败，请重试'); return r.json(); }).then(r => r.state) : pending?.state;
             setReady(false);
             setConflict(false);
-            setLaunch({ submissionId: pending?.submissionId ?? newClientMutationId(), owner: { ...current.owner }, id: pendingEntry?.[0] ?? newClientMutationId(), artifactId: block?.id ?? pending?.artifactId ?? newClientMutationId(), baseRevision: pending?.baseRevision ?? block?.revision ?? 0, toolId: block?.toolId ?? (current.owner.ownerType === 'result' ? 'qpcr-analysis' : 'qpcr-plate-layout'), state, anchorId, samples: context.samples, layouts: context.layouts, planLayouts: context.planLayouts ?? [] });
+            setLaunch({ submissionId: pending?.submissionId ?? newClientMutationId(), owner: { ...current.owner }, id: pendingEntry?.[0] ?? newClientMutationId(), artifactId: block?.id ?? pending?.artifactId ?? newClientMutationId(), baseRevision: pending?.baseRevision ?? block?.revision ?? 0, toolId: block?.toolId ?? (current.owner.ownerType === 'result' ? 'qpcr-analysis' : 'qpcr-plate-layout'), state, anchorId, insertionSection, samples: context.samples, layouts: context.layouts, planLayouts: context.planLayouts ?? [] });
         }
         catch (e) {
             setError(e instanceof Error ? e.message : '尚未打开，请重试');
@@ -232,7 +233,7 @@ export function QpcrRecordIntegration({ owner, title, document, onChange, childr
             setError('');
             try {
                 const current = latest.current;
-                const response = await fetch('/api/qpcr-workflow', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ draftId, owner: launch.owner, forkFromId: launch.forkFromId, document: current.document, baseDocument: base.current, form: formValues(), sessionId: launch.id, session: message.state, output: { ...message.output, id: launch.artifactId, baseRevision: launch.baseRevision, submissionId: launch.submissionId, toolId: launch.toolId, sectionKey: launch.owner.ownerType === 'result' ? 'analysis' : launch.owner.ownerType === 'experiment' ? 'setup' : 'material_methods', anchorId: launch.anchorId, source: launch.source } }) });
+                const response = await fetch('/api/qpcr-workflow', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ draftId, owner: launch.owner, forkFromId: launch.forkFromId, document: current.document, baseDocument: base.current, form: formValues(), sessionId: launch.id, session: message.state, output: { ...message.output, id: launch.artifactId, baseRevision: launch.baseRevision, submissionId: launch.submissionId, toolId: launch.toolId, sectionKey: launch.owner.ownerType === 'result' ? 'analysis' : launch.owner.ownerType === 'experiment' ? 'setup' : 'material_methods', anchorId: launch.anchorId, insertionSection: launch.insertionSection, source: launch.source } }) });
                 const result = await response.json();
                 if (!response.ok)
                     throw new Error(result.error);

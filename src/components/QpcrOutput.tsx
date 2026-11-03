@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import type { QpcrOutputBlock } from '@/lib/qpcr-workflow';
 import { Button } from './ui/Button';
-export const QpcrEditContext = createContext<((block?: QpcrOutputBlock, anchorId?: string) => void) | null>(null);
+export const QpcrEditContext = createContext<((block?: QpcrOutputBlock, anchorId?: string, insertionSection?: string) => void) | null>(null);
 export function QpcrOutput({ block }: {
     block: QpcrOutputBlock;
 }) {

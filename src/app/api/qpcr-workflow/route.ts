@@ -14,7 +14,7 @@ const requestSchema = z.object({
     baseDocument: scientificDocumentSchema.optional(), forkFromId: z.string().optional(), form: z.record(z.string(), z.unknown()).default({}),
     sessionId: z.string().optional(), session: z.unknown().optional(),
     output: z.object({ id: z.string().uuid(), submissionId: z.string().uuid(), baseRevision: z.number().int().nonnegative(), toolId: z.enum(['qpcr-plate-layout', 'qpcr-analysis']),
-        sectionKey: z.enum(['setup', 'material_methods', 'analysis']), anchorId: z.string().optional(), label: z.string(), method: z.string(),
+        sectionKey: z.enum(['setup', 'material_methods', 'analysis']), anchorId: z.string().optional(), insertionSection: z.string().optional(), label: z.string(), method: z.string(),
         images: z.array(z.object({ svg: z.string().max(2000000), caption: z.string() })).max(150),
         fullTable: z.object({ headers: z.array(z.string()), rows: z.array(z.array(z.string())) }).optional(),
         table: z.object({ headers: z.array(z.string()), rows: z.array(z.array(z.string())) }), mixTsv: z.string().optional(), source: z.object({ ownerId: z.string(), artifactId: z.string(), revision: z.number() }).optional(),
@@ -125,7 +125,7 @@ export async function POST(request: Request) {
                     attachmentIds.push(attachment.id);
                 }
                 block = { id: output.id, type: 'qpcr', label: output.label, toolId: output.toolId, revision: output.baseRevision + 1, submissionId: output.submissionId, sessionAttachmentId: attachmentIds[0], images: output.images.map((image, index) => ({ caption: image.caption, url: `/api/attachments/${attachmentIds[index + 1]}?inline=1` })), table: output.table, method: output.method, mixTsv: output.mixTsv, source: output.source, dataset: { attachmentId: attachmentIds[output.images.length + 1], rowCount: (output.fullTable ?? output.table).rows.length, headers: (output.fullTable ?? output.table).headers, preview: (output.fullTable ?? output.table).rows.slice(0, 20) }, rawAttachments: attachmentIds.slice(output.images.length + 2).map((id, index) => ({ id, name: files[output.images.length + 2 + index].originalFilename })) };
-                document = mergeQpcrOutput(document, block, output.sectionKey, output.baseRevision, output.anchorId);
+                document = mergeQpcrOutput(document, block, output.sectionKey, output.baseRevision, output.anchorId, output.insertionSection);
                 if (record) {
                     const update = { contentJson: json(document) };
                     if (data.owner.ownerType === 'result')

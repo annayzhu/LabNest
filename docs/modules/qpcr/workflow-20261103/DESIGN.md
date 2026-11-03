@@ -76,3 +76,11 @@ Implementation sources: [record integration](../../../../src/components/QpcrReco
 - **Don't** equate a visible facet, compact table or current target with the complete saved analysis.
 - **Don't** imply technical wells are independent biological samples, or a successful UI review validates scientific assumptions.
 - **Don't** promote module-local palette aliases or screenshot-specific observations into claims of global theme or responsive coverage.
+
+## Acceptance corrections · 2026-11-03
+
+- qPCR is inserted from the existing `/` writing menu. Section headings have no fixed qPCR action. Existing outputs retain editing actions.
+- An insertion belongs to the chosen paragraph/section, including empty sections and custom templates.
+- Reference targets and calibrator remain visible when changed. Display ordering is a separate disclosure.
+- Embedded navigation uses one compact row and a shared content rail. Layout selection belongs to data import. Completed QC has a compact state; change history expands on demand.
+- The plate initially fits all wells. Selecting a well shows full details; zoom and four-direction controls support mouse use. Advanced layout correction expands on demand.

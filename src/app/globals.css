@@ -5349,7 +5349,6 @@ input[type="file"]::file-selector-button:hover {
 
 
 /* qPCR outputs share the scientific record's typography and controls. */
-.qpcr-section-action{margin:0 0 12px;padding:6px 10px;border:1px solid var(--color-hairline);border-radius:var(--ln-radius-control-lg);color:var(--color-moss);font-family:var(--font-sans);font-size:13px;cursor:pointer}
 .qpcr-record-workspace{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;background:var(--color-surface);color:var(--color-ink)}
 .qpcr-record-workspace[open]{display:flex;flex-direction:column}
 .qpcr-record-workspace>header{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--color-hairline)}
@@ -5359,6 +5358,6 @@ input[type="file"]::file-selector-button:hover {
 .qpcr-output>header{margin-bottom:12px}.qpcr-output h3{font-weight:600}.qpcr-output figure{margin:16px 0;break-inside:avoid}
 .qpcr-output img{display:block;width:100%;height:auto;max-height:none}.qpcr-output figcaption,.qpcr-method{font-size:12px;line-height:1.5;margin:8px 0;color:var(--color-graphite)}
 .qpcr-table-scroll{overflow-x:auto}.qpcr-output table{width:100%;border-collapse:collapse;font-size:12px}.qpcr-output th,.qpcr-output td{padding:6px 8px;text-align:left;border-bottom:1px solid var(--color-hairline);overflow-wrap:anywhere}.qpcr-output th{font-weight:500}.qpcr-output details{margin-top:12px;font-size:12px}
-@media print{.qpcr-record-workspace,.qpcr-section-action{display:none!important}.qpcr-output,.qpcr-table-scroll{overflow:visible!important;break-inside:auto!important}.qpcr-output figure{break-inside:avoid;page-break-inside:avoid}.qpcr-output img{width:100%;max-height:none!important}.qpcr-output thead{display:table-header-group}.qpcr-output tr{break-inside:avoid}.qpcr-output figcaption,.qpcr-method,.qpcr-output table{font-size:9pt}.qpcr-output details{display:none}}
+@media print{.qpcr-record-workspace{display:none!important}.qpcr-output,.qpcr-table-scroll{overflow:visible!important;break-inside:auto!important}.qpcr-output figure{break-inside:avoid;page-break-inside:avoid}.qpcr-output img{width:100%;max-height:none!important}.qpcr-output thead{display:table-header-group}.qpcr-output tr{break-inside:avoid}.qpcr-output figcaption,.qpcr-method,.qpcr-output table{font-size:9pt}.qpcr-output details{display:none}}
 
 .qpcr-expand-image{margin-left:12px;color:var(--color-moss);text-decoration:underline;cursor:pointer}.qpcr-image-preview{width:96vw;max-width:1100px;max-height:92dvh;padding:16px;border:1px solid var(--color-hairline);border-radius:var(--ln-radius-panel-inner);background:var(--color-surface)}.qpcr-image-preview>header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:12px}.qpcr-image-preview>div{overflow:auto}.qpcr-image-preview img{width:900px;min-width:640px;max-width:none;height:auto}@media print{.qpcr-image-preview,.qpcr-expand-image{display:none!important}}

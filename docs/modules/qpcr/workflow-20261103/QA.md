@@ -36,3 +36,7 @@ Focused code reviews found2 standards-axis lifecycle issues and5 spec-axis issue
 Design review report: both visual fixes resolved; scope-limited disposition ship. All reports refer to synthetic test data.
 
 Plan metadata restoration was additionally verified through the visible metadata drawer: title, selected project and manual document survive refresh, then formal save clears the draft. Experiment drafts restore controlled title/date/status/method fields and protocol selection. Repeated form values are retained as arrays. Final host suite remains1,971 passed/7 skipped; typecheck passes.
+
+## User acceptance corrections · 2026-11-03
+
+Reproduced fixed qPCR actions and slash insertion returning to the wrong section. The slash browser check now passes. Reproduced TBP selection closing its own settings in the prior offline bundle; the new browser test verifies persistent settings, fit of 384 wells, zoom, mouse movement, P24 selection, preservation of a deselected chart and a 390 px layout without page overflow. Analysis: 96 unit tests and 6 browser flows passed. Package verification passed. Shared workspace tests encountered one unrelated in-progress plasmid reliability failure; release checks use committed source excluding that work.

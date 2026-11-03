@@ -1,3 +1,4 @@
+import {openQpcrFromSlash} from './qpcr-browser-helpers.mjs';
 import {chromium} from 'playwright';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
@@ -7,7 +8,7 @@ page.on('pageerror',e=>console.log('PAGEERROR',e.stack));page.on('response',asyn
 await page.goto(`http://localhost:3002/results/new?experiment=${ids.experimentId}&manual=1`);
 await page.getByRole('textbox',{name:'Result title',exact:true}).fill('qPCR 合成验收 · 45 类别 · 草稿恢复');
 await page.locator('.tiptap p').first().fill('合成验收观察：保留手写正文。');
-await page.getByRole('button',{name:'qPCR 分析',exact:true}).click();
+await openQpcrFromSlash(page,'qPCR 分析');
 const frame=page.frameLocator('iframe[title="qPCR 分析"]');
 await frame.getByRole('button',{name:'EN',exact:true}).click();
 await frame.getByRole('radio',{name:/Start from ΔΔCq/}).click();
@@ -27,7 +28,7 @@ await page.reload();
 await page.waitForFunction(()=>document.querySelector('[aria-label="Result title"]')?.value.includes('45'));
 assert.equal(await page.getByRole('textbox',{name:'Result title',exact:true}).inputValue(),'qPCR 合成验收 · 45 类别 · 草稿恢复');
 assert.match(await page.locator('.tiptap').innerText(),/保留手写正文/);
-await page.getByRole('button',{name:'qPCR 分析',exact:true}).click();
+await openQpcrFromSlash(page,'qPCR 分析');
 await frame.locator('.workflow-chart:not([hidden]) svg').first().waitFor();
 assert.equal(await frame.locator('svg text[aria-label^="Sample-"]').count(),45);
 await page.getByRole('button',{name:'插入结果',exact:true}).click();

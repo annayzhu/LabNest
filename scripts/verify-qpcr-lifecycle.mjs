@@ -1,3 +1,4 @@
+import {openQpcrFromSlash} from './qpcr-browser-helpers.mjs';
 import {chromium} from 'playwright';
 import {readFile} from 'node:fs/promises';import assert from 'node:assert/strict';
 const ids=JSON.parse(await readFile('/private/tmp/qpcr-fixtures.json','utf8'));
@@ -30,7 +31,7 @@ await page.getByRole('button',{name:'编辑布局',exact:true}).first().click();
 const frame=page.frameLocator('iframe[title="qPCR 板布局"]');
 await frame.locator('.sample-name-input').first().fill('Synthetic_Draft_A');
 await page.getByRole('button',{name:'返回记录',exact:true}).click();await page.locator('dialog').waitFor({state:'detached'});
-await page.getByRole('button',{name:'qPCR 板布局',exact:true}).click();
+await openQpcrFromSlash(page,'qPCR 板布局');
 await frame.getByRole('button',{name:'载入示例',exact:true}).click();await frame.getByRole('button',{name:'生成布局',exact:true}).click();
 await page.getByRole('button',{name:'保存到计划',exact:true}).click();await page.locator('dialog').waitFor({state:'detached'});
 await page.getByRole('button',{name:'编辑布局',exact:true}).first().click();

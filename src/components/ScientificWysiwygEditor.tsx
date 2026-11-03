@@ -46,7 +46,6 @@ export const ScientificSectionAddons = createContext<Record<string, ReactNode>>(
 function ScientificSectionNodeView({ node }: NodeViewProps) {
   const { t } = useI18n();
   const addon = useContext(ScientificSectionAddons)[node.attrs.sectionKey];
-  const openQpcr = useContext(QpcrEditContext);
   // Section titles are stored in English; the page translator skips editable content, so translate here.
   return <NodeViewWrapper as="section" id={scientificSectionAnchorId(node.attrs.sectionKey)} className="ln-protocol-section ln-scientific-section" data-section-key={node.attrs.sectionKey}>
     <header className="ln-protocol-section-heading" contentEditable={false}>
@@ -54,7 +53,6 @@ function ScientificSectionNodeView({ node }: NodeViewProps) {
       <h2 style={node.attrs.titleFontSizePt ? {fontSize: `${node.attrs.titleFontSizePt}pt`} : undefined}>{t(node.attrs.sectionTitle)}</h2>
       {node.attrs.sectionKey === "quality_limitations" ? <small>{t("Only record deviations, failed QC, missing data, or limits that change interpretation.")}</small> : null}
     </header>
-    {openQpcr && ["setup","material_methods","analysis"].includes(node.attrs.sectionKey) ? <button type="button" className="focus-ring qpcr-section-action" contentEditable={false} onClick={()=>openQpcr()}>{node.attrs.sectionKey === "analysis" ? "qPCR 分析" : "qPCR 板布局"}</button> : null}
     {addon ? <div className="ln-scientific-section-addon" contentEditable={false}>{addon}</div> : null}
     <NodeViewContent as="div" className="ln-protocol-section-content" />
   </NodeViewWrapper>;
@@ -140,7 +138,38 @@ export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSection
   const previousHiddenSectionSignatureRef = useRef(hiddenSectionSignature);
   const onChangeRef = useRef(onChange);
   const openQpcr = useContext(QpcrEditContext);
-  const inserts = [...scientificInserts(insertProfile), ...(openQpcr ? [{id:"qpcr",label:insertProfile === "scientific-result" ? "qPCR 分析" : "qPCR 板布局",hint:"",keywords:"qpcr 排板 分析",icon:BarChart3,insert:(editor:Editor)=>{ const anchorId=editor.state.selection.$from.parent.attrs.scientificBlockId; openQpcr(undefined,anchorId); }}] : [])];
+  const inserts = [...scientificInserts(insertProfile), ...(openQpcr ? [{id:"qpcr",label:insertProfile === "scientific-result" ? "qPCR 分析" : "qPCR 板布局",hint:"",keywords:"qpcr 排板 分析",icon:BarChart3,insert:(editor:Editor)=>{ const { $from } = editor.state.selection;
+    let depth = $from.depth;
+    while (depth > 0 && $from.node(depth).type.name !== "scientificSection") depth--;
+    if (!depth) return;
+    const sectionKey = $from.node(depth).attrs.sectionKey;
+    const childIndex = $from.index(depth);
+    // Split paragraph groups at the insertion line so the saved block stays here.
+    const transaction = editor.state.tr;
+    const selectedSection = $from.node(depth);
+    const selectedNode = selectedSection.child(childIndex);
+    const groupId = selectedNode.attrs.scientificBlockId;
+    const anchorGroupId = groupId || uniqueBlockId("text");
+    const followingGroupId = uniqueBlockId("text");
+    let groupStart = childIndex;
+    let groupEnd = childIndex;
+    const sameGroup = (index: number) => {
+      const node = selectedSection.child(index);
+      return "scientificBlockId" in node.attrs && node.attrs.scientificBlockId === groupId;
+    };
+    while (groupStart > 0 && sameGroup(groupStart - 1)) groupStart--;
+    while (groupEnd + 1 < selectedSection.childCount && sameGroup(groupEnd + 1)) groupEnd++;
+    selectedSection.forEach((node, offset, index) => {
+      if (index < groupStart || index > groupEnd || !("scientificBlockId" in node.attrs)) return;
+      const id = index <= childIndex ? anchorGroupId : followingGroupId;
+      if (node.attrs.scientificBlockId !== id) transaction.setNodeMarkup($from.start(depth) + offset, undefined, { ...node.attrs, scientificBlockId: id });
+    });
+    editor.view.dispatch(transaction);
+    const prefix = editor.getJSON();
+    const section = prefix.content?.find(node => node.attrs?.sectionKey === sectionKey);
+    if (section) section.content = section.content?.slice(0, childIndex + 1);
+    const anchorId = tiptapToScientificDocument(prefix, originalRef.current).sections.find(section => section.key === sectionKey)?.blocks.at(-1)?.id;
+    openQpcr(undefined, anchorId, sectionKey); }}] : [])];
   useEffect(() => { originalRef.current = document; }, [document]);
   useEffect(() => { hiddenSectionKeysRef.current = hiddenSectionKeys; }, [hiddenSectionSignature, hiddenSectionKeys]);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);

@@ -1,3 +1,4 @@
+import {openQpcrFromSlash} from './qpcr-browser-helpers.mjs';
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
@@ -5,7 +6,7 @@ const base='http://localhost:3002', ids=JSON.parse(await readFile('/private/tmp/
 const browser=await chromium.launch();const page=await browser.newPage({viewport:{width:1366,height:768}});
 page.on('pageerror',error=>console.log('PAGEERROR',error.stack));page.on('response',async response=>{if(response.status()>=400&&response.url().includes('qpcr-workflow'))console.log('API',await response.text());});
 await page.goto(base+`/experiments/${ids.experimentId}/edit`);
-await page.getByRole('button',{name:'qPCR 板布局',exact:true}).click();
+await openQpcrFromSlash(page,'qPCR 板布局');
 const frame=page.frameLocator('iframe[title="qPCR 板布局"]');
 await frame.getByRole('button',{name:'载入示例',exact:true}).click();
 await frame.getByRole('button',{name:'生成布局',exact:true}).click();

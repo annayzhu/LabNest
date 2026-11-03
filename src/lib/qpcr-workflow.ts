@@ -24,7 +24,7 @@ export function qpcrOutputs(document: ScientificDocument) {
     return document.sections.flatMap(section => section.blocks.filter((block): block is QpcrOutputBlock => block.type === 'qpcr'));
 }
 /** Only the selected output is replaced. A retry is a no-op, including after a later revision. */
-export function mergeQpcrOutput(document: ScientificDocument, output: QpcrOutputBlock, sectionKey: string, baseRevision: number, anchorId?: string): ScientificDocument {
+export function mergeQpcrOutput(document: ScientificDocument, output: QpcrOutputBlock, sectionKey: string, baseRevision: number, anchorId?: string, insertionSection?: string): ScientificDocument {
     const next = structuredClone(document);
     const existing = qpcrOutputs(next).find(block => block.id === output.id);
     if (existing?.submissionId === output.submissionId)
@@ -36,13 +36,13 @@ export function mergeQpcrOutput(document: ScientificDocument, output: QpcrOutput
             section.blocks = section.blocks.map(block => block.id === output.id ? output : block);
     }
     else {
-        let section = next.sections.find(item => anchorId && item.blocks.some(block => block.id === anchorId)) ?? next.sections.find(item => item.key === sectionKey);
+        let section = next.sections.find(item => item.key === insertionSection) ?? next.sections.find(item => anchorId && item.blocks.some(block => block.id === anchorId)) ?? next.sections.find(item => item.key === sectionKey);
         if (!section) {
             section = { key: sectionKey, title: sectionKey === 'analysis' ? 'Analysis' : sectionKey === 'setup' ? 'Setup & samples' : 'Material & methods', blocks: [] };
             next.sections.push(section);
         }
         const index = anchorId ? section.blocks.findIndex(block => block.id === anchorId) : -1;
-        section.blocks.splice(index < 0 ? section.blocks.length : index + 1, 0, output);
+        section.blocks.splice(index < 0 ? (insertionSection ? 0 : section.blocks.length) : index + 1, 0, output);
     }
     return next;
 }

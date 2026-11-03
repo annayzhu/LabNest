@@ -35,21 +35,29 @@ const savePayload = z.object({
   sourceFileName: z.string().max(500).optional(),
 }).refine((input) => input.record.features.every((item) => item.segments.every((part) => part.start <= part.end && part.end <= input.record.sequence.length)), "A feature lies outside the sequence.");
 
-export type PlasmidSaveResult = { error?: string; productId?: string; versionLabel?: string; unchanged?: boolean };
+export type PlasmidSaveResult = { error?: string; warning?: string; productId?: string; versionLabel?: string; unchanged?: boolean };
 
-/** Saves the open sequence onto a plasmid product; the original file is kept with that version (Q275, F10). */
+/**
+ * Saves the open sequence onto a plasmid product; the original file is kept with that version (Q275, F10). The file is
+ * kept after the version is saved, so when keeping it fails the version stays and the result carries a warning.
+ */
 export async function savePlasmidSequence(formData: FormData): Promise<PlasmidSaveResult> {
   try {
     const input = savePayload.parse(JSON.parse(String(formData.get("payload") ?? "null")));
     const result = await prisma.$transaction((tx) => savePlasmidVersion(tx, input));
     const file = formData.get("file");
+    let warning: string | undefined;
     if (!result.unchanged && file instanceof File && file.size) {
-      await keepAttachment(file, { targetType: "sequence_version", targetId: result.versionId, linkType: "source_file" });
+      try {
+        await keepAttachment(file, { targetType: "sequence_version", targetId: result.versionId, linkType: "source_file" });
+      } catch (error) {
+        warning = formActionErrorMessage(error, "The original file was not kept.");
+      }
     }
     revalidatePath("/inventory");
     revalidatePath(`/inventory/products/${result.productId}`);
     revalidatePath("/tools/plasmid");
-    return { productId: result.productId, versionLabel: result.versionLabel, unchanged: result.unchanged };
+    return { productId: result.productId, versionLabel: result.versionLabel, unchanged: result.unchanged, ...(warning ? { warning } : {}) };
   } catch (error) {
     return { error: formActionErrorMessage(error, "The sequence was not saved.") };
   }

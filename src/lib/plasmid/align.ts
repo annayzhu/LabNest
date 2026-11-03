@@ -50,6 +50,7 @@ export type AlignmentDifference = {
   kind: "mismatch" | "insertion" | "deletion" | "ambiguous";
   /** For an insertion, the reference position the inserted bases sit before. */
   referenceStart: number;
+  /** Past the reference length when a deletion crosses a circular origin (it goes on from position 0). */
   referenceEnd: number;
   referenceBases: string;
   readBases: string;
@@ -152,7 +153,7 @@ export function createAligner(reference: string, topology: Topology, parameters 
       const readBase = op === "D" ? "-" : query[readIndex];
       const referenceBase = op === "I" ? "-" : target[targetIndex];
       let kind: AlignmentColumn["kind"] = op === "I" ? "insertion" : op === "D" ? "deletion" : "match";
-      if (op === "M" && readBase !== referenceBase) kind = table[readBase.charCodeAt(0) * 128 + referenceBase.charCodeAt(0)] === 0 ? "ambiguous" : "mismatch";
+      if (op === "M" && readBase !== referenceBase) kind = compatible(readBase, referenceBase) ? "ambiguous" : "mismatch";
       else if (op === "M" && !"ACGT".includes(readBase)) kind = "ambiguous";
       columns.push({ referencePosition, readIndex: op === "D" ? null : readIndex, originalIndex, referenceBase, readBase, quality: originalIndex === null ? null : qualityAt(originalIndex), kind });
       if (op !== "D") readIndex += 1;
@@ -178,7 +179,7 @@ export function createAligner(reference: string, topology: Topology, parameters 
         readEnd: best.hit.queryEnd,
         readLength,
         columns,
-        differences: differencesOf(columns, parameters.minQuality),
+        differences: differencesOf(columns, parameters.minQuality, circular ? length : undefined),
         secondary: secondary.map((placement) => ({ orientation: placement.orientation, referenceStart: placement.segments[0].start, score: placement.hit.score })),
         parameters,
         algorithm: ALIGNER_VERSION,
@@ -203,14 +204,19 @@ type LocalHit = { score: number; queryStart: number; queryEnd: number; targetSta
 
 type Placement = { hit: LocalHit; orientation: Orientation; offset: number; segments: Segment[] };
 
+/** Two IUPAC codes that could stand for the same base (an N could be anything). */
+function compatible(left: string, right: string) {
+  const options = IUPAC_BASES[right] ?? "";
+  return [...(IUPAC_BASES[left] ?? "")].some((base) => options.includes(base));
+}
+
 /** Scores every pair of IUPAC codes. A code that could be the other base scores 0: an N neither supports nor breaks an alignment. */
 function scoreTable(parameters: AlignmentParameters) {
   const table = new Int32Array(128 * 128).fill(-parameters.mismatch);
   for (const [left, leftBases] of Object.entries(IUPAC_BASES)) {
     for (const [right, rightBases] of Object.entries(IUPAC_BASES)) {
       const certain = leftBases.length === 1 && rightBases.length === 1;
-      const compatible = [...leftBases].some((base) => rightBases.includes(base));
-      table[left.charCodeAt(0) * 128 + right.charCodeAt(0)] = !compatible ? -parameters.mismatch : certain ? parameters.match : 0;
+      table[left.charCodeAt(0) * 128 + right.charCodeAt(0)] = !compatible(left, right) ? -parameters.mismatch : certain ? parameters.match : 0;
     }
   }
   return table;
@@ -331,7 +337,8 @@ function confidence(qualities: Array<number | null>, bases: string, minQuality: 
   return Math.min(...(qualities as number[])) >= minQuality ? "high" : "low-quality";
 }
 
-function differencesOf(columns: AlignmentColumn[], minQuality: number) {
+/** `circularLength` is the reference length when it is circular: a deletion across the origin then ends past it. */
+function differencesOf(columns: AlignmentColumn[], minQuality: number, circularLength?: number) {
   const differences: AlignmentDifference[] = [];
   const positions = columnPositions(columns);
   const last = [...columns].reverse().find((column) => column.referencePosition !== null);
@@ -362,10 +369,11 @@ function differencesOf(columns: AlignmentColumn[], minQuality: number) {
       const position = positions[end + 1] ?? (last ? last.referencePosition! + 1 : 0);
       differences.push({ kind: "insertion", referenceStart: position, referenceEnd: position, referenceBases: "", readBases: changed, lowestQuality: known.length ? Math.min(...known) : null, confidence: confidence(qualities, changed, minQuality), ...homopolymer });
     } else {
+      const stop = run[run.length - 1].referencePosition! + 1;
       differences.push({
         kind: "deletion",
         referenceStart: column.referencePosition!,
-        referenceEnd: run[run.length - 1].referencePosition! + 1,
+        referenceEnd: circularLength && stop <= column.referencePosition! ? stop + circularLength : stop,
         referenceBases: changed,
         readBases: "",
         lowestQuality: known.length ? Math.min(...known) : null,

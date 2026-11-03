@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({ prisma: {} }));
 
-const { storedFeature, versionFingerprint } = await import("./store.server");
+const { versionFingerprint } = await import("./store.server");
+const { storedFeature } = await import("./feature-rows");
 
 describe("plasmid versions", () => {
   const feature = { name: "CDS", type: "CDS", strand: -1 as const, segments: [{ start: 0, end: 80 }, { start: 460, end: 500 }], codonStart: 1 as const, qualifiers: { label: ["CDS"], note: ["a"] }, evidence: "file" as const };

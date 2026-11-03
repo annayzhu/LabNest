@@ -68,8 +68,10 @@ function rangeSegments(range: string, length: number, circular: boolean, base: 0
   if (!match) throw new SequenceParseError("snapgene.range", `Unreadable range "${range}".`);
   const start = Number(match[1]) - base;
   const end = Number(match[2]) + 1 - base;
-  if (start < end && end <= length) return [{ start, end }];
-  if (start >= end && circular && start < length && end <= length) return [{ start, end: length }, { start: 0, end }];
+  if (start >= 0 && end <= length) {
+    if (start < end) return [{ start, end }];
+    if (circular && start < length) return [{ start, end: length }, { start: 0, end }];
+  }
   throw new SequenceParseError("snapgene.range", `Range "${range}" lies outside a ${circular ? "circular" : "linear"} ${length} bp sequence.`);
 }
 

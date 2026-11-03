@@ -43,7 +43,7 @@ export type StructureCheck = {
   codingProtein: string;
   elements: ElementObservation[];
   items: StructureCheckItem[];
-  /** True only when every element is present, in frame, in order and not after a stop. */
+  /** True only when every element is present, in frame, in order, within its allowed gap and not after a stop. */
   arrangementFound: boolean;
 };
 
@@ -62,7 +62,8 @@ export function checkStructure(input: StructureCheckInput): StructureCheck {
   let frame = input.frame;
   const anchors = observations[0]?.anyFrame ?? [];
   if (!frame && anchors.length) {
-    const anchor = [...anchors].sort((left, right) => right.strand - left.strand || left.start - right.start)[0];
+    // The earliest hit in reading order: on the minus strand that is the one with the highest top-strand position.
+    const anchor = [...anchors].sort((left, right) => right.strand - left.strand || (left.offset + left.aaStart * 3) - (right.offset + right.aaStart * 3))[0];
     frame = { strand: anchor.strand, offset: anchor.offset + anchor.aaStart * 3 };
   }
   if (!frame) {
@@ -98,7 +99,7 @@ export function checkStructure(input: StructureCheckInput): StructureCheck {
         id: "order",
         element: element.name,
         status: !found || previousEnd === undefined ? "not-applicable" : inOrder ? "pass" : "fail",
-        detail: inOrder ? `After ${input.elements[index - 1].name}.` : found ? `Before ${input.elements[index - 1].name}.` : "",
+        detail: !found ? "" : previousEnd === undefined ? `Not checked: ${input.elements[index - 1].name} is not placed in the coding frame.` : inOrder ? `After ${input.elements[index - 1].name}.` : `Before ${input.elements[index - 1].name}.`,
       });
       if (inOrder && previousEnd !== undefined) {
         const gap = inOrder.aaStart - previousEnd;
@@ -127,8 +128,8 @@ export function checkStructure(input: StructureCheckInput): StructureCheck {
     });
     previousEnd = inOrder?.aaEnd;
   });
-  // Gaps and junction quality are reported but do not decide whether the arrangement is there.
-  const arrangementFound = items.every((item) => item.status === "pass" || item.id === "gap" || item.id === "junction-quality");
+  // Junction quality judges the reads, not the construct, so it does not decide whether the arrangement is there.
+  const arrangementFound = items.every((item) => item.status === "pass" || item.id === "junction-quality");
   return { frame, codingProtein, elements: observations, items, arrangementFound };
 }
 

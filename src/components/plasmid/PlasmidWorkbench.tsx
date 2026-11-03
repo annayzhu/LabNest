@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { copyCalculation } from "@/lib/calculators/clipboard";
 import { reverseComplement } from "@/lib/sequence";
-import { groupReadEvidence, importSequenceFiles, type ImportedSource, type SourceFile } from "@/lib/plasmid/files";
+import { expandZip, groupReadEvidence, importSequenceFiles, type ImportedSource, type SourceFile } from "@/lib/plasmid/files";
 import { formatGenbank } from "@/lib/plasmid/genbank";
 import { clockwiseSegments, formatSegments, selectionSegments } from "@/lib/plasmid/layout";
 import { completenessKinds, featureLength, type Completeness, type Segment, type SequenceRecord } from "@/lib/plasmid/model";
@@ -56,33 +56,44 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [] }: {
   const view = active?.kind === "read" ? "sequence" : tab;
   const notes = active?.kind === "record" && record ? genbankNotes(record) : [];
 
-  const open = useCallback(async (picked: SourceFile[]) => {
-    if (!picked.length) return;
+  const load = useCallback(async (next: SourceFile[]) => {
     setImportError(undefined);
-    setProgress({ done: 0, total: picked.length });
+    setProgress({ done: 0, total: next.length });
     try {
-      const imported = await importSequenceFiles(picked, { onProgress: (done, total) => setProgress({ done, total }) });
-      setFiles(picked);
+      const imported = await importSequenceFiles(next, { onProgress: (done, total) => setProgress({ done, total }) });
+      setFiles(next);
       setSources(imported);
-      setShowImport(false);
-      // Open a whole sequence first when there is one; reads are fragments of it.
-      const opened = workbenchItems(imported);
-      setActiveKey((opened.find((item) => item.kind === "record") ?? opened[0])?.key);
-      setSelection({ segments: [] });
-      setShape(undefined);
+      return imported;
     } catch (failure) {
       setImportError(`The files could not be read: ${failure instanceof Error ? failure.message : String(failure)}`);
+      return undefined;
     } finally {
       setProgress(undefined);
     }
   }, []);
 
+  const open = useCallback(async (picked: SourceFile[]) => {
+    if (!picked.length) return;
+    const imported = await load(picked);
+    if (!imported) return;
+    setShowImport(false);
+    // Open a whole sequence first when there is one; reads are fragments of it.
+    const opened = workbenchItems(imported);
+    setActiveKey((opened.find((item) => item.kind === "record") ?? opened[0])?.key);
+    setSelection({ segments: [] });
+    setShape(undefined);
+  }, [load]);
+
+  // A ZIP member cannot be swapped inside its archive, so the archive is unpacked into its members first.
   const retry = useCallback(async (path: string, replacement: SourceFile) => {
-    const next = files.map((file) => (file.path === path ? replacement : file));
-    const imported = await importSequenceFiles(next);
-    setFiles(next);
-    setSources(imported);
-  }, [files]);
+    const archive = sources.find((source) => source.path === path)?.container;
+    const next = files.flatMap((file) => {
+      if (file.path === path) return [replacement];
+      if (file.path !== archive) return [file];
+      return expandZip(file.path, file.bytes).files.map((member) => (member.path === path ? replacement : member));
+    });
+    await load(next);
+  }, [files, sources, load]);
 
   useEffect(() => {
     const clear = (event: KeyboardEvent) => {

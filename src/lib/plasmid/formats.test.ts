@@ -7,7 +7,7 @@ import { groupReadEvidence, importSequenceFiles, parseSequenceFile } from "./fil
 import { formatGenbank, parseGenbankLocation, parseGenbankText } from "./genbank";
 import { SequenceParseError } from "./model";
 import { a02, a04, SAMPLE_LABEL } from "./test-samples/build";
-import { abifTag, writeAbif } from "./test-samples/writers";
+import { abifTag, snapGeneDna, writeAbif, writeSnapGene } from "./test-samples/writers";
 import { translate } from "./translate";
 
 const root = "src/lib/plasmid/test-samples/files";
@@ -76,6 +76,13 @@ describe("A02 SnapGene subset", () => {
 
   it("refuses a file whose bases cannot be read reliably", () => {
     expect(parseError(() => parse("A02-compressed-only.dna"))).toBe("snapgene.no-dna");
+  });
+
+  it("lists a feature that starts before base 1 as not read instead of keeping it", () => {
+    const features = '<Features><Feature name="zero" type="misc_feature" directionality="1"><Segment range="0-10" type="standard"/></Feature><Feature name="first" type="misc_feature" directionality="1"><Segment range="1-10" type="standard"/></Feature></Features>';
+    const parsed = parseSequenceFile("zero.dna", writeSnapGene([snapGeneDna("ACGT".repeat(25), false), { type: 0x0a, data: features }]));
+    expect(parsed.records[0].features.map((feature) => [feature.name, feature.segments])).toEqual([["first", [{ start: 0, end: 10 }]]]);
+    expect(parsed.unsupported.map((item) => item.code)).toEqual(["snapgene.range"]);
   });
 });
 
@@ -200,5 +207,18 @@ describe("A14 and A19 imports", () => {
     const sources = await importSequenceFiles([{ path: "test.zip", bytes: archive }], { zipLimits: { maxEntries: 1, maxTotalBytes: 1_000, maxEntryBytes: 1_000 } });
     expect(sources.map((source) => source.path)).toEqual(["test.zip", "test.zip::a.seq"]);
     expect(sources[0].warnings.map((warning) => warning.code)).toEqual(["zip.unsafe-path", "zip.limit"]);
+  });
+
+  it("counts only the members it reads toward the archive limits", async () => {
+    const archive = zipSync({ "a.seq": strToU8("ACGT".repeat(175)), "b.seq": strToU8("ACGT".repeat(100)) });
+    const sources = await importSequenceFiles([{ path: "test.zip", bytes: archive }], { zipLimits: { maxEntries: 10, maxTotalBytes: 1_000, maxEntryBytes: 600 } });
+    expect(sources.map((source) => source.path)).toEqual(["test.zip", "test.zip::b.seq"]);
+    expect(sources[0].warnings.map((warning) => warning.code)).toEqual(["zip.limit"]);
+  });
+
+  it("keeps the names a ZIP marks as UTF-8 as they are", async () => {
+    const archive = zipSync({ "37°C-M13F.seq": strToU8("ACGTACGTACGTACGT"), "Müller/测序-F.seq": strToU8("ACGTACGTACGTAAAA") });
+    const sources = await importSequenceFiles([{ path: "run.zip", bytes: archive }]);
+    expect(sources.map((source) => source.path)).toEqual(["run.zip", "run.zip::37°C-M13F.seq", "run.zip::Müller/测序-F.seq"]);
   });
 });

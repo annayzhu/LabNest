@@ -3,59 +3,13 @@ import type { Prisma } from "@/generated/prisma/client";
 import type { SequenceSourceType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { reserveRecordCode } from "@/lib/record-codes";
-import { evidenceKinds, type Completeness, type ReadableFormat, type Segment, type SequenceFeature, type SequenceRecord, type Strand, type Topology } from "./model";
+import { featureRow, storedFeature } from "./feature-rows";
+import type { Completeness, ReadableFormat, SequenceRecord, Topology } from "./model";
 
 type Tx = Prisma.TransactionClient;
 
 export type PlasmidChoice = Awaited<ReturnType<typeof listPlasmidProducts>>[number];
 export type SavedFolder = Awaited<ReturnType<typeof listSequencingFolders>>[number];
-
-type StoredFeature = {
-  name: string;
-  type: string;
-  start: number;
-  end: number;
-  strand: string | null;
-  note: string | null;
-  segmentsJson?: Prisma.JsonValue | null;
-  codonStart?: number | null;
-  qualifiersJson?: Prisma.JsonValue | null;
-  color?: string | null;
-  evidence?: string | null;
-};
-
-/**
- * `segmentsJson` holds the exact parts (joins, origin crossing); rows written before it
- * keep only the overall span, 1-based and closed as GenBank writes it.
- */
-export function storedFeature(row: StoredFeature): SequenceFeature {
-  const strand: Strand | 0 = row.strand === "+" ? 1 : row.strand === "-" ? -1 : 0;
-  const segments = Array.isArray(row.segmentsJson) && row.segmentsJson.length ? (row.segmentsJson as Segment[]) : [{ start: row.start - 1, end: row.end }];
-  const qualifiers = row.qualifiersJson && typeof row.qualifiersJson === "object" && !Array.isArray(row.qualifiersJson)
-    ? (row.qualifiersJson as Record<string, string[]>)
-    : row.note ? { note: [row.note] } : {};
-  const codonStart = row.codonStart === 1 || row.codonStart === 2 || row.codonStart === 3 ? row.codonStart : undefined;
-  const evidence = evidenceKinds.find((value) => value === row.evidence) ?? "file";
-  return { name: row.name, type: row.type, strand, segments, qualifiers, evidence, ...(codonStart ? { codonStart } : {}), ...(row.color ? { color: row.color } : {}) };
-}
-
-function featureRow(feature: SequenceFeature, order: number, sourceLabel: string | null) {
-  return {
-    name: feature.name,
-    type: feature.type,
-    start: Math.min(...feature.segments.map((segment) => segment.start)) + 1,
-    end: Math.max(...feature.segments.map((segment) => segment.end)),
-    strand: feature.strand === 1 ? "+" : feature.strand === -1 ? "-" : null,
-    note: feature.qualifiers.note?.[0] ?? null,
-    segmentsJson: feature.segments as Prisma.InputJsonValue,
-    codonStart: feature.codonStart ?? null,
-    qualifiersJson: feature.qualifiers as Prisma.InputJsonValue,
-    color: feature.color ?? null,
-    evidence: feature.evidence,
-    sourceLabel,
-    order,
-  };
-}
 
 /**
  * What makes two saves the same version: bases, topology, completeness and the features.
@@ -110,8 +64,7 @@ export async function savePlasmidVersion(tx: Tx, input: PlasmidSaveInput) {
     if (!found || found.type?.key !== "plasmid") throw new Error("Choose a plasmid in inventory.");
     product = found;
   }
-  const entityId = product.entityId ?? (await tx.entity.create({ data: { name: product.name, type: "plasmid" } })).id;
-  if (!product.entityId) await tx.inventoryProduct.update({ where: { id: product.id }, data: { entityId } });
+  const entityId = await plasmidEntity(tx, product);
 
   const link = await primaryLink(tx, entityId);
   const current = link?.sequenceVersion;
@@ -180,6 +133,14 @@ export async function loadPlasmidProduct(productId: string): Promise<PlasmidProd
   };
 }
 
+/** The entity a plasmid product's sequences and folders hang on, made on first use. */
+async function plasmidEntity(tx: Tx, product: { id: string; name: string; entityId: string | null }) {
+  if (product.entityId) return product.entityId;
+  const { id } = await tx.entity.create({ data: { name: product.name, type: "plasmid" } });
+  await tx.inventoryProduct.update({ where: { id: product.id }, data: { entityId: id } });
+  return id;
+}
+
 function primaryLink(db: Pick<Tx, "entitySequenceLink">, entityId: string) {
   return db.entitySequenceLink.findFirst({ where: { entityId, role: "primary" }, include: { sequenceVersion: { include: { features: { orderBy: { order: "asc" } } } } } });
 }
@@ -205,11 +166,19 @@ export type FolderReadInput = {
   parserVersion: string;
 };
 
+/** A folder about a plasmid hangs on its entity, made here when the plasmid has no sequence yet. */
 export async function createSequencingFolder(name: string, productId?: string) {
-  const entityId = productId ? (await prisma.inventoryProduct.findUnique({ where: { id: productId }, select: { entityId: true } }))?.entityId ?? null : null;
-  const folder = await prisma.sequencingFolder.create({ data: { name, entityId }, select: { id: true } });
-  await prisma.activityLog.create({ data: { action: "create", targetType: "sequencing_folder", targetId: folder.id, metadataJson: { name } } });
-  return folder.id;
+  return prisma.$transaction(async (tx) => {
+    let entityId: string | null = null;
+    if (productId) {
+      const product = await tx.inventoryProduct.findUnique({ where: { id: productId }, select: { id: true, name: true, entityId: true, type: { select: { key: true } } } });
+      if (!product || product.type?.key !== "plasmid") throw new Error("Choose a plasmid in inventory.");
+      entityId = await plasmidEntity(tx, product);
+    }
+    const folder = await tx.sequencingFolder.create({ data: { name, entityId }, select: { id: true } });
+    await tx.activityLog.create({ data: { action: "create", targetType: "sequencing_folder", targetId: folder.id, metadataJson: { name, entityId } } });
+    return folder.id;
+  });
 }
 
 /** Replaces a folder's reads with these, in order, so sending them again never doubles them. */

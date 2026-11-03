@@ -30,7 +30,7 @@ export function extractFeature(record: SequenceRecord, feature: SequenceFeature)
 
 /** Lists the features a difference falls in, a known-variant note there, and for a mismatch the codon it changes. */
 export function differenceContext(difference: AlignmentDifference, record: SequenceRecord): DifferenceContext {
-  const overlapping = record.features.filter((feature) => covers(feature, difference.referenceStart, difference.referenceEnd));
+  const overlapping = record.features.filter((feature) => covers(feature, difference.referenceStart, difference.referenceEnd, record.sequence.length));
   const variant = overlapping.find((feature) => feature.type === "variation");
   const coding: CodingChange[] = [];
   if (difference.kind === "mismatch") {
@@ -62,9 +62,13 @@ export function differenceContext(difference: AlignmentDifference, record: Seque
   };
 }
 
-/** An insertion (end === start) sits between two bases: it is inside only when both neighbours are. */
-function covers(feature: SequenceFeature, start: number, end: number) {
-  return feature.segments.some((segment) => (end === start ? segment.start < start && start < segment.end : segment.start < end && start < segment.end));
+/**
+ * An insertion (end === start) sits between two bases: it is inside only when both neighbours are. A difference that
+ * runs past `length` crosses a circular origin, so its part from position 0 is checked too.
+ */
+function covers(feature: SequenceFeature, start: number, end: number, length: number) {
+  const parts = end > length ? [[start, length], [0, end - length]] : [[start, end]];
+  return feature.segments.some((segment) => parts.some(([from, to]) => (to === from ? segment.start < from && from < segment.end : segment.start < to && from < segment.end)));
 }
 
 /** Offset of a top-strand position inside the feature's 5'→3' sequence, or -1. */

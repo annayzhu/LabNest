@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { reverseComplement } from "@/lib/sequence";
 import { parseSequenceFile } from "./files";
 import { checkStructure, type StructureElement } from "./fusion";
 import { findTags } from "./tags";
@@ -82,6 +83,26 @@ describe("A08–A10 fusion structure", () => {
     const fromRead = checkStructure({ sequence: read.bases, quality: read.quality, elements: srgnFusion });
     expect(fromRead.arrangementFound).toBe(true);
     expect([status(fromRead, "junction-quality", "3×FLAG"), status(fromRead, "junction-quality", "SRGN mature start")]).toEqual(["pass", "pass"]);
+  });
+
+  const dna = { flag: "GACTACAAGGACGACGATGACAAG", ha: "TACCCATACGATGTTCCAGATTACGCT", myc: "GAACAGAAGCTGATCAGCGAAGAAGATCTG" };
+  const flagThenHa: StructureElement[] = [{ name: "FLAG", protein: FLAG }, { name: "HA", protein: "YPYDVPDYA" }];
+
+  it("anchors the frame on the first element in reading order on the minus strand too", () => {
+    const forward = `ATG${dna.flag}${dna.ha}GGC${dna.flag}TAA`;
+    expect(checkStructure({ sequence: forward, elements: flagThenHa }).arrangementFound).toBe(true);
+    expect(checkStructure({ sequence: reverseComplement(forward), elements: flagThenHa }).arrangementFound).toBe(true);
+  });
+
+  it("does not claim an order after an element that is missing", () => {
+    const check = checkStructure({ sequence: `ATG${dna.flag}${dna.myc}TAA`, elements: [...flagThenHa, { name: "Myc", protein: "EQKLISEEDL" }] });
+    expect(check.items.find((item) => item.id === "order" && item.element === "Myc")).toMatchObject({ status: "not-applicable", detail: "Not checked: HA is not placed in the coding frame." });
+  });
+
+  it("counts a gap beyond the allowed one against the arrangement", () => {
+    const check = checkStructure({ sequence: `ATG${dna.flag}GGC${dna.ha}TAA`, elements: [flagThenHa[0], { ...flagThenHa[1], maxGapBefore: 0 }] });
+    expect(status(check, "gap", "HA")).toBe("fail");
+    expect(check.arrangementFound).toBe(false);
   });
 
   it("A10: without the tag the target arrangement is not found", () => {

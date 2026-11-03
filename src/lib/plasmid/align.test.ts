@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { reverseComplement } from "@/lib/sequence";
-import { createAligner, type ReadAlignment } from "./align";
+import { createAligner, defaultAlignmentParameters, type ReadAlignment } from "./align";
 import { coverageProfile, sequencingStatus } from "./coverage";
 import { differenceContext } from "./effects";
 import { groupReadEvidence, importSequenceFiles, parseSequenceFile } from "./files";
@@ -122,8 +122,39 @@ describe("Sanger alignment against a reference", () => {
     expect(groups[0].reasons).toEqual(["paired-export"]);
   });
 
+  it("never counts a mixed-base call as support, even when it rules out the reference base (A13)", () => {
+    const position = 500;
+    const ruleOut: Record<string, string> = { A: "Y", C: "R", G: "Y", T: "R" };
+    const bases = reference.sequence.slice(100, 700);
+    const read = { name: "mixed", bases: `${bases.slice(0, position - 100)}${ruleOut[reference.sequence[position]]}${bases.slice(position - 99)}`, quality: Array(600).fill(40), peaks: null, traces: null, metadata: {} };
+    const profile = coverageProfile(reference.sequence.length, [{ alignment: aligned(read) }]);
+    expect(profile.stateAt(position)).toBe("low");
+    expect(profile.stateAt(position + 1)).toBe("supported");
+    expect(sequencingStatus(profile, { range: { start: 300, end: 600 }, confirmed: true })).toBe("partial");
+  });
+
+  it("keeps a deletion across the circular origin in one piece, ending past the length", () => {
+    const length = reference.sequence.length;
+    const bases = `${reference.sequence.slice(length - 300, length - 1)}${reference.sequence.slice(1, 300)}`;
+    const alignment = aligned({ name: "origin deletion", bases, quality: Array(bases.length).fill(40), peaks: null, traces: null, metadata: {} });
+    const deletion = alignment.differences.find((item) => item.kind === "deletion");
+    expect(deletion).toMatchObject({ referenceStart: length - 1, referenceEnd: length + 1, referenceBases: `${reference.sequence[length - 1]}${reference.sequence[0]}` });
+    const atOrigin = { ...reference, features: [{ name: "origin piece", type: "misc_feature", strand: 1 as const, segments: [{ start: 0, end: 5 }], qualifiers: {}, evidence: "file" as const }] };
+    expect(differenceContext(deletion!, atOrigin).features).toEqual(["origin piece"]);
+  });
+
+  it("tells a mismatch from an ambiguous call by the bases, whatever the scores", () => {
+    const position = 1500;
+    const swap: Record<string, string> = { A: "C", C: "A", G: "T", T: "G" };
+    const bases = reference.sequence.slice(1200, 1800);
+    const read = { name: "one change", bases: `${bases.slice(0, 300)}${swap[reference.sequence[position]]}${bases.slice(301)}`, quality: Array(600).fill(40), peaks: null, traces: null, metadata: {} };
+    const outcome = createAligner(reference.sequence, reference.topology, { ...defaultAlignmentParameters, mismatch: 0 }).align(read);
+    expect(outcome.aligned && outcome.alignment.differences.map((item) => [item.kind, item.referenceStart])).toEqual([["mismatch", position]]);
+  });
+
   it("A15: covering only the insert is a partial check, never a full one", () => {
     const profile = coverageProfile(reference.sequence.length, [{ alignment: aligned(readOf("A15-read-insert-only.ab1")) }]);
+    expect(sequencingStatus(profile, { range: { start: 5, end: 5 }, confirmed: true })).toBe("not-checked");
     expect(sequencingStatus(profile, { confirmed: true })).toBe("partial");
     expect(sequencingStatus(profile, { range: construct.tag })).toBe("partial");
     expect(sequencingStatus(profile, { range: construct.tag, confirmed: true })).toBe("range-complete");

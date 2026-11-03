@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
+import { changedStretch, movedSegments } from "./plasmid/edits";
+import { featureRow, storedFeature } from "./plasmid/feature-rows";
 import { cleanStrands, sequenceKind, type SequenceKind } from "./product-sequences";
 import { reserveRecordCode } from "./record-codes";
 
@@ -29,13 +31,18 @@ export async function readProductSequences(db: Db, entityId: string | null, type
 /**
  * Saves the strands typed for a product of a sequence type. The first sequence makes the product's entity; a changed
  * strand becomes a new version of its sequence record, so earlier versions stay; an emptied strand is unlinked.
+ * Only the bases change on this page, so the new version keeps the topology, the completeness and the features away
+ * from the changed bases (moved with any change in length); features on the changed bases are dropped and counted.
  * Returns the entity the strands hang on, or the product's own when nothing was typed.
  */
 export async function saveProductSequences(tx: Tx, product: { name: string; entityId: string | null }, kind: SequenceKind, typed: Record<string, string>) {
   const strands = cleanStrands(kind, typed);
   if (!product.entityId && strands.every((strand) => !strand.sequence)) return null;
   const entityId = product.entityId ?? (await tx.entity.create({ data: { name: product.name, type: kind.entity } })).id;
-  const links = await tx.entitySequenceLink.findMany({ where: { entityId }, include: { sequenceVersion: { select: { sequence: true } } } });
+  const links = await tx.entitySequenceLink.findMany({
+    where: { entityId },
+    include: { sequenceVersion: { select: { sequence: true, topology: true, completeness: true, features: { orderBy: { order: "asc" } } } } },
+  });
   for (const [order, strand] of strands.entries()) {
     const link = links.find((entry) => entry.role === strand.role);
     if (!strand.sequence) {
@@ -45,9 +52,30 @@ export async function saveProductSequences(tx: Tx, product: { name: string; enti
     if (link?.sequenceVersion.sequence === strand.sequence) continue;
     const checksum = createHash("sha256").update(strand.sequence).digest("hex");
     if (link) {
+      const before = link.sequenceVersion;
+      const stretch = changedStretch(before.sequence, strand.sequence);
+      const features = before.features.flatMap((row) => {
+        const feature = storedFeature(row);
+        const segments = movedSegments(feature.segments, stretch);
+        return segments ? [featureRow({ ...feature, segments }, row.order, row.sourceLabel)] : [];
+      });
+      const dropped = before.features.length - features.length;
       const latest = await tx.sequenceVersion.findFirst({ where: { sequenceId: link.sequenceId }, orderBy: { versionNumber: "desc" }, select: { versionNumber: true } });
       const versionNumber = (latest?.versionNumber ?? 0) + 1;
-      const version = await tx.sequenceVersion.create({ data: { sequenceId: link.sequenceId, versionNumber, displayVersion: `${versionNumber}.0`, moleculeType: kind.molecule, sequence: strand.sequence, checksum, changeSummary: "Changed on the product page." } });
+      const version = await tx.sequenceVersion.create({
+        data: {
+          sequenceId: link.sequenceId,
+          versionNumber,
+          displayVersion: `${versionNumber}.0`,
+          moleculeType: kind.molecule,
+          sequence: strand.sequence,
+          checksum,
+          topology: before.topology,
+          completeness: before.completeness,
+          features: { create: features },
+          changeSummary: dropped ? `Changed on the product page; ${dropped} feature(s) on the changed bases were dropped.` : "Changed on the product page.",
+        },
+      });
       await tx.entitySequenceLink.update({ where: { id: link.id }, data: { sequenceVersionId: version.id } });
     } else {
       const record = await tx.sequence.create({

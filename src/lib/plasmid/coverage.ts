@@ -30,6 +30,9 @@ export function coverageProfile(referenceLength: number, reads: Array<{ alignmen
   const continuity = options.continuity ?? 10;
   const resolvedPositions = options.resolvedPositions ?? new Set<number>();
   const reliable = (column: AlignmentColumn) => column.quality !== null && column.quality >= minQuality;
+  // A mixed-base call (R, Y, N…) is never support. When it also rules out the reference base it counts as low, not as
+  // a conflict: the call itself is unsure (A13).
+  const mixed = (column: AlignmentColumn) => column.kind === "mismatch" && !"ACGT".includes(column.readBase);
   const byGroup = new Map<string, Uint8Array>();
   for (const { alignment, group } of reads) {
     const key = group ?? `${alignment.readName}#${byGroup.size}`;
@@ -49,7 +52,7 @@ export function coverageProfile(referenceLength: number, reads: Array<{ alignmen
       if (position === null) return;
       let state: CoverageState;
       if (conflicts[at]) state = "conflict";
-      else if (!reliable(column) || column.kind === "ambiguous") state = "low";
+      else if (!reliable(column) || column.kind === "ambiguous" || mixed(column)) state = "low";
       else if (column.kind === "insertion") return;
       else state = nearConflict(at) ? "interrupted" : "supported";
       states[position] = Math.max(states[position], stateRank[state]);
@@ -87,7 +90,7 @@ export function coverageProfile(referenceLength: number, reads: Array<{ alignmen
  */
 export function sequencingStatus(profile: CoverageProfile, options: { range?: Segment; confirmed?: boolean } = {}): SequencingStatus {
   const range = options.range ?? { start: 0, end: profile.referenceLength };
-  if (!profile.ranges.some((item) => item.state !== "uncovered")) return "not-checked";
+  if (range.end <= range.start || !profile.ranges.some((item) => item.state !== "uncovered")) return "not-checked";
   let allSupported = true;
   for (let position = range.start; position < range.end; position += 1) {
     const state = profile.stateAt(position);

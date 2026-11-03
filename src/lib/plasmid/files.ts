@@ -112,10 +112,32 @@ export function parseSequenceFile(path: string, bytes: Uint8Array, format = dete
   throw new SequenceParseError("file.unknown-format", "The content is not a supported sequence format.");
 }
 
-/** fflate decodes names without the UTF-8 flag as Latin-1; Windows archives often hold GBK. */
-function zipEntryName(name: string) {
-  if (!/[\u0080-ÿ]/.test(name)) return name;
+/** fflate decodes names without the UTF-8 flag as Latin-1; Windows archives often hold GBK. Flagged names are already right. */
+function zipEntryName(name: string, flaggedUtf8: Set<string>) {
+  if (flaggedUtf8.has(name) || !/[\u0080-\u00ff]/.test(name)) return name;
   return tryDecode(Uint8Array.from(name, (character) => character.charCodeAt(0))) ?? name;
+}
+
+/**
+ * Names of the entries a ZIP marks as UTF-8 (general purpose flag bit 11), decoded as fflate decodes them. Read from
+ * the central directory; an archive whose directory cannot be found (ZIP64, damage) gives an empty set.
+ */
+function utf8EntryNames(bytes: Uint8Array) {
+  const names = new Set<string>();
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  // The end record is the last 22 bytes, plus a comment of at most 64 KB.
+  for (let at = bytes.length - 22; at >= Math.max(0, bytes.length - 22 - 0xffff); at -= 1) {
+    if (view.getUint32(at, true) !== 0x06054b50) continue;
+    const count = view.getUint16(at + 10, true);
+    let entry = view.getUint32(at + 16, true);
+    for (let index = 0; index < count && entry + 46 <= bytes.length && view.getUint32(entry, true) === 0x02014b50; index += 1) {
+      const nameLength = view.getUint16(entry + 28, true);
+      if (view.getUint16(entry + 8, true) & 0x800) names.add(new TextDecoder().decode(bytes.subarray(entry + 46, entry + 46 + nameLength)));
+      entry += 46 + nameLength + view.getUint16(entry + 30, true) + view.getUint16(entry + 32, true);
+    }
+    break;
+  }
+  return names;
 }
 
 function isUnsafePath(name: string) {
@@ -125,30 +147,33 @@ function isUnsafePath(name: string) {
 
 /**
  * Reads ZIP members in memory; nothing is written to disk. Entry count, sizes and unsafe
- * paths are checked before inflating, and macOS resource forks are skipped.
+ * paths are checked before inflating, and macOS resource forks are skipped. Only members
+ * that are read count toward the limits.
  */
 export function expandZip(path: string, bytes: Uint8Array, limits = defaultZipLimits) {
   const rejected: ParseIssue[] = [];
+  const flaggedUtf8 = utf8EntryNames(bytes);
+  const nameOf = (name: string) => `${path}::${zipEntryName(name, flaggedUtf8)}`;
   let entries = 0;
   let total = 0;
   const members = unzipSync(bytes, {
     filter(file) {
       if (file.name.endsWith("/") || file.name.startsWith("__MACOSX/") || /(^|\/)\.DS_Store$/.test(file.name)) return false;
       if (isUnsafePath(file.name)) {
-        rejected.push({ code: "zip.unsafe-path", message: `${path}::${zipEntryName(file.name)} has an unsafe path and was not read.` });
+        rejected.push({ code: "zip.unsafe-path", message: `${nameOf(file.name)} has an unsafe path and was not read.` });
+        return false;
+      }
+      if (entries + 1 > limits.maxEntries || file.originalSize > limits.maxEntryBytes || total + file.originalSize > limits.maxTotalBytes) {
+        rejected.push({ code: "zip.limit", message: `${nameOf(file.name)} exceeds the archive limits and was not read.` });
         return false;
       }
       entries += 1;
       total += file.originalSize;
-      if (entries > limits.maxEntries || file.originalSize > limits.maxEntryBytes || total > limits.maxTotalBytes) {
-        rejected.push({ code: "zip.limit", message: `${path}::${zipEntryName(file.name)} exceeds the archive limits and was not read.` });
-        return false;
-      }
       return true;
     },
   });
   return {
-    files: Object.keys(members).sort().map((name) => ({ path: `${path}::${zipEntryName(name)}`, bytes: members[name] })),
+    files: Object.keys(members).sort().map((name) => ({ path: nameOf(name), bytes: members[name] })),
     rejected,
   };
 }

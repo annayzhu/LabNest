@@ -3,9 +3,10 @@
 import { FolderOpen, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { addSequencingFile, savePlasmidSequence, saveSequencingReads, startSequencingFolder, type PlasmidSaveResult } from "@/app/tools/plasmid/actions";
 import { Button } from "@/components/ui/Button";
+import { MAX_ATTACHMENT_BYTES } from "@/lib/attachment-limits";
 import { labDate } from "@/lib/lab-time";
 import { groupReadEvidence, type ImportedSource, type SourceFile } from "@/lib/plasmid/files";
 import { PLASMID_PARSER_VERSION, type Completeness, type ReadableFormat, type SequenceRecord } from "@/lib/plasmid/model";
@@ -40,6 +41,8 @@ export function SaveToInventory({ record, completeness, format, original, plasmi
   const [pending, startTransition] = useTransition();
   const choices = [...plasmids, ...created.filter((item) => !plasmids.some((plasmid) => plasmid.id === item.id))];
 
+  // The upload limit is 25 MB a file; a bigger original (a large ZIP) stays out, and the result says so.
+  const keepOriginal = original && original.bytes.length <= MAX_ATTACHMENT_BYTES ? original : undefined;
   const save = () => startTransition(async () => {
     const data = new FormData();
     data.set("payload", JSON.stringify({
@@ -49,9 +52,9 @@ export function SaveToInventory({ record, completeness, format, original, plasmi
       ...(format ? { sourceFormat: format } : {}),
       ...(original ? { sourceFileName: baseName(original.path) } : {}),
     }));
-    if (original) data.set("file", fileFrom(original));
+    if (keepOriginal) data.set("file", fileFrom(keepOriginal));
     const saved = await savePlasmidSequence(data);
-    setResult(saved);
+    setResult(original && !keepOriginal && saved.productId && !saved.unchanged ? { ...saved, warning: "The original file is over 25 MB, so it was not kept." } : saved);
     if (!saved.productId) return;
     // The next save of this sequence goes to the plasmid it now lives on.
     if (mode === "new") setCreated((list) => [...list, { id: saved.productId!, name }]);
@@ -91,6 +94,7 @@ export function SaveToInventory({ record, completeness, format, original, plasmi
           <Link href={`/inventory/products/${result.productId}`} className="ln-pw-link">Open the plasmid</Link>
         </p>
       ) : null}
+      {result?.warning ? <p className="ln-pw-note" role="status">{result.warning}</p> : null}
       <div className="ln-pw-actions">
         <Button type="button" variant="primary" size="sm" disabled={pending || (mode === "new" ? !name.trim() : !productId)} onClick={save}>{pending ? "Saving…" : "Save"}</Button>
         <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)}>Close</Button>
@@ -101,7 +105,8 @@ export function SaveToInventory({ record, completeness, format, original, plasmi
 
 /**
  * 测序资料夹 (Q273): keeps every original once (copies point at the first), then records
- * each read with its quality or 未提供, its source path and its evidence group.
+ * each read with its quality or 未提供, its source path and its evidence group. A save that
+ * stops on a file goes on from that file into the same folder when saved again.
  */
 export function SaveFolder({ sources, files, plasmids }: { sources: ImportedSource[]; files: SourceFile[]; plasmids: PlasmidChoice[] }) {
   const router = useRouter();
@@ -109,6 +114,8 @@ export function SaveFolder({ sources, files, plasmids }: { sources: ImportedSour
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(firstFolder || `Sequencing ${labDate(new Date())}`);
   const [productId, setProductId] = useState("");
+  const [folderId, setFolderId] = useState<string>();
+  const kept = useRef(new Map<string, string>());
   const [progress, setProgress] = useState<string>();
   const [error, setError] = useState<string>();
   const [done, setDone] = useState<string>();
@@ -117,19 +124,29 @@ export function SaveFolder({ sources, files, plasmids }: { sources: ImportedSour
   const save = () => startTransition(async () => {
     setError(undefined);
     setDone(undefined);
-    const started = await startSequencingFolder(name, productId);
-    if (!started.folderId) {
-      setError(started.error);
-      return;
+    let id = folderId;
+    if (!id) {
+      const started = await startSequencingFolder(name, productId);
+      if (!started.folderId) {
+        setError(started.error);
+        return;
+      }
+      id = started.folderId;
+      setFolderId(id);
     }
-    const kept = new Map<string, string>();
+    const tooLarge: string[] = [];
     const topLevel = sources.filter((source) => !source.container);
     for (const [index, source] of topLevel.entries()) {
+      if (kept.current.has(source.path)) continue;
       setProgress(`Keeping file ${index + 1} of ${topLevel.length}…`);
       const file = files.find((item) => item.path === source.path);
       if (!file) continue;
-      if (source.duplicateOf && kept.has(source.duplicateOf)) {
-        kept.set(source.path, kept.get(source.duplicateOf)!);
+      if (source.duplicateOf && kept.current.has(source.duplicateOf)) {
+        kept.current.set(source.path, kept.current.get(source.duplicateOf)!);
+        continue;
+      }
+      if (file.bytes.length > MAX_ATTACHMENT_BYTES) {
+        tooLarge.push(source.path);
         continue;
       }
       const data = new FormData();
@@ -142,19 +159,20 @@ export function SaveFolder({ sources, files, plasmids }: { sources: ImportedSour
         unsupported: source.unsupported.map((item) => item.message),
         warnings: [...source.warnings.map((item) => item.message), ...(source.error ? [source.error.message] : [])],
       }));
-      const result = await addSequencingFile(started.folderId, data);
+      const result = await addSequencingFile(id, data);
       if (!result.attachmentId) {
+        setProgress(undefined);
         setError(result.error);
         return;
       }
-      kept.set(source.path, result.attachmentId);
+      kept.current.set(source.path, result.attachmentId);
     }
     setProgress("Recording the reads…");
     const { reads } = groupReadEvidence(sources);
     const payload = await Promise.all(reads.map(async ({ source, read, group }) => {
       const container = source.container ?? source.path;
       return {
-        attachmentId: kept.get(container) ?? null,
+        attachmentId: kept.current.get(container) ?? null,
         relativePath: container,
         memberPath: source.container ? source.path.slice(`${source.container}::`.length) : null,
         format: source.format,
@@ -170,11 +188,12 @@ export function SaveFolder({ sources, files, plasmids }: { sources: ImportedSour
         parserVersion: PLASMID_PARSER_VERSION,
       };
     }));
-    const saved = await saveSequencingReads(started.folderId, payload);
+    const saved = await saveSequencingReads(id, payload);
     setProgress(undefined);
     if (saved.error) setError(saved.error);
     else {
-      setDone(`Saved ${saved.saved} reads and ${new Set(kept.values()).size} files.`);
+      const keptFiles = new Set(kept.current.values()).size;
+      setDone(tooLarge.length ? `Saved ${saved.saved} reads and ${keptFiles} files; ${tooLarge.length} file(s) over 25 MB were not kept.` : `Saved ${saved.saved} reads and ${keptFiles} files.`);
       router.refresh();
     }
   });
@@ -184,11 +203,11 @@ export function SaveFolder({ sources, files, plasmids }: { sources: ImportedSour
     <div className="ln-pw-save" role="dialog" aria-label="Save as a sequencing folder">
       <label className="ln-pw-field">
         <span>Folder name</span>
-        <input className="ln-pw-input" value={name} onChange={(event) => setName(event.target.value)} />
+        <input className="ln-pw-input" value={name} disabled={Boolean(folderId)} onChange={(event) => setName(event.target.value)} />
       </label>
       <label className="ln-pw-field">
         <span>About which plasmid (optional)</span>
-        <select className="ln-pw-input" value={productId} onChange={(event) => setProductId(event.target.value)}>
+        <select className="ln-pw-input" value={productId} disabled={Boolean(folderId)} onChange={(event) => setProductId(event.target.value)}>
           <option value="">Not chosen yet</option>
           {plasmids.map((plasmid) => <option key={plasmid.id} value={plasmid.id}>{plasmid.name}</option>)}
         </select>
@@ -196,6 +215,7 @@ export function SaveFolder({ sources, files, plasmids }: { sources: ImportedSour
       <p className="ln-pw-note">Every original file is kept once, with its path inside the folder; identical copies are not stored twice.</p>
       {progress ? <p className="ln-pw-note" aria-live="polite">{progress}</p> : null}
       {error ? <p className="ln-pw-error" role="alert">{error}</p> : null}
+      {error && folderId ? <p className="ln-pw-note">Press Save folder again to go on from this file.</p> : null}
       {done ? <p className="ln-pw-ok" role="status">{done}</p> : null}
       <div className="ln-pw-actions">
         <Button type="button" variant="primary" size="sm" disabled={pending || !name.trim() || Boolean(done)} onClick={save}>{pending ? "Saving…" : "Save folder"}</Button>

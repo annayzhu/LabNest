@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { confirmVerificationAction, decideVerificationItem, reviseVerificationAction, submitVerification } from "@/app/tools/plasmid/actions";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
+import { labDate, labDateTime } from "@/lib/lab-time";
 import { Button } from "@/components/ui/Button";
 import type { CoverageState } from "@/lib/plasmid/coverage";
 import type { StructureCheckItem } from "@/lib/plasmid/fusion";
@@ -70,7 +71,7 @@ export function VerificationReport({ record }: { record: Report }) {
           <Link className="ln-pw-link" href={`/tools/plasmid?product=${record.product.id}`}><ExternalLink className="h-3.5 w-3.5" aria-hidden />Open the plasmid</Link>
           <Link className="ln-pw-link" href={`/inventory/products/${record.product.id}`}>Plasmid in inventory</Link>
           <a className="ln-pw-link" href={`/tools/plasmid/verifications/${record.id}/csv`}><Download className="h-3.5 w-3.5" aria-hidden />Differences (CSV)</a>
-          <CopyForRecord text={`[${[`Sequencing check`, record.product.name, record.version.label, record.inventoryItem?.lotNumber ? `lot ${record.inventoryItem.lotNumber}` : record.inventoryItem?.name, scope.label, record.result ? resultLabels[record.result as VerificationResult] : statusLabels[status], new Date(record.confirmedAt ?? record.createdAt).toISOString().slice(0, 10)].filter(Boolean).join(" · ").replaceAll("[", "(").replaceAll("]", ")")}](/tools/plasmid/verifications/${record.id})`} />
+          <CopyForRecord text={`[${[`Sequencing check`, record.product.name, record.version.label, record.inventoryItem?.lotNumber ? `lot ${record.inventoryItem.lotNumber}` : record.inventoryItem?.name, scope.label, record.result ? resultLabels[record.result as VerificationResult] : statusLabels[status], labDate(record.confirmedAt ?? record.createdAt)].filter(Boolean).join(" · ").replaceAll("[", "(").replaceAll("]", ")")}](/tools/plasmid/verifications/${record.id})`} />
           <DocumentPrintButton label="Print or save as PDF" showLabel />
         </div>
       </header>
@@ -88,8 +89,8 @@ export function VerificationReport({ record }: { record: Report }) {
           <dt>Scope</dt><dd><span data-i18n-ignore={scope.kind === "feature" || undefined}>{scope.label}</span>{` · ${span(scope.segments)} · ${scopeSize.toLocaleString("en-US")} bp`}</dd>
           <dt>Settings</dt><dd>{`Quality threshold Q${settings.minQuality} · double peak at ${Math.round(settings.ratio * 100)}% · ${settings.includeLow ? "stops at low-quality differences" : "stops at high-quality differences"}`}</dd>
           <dt>Aligner</dt><dd className="ln-pw-mono" data-i18n-ignore>{settings.aligner}</dd>
-          <dt>Kept</dt><dd>{new Date(record.createdAt).toLocaleString("zh-CN")}</dd>
-          {record.confirmedBy ? <><dt>Confirmed by</dt><dd><span data-i18n-ignore>{record.confirmedBy}</span>{` · ${new Date(record.confirmedAt!).toLocaleString("zh-CN")} · `}<em>Typed by hand, not an authenticated identity</em></dd></> : null}
+          <dt>Kept</dt><dd>{labDateTime(record.createdAt)}</dd>
+          {record.confirmedBy ? <><dt>Confirmed by</dt><dd><span data-i18n-ignore>{record.confirmedBy}</span>{` · ${labDateTime(record.confirmedAt!)} · `}<em>Typed by hand, not an authenticated identity</em></dd></> : null}
           {record.note ? <><dt>Note</dt><dd data-i18n-ignore>{record.note}</dd></> : null}
         </dl>
       </section>

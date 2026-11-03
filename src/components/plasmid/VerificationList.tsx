@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { labDate } from "@/lib/lab-time";
 import type { listVerifications } from "@/lib/plasmid/verification.server";
 import { resultLabels, statusLabels, type VerificationResult, type VerificationScope, type VerificationStatus } from "@/lib/plasmid/verification";
 
@@ -23,7 +24,7 @@ export function VerificationList({ rows, currentVersionId, showTube = true }: { 
             {showTube ? <span>{row.inventoryItem ? <span data-i18n-ignore>{[row.inventoryItem.name, row.inventoryItem.lotNumber && `lot ${row.inventoryItem.lotNumber}`].filter(Boolean).join(" · ")}</span> : "No tube (analysis draft)"}</span> : null}
             <span className="text-muted"><span data-i18n-ignore={scope.kind === "feature" || undefined}>{scope.label}</span>{` · v${row.sequenceVersion.displayVersion}`}</span>
             {currentVersionId && row.sequenceVersionId !== currentVersionId ? <span className="text-warning">Older version</span> : null}
-            <span className="text-muted">{(row.confirmedAt ?? row.createdAt).toLocaleDateString("zh-CN")}{row.confirmedBy ? <span data-i18n-ignore>{` · ${row.confirmedBy}`}</span> : null}</span>
+            <span className="text-muted">{labDate(row.confirmedAt ?? row.createdAt)}{row.confirmedBy ? <span data-i18n-ignore>{` · ${row.confirmedBy}`}</span> : null}</span>
           </li>
         );
       })}

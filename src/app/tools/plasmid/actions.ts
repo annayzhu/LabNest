@@ -7,9 +7,10 @@ import { keepAttachment } from "@/lib/attachment-files";
 import { prisma } from "@/lib/db";
 import { formActionErrorMessage } from "@/lib/form-actions";
 import { completenessKinds, completenessSources, evidenceKinds, readableFormats, topologies } from "@/lib/plasmid/model";
-import { createSequencingFolder, saveFolderReads, savePlasmidVersion } from "@/lib/plasmid/store.server";
+import { createSequencingFolder, loadPlasmidProduct, saveFolderReads, savePlasmidVersion } from "@/lib/plasmid/store.server";
+import type { InventoryDocument } from "@/lib/plasmid/workbench";
 import { addLibraryEntry, removeLibraryEntry } from "@/lib/plasmid/library.server";
-import { saveExpectedStructure } from "@/lib/plasmid/structure.server";
+import { loadExpectedStructure, saveExpectedStructure } from "@/lib/plasmid/structure.server";
 import { dispositions, results } from "@/lib/plasmid/verification";
 import { confirmVerification, createVerification, decideItem, listPlasmidTubes, reviseVerification, submitForReview } from "@/lib/plasmid/verification.server";
 
@@ -247,4 +248,27 @@ export async function reviseVerificationAction(id: string): Promise<{ error?: st
 /** The tubes of a plasmid, to bind a new check to (Q372). */
 export async function plasmidTubes(productId: string) {
   return listPlasmidTubes(z.string().min(1).parse(productId));
+}
+
+/** A plasmid's current sequence, to open in a new tab of the workbench. */
+export async function openPlasmid(productId: string): Promise<{ error?: string; document?: InventoryDocument }> {
+  try {
+    const id = z.string().min(1).parse(productId);
+    const opened = await loadPlasmidProduct(id);
+    if (!opened) return { error: "Choose a plasmid in inventory." };
+    if (!opened.version) return { error: "This plasmid has no saved sequence yet." };
+    return {
+      document: {
+        record: opened.version.record,
+        label: `${opened.version.label} · From inventory`,
+        productId: opened.product.id,
+        versionId: opened.version.id,
+        completeness: opened.version.completeness,
+        completenessSource: opened.version.completenessSource,
+        structure: await loadExpectedStructure(id),
+      },
+    };
+  } catch (error) {
+    return { error: formActionErrorMessage(error, "The plasmid could not be opened.") };
+  }
 }

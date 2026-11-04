@@ -7,6 +7,15 @@
 
   const EXECUTION_PLAN_VERSION = 2;
 
+  /** The volume written in a result table cell, such as "1,045 µL". Thousands marks are part of the number. */
+  function volumeFromCell(value) {
+    const text = String(value ?? "").replace(/(\d),(?=\d{3}(?:\D|$))/g, "$1");
+    const match = text.match(/(-?\d+(?:\.\d+)?(?:e[+-]?\d+)?)\s*(nL|uL|µL|mL|L)\b/i);
+    if (!match) return null;
+    const unit = match[2] === "ul" || match[2] === "UL" ? "uL" : match[2];
+    return { value: Number(match[1]), unit };
+  }
+
   const TRANSIENT_INPUT_KEYS = new Set([
     "wellCount", "dilutionWellCount", "groupDimension", "groupRoleLines", "groupOverageLines",
     "overagePercent", "fixedOveragePercent", "dilutionOveragePercent", "solidOveragePercent",
@@ -362,5 +371,5 @@
     return buildTransfectionExecutionPlan({ groups: buildExecutionGroupsFromContributions(contributions), language });
   }
 
-  return { EXECUTION_PLAN_VERSION, stableRecipeInput, preparationCompatibility, buildTransfectionContributions, buildTransfectionProtocol, buildExecutionGroupsFromContributions, buildTransfectionExecutionPlanFromContributions, buildTransfectionExecutionPlan, safeDisplayLabel };
+  return { EXECUTION_PLAN_VERSION, volumeFromCell, stableRecipeInput, preparationCompatibility, buildTransfectionContributions, buildTransfectionProtocol, buildExecutionGroupsFromContributions, buildTransfectionExecutionPlanFromContributions, buildTransfectionExecutionPlan, safeDisplayLabel };
 });

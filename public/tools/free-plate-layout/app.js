@@ -1288,13 +1288,6 @@
     return Number(input.prepOverage ?? input.overagePercent ?? input.fixedOveragePercent ?? input.dilutionOveragePercent ?? input.solidOveragePercent ?? 0) || 0;
   }
 
-  function volumeFromCell(value) {
-    const match = String(value ?? "").match(/(-?\d+(?:\.\d+)?(?:e[+-]?\d+)?)\s*(nL|uL|µL|mL|L)\b/i);
-    if (!match) return null;
-    const unit = match[2] === "ul" || match[2] === "UL" ? "uL" : match[2];
-    return { value: Number(match[1]), unit };
-  }
-
   function liquidResultContributions(result, plate) {
     if (Array.isArray(result?.contributions)) return result.contributions.map((item) => ({ ...item, scopeWellIds: [...(item.scopeWellIds || [])] }));
     const input = result?.input || {};
@@ -1316,7 +1309,7 @@
     }[result.module] || bilingual("配液方案", "Preparation plan"));
     const contributions = [];
     const add = (component, cell, subgroup = "") => {
-      const volume = volumeFromCell(cell);
+      const volume = LiquidPlan.volumeFromCell(cell);
       if (!volume || !Number.isFinite(volume.value) || volume.value < 0) return;
       contributions.push({
         groupKey: subgroup ? `${groupKey}:${subgroup}` : groupKey,
@@ -1347,6 +1340,16 @@
       });
     }
     return contributions;
+  }
+
+  // These plans take volumes from their saved table: contributions stored by older versions dropped the thousands.
+  function planContributions(plan, plate) {
+    const stored = plan.contributions || [];
+    const fromCells = ["basic", "serial", "drug"].includes(plan.module) && !plan.resultSnapshot?.structuredPreparation && plan.resultSnapshot?.rows?.length;
+    if (!fromCells) return stored;
+    const reread = liquidResultContributions({ module: plan.module, input: plan.input, rows: plan.resultSnapshot.rows }, plate);
+    if (reread.length !== stored.length) return reread.length ? reread : stored;
+    return stored.map((item, index) => ({ ...item, baseVolume: reread[index].baseVolume, unit: reread[index].unit }));
   }
 
   function selectedLiquidPlates() {
@@ -1407,7 +1410,7 @@
         if (plan.stale) continue;
         const legacyTransfection = plan.module === "transfection" && plan.executionPlanVersion !== LiquidPlan.EXECUTION_PLAN_VERSION;
         if (legacyTransfection || !Array.isArray(plan.contributions) || !plan.contributions.length) skipped.push(`${plate.name} · ${plan.name || plan.module}`);
-        else contributions.push(...plan.contributions.map((item) => ({ ...item, plateId: plate.id, plateName: plate.name, displayOrder: plateOrder * 10000 + (Number(item.displayOrder) || 0) })));
+        else contributions.push(...planContributions(plan, plate).map((item) => ({ ...item, plateId: plate.id, plateName: plate.name, displayOrder: plateOrder * 10000 + (Number(item.displayOrder) || 0) })));
       }
     }
     return { merged: Workspace.mergeLiquidContributions(contributions, { overagePercent, minPipetteVolume: 1, maxContainerVolume }), skipped, contributionCount: contributions.length };
@@ -3414,7 +3417,7 @@
       const rows = [headers, ...exportOrderWellIds(plate).map((wellId) => [wellId, ...plate.dimensions.map((dimension) => plate.plates[plate.plateSize][wellId]?.params?.[dimension.id] ?? "")])];
       sheets.push({ name: plate.name, systemKind: "plate", rows, freezeRows: 1, autoFilter: true });
       const preparationRows = [[bilingual("方案名称", "Plan name"), bilingual("配方", "Recipe"), bilingual("状态", "Status"), bilingual("配液类型", "Preparation type"), bilingual("管", "Tube"), bilingual("目的物/分组", "Cargo / group"), bilingual("组分", "Component"), bilingual("每孔", "Per well"), bilingual("基础需求", "Base need"), bilingual("本板方案准备量", "Saved-plan preparation"), bilingual("余量", "Overage"), bilingual("目标孔", "Target wells"), bilingual("操作步骤", "Protocol steps")]];
-      for (const plan of [Workspace.usableLiquidPlan(plate)].filter(Boolean)) for (const contribution of plan.contributions || []) preparationRows.push([
+      for (const plan of [Workspace.usableLiquidPlan(plate)].filter(Boolean)) for (const contribution of planContributions(plan, plate) || []) preparationRows.push([
         plan.name || plan.recipeName || plan.module,
         plan.recipeName || plan.module,
         plan.stale ? bilingual("需重算", "Recalculate") : bilingual("有效", "Current"),

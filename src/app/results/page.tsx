@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { CollectionBulkActions } from "@/components/CollectionBulkActions";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import { CollectionToolbar, collectionPrimaryActionClass } from "@/components/CollectionToolbar";
 import { PageHeader } from "@/components/PageHeader";
@@ -55,9 +56,9 @@ export default async function ResultsPage({ searchParams }: { searchParams?: Pag
         { name: "validation", label: "template validation", value: validation, options: resultValidationStatusOptions },
       ]}
       sortOptions={[{ value: "updated_desc", label: "Recently updated" }, { value: "title_asc", label: "Title A–Z" }]}
-      actions={<><CollectionExportMenu filteredHref={exportHref} exportPath="/results/export" importHref="/results/import" /><Link href="/results/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Result</Link></>}
+      actions={<><CollectionExportMenu selectedInTable filteredHref={exportHref} exportPath="/results/export" importHref="/results/import" /><Link href="/results/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Result</Link></>}
     />
-    <DataTable rows={results} getRowKey={(row) => row.id} emptyMessage="No Results match this view." selection={{ exportPath: "/results/export" }} columns={[
+    <DataTable rows={results} getRowKey={(row) => row.id} emptyMessage="No Results match this view." key={exportHref} selection={{ exportPath: "/results/export", hideExport: true, actions: <CollectionBulkActions kind="result" resetKey={exportHref} /> }} columns={[
       { key: "result", header: "Result", render: (row) => <div><Link href={`/results/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.title}</Link><p className="mt-1 text-xs text-muted">{row.project?.name ?? "No project"}{row.templateInstanceKey ? ` · ${row.templateInstanceLabel ?? row.templateInstanceKey}` : ""}</p></div> },
       { key: "type", header: "Type", render: (row) => <BadgeLink href={filterHref("/results", { type: row.resultType })} tone="sage">{row.resultType}</BadgeLink> },
       { key: "experiment", header: "Experiment", render: (row) => row.experiment ? <Link href={`/experiments/${row.experiment.id}`} className="text-moss hover:underline">{row.experiment.runCode ?? row.experiment.title}</Link> : "—" },

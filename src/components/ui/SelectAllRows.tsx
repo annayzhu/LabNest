@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useI18n } from "@/components/I18nProvider";
 
 /** The header box of a selectable table: checks or clears every row, and shows a dash while only some are checked. */
 export function SelectAllRows() {
   const box = useRef<HTMLInputElement>(null);
+  const { locale } = useI18n();
 
   useEffect(() => {
     const form = box.current?.form;
@@ -25,7 +27,7 @@ export function SelectAllRows() {
     <input
       ref={box}
       type="checkbox"
-      aria-label="Select all rows"
+      aria-label={locale === "zh" ? "全选当前列表" : "Select all rows in this list"}
       className="focus-ring ln-data-table-checkbox"
       onChange={(event) => {
         const form = event.currentTarget.form;

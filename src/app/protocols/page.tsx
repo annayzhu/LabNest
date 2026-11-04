@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BookSearch, Plus, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { CollectionBulkActions } from "@/components/CollectionBulkActions";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import { AiLink } from "@/components/AiAssistant";
 import { CollectionToolbar, collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
@@ -67,13 +68,13 @@ export default async function ProtocolsPage({ searchParams }: { searchParams?: P
           { value: "code_asc", label: "Protocol code" },
         ]}
         actions={<>
-          <CollectionExportMenu filteredHref={exportHref} exportPath="/protocols/export" importHref="/protocols/import" />
+          <CollectionExportMenu selectedInTable filteredHref={exportHref} exportPath="/protocols/export" importHref="/protocols/import" />
           <Link href="/protocols/import/recognize#manuals" className={collectionSecondaryActionClass}><BookSearch className="h-4 w-4" aria-hidden />Find a product manual</Link>
           <AiLink href="/protocols/design"><Sparkles className="h-4 w-4" aria-hidden />Design from a goal</AiLink>
           <Link href="/protocols/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Protocol</Link>
         </>}
       />
-      <DataTable rows={protocols} getRowKey={(row) => row.id} emptyMessage="No Protocols match this view." selection={{ exportPath: "/protocols/export" }} columns={[
+      <DataTable rows={protocols} getRowKey={(row) => row.id} emptyMessage="No Protocols match this view." key={exportHref} selection={{ exportPath: "/protocols/export", hideExport: true, actions: <CollectionBulkActions kind="protocol" resetKey={exportHref} /> }} columns={[
         { key: "protocol", header: "Protocol", render: (row) => <Link href={`/protocols/${row.id}`} className="block text-ink hover:text-moss"><ProtocolIdentity title={row.canonicalTitle ?? row.title} code={row.humanCode} /></Link> },
         { key: "version", header: "Current version", render: (row) => row.versions[0] ? <span className="record-identifier font-medium">{row.versions[0].displayVersion}</span> : "—" },
         { key: "review", header: "Review", render: (row) => row.versions[0] ? <StatusPill status={row.versions[0].reviewStage} href={filterHref("/protocols", { review: row.versions[0].reviewStage })} /> : "—" },

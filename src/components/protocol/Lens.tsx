@@ -19,9 +19,9 @@ export function toggleLens(lens: ProtocolSelection, dimensionId: string, optionI
 export function LensRow({ dimension, marks, lens, onChange, label, optionTitle, children }: { dimension: Dimension; marks: Map<string, OptionMark>; lens: ProtocolSelection; onChange: (lens: ProtocolSelection) => void; label: string; optionTitle: (option: Dimension['options'][number]) => string; children?: ReactNode }) {
   return <div className="ln-systems-row">
     <span className="ln-systems-dimension">{systemLabelText(dimension.label)}</span>
-    <span className="ln-systems-options" role="group" aria-label={label}>{dimension.options.map(option => { const mark = marks.get(`${dimension.id}:${option.id}`); return <button key={option.id} type="button" className="focus-ring" aria-pressed={lens[dimension.id] === option.id} data-tone={mark?.tone} title={optionTitle(option)}
+    <span className="ln-systems-choices"><span className="ln-systems-options" role="group" aria-label={label}>{dimension.options.map(option => { const mark = marks.get(`${dimension.id}:${option.id}`); return <button key={option.id} type="button" className="focus-ring" aria-pressed={lens[dimension.id] === option.id} data-tone={mark?.tone} title={optionTitle(option)}
       onClick={() => onChange(toggleLens(lens, dimension.id, option.id))}>{mark?.symbol ? <SystemMark mark={mark} /> : null}<span>{systemLabelText(option.label)}</span></button>; })}</span>
-    {children}
+    {children}</span>
   </div>;
 }
 

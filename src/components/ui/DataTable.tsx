@@ -49,6 +49,8 @@ export function DataTable<T>({
     label?: string;
     /** Bulk actions for the checked rows, in a bar above the table; the header then gets a select-all box. */
     actions?: ReactNode;
+    /** A selection action component renders the sole export button itself. */
+    hideExport?: boolean;
   };
 }) {
   const columns = allColumns
@@ -120,7 +122,7 @@ export function DataTable<T>({
       {selection.actions ? (
         <div className="hidden flex-wrap items-center gap-2 rounded-[var(--ln-radius-panel)] border border-hairline bg-surface px-3 py-2 group-has-[.selection-checkbox:checked]/selection:flex">
           {selection.actions}
-          {selection.exportPath ? <button type="submit" className={selectionBarExportButtonClass}>{exportLabel}</button> : null}
+          {selection.exportPath && !selection.hideExport ? <button type="submit" className={selectionBarExportButtonClass}>{exportLabel}</button> : null}
         </div>
       ) : null}
       {table}

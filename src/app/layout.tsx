@@ -11,6 +11,7 @@ import { systemThemeCssText, systemThemes, systemThemeStorageKey } from "@/lib/s
 import { typographyCssProperties, typographyCssStorageKey } from "@/lib/typography-settings";
 import { defaultUiScale, uiScaleOptions, uiScaleStorageKey } from "@/lib/ui-scale";
 import "./globals.css";
+import "@/components/screen-readability.css";
 
 const typographyBootstrapScript = `(function(){try{var v=JSON.parse(localStorage.getItem(${JSON.stringify(typographyCssStorageKey)})||'{}');${JSON.stringify(typographyCssProperties)}.forEach(function(k){if(typeof v[k]==='string'&&v[k].length<500)document.documentElement.style.setProperty(k,v[k])})}catch(e){}})()`;
 const systemThemeStyles = systemThemeCssText()+appearanceThemeCssText();

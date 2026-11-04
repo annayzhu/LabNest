@@ -85,9 +85,12 @@
 .ln-systems-bar { display: grid; gap: 0.2rem; margin: 0 0 1rem; padding: 0.15rem 0 0.65rem; border-bottom: 1px solid var(--hairline); font: var(--ln-control-font-size-md)/1.4 var(--font-ui); color: var(--graphite); }
 .ln-systems-bar.is-empty { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; color: var(--muted); font-size: var(--ln-control-font-size-xs); }
 .ln-systems-bar code { font-family: var(--font-data); color: var(--ink); background: var(--ln-chip-surface); border-radius: var(--ln-radius-control-sm); padding: 0 0.3em; }
-.ln-systems-row { display: grid; grid-template-columns: minmax(5rem, 8rem) minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; min-height: 2.1rem; }
-.ln-systems-dimension { color: var(--ink); font-weight: 600; overflow-wrap: anywhere; }
-.ln-systems-options { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.ln-systems-row { display: flex; align-items: center; gap: 0.6rem; min-height: 2.1rem; min-width: 0; }
+.ln-systems-dimension { flex: 0 1 auto; max-width: min(45%, 28rem); color: var(--ink); font-weight: 600; overflow-wrap: anywhere; }
+.ln-systems-choices { display: flex; flex: 0 1 auto; align-items: center; gap: 0.3rem; min-width: 0; }
+.ln-systems-choices > .ln-systems-icon { flex: none; }
+.ln-systems-options { display: flex; flex-wrap: wrap; gap: 0.3rem; min-width: 0; }
+.ln-systems-options button { white-space: nowrap; }
 .ln-systems-options button, .ln-systems-footer button, .ln-systems-bar.is-empty button, .ln-condition-menu-options button {
   display: inline-flex; align-items: center; gap: 0.3em; min-height: 1.75rem; padding: 0.1rem 0.6rem; border: 1px solid var(--hairline); border-radius: 999px;
   background: var(--surface); color: var(--graphite); font: inherit; font-size: var(--ln-control-font-size-xs); cursor: pointer;
@@ -99,6 +102,9 @@
 .ln-systems-spacer { flex: 1; }
 .ln-systems-ranges { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.6rem; margin: 0 0 0.5rem; padding: 0.35rem 0.55rem; border-radius: var(--ln-radius-control-md); background: var(--warning-surface, var(--warm)); color: var(--warning); font-size: var(--ln-control-font-size-xs); }
 .ln-systems-ranges button { min-height: 1.75rem; padding: 0 0.4rem; border-radius: var(--ln-radius-control-md); color: var(--moss); font-weight: 600; }
+.ln-systems-ranges details { min-width: 0; }
+.ln-systems-ranges summary { cursor: pointer; }
+.ln-systems-ranges details p { margin-top: 0.25rem; }
 .ln-systems-bar .ln-systems-ranges { margin: 0.2rem 0 0; }
 .ln-chip-error.is-inline, .ln-chip-stock-tag { margin-right: 0.35em; }
 .ln-chip-stock-tag { padding: 0 0.35em; border: 1px solid var(--hairline); border-radius: 999px; }
@@ -124,7 +130,8 @@
 .ln-systems-editor-actions .is-danger { color: var(--error); }
 .ln-systems-editor-actions .is-primary { background: var(--moss); border-color: var(--moss); color: var(--surface); }
 @media print { .ln-systems-bar { border-bottom-color: var(--border-strong); } .ln-systems-options button { border-color: var(--border-strong); } }
-@media (max-width: 640px) { .ln-systems-row { grid-template-columns: minmax(0, 1fr) auto; } .ln-systems-options { grid-column: 1 / -1; grid-row: 2; } }
+@media screen and (max-width: 640px) { .ln-systems-row { align-items: flex-start; flex-direction: column; gap: 0.25rem; padding-block: 0.3rem; } .ln-systems-dimension { max-width: 100%; } .ln-systems-choices { max-width: 100%; } }
+@media print { .ln-systems-row { flex-direction: row; align-items: center; gap: 2mm; } .ln-systems-dimension { max-width: 65mm; } }
 
 /* ——— Floating editors: chip popover, condition menu, split prompt (the insert menu: editor-command-menu.css) ——— */
 .ln-chip-popover, .ln-condition-menu, .ln-split-prompt {

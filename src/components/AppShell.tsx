@@ -18,7 +18,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
         <Sidebar />
         <div className="app-shell-content min-w-0 flex-1 pb-28 tablet:pb-0">
           <TopBar />
-          <main className="app-shell-main mx-auto max-w-[1480px] overflow-x-clip px-4 py-4 md:px-5 md:py-5">
+          <main className="app-shell-main w-full min-w-0 overflow-x-clip px-4 py-4 md:px-5 md:py-5">
             {children}
           </main>
         </div>

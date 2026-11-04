@@ -11,6 +11,7 @@ import { SystemMark } from './SystemMark';
 import { LensPresets, LensRow } from './Lens';
 import { useProtocolEditor } from './ProtocolEditorContext';
 import { systemLabelText } from '@/lib/protocol-conditions';
+import { useI18n } from '@/components/I18nProvider';
 
 type Dimension = ProtocolSystems['dimensions'][number];
 type Option = Dimension['options'][number];
@@ -68,6 +69,7 @@ function DimensionEditor({ dimension, systems, onDone }: { dimension: Dimension;
 /** Legend and lens: one row per system or condition; choosing an option quiets content for the other options while writing. */
 export function SystemsBar() {
   const api = useProtocolEditor();
+  const { locale } = useI18n();
   const [editing, setEditing] = useState<string | null>(null);
   const systems = api.systems;
   const dimensions = systems?.dimensions ?? [];
@@ -86,7 +88,7 @@ export function SystemsBar() {
   const savePreset = () => systems && api.updateSystems(current => ({ ...current, presets: [...current.presets, { id: uid('preset'), label: Object.entries(api.lens).map(([d, o]) => current.dimensions.find(x => x.id === d)?.options.find(x => x.id === o)?.label).filter(Boolean).join(' · ') || '常用组合', selections: { ...api.lens } }] }));
   // Source ranges this Protocol has not fixed a value for yet; each opens where it is written.
   const openRanges = (systems?.parameters ?? []).filter(p => p.range && p.source.kind === 'fixed' && p.source.value === null);
-  const ranges = openRanges.length ? <p className="ln-systems-ranges" role="status" data-print-hidden>{`${openRanges.length} source ${openRanges.length === 1 ? 'range has' : 'ranges have'} no adopted value yet; until adopted, it is filled in at the step during the run.`}<button type="button" className="focus-ring is-quiet" onClick={() => api.revealParameter(openRanges.map(parameter => parameter.id))}>Adopt a value</button></p> : null;
+  const ranges = openRanges.length ? <div className="ln-systems-ranges" role="status" data-print-hidden data-i18n-ignore><details><summary>{locale === 'zh' ? `${openRanges.length} 个范围待选定` : `${openRanges.length} ranges need a value`}</summary><p>{locale === 'zh' ? '未选定时，仍需在运行步骤中填写。' : 'Until a value is adopted, fill it in at the step during the run.'}</p></details><button type="button" className="focus-ring is-quiet" onClick={() => api.revealParameter(openRanges.map(parameter => parameter.id))}>{locale === 'zh' ? '去选定' : 'Adopt a value'}</button></div> : null;
   if (!dimensions.length) return <>{ranges}<div className="ln-systems-bar is-empty" data-print-hidden>
     <span>When systems use different amounts, write <code>50/80 µL</code>; set sample conditions that need their own label in “Applies to…” from ⋮⋮ beside a step or paragraph.</span>
     <button className="focus-ring" type="button" onClick={() => { if (!systems) api.updateSystems(() => blankProtocolSystems()); addDimension('system'); }}><Plus aria-hidden />System</button>

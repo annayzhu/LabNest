@@ -1,6 +1,7 @@
 'use client';
 
 import { useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { flushSync } from 'react-dom';
 import { ProtocolSourcesView } from './ProtocolSourcesView';
 import { RecordTemplateSummary } from './protocol/RecordTemplate';
 import { useI18n } from './I18nProvider';
@@ -279,12 +280,33 @@ function Folded({ systems, rules, children }: { systems: ProtocolSystems; rules:
   </div>;
 }
 
+const allSystemsLens: ProtocolSelection = {};
+
+/** A reading filter must never remove source rows or alternative quantities from a printed Protocol. */
+function useProtocolPrintMode() {
+  const [printing, setPrinting] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia('print');
+    // Native print takes its DOM snapshot before deferred React work; commit the full source first.
+    const before = () => flushSync(() => setPrinting(true));
+    const after = () => setPrinting(false);
+    const change = () => media.matches ? before() : after();
+    window.addEventListener('beforeprint', before);
+    window.addEventListener('afterprint', after);
+    media.addEventListener('change', change);
+    return () => { window.removeEventListener('beforeprint', before); window.removeEventListener('afterprint', after); media.removeEventListener('change', change); };
+  }, []);
+  return printing;
+}
+
 export function ProtocolDocumentView({ document, title, identifier, version }: { document: ProtocolDocument; title?: string; identifier?: string | null; version?: string | null }) {
   const { t } = useI18n();
   // The standard section names are the app's words and follow the interface language; a title the author changed stays as written.
   const sectionTitle = (section: ProtocolDocument["sections"][number]) => section.title === protocolSectionLabels[section.key] ? t(section.title) : section.title;
   const systems = document.systems;
-  const [lens, setLens] = useRememberedLens([identifier, version].filter(Boolean).join("@") || undefined, systems);
+  const [readingLens, setLens] = useRememberedLens([identifier, version].filter(Boolean).join("@") || undefined, systems);
+  const printing = useProtocolPrintMode();
+  const lens = printing ? allSystemsLens : readingLens;
   const lensActive = Object.keys(lens).length > 0;
   const resolution = useMemo(() => systems && lensActive ? resolveProtocolSystem(systems, lens) : undefined, [systems, lens, lensActive]);
   const state = targetApplicability(systems, resolution?.rules ?? {});

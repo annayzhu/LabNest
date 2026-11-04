@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { CollectionBulkActions } from "@/components/CollectionBulkActions";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import {
   CollectionToolbar,
@@ -61,7 +62,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams?: Pa
           { value: "status_asc", label: "Status" },
         ]}
         actions={<>
-          <CollectionExportMenu filteredHref={exportHref} exportPath="/projects/export" importHref="/projects/import" />
+          <CollectionExportMenu selectedInTable filteredHref={exportHref} exportPath="/projects/export" importHref="/projects/import" />
           <Link href="/projects/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Project</Link>
         </>}
       />
@@ -69,9 +70,9 @@ export default async function ProjectsPage({ searchParams }: { searchParams?: Pa
         rows={projects}
         getRowKey={(row) => row.id}
         emptyMessage="No Projects match this view."
-        selection={{ exportPath: "/projects/export" }}
+        key={exportHref} selection={{ exportPath: "/projects/export", hideExport: true, actions: <CollectionBulkActions kind="project" resetKey={exportHref} /> }}
         columns={[
-          { key: "name", header: "Project", render: (row) => <div><Link href={`/projects/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.name}</Link><p className="mt-1 max-w-xl text-xs leading-5 text-muted">{row.description ?? "No description."}</p></div> },
+          { key: "name", header: "Project", render: (row) => <div><Link href={`/projects/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.name}</Link>{row.description ? <p className="mt-1 text-xs leading-5 text-muted">{row.description}</p> : null}</div> },
           { key: "counts", header: "Connected work", render: (row) => <Link href={filterHref("/research-plans", { project: row.id })} className="text-moss hover:underline">{row._count.researchPlans} plans · {row._count.experiments} experiments · {row._count.results} results</Link> },
           { key: "status", header: "Status", render: (row) => <StatusPill status={row.status} href={filterHref("/projects", { status: row.status })} /> },
           { key: "tags", header: "Tags", render: (row) => <div className="flex flex-wrap gap-1">{row.tags.map((item) => <BadgeLink key={item} href={filterHref("/projects", { tag: item })}>{item}</BadgeLink>)}</div> },

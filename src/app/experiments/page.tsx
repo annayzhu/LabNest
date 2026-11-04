@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus, TabletSmartphone } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { CollectionBulkActions } from "@/components/CollectionBulkActions";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import { CollectionToolbar, collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
 import { PageHeader } from "@/components/PageHeader";
@@ -64,11 +65,11 @@ export default async function ExperimentsPage({ searchParams }: { searchParams?:
         ]}
         actions={<>
           <Link href="/protocol-run" className={collectionSecondaryActionClass}><TabletSmartphone className="h-4 w-4" aria-hidden />Run mode</Link>
-          <CollectionExportMenu filteredHref={exportHref} exportPath="/experiments/export" importHref="/experiments/import" />
+          <CollectionExportMenu selectedInTable filteredHref={exportHref} exportPath="/experiments/export" importHref="/experiments/import" />
           <Link href="/experiments/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Experiment</Link>
         </>}
       />
-      <DataTable rows={experiments} getRowKey={(row) => row.id} emptyMessage="No Experiments match this view." selection={{ exportPath: "/experiments/export" }} columns={[
+      <DataTable rows={experiments} getRowKey={(row) => row.id} emptyMessage="No Experiments match this view." key={exportHref} selection={{ exportPath: "/experiments/export", hideExport: true, actions: <CollectionBulkActions kind="experiment" resetKey={exportHref} /> }} columns={[
         { key: "experiment", header: "Experiment", render: (row) => <Link href={`/experiments/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.runCode ? `${row.runCode} · ` : ""}{row.title}</Link> },
         { key: "project", header: "Project", render: (row) => row.project ? <Link href={`/projects/${row.project.id}`} className="text-moss hover:underline">{row.project.name}</Link> : "—" },
         { key: "plan", header: "Research Plan", render: (row) => row.researchPlan ? <BadgeLink href={filterHref("/experiments", { plan: row.researchPlan.id })}>{row.researchPlan.code ?? row.researchPlan.title}</BadgeLink> : <span className="text-warning">Unassigned</span> },

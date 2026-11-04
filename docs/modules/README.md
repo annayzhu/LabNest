@@ -5,6 +5,7 @@
 | 主题 | 入口 |
 | --- | --- |
 | 跨模块设计（2026-11-01） | [对标 SciNote 并超越：总览与问题索引（Q259–Q313，2026-11-01 已按推荐确认）](../product/beyond-scinote-20261101/README.md) |
+| 列表批量操作与界面补齐（2026-11-04） | [五类列表批量操作、导入区与体系区布局（Q404–Q413）](collections/bulk-actions-layout-20261104/PLAN.md) · [验收记录](collections/bulk-actions-layout-20261104/QA.md) |
 | Protocol 与实验执行 | [结构化规程导航](structured-protocol/README.md) · [多日实验排程与日历同步（2026-11-01，设计稿）](structured-protocol/multi-day-schedule-20261101/PLAN.md) |
 | AI 辅助 | [AI 方案与验证批次](ai/README.md) · [说明书先按模板整理再识别、研究方案设计工作流（2026-11-01，设计稿）](ai/copilot-workflow-20261101/PLAN.md) |
 | 计算器与孔板 | [计算器版本及功能批次](calculator/README.md) |

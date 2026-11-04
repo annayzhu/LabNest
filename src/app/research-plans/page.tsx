@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Bot, Plus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CopilotLauncher } from "@/components/CopilotLauncher";
+import { CollectionBulkActions } from "@/components/CollectionBulkActions";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import { CollectionToolbar, collectionPrimaryActionClass } from "@/components/CollectionToolbar";
 import { PageHeader } from "@/components/PageHeader";
@@ -69,14 +70,14 @@ export default async function ResearchPlansPage({ searchParams }: { searchParams
         ]}
         sortOptions={[...researchPlanSortOptions]}
         actions={<>
-          <CollectionExportMenu filteredHref={exportHref} exportPath="/research-plans/export" importHref="/research-plans/import" />
+          <CollectionExportMenu selectedInTable filteredHref={exportHref} exportPath="/research-plans/export" importHref="/research-plans/import" />
           <Link href={filterHref("/research-plans", { q: query, project: projectId, status, sort: sort === "updated_desc" ? undefined : sort, copilot: "1" })} className="ln-copilot-entry focus-ring" aria-expanded={Boolean(launcher)}><Bot className="h-4 w-4" aria-hidden />Copilot</Link>
           <Link href="/research-plans/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Research Plan</Link>
         </>}
       />
       {launcher ? <CopilotLauncher plans={launcher.plans} projects={projects.map((project) => ({ id: project.id, label: project.name }))} defaultProjectId={launcher.defaultProjectId}
         closeHref={filterHref("/research-plans", { q: query, project: projectId, status, sort: sort === "updated_desc" ? undefined : sort })} /> : null}
-      <DataTable rows={plans} getRowKey={(row) => row.id} emptyMessage="No Research Plans match this view." selection={{ exportPath: "/research-plans/export" }} columns={[
+      <DataTable rows={plans} getRowKey={(row) => row.id} emptyMessage="No Research Plans match this view." key={exportHref} selection={{ exportPath: "/research-plans/export", hideExport: true, actions: <CollectionBulkActions kind="research_plan" resetKey={exportHref} /> }} columns={[
         { key: "plan", header: "Research Plan", render: (row) => <div><div className="flex items-center gap-2">{row.code ? <span className="record-identifier text-xs font-medium text-muted">{row.code}</span> : null}<Link href={`/research-plans/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.title}</Link></div><p className="mt-1 max-w-xl text-xs leading-5 text-muted">{row.objective ?? "Objective not recorded."}</p></div> },
         { key: "project", header: "Project", render: (row) => <Link href={`/projects/${row.projectId}`} className="text-moss hover:underline">{row.project.name}</Link> },
         { key: "protocols", header: "Protocols", width: 92, minWidth: 72, render: (row) => <ResearchPlanRelationCounts planId={row.id} kind="protocols" count={row._count.protocols} /> },

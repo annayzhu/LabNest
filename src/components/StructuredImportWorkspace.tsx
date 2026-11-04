@@ -2,8 +2,9 @@
 
 import { useId, useMemo, useRef, useState, type DragEvent, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, Check, Download, FileCheck2, FileSearch, FileUp, LoaderCircle, Pencil, Plus, Sparkles, Trash2, Undo2 } from "lucide-react";
+import { ChevronDown, AlertTriangle, Check, Download, FileCheck2, FileSearch, FileUp, LoaderCircle, Pencil, Plus, Sparkles, Trash2, Undo2 } from "lucide-react";
 import { suggestImportColumns } from "@/app/inventory/import/actions";
+import { anchoredPopoverStyle, useAnchoredPopover } from "@/components/ui/useAnchoredPopover";
 import { Button } from "@/components/ui/Button";
 import { ProtocolImportDecisionNotice } from "@/components/ProtocolImportDecisionNotice";
 import { useI18n } from "@/components/I18nProvider";
@@ -35,6 +36,22 @@ const acceptByFormat = {
 
 const structuredTemplateVersion = "7";
 const maxStructuredImportBytes = 25 * 1024 * 1024;
+
+/** Protocol DOCX uses the same generator as the direct Word link; keep only that entry. */
+function ImportTemplates({ module }: { module: StructuredModuleKey }) {
+  const { locale } = useI18n();
+  const { id, button, panel, close } = useAnchoredPopover();
+  const formats = structuredModules[module].importFormats.filter(format => module !== "protocols" || format !== "docx");
+  const primary = formats.filter(format => format === "xlsx" || format === "csv");
+  const other = formats.filter(format => format !== "xlsx" && format !== "csv");
+  const href = (format: string) => `/api/structured-import/${module}/template?format=${format}&v=${structuredTemplateVersion}`;
+  const linkClass = "focus-ring inline-flex min-h-8 items-center gap-1.5 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-2 text-xs font-medium text-moss hover:bg-warm";
+  return <div data-i18n-ignore className="flex flex-wrap items-center gap-2">
+    {primary.map(format => <a key={format} download href={href(format)} className={linkClass}><Download className="h-3.5 w-3.5" aria-hidden />{format.toUpperCase()}{locale === "zh" ? " 模板" : " template"}</a>)}
+    {other.length ? <><button type="button" ref={button} popoverTarget={id} className={linkClass}>{locale === "zh" ? "其他模板" : "Other templates"}<ChevronDown className="h-3.5 w-3.5" aria-hidden /></button>
+      <div ref={panel} id={id} popover="auto" style={anchoredPopoverStyle} className="w-64 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-1.5 shadow-soft">{other.map(format => <a key={format} download href={href(format)} onClick={close} className="focus-ring flex min-h-9 items-center gap-2 rounded-[var(--ln-radius-control-md)] px-3 text-sm text-ink hover:bg-warm"><Download className="h-4 w-4" aria-hidden />{formatLabel(format)}{locale === "zh" ? " 模板" : " template"}</a>)}</div></> : null}
+  </div>;
+}
 
 function formatFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -339,35 +356,11 @@ export function StructuredImportWorkspace({ module, columnHelper }: { module: St
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader title={module === "protocols" ? "其他导入格式与模板（上传时自动识别格式）" : "Choose a structured format"} />
-        <CardBody className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-          {definition.importFormats.map((format) => {
-            const showCompactGuidance = (format === "csv" || format === "tsv") && controlledFields.length > 0;
-            return (
-              <div key={format} className="flex items-start justify-between gap-3 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-ink">{formatLabel(format)}</p>
-                  {showCompactGuidance ? controlledFields.map((field) => (
-                    <p key={field.key} className="mt-1 truncate text-xs text-muted">
-                      <span>{field.label}</span>: {(field.optionLabels ? Object.values(field.optionLabels) : field.allowedValues ?? []).map((choice, index) => <span key={choice}>{index ? " · " : ""}<span>{choice}</span></span>)}
-                    </p>
-                  )) : null}
-                </div>
-                <a download href={`/api/structured-import/${module}/template?format=${format}&v=${structuredTemplateVersion}`} className="focus-ring inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[var(--ln-radius-control-sm)] border border-hairline bg-surface px-2 text-xs font-medium text-moss hover:bg-sage-surface">
-                  <Download className="h-3.5 w-3.5" aria-hidden />Template
-                </a>
-              </div>
-            );
-          })}
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardHeader title="Upload and preview" />
+        <CardHeader className="flex-wrap" title="Upload and preview" action={<ImportTemplates module={module} />} />
         <CardBody className="space-y-4">
           <div
             className={cn(
-              "rounded-[var(--ln-radius-panel-inner)] border border-dashed p-5 text-center transition-colors",
+              "rounded-[var(--ln-radius-panel-inner)] border border-dashed p-4 text-center transition-colors",
               dragActive ? "border-moss bg-sage-surface/70" : "border-border-strong bg-warm",
               pending && "cursor-not-allowed opacity-60",
             )}
@@ -395,7 +388,7 @@ export function StructuredImportWorkspace({ module, columnHelper }: { module: St
             {file ? (
               <div className="mx-auto mt-4 flex max-w-xl items-center justify-center gap-2 rounded-[var(--ln-radius-control-md)] border border-moss/25 bg-sage-surface px-3 py-2 text-left" aria-live="polite">
                 <FileCheck2 className="h-4 w-4 shrink-0 text-moss" aria-hidden />
-                <span className="min-w-0 truncate text-xs font-medium text-ink">{file.name}</span>
+                <span className="min-w-0 break-all text-xs font-medium text-ink">{file.name}</span>
                 <span className="shrink-0 text-xs text-muted">{formatFileSize(file.size)}</span>
               </div>
             ) : null}
@@ -406,6 +399,7 @@ export function StructuredImportWorkspace({ module, columnHelper }: { module: St
               Preview import
             </Button>
           </div>
+          {controlledFields.length ? <details className="text-xs text-muted"><summary className="cursor-pointer">{locale === "zh" ? "字段可选值" : "Allowed field values"}</summary><div className="mt-2 space-y-1">{controlledFields.map(field => <p key={field.key}><span>{field.label}</span>: {(field.optionLabels ? Object.values(field.optionLabels) : field.allowedValues ?? []).join(" · ")}</p>)}</div></details> : null}
           {error ? <p role="alert" className="rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{error}</p> : null}
         </CardBody>
       </Card>

@@ -1,0 +1,16 @@
+/* Screen controls stay readable at the compact interface scale. Print keeps its physical document type. */
+@media screen {
+  html .app-shell,
+  html[data-labnest-ui-scale="standard"] .app-shell { --text-xs: 12px; }
+  .document-page-facts :is(dt, dd),
+  .document-page-kicker,
+  .document-premise-label { font-size: 12px; }
+  html .ln-chip { font-size: max(12px, 0.92em); }
+  html .ln-chip-unit { font-size: max(12px, 0.9em); }
+  html .ln-chip-range-text { font-size: max(12px, 0.82em); }
+  html .ln-chip-reason { font-size: max(12px, 0.92em); }
+  html .interface-scale-preview { min-height: 3.25rem; height: auto; line-height: 1.1; }
+  html .interface-scale-preview[data-scale-preview] > span:nth-child(-n+2) { font-size: 12px; }
+  html .interface-scale-preview[data-scale-preview="standard"] > span:first-child { font-size: 13px; }
+  html .interface-scale-preview[data-scale-preview="comfortable"] > span:first-child { font-size: 14px; }
+}

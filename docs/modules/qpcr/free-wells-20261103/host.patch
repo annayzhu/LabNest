@@ -1,0 +1,19 @@
+--- a/src/app/tools/[toolId]/page.tsx
++++ b/src/app/tools/[toolId]/page.tsx
+@@ -2,11 +2,14 @@
+ import { notFound } from "next/navigation";
+ import { labToolManifest } from "@/lib/tool-manifest";
+ import { EmbeddedLabTool } from "@/components/EmbeddedLabTool";
+-const embeddedIds = new Set(["qpcr-plate-layout", "cnv-plate-layout", "qpcr-analysis", "cnv-analysis"]);
++import { Activity, Binary, Dna, Grid3X3 } from "lucide-react";
++const embeddedIcons = { "qpcr-plate-layout": Grid3X3, "cnv-plate-layout": Dna, "qpcr-analysis": Activity, "cnv-analysis": Binary };
++const embeddedIds = new Set(Object.keys(embeddedIcons));
+ 
+ export default async function Page({ params }: { params: Promise<{ toolId: string }> }) {
+   const { toolId } = await params;
+   const tool = labToolManifest.find(item => item.id === toolId);
+   if (!tool || !embeddedIds.has(toolId)) notFound();
+-  return <main className="embedded-tool-workspace flex h-dvh flex-col bg-surface"><header className="flex flex-none flex-wrap items-center justify-between gap-2 border-b border-hairline px-4 py-1"><h1 className="text-base font-semibold">{tool.name}</h1><Link className="focus-ring inline-flex min-h-11 items-center text-sm text-moss" href="/tools">Back to tools</Link></header><EmbeddedLabTool id={toolId} title={tool.name} fullPage /></main>;
++  const Icon = embeddedIcons[toolId as keyof typeof embeddedIcons];
++  return <main className="embedded-tool-workspace flex h-dvh flex-col bg-surface"><header className="flex flex-none flex-wrap items-center justify-between gap-2 border-b border-hairline px-4 py-1"><h1 className="flex min-w-0 items-center gap-2 text-base font-semibold"><Icon className="h-5 w-5 shrink-0 text-moss" strokeWidth={1.7} aria-hidden /><span className="[overflow-wrap:anywhere]">{tool.name}</span></h1><Link className="focus-ring inline-flex min-h-11 items-center text-sm text-moss" href="/tools">Back to tools</Link></header><EmbeddedLabTool id={toolId} title={tool.name} fullPage /></main>;
+ }

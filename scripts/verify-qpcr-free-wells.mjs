@@ -1,0 +1,126 @@
+import assert from 'node:assert/strict';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import path from 'node:path';
+import { chromium } from 'playwright';
+
+const base = process.env.BASE_URL ?? 'http://localhost:3002';
+const source = process.env.QPCR_PLANNER_SOURCE ?? '/Users/annayzhu/Developer/labnest-tools/qPCR-Plate-Layout-Planner';
+const XLSX = createRequire(path.join(source,'package.json'))('xlsx-js-style');
+const evidence = path.resolve('.local-runtime/qpcr-free-wells-20261103/evidence');
+await mkdir(evidence,{recursive:true});
+const browser = await chromium.launch();
+const measurements = [];
+try {
+  const context = await browser.newContext({viewport:{width:1366,height:768},permissions:['clipboard-read','clipboard-write']});
+  await context.addCookies([{name:'labnest_locale',value:'zh',url:base}]);
+  await context.addInitScript(()=>localStorage.setItem('labnest.locale','zh'));
+  const page = await context.newPage();
+  page.setDefaultTimeout(15000);
+  const errors=[];
+  page.on('pageerror',error=>errors.push(error.message));
+  await page.goto(`${base}/tools/qpcr-plate-layout`);
+  const frame = page.frameLocator('iframe');
+  async function screenshot(name,width,height,modal=false) {
+    await page.setViewportSize({width,height});
+    await page.screenshot({path:path.join(evidence,`${name}-${width}.png`)});
+    const metrics=await frame.locator('body').evaluate((body,modal)=>{
+      const target=modal?body.querySelector('.edit-sheet'):body;
+      const rect=target.getBoundingClientRect();
+      const fonts=modal?Array.from(target.querySelectorAll('*')).filter(el=>{const s=getComputedStyle(el);return s.visibility!=='hidden'&&el.getClientRects().length&&((el.childNodes.length&&Array.from(el.childNodes).some(n=>n.nodeType===Node.TEXT_NODE&&n.textContent.trim()))||el.tagName==='INPUT'||el.tagName==='SELECT');}).map(el=>parseFloat(getComputedStyle(el).fontSize)):[];
+      return {scrollWidth:body.scrollWidth,windowWidth:innerWidth,modalBounds:modal?{x:rect.x,y:rect.y,width:rect.width,height:rect.height,bottom:rect.bottom,viewportHeight:innerHeight}:null,minModalFont:fonts.length?Math.min(...fonts):null,zoom:body.querySelector('.zoom-value input')?.value??null};
+    },modal);
+    measurements.push({name,width,height,...metrics});
+    assert.ok(metrics.scrollWidth<=metrics.windowWidth+1,`page overflow: ${JSON.stringify(metrics)}`);
+    if(modal){assert.ok(metrics.modalBounds.y>=0&&metrics.modalBounds.bottom<=metrics.modalBounds.viewportHeight+1,'edit dialog must fit the viewport');}
+  }
+  await page.locator('h1 svg').waitFor();
+  await frame.getByRole('button',{name:'载入示例',exact:true}).waitFor();
+  await screenshot('empty',1366,768);
+  assert.equal(await page.locator('input[type=file]').count(),0,'no detached host sample importer');
+  const samplePanel=frame.locator('section.panel').filter({has:frame.getByRole('heading',{name:'样本与对照',exact:true})});
+  assert.equal(await samplePanel.locator('.workflow-sample-file').count(),1);
+  await samplePanel.getByText('从文件导入样本',{exact:true}).click();
+  await samplePanel.getByLabel('样本名单文件',{exact:true}).setInputFiles({name:'synthetic-samples.csv',mimeType:'text/csv',buffer:Buffer.from('id,name\n1,File Sample A\n2,File Sample B')});
+  await samplePanel.getByLabel('样本名称列').selectOption('1');
+  await screenshot('sample-import',1366,768);
+  await samplePanel.getByRole('button',{name:'导入 2 个样本',exact:true}).click();
+  assert.deepEqual(await frame.locator('.sample-list .sample-name-input').evaluateAll(inputs=>inputs.map(input=>input.value)),['File Sample A','File Sample B']);
+  await samplePanel.getByText('从文件导入样本',{exact:true}).click();
+  await frame.getByRole('button',{name:'载入示例',exact:true}).click();
+  await frame.getByRole('button',{name:/^384 孔板/}).click();
+  await frame.getByRole('button',{name:'生成布局',exact:true}).click();
+  const sampleInputs=await frame.locator('.sample-list .sample-name-input').evaluateAll(inputs=>inputs.map(input=>input.value));
+  const geneInputs=await frame.locator('.gene-list .sample-name-input').evaluateAll(inputs=>inputs.map(input=>input.value));
+  assert.equal(sampleInputs.length,8);assert.equal(geneInputs.length,4);
+  await frame.getByRole('gridcell',{name:/^P24，空孔/}).dblclick();
+  await frame.getByRole('button',{name:'检测孔',exact:true}).click();
+  const extraSample='额外合成样本名称'.repeat(4), extraGene='额外合成基因名称'.repeat(4);
+  await frame.getByLabel('样本',{exact:true}).fill(extraSample);
+  await frame.getByLabel('基因',{exact:true}).fill(extraGene);
+  for(const [width,height] of [[1366,768],[1440,900],[1920,1080]])await screenshot('free-well-editor',width,height,true);
+  assert.equal(await frame.locator('.manual-well-full-name').filter({hasText:extraSample}).count(),1);
+  await frame.getByRole('button',{name:'应用修改',exact:true}).click();
+  await frame.getByRole('gridcell',{name:/^P24，.*额外合成/}).waitFor();
+  assert.match(await frame.locator('.plate-subtitle').innerText(),/9 个样本/);
+  assert.deepEqual(await frame.locator('.sample-list .sample-name-input').evaluateAll(inputs=>inputs.map(input=>input.value)),sampleInputs);
+  assert.deepEqual(await frame.locator('.gene-list .sample-name-input').evaluateAll(inputs=>inputs.map(input=>input.value)),geneInputs);
+  await frame.getByRole('button',{name:'复制配液',exact:true}).click();
+  await frame.getByRole('button',{name:'已复制',exact:true}).waitFor();
+  const mix=await page.evaluate(()=>navigator.clipboard.readText());
+  assert.match(mix,new RegExp(`${extraGene}\\t1\\t0\\t10.08\\t5.6`));
+  assert.match(mix,new RegExp(`${extraSample}\\t1\\t1.12`));
+  await frame.getByRole('button',{name:'保存',exact:true}).click();
+  await page.reload();
+  await frame.getByRole('gridcell',{name:/^P24，.*额外合成/}).waitFor();
+  for(const [width,height] of [[1366,768],[1440,900],[1920,1080]])await screenshot('populated',width,height);
+  await frame.getByRole('button',{name:'确认本板',exact:true}).click();
+  async function downloadWorkbook(name){
+    const pending=page.waitForEvent('download');
+    await frame.getByRole('button',{name:'导出 Excel',exact:true}).click();
+    const download=await pending;const filename=path.join(evidence,name);await download.saveAs(filename);
+    return XLSX.read(await readFile(filename),{type:'buffer'});
+  }
+  const workbook=await downloadWorkbook('free-wells-1920.xlsx');
+  const geneRows=XLSX.utils.sheet_to_json(workbook.Sheets.Gene_Requirements);
+  const row=geneRows.find(row=>row['基因 / Assay']===extraGene);
+  assert.equal(row['孔数 / Well count'],1);assert.equal(row['预混液 / Master mix (µL)'],5.6);
+  const sampleRows=XLSX.utils.sheet_to_json(workbook.Sheets.Sample_cDNA);
+  assert.equal(sampleRows.find(row=>row['样本 / Sample']===extraSample)['建议准备 cDNA / Prepare cDNA (µL)'],1.12);
+  await page.setViewportSize({width:1366,height:768});
+  const narrow=await downloadWorkbook('free-wells-1366.xlsx');
+  for(const sheet of ['Well_Detail','Gene_Requirements','Sample_cDNA'])assert.deepEqual(XLSX.utils.sheet_to_json(workbook.Sheets[sheet]),XLSX.utils.sheet_to_json(narrow.Sheets[sheet]),`${sheet} must not depend on viewport`);
+  await frame.getByRole('button',{name:'解除确认',exact:true}).click();
+  await frame.getByRole('gridcell',{name:/^P24，.*额外合成/}).dblclick();
+  for(const [width,height] of [[834,1194],[390,844]])await screenshot('editor-responsive',width,height,true);
+  await frame.getByRole('button',{name:'关闭编辑',exact:true}).click();
+  await page.setViewportSize({width:1440,height:900});
+  await frame.getByRole('button',{name:'全屏查看',exact:true}).click();
+  await page.waitForFunction(()=>{const doc=document.querySelector('iframe')?.contentDocument;return Boolean(doc?.fullscreenElement||doc?.querySelector('.plate-view-help[role="alert"]'));});
+  const fullscreen=await frame.locator('body').evaluate(body=>Boolean(body.ownerDocument.fullscreenElement));
+  measurements.push({name:'fullscreen',available:fullscreen});
+  await page.screenshot({path:path.join(evidence,'expanded-view.png')});
+  if(fullscreen)await frame.getByRole('button',{name:'退出全屏',exact:true}).click();
+  await page.reload();
+  await page.setViewportSize({width:1440,height:900});
+  await frame.getByRole('gridcell',{name:/^P24，.*额外合成/}).waitFor();
+  const expandInputs=frame.getByRole('button',{name:'展开输入',exact:true});
+  if(await expandInputs.isVisible())await expandInputs.click();
+  await frame.getByLabel('快速输入样本数量',{exact:true}).scrollIntoViewIfNeeded();
+  await frame.getByLabel('快速输入样本数量',{exact:true}).fill('24');
+  await frame.getByRole('button',{name:'快速添加编号样本',exact:true}).click();
+  page.on('dialog',dialog=>dialog.accept());
+  await frame.getByRole('button',{name:'重新生成布局',exact:true}).click();
+  await frame.getByRole('gridcell',{name:/^P24/}).waitFor();
+  assert.equal(await frame.getByRole('gridcell').count(),384);
+  assert.equal(await frame.getByRole('gridcell',{name:/，空孔/}).count(),0);
+  await screenshot('full-384-well-plate',1440,900);
+  assert.deepEqual(errors,[]);
+  assert.ok(measurements.filter(item=>item.minModalFont!==null&&item.minModalFont!==undefined).every(item=>item.minModalFont>=12),'all edited form text must be at least 12px');
+  await writeFile(path.join(evidence,'measurements.json'),JSON.stringify(measurements,null,2)+'\n');
+  console.log('PASS title icon, left-only file import, free names, unchanged automatic inputs, mix, explicit save/reopen, Excel, viewport invariance and responsive editor');
+  console.log(JSON.stringify(measurements));
+} finally {
+  if(!measurements.some(item=>item.name==='fullscreen')){const last=browser.contexts()[0]?.pages()[0];if(last)await last.screenshot({path:path.join(evidence,'failure.png')});}
+  await browser.close();
+}

@@ -1,0 +1,38 @@
+--- a/app/globals.css
++++ b/app/globals.css
+@@ -3293,3 +3293,10 @@
+ body:has(.edit-sheet) .toast{top:12px;bottom:auto}
+ 
+ .sample-import-fields .select{font-size:13px}
++
++/* Detail wrapping must not size the plate row or move the controls beneath it. */
++@media screen and (min-width:1024px){
++  .plate-aside{contain:size;min-height:0;scrollbar-gutter:stable}
++  .plate-aside>*{flex-shrink:0}
++  .plate-aside .well-inspector{min-block-size:calc(5lh + 4px)}
++}
+--- a/app/PlateViewport.tsx
++++ b/app/PlateViewport.tsx
+@@ -192,7 +192,7 @@
+ 
+   function inspectWell(target: EventTarget) {
+     const well = (target as Element).closest<HTMLElement>("button[data-well-id]");
+-    setInspectedWellId(well?.dataset.wellId ?? null);
++    if (well) setInspectedWellId(well.dataset.wellId ?? null);
+   }
+ 
+   function pointInGrid(event: PointerEvent<HTMLDivElement>) {
+@@ -299,11 +299,11 @@
+       </div>
+       {fullscreenError && <p className="plate-view-help" role="alert">{tr("浏览器未允许全屏，可拖动孔板下方的手柄调整高度。", "Full screen is unavailable. Drag the handle below the plate to resize it.")}</p>}
+       </div>
+-      <div ref={stageRef} className="plate-stage">
++      <div ref={stageRef} className="plate-stage" onPointerLeave={() => setInspectedWellId(null)}>
+       <div id={viewportId} ref={viewportRef} className={`plate-scroll ${panMode ? "pan-mode" : "select-mode"}`} data-plate-zoom={zoom.toFixed(3)} style={{ height: fullscreen ? undefined : height ?? autoHeight ?? undefined }}
+         onPointerDown={beginDrag} onPointerMove={updateDrag} onPointerUp={(event) => finishDrag(event)} onPointerCancel={(event) => finishDrag(event, true)}
+         onPointerOver={(event) => inspectWell(event.target)} onFocusCapture={(event) => inspectWell(event.target)}
+-        onPointerLeave={() => { setInspectedWellId(null); if (!dragRef.current?.active) dragRef.current = null; }}
++        onPointerLeave={() => { if (!dragRef.current?.active) dragRef.current = null; }}
+         onClickCapture={(event) => { if (suppressClickRef.current || panMode) { event.preventDefault(); event.stopPropagation(); } }}
+         onDoubleClickCapture={(event) => { if (panMode) { event.preventDefault(); event.stopPropagation(); } }}
+         title={tr("拖动框选 · ⌘/Ctrl 加选 · 双击编辑", "Drag to select · ⌘/Ctrl to add · Double-click to edit")}>

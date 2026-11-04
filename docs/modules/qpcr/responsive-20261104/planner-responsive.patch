@@ -1,0 +1,73 @@
+--- a/app/PlateViewport.tsx
++++ b/app/PlateViewport.tsx
+@@ -128,7 +128,10 @@
+     const unscaledWidth = bounds.width / zoomRef.current;
+     const unscaledHeight = bounds.height / zoomRef.current;
+     if (!unscaledWidth || !unscaledHeight) return;
+-    changeZoom(Math.min(MAX_FIT_ZOOM, (width - 1) / unscaledWidth, (height - 1) / unscaledHeight));
++    const widthFit = (width - 1) / unscaledWidth;
++    const stacked = getComputedStyle(stageRef.current!).gridTemplateColumns.trim().split(/\s+/).length === 1;
++    const isFullscreen = Boolean(document.fullscreenElement?.contains(workspaceRef.current));
++    changeZoom(Math.min(MAX_FIT_ZOOM, widthFit, stacked && !isFullscreen ? Infinity : (height - 1) / unscaledHeight));
+     viewport.scrollLeft = 0;
+     viewport.scrollTop = 0;
+     fitRef.current = true;
+@@ -167,7 +170,15 @@
+       const offset = stage.getBoundingClientRect().top - columnBounds.top + column.scrollTop;
+       const below = (workspaceRef.current?.nextElementSibling as HTMLElement | null)?.offsetHeight ?? 0;
+       const handle = stage.nextElementSibling instanceof HTMLElement ? stage.nextElementSibling.offsetHeight : 0;
+-      setAutoHeight(clampHeight(column.clientHeight - offset - below - handle - parseFloat(getComputedStyle(column).paddingBottom)));
++      const viewport = viewportRef.current!;
++      const style = getComputedStyle(viewport);
++      const grid = gridRef.current!.getBoundingClientRect();
++      const availableWidth = viewport.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
++      const contentHeight = grid.width > 0
++        ? Math.ceil((availableWidth - 1) * grid.height / grid.width + parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) + 1)
++        : MAX_HEIGHT;
++      const availableHeight = clampHeight(column.clientHeight - offset - below - handle - parseFloat(getComputedStyle(column).paddingBottom));
++      setAutoHeight(Math.min(availableHeight, contentHeight));
+     };
+     measure();
+     const observer = new ResizeObserver(measure);
+@@ -264,6 +275,8 @@
+     dragRef.current = null;
+     setBox(null);
+   }
++
++  const viewportHeight = fullscreen ? null : height ?? autoHeight;
+ 
+   return (
+     <div ref={workspaceRef} className={`plate-viewport ${fullscreen ? "is-fullscreen" : ""}`} onKeyDown={(event) => {
+@@ -300,7 +313,7 @@
+       {fullscreenError && <p className="plate-view-help" role="alert">{tr("浏览器未允许全屏，可拖动孔板下方的手柄调整高度。", "Full screen is unavailable. Drag the handle below the plate to resize it.")}</p>}
+       </div>
+       <div ref={stageRef} className="plate-stage" onPointerLeave={() => setInspectedWellId(null)}>
+-      <div id={viewportId} ref={viewportRef} className={`plate-scroll ${panMode ? "pan-mode" : "select-mode"}`} data-plate-zoom={zoom.toFixed(3)} style={{ height: fullscreen ? undefined : height ?? autoHeight ?? undefined }}
++      <div id={viewportId} ref={viewportRef} className={`plate-scroll ${panMode ? "pan-mode" : "select-mode"}`} data-plate-zoom={zoom.toFixed(3)} style={{ "--plate-viewport-height": viewportHeight === null ? undefined : `${viewportHeight}px` } as CSSProperties}
+         onPointerDown={beginDrag} onPointerMove={updateDrag} onPointerUp={(event) => finishDrag(event)} onPointerCancel={(event) => finishDrag(event, true)}
+         onPointerOver={(event) => inspectWell(event.target)} onFocusCapture={(event) => inspectWell(event.target)}
+         onPointerLeave={() => { if (!dragRef.current?.active) dragRef.current = null; }}
+--- a/app/globals.css
++++ b/app/globals.css
+@@ -3164,7 +3164,7 @@
+ }
+ 
+ /* Full plate first; ordinary scrolling continues to the mix below it. */
+-.plate-scroll{height:clamp(320px,calc(100dvh - 260px),900px);min-height:320px;overscroll-behavior:auto}
++.plate-scroll{height:var(--plate-viewport-height,clamp(320px,calc(100dvh - 260px),900px));min-height:320px;overscroll-behavior:auto}
+ .workflow-mix-summary{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:12px 16px;border-top:1px solid var(--border);font-size:13px}
+ .workflow-mix-summary>span{flex:1}.workflow-mix-summary>label{width:100%}.workflow-mix-summary textarea{width:100%;min-height:140px}
+ html:has(body .app-shell) .topbar .brand-subtitle{display:none}
+@@ -3300,3 +3300,12 @@
+   .plate-aside>*{flex-shrink:0}
+   .plate-aside .well-inspector{min-block-size:calc(5lh + 4px)}
+ }
++
++/* A stacked plate sizes its viewport from the fitted content, not the window height. */
++@media screen and (max-width:1023px){
++  .plate-viewport:not(.is-fullscreen) .plate-scroll{height:auto;min-height:0}
++  .plate-viewport:not(.is-fullscreen) .plate-height-handle{display:none}
++  .plate-aside .selection-toolbar{justify-content:stretch}
++  .plate-aside .selection-actions{grid-template-columns:repeat(auto-fit,minmax(112px,1fr));width:100%;min-width:0}
++  .plate-aside .selection-actions .button{min-height:44px;white-space:normal}
++}

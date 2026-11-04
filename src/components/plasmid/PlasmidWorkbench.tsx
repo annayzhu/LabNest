@@ -14,14 +14,15 @@ import { completenessKinds, featureLength, type Completeness, type CompletenessS
 import type { PlasmidChoice, SavedFolder } from "@/lib/plasmid/store.server";
 import { sixFrameTranslations, translate } from "@/lib/plasmid/translate";
 import { completenessLabels, declaredCompleteness, defaultCompleteness, downloadText, exportFasta, genbankNotes, readAsRecord, readSummary, strandArrow, strandName, topologyLabels, workbenchItems, type InventoryDocument, type WorkbenchItem } from "@/lib/plasmid/workbench";
-import { AlignmentView } from "./AlignmentView";
+import { compareSequences } from "@/lib/plasmid/compare";
+import { AlignmentView, type AlignmentMemory } from "./AlignmentView";
 import { CompareView } from "./CompareView";
 import { DocumentTabs } from "./DocumentTabs";
 import { MapExport } from "./MapExport";
 import { FeatureTable } from "./FeatureTable";
 import { ImportDropZone, ImportResults } from "./ImportPanel";
 import { AddToLibrary, LibraryList } from "./LibraryPanel";
-import { PlasmidMap } from "./PlasmidMap";
+import { PlasmidMap, type MapMark } from "./PlasmidMap";
 import { ReadTrace } from "./ReadTrace";
 import { SaveFolder, SavedFolders, SaveToInventory } from "./SavePanels";
 import { SearchPanel } from "./SearchPanel";
@@ -63,6 +64,7 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [], library
   const [views, setViews] = useState<Record<string, Tab>>({});
   const [selections, setSelections] = useState<Record<string, Selection>>({});
   const [comparing, setComparing] = useState<Record<string, string>>({});
+  const [alignments, setAlignments] = useState<Record<string, AlignmentMemory>>({});
   // What opening files is for, when a picker asked: then the opened sequence goes where the person was heading.
   const afterOpen = useRef<{ goal: "align" } | { goal: "compare"; from: string } | undefined>(undefined);
   const [allFrames, setAllFrames] = useState(false);
@@ -196,6 +198,7 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [], library
     setStored((current) => current.filter((document) => !keys.includes(inventoryKey(document.productId))));
     setClosed([...shut].filter((key) => keptSources.some((source) => workbenchItems([source]).some((item) => item.key === key))));
     setComparing((current) => Object.fromEntries(Object.entries(current).filter(([from, to]) => !keys.includes(from) && !keys.includes(to))));
+    setAlignments((current) => Object.fromEntries(Object.entries(current).filter(([key]) => !keys.includes(key))));
     if (activeKey && keys.includes(activeKey)) {
       const at = items.findIndex((item) => item.key === activeKey);
       const next = items.slice(at + 1).find((item) => !keys.includes(item.key)) ?? [...items.slice(0, at)].reverse().find((item) => !keys.includes(item.key));
@@ -241,6 +244,18 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [], library
   const selectRange = (start: number, end: number) => setSelection({ segments: selectionSegments(start, end, record?.sequence.length ?? 0, false) });
 
   const compared = items.find((item) => item.key === comparing[activeKey ?? ""]);
+  const comparedRecord = compared ? (compared.kind === "record" ? compared.record : readAsRecord(compared.read)) : undefined;
+  // Differences on the map come from the alignment and the comparison this tab already holds.
+  const comparedMarks = useMemo<MapMark[]>(() => (view === "map" && record && comparedRecord ? compareSequences(record, comparedRecord).differences.map((difference) => ({ position: Math.min(difference.aStart, record.sequence.length - 1), tone: "compare" })) : []), [view, record, comparedRecord]);
+  const alignedMarks = useMemo<MapMark[]>(() => (activeKey ? alignments[activeKey]?.marks ?? [] : []).map((mark) => ({ position: mark.position, tone: "sequencing", read: mark.read })), [alignments, activeKey]);
+  const mapMarks = useMemo(() => [...alignedMarks, ...comparedMarks], [alignedMarks, comparedMarks]);
+  const openMark = (mark: MapMark) => {
+    if (!activeKey) return;
+    if (mark.tone === "compare") return setTab("compare");
+    const position = Math.min(mark.position, (record?.sequence.length ?? 1) - 1);
+    setAlignments((current) => ({ ...current, [activeKey]: { ...current[activeKey], focus: { read: mark.read ?? 0, position } } }));
+    setTab("alignment");
+  };
   const compareWith = (from: string, to: string | undefined) => setComparing((current) => (to ? { ...current, [from]: to } : Object.fromEntries(Object.entries(current).filter(([key]) => key !== from))));
   const openFiles = (goal?: { goal: "align" } | { goal: "compare"; from: string }) => {
     afterOpen.current = goal;
@@ -379,7 +394,13 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [], library
             <div className="ln-pw-view">
               {view === "map" ? (
                 <>
-                  <div className="ln-pw-map"><PlasmidMap record={record} shape={currentShape} selection={selection.segments} selectedFeature={selection.feature} autoFrom={autoFrom} onSelectFeature={selectFeature} /></div>
+                  <div className="ln-pw-map"><PlasmidMap record={record} shape={currentShape} selection={selection.segments} selectedFeature={selection.feature} autoFrom={autoFrom} onSelectFeature={selectFeature} marks={mapMarks} onSelectMark={openMark} /></div>
+                  {mapMarks.length ? (
+                    <p className="ln-pw-map-marks">
+                      {alignedMarks.length ? <button type="button" className="ln-pw-link" data-tone="sequencing" onClick={() => setTab("alignment")}>{`${alignedMarks.length} sequencing difference(s) marked`}</button> : null}
+                      {comparedMarks.length ? <button type="button" className="ln-pw-link" data-tone="compare" onClick={() => setTab("compare")}>{`${comparedMarks.length} difference(s) from the compared sequence marked`}</button> : null}
+                    </p>
+                  ) : null}
                   <FeatureTable record={record} selectedFeature={selection.feature} onSelectFeature={selectFeature} auto={auto} />
                 </>
               ) : null}
@@ -450,6 +471,8 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [], library
                   saved={saved}
                   structure={inventoryDocument?.structure ?? []}
                   splits={apart}
+                  memory={alignments[active.key]}
+                  onKeep={(memory) => setAlignments((current) => ({ ...current, [active.key]: memory }))}
                   onOpenFiles={() => openFiles()}
                 />
               ) : null}

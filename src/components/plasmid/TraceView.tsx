@@ -10,7 +10,7 @@ const height = 120;
 const top = 30;
 
 /** Scrolls `box` sideways so its first `selector` element sits in the middle: the marked base stays in view on a narrow screen. */
-export function useCenteredMark(box: RefObject<HTMLElement | null>, selector: string, key: unknown) {
+function useCenteredMark(box: RefObject<HTMLElement | null>, selector: string, key: unknown) {
   useEffect(() => {
     const container = box.current;
     const mark = container?.querySelector(selector);

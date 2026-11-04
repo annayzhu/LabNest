@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createAligner, type ReadAlignment } from "./align";
+import { alignInRegion, createAligner, type ReadAlignment } from "./align";
 import { coverageProfile } from "./coverage";
 import { parseSequenceFile } from "./files";
 import { construct } from "./test-samples/build";
@@ -66,6 +66,22 @@ describe("verification records (C1)", () => {
     expect(rangeScope(2900, 20, 2949, true)?.segments).toEqual([{ start: 2899, end: 2949 }, { start: 0, end: 20 }]);
     expect(rangeScope(2900, 20, 2949, false)).toBeUndefined();
     expect(rangeScope(0, 20, 2949, true)).toBeUndefined();
+  });
+
+  it("holds a read to a stretch of the reference: another copy of a repeat, on whole-reference coordinates", () => {
+    const unit = reference.sequence.slice(400, 1000);
+    const repeated = `${reference.sequence.slice(0, 1000)}${"T".repeat(50)}${unit}`;
+    const read = { name: "SIM-repeat", bases: `${unit.slice(0, 300)}${unit[300] === "A" ? "C" : "A"}${unit.slice(301)}`, quality: Array(600).fill(40), peaks: null, traces: null, metadata: {} };
+    const free = createAligner(repeated, "linear").align(read);
+    expect(free.aligned && free.alignment.secondary.length).toBeGreaterThan(0);
+    const region = { start: 1000, end: repeated.length };
+    const held = alignInRegion(repeated, read, region);
+    if (!held.aligned) throw new Error(held.reason);
+    expect(held.alignment.region).toEqual(region);
+    expect(held.alignment.referenceSegments[0].start).toBe(1050);
+    expect(held.alignment.differences).toEqual([expect.objectContaining({ kind: "mismatch", referenceStart: 1350, referenceEnd: 1351 })]);
+    expect(held.alignment.columns.find((column) => column.referencePosition !== null)?.referencePosition).toBe(1050);
+    expect(alignInRegion(repeated, read, { start: 0, end: 300 }).aligned).toBe(false);
   });
 
   it("exports the items in 1-based coordinates and quotes what needs quoting", () => {

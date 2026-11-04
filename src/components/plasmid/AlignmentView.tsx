@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileUp, Minus, Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { createAligner, differenceStops, rescore, type AlignmentOutcome, type ReadAlignment } from "@/lib/plasmid/align";
@@ -51,7 +51,7 @@ function alignReads(request: AlignRequest): Promise<AlignmentOutcome[]> {
  * coverage, in the bases or by number. One quality threshold judges everything shown (R03). It draws no conclusion:
  * checking and confirming come with the verification records (batch C).
  */
-export function AlignmentView({ record, reads, folders, saved, structure, splits }: {
+export function AlignmentView({ record, reads, folders, saved, structure, splits, onOpenFiles }: {
   record: SequenceRecord;
   reads: ReadChoice[];
   folders: SavedFolder[];
@@ -60,16 +60,19 @@ export function AlignmentView({ record, reads, folders, saved, structure, splits
   structure: StoredStructureElement[];
   /** Reads a person split off a same-bases group, with the reason (Q371). */
   splits: Record<string, string>;
+  onOpenFiles: () => void;
 }) {
   const [extra, setExtra] = useState<ReadChoice[]>([]);
   const all = useMemo(() => [...reads, ...extra], [reads, extra]);
-  const [chosen, setChosen] = useState<string[]>(() => reads.map((item) => item.key));
+  // Reads taken out by hand; everything else open is aligned, so a read opened later joins by itself.
+  const [left, setLeft] = useState<string[]>([]);
+  const chosen = useMemo(() => all.filter((item) => !left.includes(item.key)), [all, left]);
+  const chosenKeys = chosen.map((item) => item.key).join("\n");
   const [minQuality, setMinQuality] = useState(20);
   const [ratio, setRatio] = useState(0.3);
   const [includeLow, setIncludeLow] = useState(false);
   const [result, setResult] = useState<{ keys: string[]; outcomes: AlignmentOutcome[] }>();
-  const [running, setRunning] = useState(false);
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<{ keys: string; message: string }>();
   const [stop, setStop] = useState(0);
   const [view, setView] = useState<"aligned" | "original">("aligned");
   const [zoom, setZoom] = useState(2);
@@ -79,33 +82,28 @@ export function AlignmentView({ record, reads, folders, saved, structure, splits
 
   const request = useCallback((picked: ReadChoice[]) => alignReads({ reference: record.sequence, topology: record.topology, reads: picked.map(({ read }) => ({ name: read.name, bases: read.bases, quality: read.quality })) }), [record.sequence, record.topology]);
 
-  const run = async (keys: string[]) => {
-    const picked = all.filter((item) => keys.includes(item.key));
-    if (!picked.length) return;
-    setRunning(true);
-    setError(undefined);
-    try {
-      setResult({ keys: picked.map((item) => item.key), outcomes: await request(picked) });
-      setStop(0);
-    } catch (failure) {
-      setError(failure instanceof Error ? failure.message : String(failure));
-    } finally {
-      setRunning(false);
-    }
-  };
-
-  // The reads opened with the file are aligned straight away; later changes wait for "Align".
-  const first = !result && !error && reads.length > 0;
+  // Whatever is chosen is aligned straight away; a newer choice overrides a run still going.
   useEffect(() => {
-    if (!first) return;
+    if (!chosen.length) return;
     let cancelled = false;
-    request(reads)
-      .then((outcomes) => { if (!cancelled) setResult({ keys: reads.map((item) => item.key), outcomes }); })
-      .catch((failure) => { if (!cancelled) setError(failure instanceof Error ? failure.message : String(failure)); });
+    request(chosen)
+      .then((outcomes) => {
+        if (cancelled) return;
+        setResult({ keys: chosen.map((item) => item.key), outcomes });
+        setStop(0);
+      })
+      .catch((failure) => { if (!cancelled) setError({ keys: chosenKeys, message: failure instanceof Error ? failure.message : String(failure) }); });
     return () => { cancelled = true; };
-  }, [first, reads, request]);
+    // `chosen` is a new list whenever a folder loads; the keys say whether the choice really changed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chosenKeys, request]);
+  const failed = error?.keys === chosenKeys ? error.message : undefined;
+  const running = chosen.length > 0 && !failed && result?.keys.join("\n") !== chosenKeys;
 
-  const placed = useMemo(() => (result ? result.keys.map((key, index) => ({ choice: all.find((item) => item.key === key)!, outcome: result.outcomes[index] })) : []), [result, all]);
+  const placed = useMemo(() => (result ? result.keys.flatMap((key, index) => {
+    const choice = chosen.find((item) => item.key === key);
+    return choice ? [{ choice, outcome: result.outcomes[index] }] : [];
+  }) : []), [result, chosen]);
   const length = record.sequence.length;
   const circularLength = record.topology === "circular" ? length : undefined;
   const alignments = useMemo(() => placed.map(({ outcome }) => (outcome.aligned ? rescore(outcome.alignment, minQuality, circularLength) : undefined)), [placed, minQuality, circularLength]);
@@ -145,7 +143,6 @@ export function AlignmentView({ record, reads, folders, saved, structure, splits
 
   const addFolder = async (folder: SavedFolder) => {
     setLoadingFolder(true);
-    setError(undefined);
     try {
       const files = await Promise.all(folder.files.map(async (file) => {
         const response = await fetch(`/api/attachments/${file.attachmentId}`);
@@ -157,9 +154,8 @@ export function AlignmentView({ record, reads, folders, saved, structure, splits
       const groups = joinKnownCopies(found, known, folder.id);
       const added = found.map((item, index) => ({ key: `${folder.id}:${item.id}`, read: item.read, group: groups[index], from: folder.name, copy: copyKey(item) }));
       setExtra((list) => [...list.filter((item) => !item.key.startsWith(`${folder.id}:`)), ...added]);
-      setChosen((keys) => [...new Set([...keys, ...added.map((item) => item.key)])]);
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : String(failure));
+      setError({ keys: chosenKeys, message: failure instanceof Error ? failure.message : String(failure) });
     } finally {
       setLoadingFolder(false);
     }
@@ -177,8 +173,9 @@ export function AlignmentView({ record, reads, folders, saved, structure, splits
     <div className="ln-pw-alignment">
       <section className="ln-pw-align-reads" aria-label="Reads">
         <div className="ln-pw-actions">
-          <strong>{`${chosen.length} of ${all.length} reads`}</strong>
-          <Button type="button" variant="primary" size="sm" disabled={running || !chosen.length} onClick={() => void run(chosen)}>{running ? "Aligning…" : "Align"}</Button>
+          {all.length ? <strong>{`${chosen.length} of ${all.length} reads`}</strong> : <strong>No reads open yet</strong>}
+          {running ? <span className="ln-pw-note">Aligning…</span> : null}
+          <Button type="button" variant="secondary" size="sm" onClick={onOpenFiles}><FileUp className="h-3.5 w-3.5" aria-hidden />Open read files</Button>
           {folders.length ? (
             <select className="ln-pw-input ln-pw-narrow" value="" disabled={loadingFolder} aria-label="Add reads from a saved sequencing folder" onChange={(event) => {
               const folder = folders.find((item) => item.id === event.target.value);
@@ -193,7 +190,7 @@ export function AlignmentView({ record, reads, folders, saved, structure, splits
           {all.map((item) => (
             <li key={item.key}>
               <label className="ln-pw-choice">
-                <input type="checkbox" checked={chosen.includes(item.key)} onChange={(event) => setChosen((keys) => (event.target.checked ? [...keys, item.key] : keys.filter((key) => key !== item.key)))} />
+                <input type="checkbox" checked={!left.includes(item.key)} onChange={(event) => setLeft((keys) => (event.target.checked ? keys.filter((key) => key !== item.key) : [...keys, item.key]))} />
                 <span data-i18n-ignore>{item.read.name}</span>
                 {item.from ? <small data-i18n-ignore>{item.from}</small> : null}
               </label>
@@ -205,10 +202,10 @@ export function AlignmentView({ record, reads, folders, saved, structure, splits
           <label>Double peak at<input type="number" min={10} max={90} step={5} value={Math.round(ratio * 100)} onChange={(event) => setRatio(Math.min(0.9, Math.max(0.1, Number(event.target.value) / 100)))} />%</label>
           <label className="ln-pw-choice"><input type="checkbox" checked={includeLow} onChange={(event) => { keepPlace(); setIncludeLow(event.target.checked); }} />Stop at low-quality differences too</label>
         </div>
-        {error ? <p className="ln-pw-error" role="alert">{error}</p> : null}
+        {failed ? <p className="ln-pw-error" role="alert">{failed}</p> : null}
       </section>
 
-      {result ? (
+      {placed.length ? (
         <>
           <section aria-label="Coverage">
             <svg className="ln-pw-coverage" viewBox={`0 0 1000 ${28 + placed.length * 14}`} role="img" aria-label="Coverage of the reference" onClick={(event) => {
@@ -284,7 +281,7 @@ export function AlignmentView({ record, reads, folders, saved, structure, splits
             ) : null}
           </section>
         </>
-      ) : running || first ? <p className="ln-pw-note">Aligning…</p> : <p className="ln-pw-note">Choose reads and align them to this sequence.</p>}
+      ) : running ? null : <p className="ln-pw-note">{all.length ? "Tick a read to align it to this sequence." : "Open .ab1 or .seq files, or add reads from a saved folder. They align to this sequence by themselves."}</p>}
     </div>
   );
 }

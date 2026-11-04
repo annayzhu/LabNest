@@ -38,7 +38,8 @@ function CircularMap({ record, selection, selectedFeature, autoFrom = Number.POS
   }, [record.features, shown, length, labelRadius]);
   const laneOf = new Map(pieces.map((piece) => [piece.featureIndex, piece.lane]));
   const reach = Math.max(labelRadius + 12, ...labels.map((label) => Math.abs(label.y) + 12));
-  const side = labelRadius + (labels.length ? 130 : 12);
+  // Wide enough for the longest label, so none is cut at the edge; a wide character counts double.
+  const side = Math.max(labelRadius + 12, ...labels.map((label) => Math.abs(label.x) + 12 + [...shortName(record.features[label.featureIndex].name)].reduce((width, character) => width + (character.charCodeAt(0) > 255 ? 13 : 7), 0)));
   return (
     <svg className="ln-pw-map-svg" data-i18n-ignore viewBox={`${-side} ${-reach} ${side * 2} ${reach * 2}`} role="img" aria-label={`${record.name}, circular map, ${length} bp`}>
       <circle r={radius} className="ln-pw-backbone" />

@@ -1,12 +1,24 @@
 import { toFasta } from "@/lib/sequence";
 import { readId, type ImportedSource } from "./files";
 import type { Completeness, CompletenessSource, SangerRead, SequenceFeature, SequenceRecord, Topology } from "./model";
+import type { StoredStructureElement } from "./structure.server";
 import { mottTrim } from "./trace";
 
 /** What the workbench can open: a whole sequence, or one Sanger read. */
 export type WorkbenchItem =
   | { kind: "record"; key: string; source?: string; record: SequenceRecord }
   | { kind: "read"; key: string; source?: string; read: SangerRead };
+
+/** A saved plasmid version open in the workbench, with what it was saved with. */
+export type InventoryDocument = {
+  record: SequenceRecord;
+  label: string;
+  productId: string;
+  versionId: string;
+  completeness: Completeness;
+  completenessSource: CompletenessSource | null;
+  structure: StoredStructureElement[];
+};
 
 /** A read's key is its read id from `groupReadEvidence`, so it finds its evidence group by key. */
 export function workbenchItems(sources: ImportedSource[]): WorkbenchItem[] {

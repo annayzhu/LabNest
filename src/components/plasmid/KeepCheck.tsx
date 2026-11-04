@@ -91,6 +91,7 @@ export function KeepCheck({ record, saved, structure, placed, alignments, profil
           quality: Boolean(choice.read.quality),
           trace: Boolean(choice.read.traces),
           group: choice.group,
+          ...(alignment?.region ? { region: alignment.region } : {}),
           ...(alignment ? { orientation: alignment.orientation, segments: alignment.referenceSegments, score: alignment.score, multiMapped: alignment.secondary.length > 0, differences: alignment.differences.length } : { unaligned: outcome.aligned ? "" : outcome.reason }),
         };
       })),

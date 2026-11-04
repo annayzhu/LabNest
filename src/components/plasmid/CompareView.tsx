@@ -78,7 +78,7 @@ export function CompareView({ record, other, onChange }: { record: SequenceRecor
 
       {differences.length ? (
         <section aria-label="Differences">
-          <div className="ln-pw-actions ln-pw-compare-steps">
+          <div className="ln-pw-actions ln-pw-steps">
             <Button type="button" variant="secondary" size="sm" disabled={at <= 0} onClick={() => go(at - 1)}><ChevronLeft className="h-3.5 w-3.5" aria-hidden />Previous difference</Button>
             <Button type="button" variant="secondary" size="sm" disabled={at >= differences.length - 1} onClick={() => go(at + 1)}>Next difference<ChevronRight className="h-3.5 w-3.5" aria-hidden /></Button>
           </div>

@@ -76,6 +76,8 @@ export type ReadAlignment = {
   secondary: Array<{ orientation: Orientation; referenceStart: number; score: number }>;
   parameters: AlignmentParameters;
   algorithm: string;
+  /** The stretch of reference a person limited this read to, because it fits a repeat equally well elsewhere. */
+  region?: Segment;
 };
 
 export type AlignmentOutcome = { readName: string; aligned: true; alignment: ReadAlignment } | { readName: string; aligned: false; reason: string };
@@ -393,6 +395,43 @@ function differencesOf(columns: AlignmentColumn[], minQuality: number, circularL
     at = end;
   }
   return differences;
+}
+
+/**
+ * Places a read inside one stretch of the reference, for a read that fits a repeat equally well elsewhere and went to the
+ * wrong copy. Coordinates come back on the whole reference; what the stretch leaves out cannot be a second placement.
+ */
+export function alignInRegion(reference: string, read: SangerRead, region: Segment, parameters = defaultAlignmentParameters): AlignmentOutcome {
+  const outcome = createAligner(reference.slice(region.start, region.end), "linear", parameters).align(read);
+  if (!outcome.aligned) return outcome;
+  const shift = region.start;
+  const { alignment } = outcome;
+  return {
+    ...outcome,
+    alignment: {
+      ...alignment,
+      region,
+      referenceSegments: alignment.referenceSegments.map((segment) => ({ ...segment, start: segment.start + shift, end: segment.end + shift })),
+      columns: alignment.columns.map((column) => (column.referencePosition === null ? column : { ...column, referencePosition: column.referencePosition + shift })),
+      differences: alignment.differences.map((difference) => ({ ...difference, referenceStart: difference.referenceStart + shift, referenceEnd: difference.referenceEnd + shift })),
+      secondary: alignment.secondary.map((placement) => ({ ...placement, referenceStart: placement.referenceStart + shift })),
+    },
+  };
+}
+
+/** What the page asks of an alignment, and what the worker runs: one reference, and reads with any region they are held to. */
+export type AlignRequest = {
+  reference: string;
+  topology: Topology;
+  reads: Array<Pick<SangerRead, "name" | "bases" | "quality"> & { region?: Segment }>;
+};
+
+export function runAlignRequest({ reference, topology, reads }: AlignRequest): AlignmentOutcome[] {
+  const aligner = createAligner(reference, topology === "circular" ? "circular" : "linear");
+  return reads.map(({ region, ...read }) => {
+    const whole = { ...read, peaks: null, traces: null, metadata: {} };
+    return region ? alignInRegion(reference, whole, region) : aligner.align(whole);
+  });
 }
 
 /** One place "next difference" stops (Q367): a difference in one read. */

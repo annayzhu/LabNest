@@ -5,6 +5,9 @@ import { angleOf, arcPath, circularLabels, pointAt, stackFeatures, type FeatureP
 import { featureLength, type Segment, type SequenceRecord } from "@/lib/plasmid/model";
 import { featureColor } from "@/lib/plasmid/workbench";
 
+/** A place to point out on the map: a difference from sequencing or from a compared sequence. */
+export type MapMark = { position: number; tone: "sequencing" | "compare"; read?: number };
+
 type MapProps = {
   record: SequenceRecord;
   shape: "circular" | "linear";
@@ -13,6 +16,8 @@ type MapProps = {
   /** Features from this index on were found by the library; they are drawn dashed. */
   autoFrom?: number;
   onSelectFeature: (index: number) => void;
+  marks?: MapMark[];
+  onSelectMark?: (mark: MapMark) => void;
 };
 
 /** Labels beyond this many crowd the ring; the feature table still lists every one (F03). */
@@ -23,7 +28,7 @@ export function PlasmidMap(props: MapProps) {
   return props.shape === "circular" ? <CircularMap {...props} /> : <LinearMap {...props} />;
 }
 
-function CircularMap({ record, selection, selectedFeature, autoFrom = Number.POSITIVE_INFINITY, onSelectFeature }: MapProps) {
+function CircularMap({ record, selection, selectedFeature, autoFrom = Number.POSITIVE_INFINITY, onSelectFeature, marks = [], onSelectMark }: MapProps) {
   const length = record.sequence.length;
   const { pieces, laneCount } = useMemo(() => stackFeatures(record.features, length), [record.features, length]);
   const shown = useMemo(() => labelled(record), [record]);
@@ -87,13 +92,19 @@ function CircularMap({ record, selection, selectedFeature, autoFrom = Number.POS
           </g>
         );
       })}
+      {marks.map((mark, index) => {
+        const angle = angleOf(mark.position, length);
+        const from = pointAt(angle, radius - 8);
+        const to = pointAt(angle, radius + 6);
+        return <line key={`mark-${index}`} className="ln-pw-map-mark" data-tone={mark.tone} x1={from.x} y1={from.y} x2={to.x} y2={to.y} onClick={() => onSelectMark?.(mark)}><title>{(mark.position + 1).toLocaleString("en-US")}</title></line>;
+      })}
       <text y={-8} textAnchor="middle" className="ln-pw-map-name">{record.name}</text>
       <text y={12} textAnchor="middle" className="ln-pw-map-length">{`${length.toLocaleString("en-US")} bp`}</text>
     </svg>
   );
 }
 
-function LinearMap({ record, selection, selectedFeature, autoFrom = Number.POSITIVE_INFINITY, onSelectFeature }: MapProps) {
+function LinearMap({ record, selection, selectedFeature, autoFrom = Number.POSITIVE_INFINITY, onSelectFeature, marks = [], onSelectMark }: MapProps) {
   const length = record.sequence.length;
   const { pieces, laneCount } = useMemo(() => stackFeatures(record.features, length), [record.features, length]);
   const shown = useMemo(() => labelled(record), [record]);
@@ -126,6 +137,7 @@ function LinearMap({ record, selection, selectedFeature, autoFrom = Number.POSIT
           </g>
         );
       })}
+      {marks.map((mark, index) => <line key={`mark-${index}`} className="ln-pw-map-mark" data-tone={mark.tone} x1={x(mark.position)} x2={x(mark.position)} y1={backbone - 8} y2={backbone + 8} onClick={() => onSelectMark?.(mark)}><title>{(mark.position + 1).toLocaleString("en-US")}</title></line>)}
     </svg>
   );
 }

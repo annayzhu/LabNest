@@ -1,3 +1,6 @@
+import { isDeepStrictEqual } from "node:util";
+import { scientificDocumentSchema } from './scientific-document';
+import { toolOutputs } from './tool-workflow';
 import type { Prisma } from "@/generated/prisma/client";
 import { associateDocumentMedia } from "@/lib/document-media.server";
 import type { RecordLifecycleStatus, ResultQualityStatus, ResultSourceType } from "@/generated/prisma/enums";
@@ -12,6 +15,7 @@ type ResultOrigin =
 
 export type ResultCreationRequest = {
   experimentId: string;
+  toolDraftId?: string;
   title: string;
   resultType: string;
   recordStatus: RecordLifecycleStatus;
@@ -38,10 +42,24 @@ function jsonValue(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 }
 
+/** A retry of the same form returns the saved result. Anything else typed on that used page would be silently dropped, so it is refused. */
+export function assertSameSubmission(saved: { title: string; contentJson: unknown; valuesJson: unknown }, request: Pick<ResultCreationRequest, "title" | "contentJson" | "valuesJson">) {
+  const same = (a: unknown, b: unknown) => b === undefined || isDeepStrictEqual(JSON.parse(JSON.stringify(a ?? null)), JSON.parse(JSON.stringify(b)));
+  if (saved.title !== request.title || !same(saved.contentJson, request.contentJson) || !same(saved.valuesJson, request.valuesJson)) throw new Error("这条结果已经保存过了。请打开已保存的结果，或新建一条结果再填写。 / This result was already saved. Open it, or start a new result.");
+}
+
 export async function createResultInTransaction(
   tx: Prisma.TransactionClient,
   request: ResultCreationRequest,
 ) {
+  if (request.toolDraftId) {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${request.toolDraftId}))`;
+    const replay=await tx.result.findUnique({where:{clientMutationId:request.toolDraftId}});
+    if(replay){if(replay.experimentId!==request.experimentId)throw new Error('草稿归属不匹配');assertSameSubmission(replay,request);return {resultId:replay.id,experimentId:replay.experimentId,researchPlanId:replay.researchPlanId};}
+    const draft=await tx.toolWorkflowDraft.findUnique({where:{id:request.toolDraftId}});
+    if(draft && (draft.ownerType!=="result" || draft.ownerId || draft.experimentId!==request.experimentId)) throw new Error("草稿归属不匹配");
+    if(draft?.boundRecordId){const existing=await tx.result.findUniqueOrThrow({where:{id:draft.boundRecordId}});assertSameSubmission(existing,request);return {resultId:existing.id,experimentId:existing.experimentId,researchPlanId:existing.researchPlanId,attachmentCount:0};}
+  }
   const experiment = await tx.experiment.findUnique({
     where: { id: request.experimentId },
     select: {
@@ -129,6 +147,7 @@ export async function createResultInTransaction(
   const sourceMetadata = request.origin.kind === "structured_import" ? request.origin.sourceMetadata : {};
   const result = await tx.result.create({
     data: {
+      clientMutationId: request.toolDraftId,
       experimentId: experiment.id,
       projectId: experiment.projectId,
       researchPlanId: experiment.researchPlanId,
@@ -171,6 +190,14 @@ export async function createResultInTransaction(
   });
 
   await associateDocumentMedia(tx, request.contentJson, "result", result.id);
+  if(request.toolDraftId){
+    await tx.toolWorkflowDraft.updateMany({where:{id:request.toolDraftId},data:{boundRecordId:result.id}});
+    await tx.attachmentLink.updateMany({where:{targetType:"tool_draft",targetId:request.toolDraftId},data:{targetType:"result",targetId:result.id}});
+  }
+  const toolDocument=scientificDocumentSchema.safeParse(request.contentJson);
+  if(toolDocument.success)for(const block of toolOutputs(toolDocument.data))if(block.dataset){
+    await tx.resultDataset.create({data:{resultId:result.id,name:`qPCR · ${block.id} · r${block.revision}`,storageMode:'external_reference',externalUri:`/api/attachments/${block.dataset.attachmentId}`,rowCount:block.dataset.rowCount,columnCount:block.dataset.headers.length,columnsJson:jsonValue(block.dataset.headers.map((name,index)=>({name,index,inferredType:'text'}))),previewJson:jsonValue(block.dataset.preview),schemaJson:jsonValue({artifactId:block.id,revision:block.revision})}});
+  }
   const itemLinks: Prisma.ItemLinkCreateManyInput[] = [{
     sourceType: "result",
     sourceId: result.id,

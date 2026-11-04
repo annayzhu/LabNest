@@ -1,3 +1,4 @@
+import { isToolOutputFile } from "@/lib/tool-workflow";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
@@ -23,11 +24,12 @@ const primaryButton = buttonStyles({ variant: "primary", size: "md" });
 
 export default async function ReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [report, attachmentLinks] = await Promise.all([
+  const [report, allAttachmentLinks] = await Promise.all([
     prisma.report.findUnique({ where: { id }, include: { project: true, researchPlan: true, sources: { orderBy: { order: "asc" } } } }),
     prisma.attachmentLink.findMany({ where: { targetType: "report", targetId: id }, include: { attachment: true }, orderBy: { createdAt: "desc" } }),
   ]);
   if (!report) notFound();
+  const attachmentLinks = allAttachmentLinks.filter((link) => !isToolOutputFile(link.attachment));
   const document = normalizeScientificDocument(report.contentJson, reportSections);
   const snapshot = report.sourceSnapshotJson && typeof report.sourceSnapshotJson === "object" && !Array.isArray(report.sourceSnapshotJson) ? report.sourceSnapshotJson as Record<string, unknown> : {};
   const counts = snapshot.counts && typeof snapshot.counts === "object" && !Array.isArray(snapshot.counts) ? snapshot.counts as Record<string, number> : {};

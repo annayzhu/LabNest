@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildEntryContent, getEntryMarkdown, getOrderedAttachmentIds, parseEntryContent, plainTextFromEntryMarkdown } from "./entry-content";
+import { buildEntryContent, getEntryMarkdown, getOrderedAttachmentIds, parseEntryContent, plainTextFromEntryMarkdown, selectEntryAttachments } from "./entry-content";
 
 describe("entry content documents", () => {
   it("builds ordered text and attachment blocks", () => {
@@ -25,7 +25,6 @@ describe("entry content documents", () => {
 });
 
 it("counts current originals once and keeps removed inline media as history, regardless of filename", async () => {
-  const { selectEntryAttachments } = await import("./entry-content");
   const { documentMediaToMarkdown } = await import("./document-media");
   const photos = ["a", "b", "c", "d"].map(id => ({ id, originalFilename: id === "d" ? "download" : `${id}.png`, mimeType: "image/png", size: 100, derivedFromId: null }));
   const markdown = photos.map(a => documentMediaToMarkdown({ id: `node-${a.id}`, type: "media", mediaType: "image", url: "", attachmentId: a.id })).join("\n");
@@ -35,10 +34,16 @@ it("counts current originals once and keeps removed inline media as history, reg
 });
 
 it("counts four originals plus a PDF, not a repeated image position, URL or preview", async () => {
-  const { selectEntryAttachments } = await import("./entry-content");
   const { documentMediaToMarkdown } = await import("./document-media");
   const markdown = ["a", "b", "c", "d", "a"].map((id,index) => documentMediaToMarkdown({ id: `node-${index}`, type: "media", mediaType: "image", url: "", attachmentId: id })).join("\n") + "\n[Link](https://example.com)";
   const pdf = { derivedFromId: null, id: "pdf", originalFilename: "test.pdf", mimeType: "application/pdf", size: 200 };
   const links = [...["a", "b", "c", "d"].map(id => ({ linkType: "embedded_document_media", attachment: { id, derivedFromId: null } })), { linkType: "entry_content", attachment: pdf }, { linkType: "attached_to", attachment: { id: "preview", derivedFromId: "a" } }];
   expect(selectEntryAttachments<{id:string;derivedFromId?:string|null}>(buildEntryContent(markdown, [pdf]), links).map(x => x.id)).toEqual(["a", "b", "c", "d", "pdf"]);
+});
+
+describe("tool files in an Entry", () => {
+  it("stay out of its attachments; the block in its text lists them", () => {
+    const file: { id: string; metadataJson: unknown } = { id: "plain", metadataJson: null }, tool: typeof file = { id: "session", metadataJson: { artifactId: "a" } };
+    expect(selectEntryAttachments(undefined, [{ attachment: file, linkType: "attached_to" }, { attachment: tool, linkType: "attached_to" }]).map((item) => item.id)).toEqual(["plain"]);
+  });
 });

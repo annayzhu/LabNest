@@ -1,3 +1,4 @@
+import { finalizeToolDraft } from "./tool-draft.server";
 import { protocolCompatibilityIssue } from "./protocol-compatibility";
 import { createHash } from "node:crypto";
 import { normalizeProtocolDocument, projectProtocolDocument } from "./protocol-document";
@@ -16,6 +17,7 @@ function cloneJson<T>(value: T): T {
 
 export type ExperimentSnapshotInput = {
   creationKey?: string;
+  toolDraftId?:string;
   /** An Experiment may start unassigned and join a Research Plan later. */
   researchPlanId?: string | null;
   runCode?: string;
@@ -167,6 +169,7 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
 
     await tx.activityLog.create({ data: { action: "create", targetType: "experiment", targetId: experiment.id, metadataJson: { runCode, researchPlanId: plan?.id ?? null, methodMode: input.methodMode, protocolVersionIds: versionIds } } });
   await associateDocumentMedia(tx, [input.contentJson, experiment.protocolSnapshotJson], "experiment", experiment.id);
+  await finalizeToolDraft(tx,input.toolDraftId,"experiment",experiment.id);
   return experiment;
 }
 

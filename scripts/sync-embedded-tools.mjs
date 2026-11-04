@@ -9,7 +9,6 @@ const records=[];
 const copy=(source,target)=>{mkdirSync(path.dirname(target),{recursive:true});copyFileSync(source,target);records.push({source,target,sha256:createHash('sha256').update(readFileSync(target)).digest('hex')});};
 // Rebuild the maintained qPCR source independently; this script does not refresh it.
 // See scripts/sync-qpcr-planner.mjs and docs/operations/tools-deployment.md.
-copy(path.join(root,'qpcr-analysis-studio/outputs/offline/qPCR-Analysis-Studio_Offline_20260828/index.html'),'public/tools/qpcr-analysis/index.html');
 const analyzer=path.join(root,'C_Taqman_CNV/CopyNumber_Analyzer');
 for(const file of ['cnvtool.html','app.js','diagnostics.js','core.js','layout.js','styles.css','vendor/xlsx.full.min.js','THIRD_PARTY_NOTICES.md'])copy(path.join(analyzer,file),'public/tools/cnv-analysis/'+(file==='cnvtool.html'?'index.html':file));
 const planner=path.join(root,'C_Taqman_CNV/CNV_Plate_Planner');

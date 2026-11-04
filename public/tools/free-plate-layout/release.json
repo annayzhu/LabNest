@@ -1,22 +1,23 @@
 {
   "product": "Plate Layout Planner",
-  "commit": "2397e6a37b1fa174a64571c24fcb2b56d85519c5",
+  "commit": "db5be35436d3c9148bc31ff4854ad6f149b78ddc",
   "files": {
-    "index.html": "de2df6ff5976601273d4a6b5a7cac19f06a5329172f8ea0347b4210375058add",
-    "README.md": "def6b3f082ebdbec55edb393c74f5ab666425b85f33e8b5fd7db5145ad893d4a",
+    "index.html": "fdbb22177b750c497dfe003bb8a2924c047830f72a831bac0d3d7154008d121a",
+    "README.md": "42ff9c731d60bcc5f6d9de5b34387901c8412956b8b180a42023fe6cfd112206",
     "docs/preparation-integration.md": "6b0f7ba018a3bebb864d7a2af4fe1843851b8d81e8c7599516ea6ef5645981ad",
     "vendor/preparation-kernel.provenance.json": "0a6930a5d0c2e3b88e31b8a0c97a76fbf6ce5da662683e75b341d71a3e1dea64",
-    "styles.css": "256208ae93ca9bb261d5fe5c550b9ca537e7b788cd2e8e517e352fe46ff33195",
+    "styles.css": "59c532ce74d09c4ff8ad249b991d40ab10414153ab609709bb00ea90acc4bb12",
     "core.js": "bb3072bb37c4c89ce3e3df7b31c699ab0af92b6d05351b0ff8cc4008f88d1121",
     "color-core.js": "e08c004e9bb0b3741744921617acc6be9ad138ba456b4238e6a55293df44479b",
     "liquid-core.js": "406594dd87fed90c4a5f98571a255e93eaf89d3a351d4062637d505cc5fdddc1",
-    "liquid-plan-core.js": "0eb9bdf3a6e4c1075937c482870925efcb7d7e22b8bdaddb23e1029ca9d94f15",
+    "liquid-plan-core.js": "9d4525390eaa5f0d24900e67643a7bb48521b148a3186693c9f203c30c826355",
     "workspace-core.js": "87621147f60ca97b3517cec3ad4c7f015dc56f3bcbf3da1770d1cd035487a0ed",
     "xlsx-core.js": "db453538704e8c294dabab7e00e3eeca2806bd5dda39f07a42460765db14b34a",
     "vendor/preparation-kernel.js": "d2e961e08f33d883e7d83cfacd8c91390f9594a1cb0599e2ffbb1a125d65337e",
     "preparation-core.js": "fbbf6559bb311b709defe8e0c4bc339ed121b37d25debb98d73113fe4f329dcf",
     "preparation-ui.js": "c16ee03313e85e81c50f6d09a2ee65b512aab8ea963b414b61ab7929a6a2ab7c",
-    "app.js": "c7db697ce2940dc51096902138b5001838ec9448701c8962137c404dcab94cdf"
+    "liquid-display.js": "fc8f992fb8719150b2bc54b397e07206cc2d1576a97929568c2f491376afa904",
+    "app.js": "792de96db4e8a409365c64d9ec15ca5faa1b6908f3048d65e0c308e00441bf68"
   },
-  "hostInsertion": "<link rel=\"stylesheet\" href=\"labnest-bridge.css?v=20261009\">\n<script src=\"calculator-engine.js?v=20261009\"></script>\n<script src=\"labnest-offline.js?v=20261009\"></script>\n<script src=\"labnest-bridge.js?v=20261009\"></script>"
+  "hostInsertion": "<link rel=\"stylesheet\" href=\"labnest-bridge.css?v=20261104\">\n<script src=\"calculator-engine.js?v=20261104\"></script>\n<script src=\"labnest-offline.js?v=20261104\"></script>\n<script src=\"labnest-bridge.js?v=20261104\"></script>"
 }

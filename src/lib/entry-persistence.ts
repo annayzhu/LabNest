@@ -9,6 +9,7 @@ import {
   type PreparedAttachmentFile,
 } from "@/lib/attachment-files";
 import { collectDocumentMedia, documentMediaAttachmentId } from "./document-media";
+import { isToolOutputFile } from "./tool-workflow";
 import { buildEntryContent } from "@/lib/entry-content";
 import { prisma } from "@/lib/db";
 import type { EntryMutationInput } from "@/lib/entry-mutations";
@@ -48,8 +49,9 @@ function jsonValue(value: unknown): Prisma.InputJsonValue {
 
 async function assertEntryOriginalLimits(tx: Prisma.TransactionClient, markdown: string, gallery: PersistedAttachment[]) {
  const ids = [...new Set([...collectDocumentMedia(markdown).flatMap(block=>{const id=documentMediaAttachmentId(block);return id?[id]:[];}),...gallery.map(a=>a.id)])];
- const originals = await tx.attachment.findMany({where:{id:{in:ids}},select:{size:true}});
- if (ids.length > MAX_ENTRY_FILES) throw new Error(`快速记录最多包含 ${MAX_ENTRY_FILES} 个原始附件。`);
+ // A tool's session and data files come with its block; the limits are for what a person attaches.
+ const originals = (await tx.attachment.findMany({where:{id:{in:ids}},select:{size:true,metadataJson:true}})).filter(file=>!isToolOutputFile(file));
+ if (originals.length > MAX_ENTRY_FILES) throw new Error(`快速记录最多包含 ${MAX_ENTRY_FILES} 个原始附件。`);
  if (originals.reduce((total,file)=>total+file.size,0) > MAX_ENTRY_TOTAL_BYTES) throw new Error("快速记录附件总量不能超过 100 MB。");
 }
 

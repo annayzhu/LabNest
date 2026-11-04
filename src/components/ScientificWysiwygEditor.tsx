@@ -1,10 +1,14 @@
 "use client";
 
+import { ToolOutput, ToolEditContext } from "./ToolOutput";
+import { toolInserts } from "./toolInserts";
+import { KeepLineAfterBlocks, focusBelow } from "@/lib/editor-block-line";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useI18n } from "@/components/I18nProvider";
 import { newClientMutationId } from "@/lib/client-mutation-id";
 import { DocumentMediaNode } from "./DocumentMediaNode";
 import { DocumentPlateNode } from "./DocumentPlateNode";
+import { DocumentToolNode } from "./DocumentToolNode";
 import { RecordReferenceNode } from "./RecordReference";
 import { chooseFiles, useDocumentMediaUploads } from "./DocumentMediaUploads";
 import { type Editor, type JSONContent } from "@tiptap/core";
@@ -33,7 +37,7 @@ import { scientificSectionAnchorId } from "@/lib/document-outline";
 import { scientificDocumentToTiptap, tiptapToScientificDocument } from "@/lib/scientific-tiptap";
 import { createDocumentBlockLineHeightExtension, createDocumentLegacyAttributesExtension, createDocumentSectionExtension, createDocumentWidgetExtension, createResizableDocumentTableExtension } from "@/lib/tiptap-document-extensions";
 
-type ScientificWidgetBlock = Extract<ScientificContentBlock, { type: "callout" | "metric" | "media" | "dataset" }>;
+type ScientificWidgetBlock = Extract<ScientificContentBlock, { type: "callout" | "metric" | "media" | "dataset" | "tool_output" }>;
 
 function uniqueBlockId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -59,6 +63,7 @@ function ScientificSectionNodeView({ node }: NodeViewProps) {
 
 function ScientificWidgetNodeView({ node, updateAttributes, selected }: NodeViewProps) {
   const block = node.attrs.block as ScientificWidgetBlock;
+  if (block.type === "tool_output") return <NodeViewWrapper contentEditable={false}><ToolOutput block={block} /></NodeViewWrapper>;
   const updateBlock = (next: ScientificWidgetBlock) => updateAttributes({ block: next });
   return <NodeViewWrapper className={cn("ln-protocol-widget ln-scientific-widget", selected && "is-selected")} data-widget-type={block.type}>
     <div className="document-print-only"><ScientificBlockView block={block} /></div>
@@ -119,6 +124,49 @@ function scientificInserts(profile: DocumentInsertProfile): WritingInsert[] {
 }
 
 /** An experiment record, result, research plan or report, written Notion-style: "/" to insert, ＋ and ⋮⋮ beside each block, a bubble over selected text. */
+const toolOutputIdsIn = (editor: Editor) => {
+  const ids = new Set<string>();
+  editor.state.doc.descendants((node) => { if (node.attrs.block?.type === "tool_output") ids.add(node.attrs.block.id); });
+  return ids;
+};
+
+/** Opens a tool where the cursor is: paragraphs split at that line, so what it saves lands right there. */
+function openToolAtCursor(editor: Editor, original: ScientificDocument, open: (anchorId: string | undefined, sectionKey: string) => void) {
+ const { $from } = editor.state.selection;
+    let depth = $from.depth;
+    while (depth > 0 && $from.node(depth).type.name !== "scientificSection") depth--;
+    if (!depth) return;
+    const sectionKey = $from.node(depth).attrs.sectionKey;
+    const childIndex = $from.index(depth);
+    // Split paragraph groups at the insertion line so the saved block stays here.
+    const transaction = editor.state.tr;
+    const selectedSection = $from.node(depth);
+    const selectedNode = selectedSection.child(childIndex);
+    const groupId = selectedNode.attrs.scientificBlockId;
+    const anchorGroupId = groupId || uniqueBlockId("text");
+    const followingGroupId = uniqueBlockId("text");
+    let groupStart = childIndex;
+    let groupEnd = childIndex;
+    const sameGroup = (index: number) => {
+      const node = selectedSection.child(index);
+      return "scientificBlockId" in node.attrs && node.attrs.scientificBlockId === groupId;
+    };
+    while (groupStart > 0 && sameGroup(groupStart - 1)) groupStart--;
+    while (groupEnd + 1 < selectedSection.childCount && sameGroup(groupEnd + 1)) groupEnd++;
+    selectedSection.forEach((node, offset, index) => {
+      if (index < groupStart || index > groupEnd || !("scientificBlockId" in node.attrs)) return;
+      const id = index <= childIndex ? anchorGroupId : followingGroupId;
+      if (node.attrs.scientificBlockId !== id) transaction.setNodeMarkup($from.start(depth) + offset, undefined, { ...node.attrs, scientificBlockId: id });
+    });
+    editor.view.dispatch(transaction);
+    const prefix = editor.getJSON();
+    const section = prefix.content?.find(node => node.attrs?.sectionKey === sectionKey);
+    if (section) section.content = section.content?.slice(0, childIndex + 1);
+    const anchorId = tiptapToScientificDocument(prefix, original).sections.find(section => section.key === sectionKey)?.blocks.at(-1)?.id;
+      open(anchorId, sectionKey);
+}
+
+
 export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSectionKeys = [], insertProfile = "scientific-full", checklist = true, onChange }: {
   document: ScientificDocument;
   /** Where the page header shows this document's actions. */
@@ -131,11 +179,13 @@ export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSection
   const [initialContent] = useState(() => scientificDocumentToTiptap(document, hiddenSectionKeys));
   const [mediaDraftId] = useState(newClientMutationId);
   const originalRef = useRef(document);
+  const lastEmittedDocument = useRef<ScientificDocument | null>(null);
   const hiddenSectionKeysRef = useRef(hiddenSectionKeys);
   const hiddenSectionSignature = hiddenSectionKeys.join("\u0000");
   const previousHiddenSectionSignatureRef = useRef(hiddenSectionSignature);
   const onChangeRef = useRef(onChange);
-  const [inserts] = useState(() => scientificInserts(insertProfile));
+  const openTool = useContext(ToolEditContext);
+  const inserts: WritingInsert[] = [...scientificInserts(insertProfile), ...(openTool ? toolInserts((editor, toolId) => openToolAtCursor(editor, originalRef.current, (anchorId, sectionKey) => openTool(undefined, anchorId, sectionKey, toolId))) : [])];
   useEffect(() => { originalRef.current = document; }, [document]);
   useEffect(() => { hiddenSectionKeysRef.current = hiddenSectionKeys; }, [hiddenSectionSignature, hiddenSectionKeys]);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
@@ -159,15 +209,26 @@ export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSection
       ScientificWidget,
       DocumentMediaNode,
       DocumentPlateNode,
+      DocumentToolNode,
       RecordReferenceNode,
       SlashCommandTrigger,
       BlockHandles,
+      KeepLineAfterBlocks,
     ],
     editorProps: {
       attributes: { class: "ln-protocol-tiptap ln-scientific-tiptap", spellcheck: "true", "aria-label": "Scientific document body" },
     },
-    onUpdate: ({ editor: nextEditor }) => onChangeRef.current(tiptapToScientificDocument(nextEditor.getJSON(), originalRef.current)),
+    onUpdate: ({ editor: nextEditor }) => {
+      const nextDocument = tiptapToScientificDocument(nextEditor.getJSON(), originalRef.current);
+      lastEmittedDocument.current = nextDocument;
+      onChangeRef.current(nextDocument);
+    },
   });
+  useEffect(() => {
+    // Local typing already lives in the editor; resetting it would move the caret.
+    if (document === lastEmittedDocument.current) return;
+    if (editor && JSON.stringify(tiptapToScientificDocument(editor.getJSON(),document)) !== JSON.stringify(document)) { let active=true; queueMicrotask(()=>{if(active&&!editor.isDestroyed){const known=toolOutputIdsIn(editor);editor.commands.setContent(scientificDocumentToTiptap(document,hiddenSectionKeysRef.current),{emitUpdate:false});focusBelow(editor,(node)=>node.attrs.block?.type==="tool_output"&&!known.has(node.attrs.block.id));}}); return ()=>{active=false;}; }
+  }, [document,editor]);
   useDocumentMediaUploads(editor, mediaDraftId);
   const commands = useCommandMenu(editor);
 

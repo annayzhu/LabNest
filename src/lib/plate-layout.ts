@@ -148,7 +148,7 @@ export function plateSampleIds(layout: PlateLayout) {
 
 // Stored as `<!--labnest-plate:…-->`. Everything but letters, digits and -_. is %-escaped, so no Markdown reader touches it.
 const tokenPattern = /^<!--labnest-plate:([A-Za-z0-9%._-]+)-->$/;
-const escapeToken = (value: string) => encodeURIComponent(value).replace(/[!'()*~]/g, (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`);
+export const escapeToken = (value: string) => encodeURIComponent(value).replace(/[!'()*~]/g, (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`);
 
 export function plateLayoutToMarkdown(layout: PlateLayout) {
   return `<!--labnest-plate:${escapeToken(JSON.stringify(layout))}-->`;
@@ -175,9 +175,42 @@ export function plateLayoutPlainText(layout: PlateLayout) {
   return [`板布局：${layout.name || `${layout.plateSize} 孔板`}（${layout.plateSize} 孔）`, ...values].join(" ");
 }
 
+/** Planner parameters too many for a plate block, by name; the planner's own file keeps them. */
+export function plannerFieldsLeftOut(backup: unknown): string[] {
+  if (!backup || typeof backup !== "object") return [];
+  const source = backup as { plates?: unknown; version?: unknown };
+  const plates: unknown[] = Array.isArray(source.plates) && Number(source.version) === 2 ? source.plates : [source];
+  const names = new Set<string>();
+  for (const plate of plates) {
+    const dimensions = (plate as { dimensions?: unknown } | null)?.dimensions;
+    if (!Array.isArray(dimensions) || dimensions.length <= MAX_PLATE_FIELDS) continue;
+    const wells = Object.values(((plate as { wells?: unknown }).wells ?? {}) as Record<string, { params?: Record<string, unknown> }>);
+    const used = (id: string) => wells.filter((well) => well?.params?.[id] !== undefined && well.params[id] !== "").length;
+    const named = dimensions.filter((item): item is { id: string; name: string } => typeof item?.id === "string" && typeof item?.name === "string");
+    for (const item of [...named].sort((a, b) => used(b.id) - used(a.id)).slice(MAX_PLATE_FIELDS)) if (used(item.id)) names.add(item.name);
+  }
+  return [...names];
+}
+
 /** Markdown with each plate line replaced by how the plate reads. */
 export function platesAsText(markdown: string) {
   return markdown.split("\n").map((line) => { const plate = plateLayoutFromMarkdown(line); return plate ? plateLayoutPlainText(plate) : line; }).join("\n");
+}
+
+/** A long name in a small well keeps both ends, where names usually differ; the title and well table carry it in full. */
+export function clipPlateLabel(value: string, units: number) {
+  const cost = (character: string) => character.charCodeAt(0) > 0x2e7f ? 2 : 1;
+  const characters = Array.from(value);
+  if (characters.reduce((total, character) => total + cost(character), 0) <= units) return value;
+  let head = "", tail = "", room = units - 1;
+  while (characters.length) {
+    const fromEnd = Array.from(tail).length < Array.from(head).length;
+    const next = fromEnd ? characters.at(-1)! : characters[0];
+    if (cost(next) > room) break;
+    room -= cost(next);
+    if (fromEnd) { tail = next + tail; characters.pop(); } else { head += next; characters.shift(); }
+  }
+  return `${head}…${tail}`;
 }
 
 /** Rows of a printable table: a header of column numbers, then each row's wells as the colouring parameter's value. */

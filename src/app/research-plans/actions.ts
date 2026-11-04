@@ -1,5 +1,6 @@
 "use server";
 
+import { finalizeToolDraft } from "@/lib/tool-draft.server";
 import { assertDocumentSaveVersion } from "@/lib/document-save-version";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -106,6 +107,7 @@ export async function createResearchPlan(
         },
       });
       await associateDocumentMedia(tx, contentJson, "research_plan", created.id);
+      await finalizeToolDraft(tx,optionalText(formData.get("toolDraftId")),"research_plan",created.id);
       await tx.activityLog.create({ data: { action: "create", targetType: "research_plan", targetId: created.id, metadataJson: { code, protocolIds } } });
       return created;
     });
@@ -114,7 +116,7 @@ export async function createResearchPlan(
     return { error: saveErrorMessage(error, "The Research Plan could not be created.") };
   }
   revalidatePath("/research-plans");
-  redirect(`/research-plans/${planId}`);
+  redirect(`/research-plans/${planId}${formData.get("toolDraftId")?`?toolSaved=${encodeURIComponent(String(formData.get("toolDraftId")))}`:""}`);
 }
 
 export async function updateResearchPlan(
@@ -144,6 +146,7 @@ export async function updateResearchPlan(
         },
       });
       await associateDocumentMedia(tx, contentJson, "research_plan", planId);
+      await finalizeToolDraft(tx,optionalText(formData.get("toolDraftId")),"research_plan",planId);
       await tx.researchPlanProtocol.deleteMany({ where: { researchPlanId: planId } });
       if (protocolIds.length) {
         await tx.researchPlanProtocol.createMany({ data: protocolIds.map((protocolId) => ({ researchPlanId: planId, protocolId, isPrimary: protocolId === primaryProtocolId })) });
@@ -155,7 +158,7 @@ export async function updateResearchPlan(
   }
   revalidatePath("/research-plans");
   revalidatePath(`/research-plans/${planId}`);
-  redirect(`/research-plans/${planId}`);
+  redirect(`/research-plans/${planId}${formData.get("toolDraftId")?`?toolSaved=${encodeURIComponent(String(formData.get("toolDraftId")))}`:""}`);
 }
 
 export async function updateResearchPlanKeyInformation(

@@ -1,3 +1,4 @@
+import { toolOutputFields } from "./tool-workflow";
 import { protocolRichTextNodeSchema, richTextPlainText } from "./protocol-document";
 import {decodeDocumentTableToken} from "./document-table-token";
 import { stripParagraphLayoutMarkup } from "./document-paragraph-layout";
@@ -9,7 +10,7 @@ import { stripLabNestLineHeightMarkup } from "./rich-text-line-height";
 import { richTextFontSizeSchema } from "./rich-text-font-size-schema";
 import { RICH_TEXT_COLORS } from "./rich-text-color";
 import { tiptapCellRichContentSchema } from "./tiptap-json-schema";
-import { plateLayoutsInText, plateSampleIds, platesAsText } from "./plate-layout";
+import { plateLayoutPlainText, plateLayoutsInText, plateSampleIds, platesAsText } from "./plate-layout";
 import { recordReferencesInText, stripRecordReferenceLinks } from "./record-references";
 
 /**
@@ -25,6 +26,7 @@ const baseBlockSchema = z.object({ id: z.string().min(1), execution: z.object({
 }).optional() });
 
 export const scientificContentBlockSchema = z.discriminatedUnion("type", [
+  baseBlockSchema.extend(toolOutputFields),
   baseBlockSchema.extend({ type: z.literal("heading"), text: z.string() }),
   baseBlockSchema.extend({ type: z.literal("text"), text: z.string() }),
   baseBlockSchema.extend({ type: z.literal("rich_text"), nodes: z.array(protocolRichTextNodeSchema) }),
@@ -254,7 +256,7 @@ export function normalizeScientificDocument(
   const sections = new Map(parsed.data.sections.map((section) => [section.key, section]));
   return {
     schemaVersion: 1,
-    sections: definitions.map(({ key, title, aliases }) => {
+    sections: [...definitions.map(({ key, title, aliases }) => {
       const existing = sections.get(key) ?? aliases?.map((alias) => sections.get(alias)).find(Boolean);
       return existing
         ? {
@@ -264,7 +266,7 @@ export function normalizeScientificDocument(
             blocks: existing.blocks.flatMap((block) => block.type === "text" ? scientificBlocksFromText(block.text, block.id) : [block]),
           }
         : { key, title, blocks: [] };
-    }),
+    }), ...parsed.data.sections.filter(section => !definitions.some(definition => definition.key === section.key || definition.aliases?.includes(section.key)))],
   };
 }
 
@@ -308,13 +310,14 @@ export function documentPlainText(document: ScientificDocument) {
     if (block.type === "table") return block.rows.flat().map(stripRecordReferenceLinks);
     if (block.type === "metric") return [`${block.label}: ${block.value} ${block.unit ?? ""}`.trim()];
     if (block.type === "media") return [block.caption || block.filename || block.url];
+    if (block.type === "tool_output") return [block.label, ...(block.plates ?? []).map(plateLayoutPlainText)];
     return [block.label];
   })).filter(Boolean).join("\n");
 }
 
-/** The plate layouts written in a document ("/板布局"), in reading order. */
+/** The plate layouts in a document, written there ("/板布局") or saved by a planner, in reading order. */
 export function documentPlateLayouts(document: ScientificDocument) {
-  return document.sections.flatMap((section) => section.blocks.flatMap((block) => block.type === "text" ? plateLayoutsInText(block.text) : []));
+  return document.sections.flatMap((section) => section.blocks.flatMap((block) => block.type === "text" ? plateLayoutsInText(block.text) : block.type === "tool_output" ? block.plates ?? [] : []));
 }
 
 /** Every sample a document names: by tag in its text or tables, or in a plate layout's wells. */

@@ -1,4 +1,5 @@
 "use client";
+import { useCalculatorRecordBridge } from "./useCalculatorRecordBridge";
 import {workspaceLayout, hasPipettingSettings, fieldWidth, orderedFields} from "@/lib/calculators/workspace-presentation";
 import "./workspace.css";
 import {CalculatorField} from "./CalculatorField";
@@ -45,7 +46,7 @@ const toolSwitches=[
   {name:'Reaction modes',title:'Reaction type',titleZh:'反应类型',tools:[['master-mix','PCR / Master Mix','PCR / Master Mix'],['transfection','Transfection','转染']]},
 ];
 
-export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateContext, embedded = false, embeddedLocale }: { calculatorId: string; initialInputs?: Record<string, string | number>; plateContext?: PlateContext; embedded?: boolean; embeddedLocale?: "zh" | "en" }) {
+export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateContext, embedded = false, embeddedLocale, recordSession = false }: { recordSession?: boolean; calculatorId: string; initialInputs?: Record<string, string | number>; plateContext?: PlateContext; embedded?: boolean; embeddedLocale?: "zh" | "en" }) {
   const contextQuery=new URLSearchParams(Object.fromEntries(["experimentId","experimentStepId"].filter(key=>initialInputs[key]).map(key=>[key,String(initialInputs[key])]))).toString();
   const definition = useMemo(() => getCalculatorDefinition(calculatorId), [calculatorId]);
   const { locale: appLocale } = useI18n();
@@ -57,6 +58,8 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
     const supplied=Object.keys(initialInputs).some(key=>['stockConcentration','fold'].includes(key))&&!initialInputs.mode?restoreLegacyInputs(calculatorId,initialInputs).inputs:initialInputs;
     for(const field of definition.fields){if(supplied[field.key]!==undefined)defaults[field.key]=supplied[field.key];if(supplied[`${field.key}Unit`]!==undefined)defaults[`${field.key}Unit`]=supplied[`${field.key}Unit`];}
     if(plateContext){if(definition.fields.some(field=>field.key==='wells'))defaults.wells=String(plateContext.wellIds.length);if(calculatorId==='master-mix'){defaults.samples=String(plateContext.wellIds.length);defaults.replicates='1';defaults.controls='0';}}
+    // An empty component table says nothing about what to fill in; these are the usual parts of a mix, with no volumes yet.
+    if(calculatorId==='master-mix'&&!plateContext&&supplied.rows===undefined&&supplied.components===undefined&&(supplied as Record<string,unknown>).groups===undefined){defaults.rows=[['2× Mix',true],['F',true],['R',true],['Template',false],['Water',true]].map(([name,premix])=>({name,volume:'',premix}));}
     if(calculatorId==='transfection'&&!('dnaUgPerWell' in supplied)){const plan=newTransfectionPlan();if(plateContext)plan.groups[0].wells=String(plateContext.wellIds.length);defaults.transfectionPlan=supplied.transfectionPlan??plan;}
     if(calculatorId==='cfu'&&supplied.dnaUg===undefined)defaults.dnaUg=0;
     return defaults;
@@ -129,6 +132,8 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
     window.parent.postMessage({type:'labnest:calculator-ready',calculatorId,plateContext},window.location.origin);
     return()=>window.removeEventListener('message',receive);
   },[calculatorId,defaults,plateContext,initialized]);
+
+  useCalculatorRecordBridge({active:recordSession,calculatorId,inputs,zh,onRestore:saved=>{setInputs({...defaults,...saved});setResult(null);setError('');setHistorical(false);setExample(false);setSourceRecord(undefined);}});
 
   const transfectionEditor=useRef<TransfectionEditorHandle>(null);
   function runCalculation(event?: FormEvent) {

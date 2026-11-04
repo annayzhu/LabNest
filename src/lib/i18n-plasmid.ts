@@ -1,6 +1,8 @@
 // 质粒工作台: labels, import results and the parser messages people see.
 export const plasmidZh: Record<string, string> = {
   // Page and panels
+  "Use a saved plasmid": "使用库存中的质粒",
+  "Choose a plasmid": "选择质粒",
   "Plasmid workbench": "质粒工作台",
   "Plasmid Workbench": "质粒工作台",
   "Molecular": "分子工具",

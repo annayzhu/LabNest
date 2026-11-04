@@ -1,5 +1,7 @@
 "use client";
 
+import { ToolRecordIntegration } from "./ToolRecordIntegration";
+import type { ToolOwner } from "@/lib/tool-workflow";
 import { useId, useMemo, useState, type ReactNode } from "react";
 import { StandaloneDocumentEditorViewport } from "@/components/DocumentEditorViewport";
 import { DocumentPageHeader, type DocumentPageHeaderFact } from "@/components/DocumentPageHeader";
@@ -32,8 +34,10 @@ export function ScientificDocumentEditor({
   insertProfile,
   checklist,
   sectionAddons,
+  toolOwner,
 }: {
   initialDocument: ScientificDocument;
+  toolOwner?: ToolOwner;
   name?: string;
   compact?: boolean;
   documentType?: string;
@@ -56,7 +60,7 @@ export function ScientificDocumentEditor({
   const outline = useMemo(() => scientificDocumentOutline(document, hiddenSectionKeys), [document, hiddenSectionKeys]);
   const actionsHostId = `${useId()}-scientific-document-actions`;
 
-  return <>
+  const content = <>
     <input type="hidden" name={name} value={serialized} />
     <StandaloneDocumentEditorViewport
         label={title?.trim() || "Structured scientific document editor"}
@@ -86,4 +90,5 @@ export function ScientificDocumentEditor({
         {trailingContent}
     </StandaloneDocumentEditorViewport>
   </>;
+  return toolOwner ? <ToolRecordIntegration owner={toolOwner} title={title} document={document} onChange={setDocument}>{content}</ToolRecordIntegration> : content;
 }

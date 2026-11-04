@@ -10,7 +10,7 @@
   /** The volume written in a result table cell, such as "1,045 µL". Thousands marks are part of the number. */
   function volumeFromCell(value) {
     const text = String(value ?? "").replace(/(\d),(?=\d{3}(?:\D|$))/g, "$1");
-    const match = text.match(/(-?\d+(?:\.\d+)?(?:e[+-]?\d+)?)\s*(nL|uL|µL|mL|L)\b/i);
+    const match = text.match(/(-?\d+(?:\.\d+)?(?:e[+-]?\d+)?)\s*(nL|uL|µL|μL|mL|L)\b/i);
     if (!match) return null;
     const unit = match[2] === "ul" || match[2] === "UL" ? "uL" : match[2];
     return { value: Number(match[1]), unit };

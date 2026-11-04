@@ -11,6 +11,7 @@ import { parseRichTextLineHeightLine, richTextLineHeightPrefix } from "@/lib/ric
 import { persistedTableFromTiptap, tiptapTableRows } from "@/lib/tiptap-table-serialization";
 import { parseRecordReferenceLink, RECORD_REFERENCE_LINK_SOURCE, recordReferenceMarkdown, type RecordReferenceKind } from "@/lib/record-references";
 import { plateLayoutFromMarkdown, plateLayoutSchema, plateLayoutToMarkdown } from "@/lib/plate-layout";
+import { toolOutputFromMarkdown, toolOutputSchema, toolOutputToMarkdown } from "@/lib/tool-workflow";
 
 type TiptapMark = NonNullable<JSONContent["marks"]>[number];
 
@@ -97,6 +98,8 @@ function markdownToTiptap(value: string, blockId: string): JSONContent[] {
     if (media) { nodes.push({ type: "documentMedia", attrs: { block: media } }); index += 1; continue; }
     const plate = plateLayoutFromMarkdown(lines[index]);
     if (plate) { nodes.push({ type: "documentPlate", attrs: { block: plate } }); index += 1; continue; }
+    const tool = toolOutputFromMarkdown(lines[index]);
+    if (tool) { nodes.push({ type: "documentTool", attrs: { block: tool } }); index += 1; continue; }
     const layout = parseParagraphLayoutLine(lines[index]);
     const parsedLine = parseRichTextLineHeightLine(layout.content);
     const parsedFontFamily = parseRichTextFontFamilyLine(parsedLine.content);
@@ -231,6 +234,11 @@ function tiptapNodesToMarkdown(nodes: JSONContent[]): string {
     if (node.type === "documentPlate") {
       const plate = plateLayoutSchema.safeParse(node.attrs?.block);
       if (plate.success) lines.push(plateLayoutToMarkdown(plate.data));
+      continue;
+    }
+    if (node.type === "documentTool") {
+      const tool = toolOutputSchema.safeParse(node.attrs?.block);
+      if (tool.success) lines.push(toolOutputToMarkdown(tool.data));
       continue;
     }
     if (node.type === "bulletList" || node.type === "orderedList" || node.type === "taskList") {

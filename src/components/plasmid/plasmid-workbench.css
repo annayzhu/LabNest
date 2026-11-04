@@ -127,6 +127,8 @@
 .ln-pw-field { color: var(--muted); display: grid; font-size: 12px; gap: 0.25rem; }
 .ln-pw-input { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); color: var(--ink); font-size: 13px; min-height: 2rem; padding: 0.25rem 0.5rem; width: 100%; }
 .ln-pw-error { color: var(--error); font-size: 12px; margin: 0; }
+.ln-pw-pick-saved { align-items: center; display: flex; flex-wrap: wrap; font-size: 13px; gap: 8px; margin-bottom: 12px; }
+.ln-pw-pick-saved select { flex: 1 1 16rem; max-width: 32rem; min-width: 0; }
 .ln-pw-ok { color: var(--success); font-size: 12px; margin: 0; }
 .ln-pw-rail li > button:disabled { opacity: 0.6; }
 

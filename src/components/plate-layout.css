@@ -85,3 +85,10 @@ button.ln-plate-layout-axis:hover { background: var(--warm); color: var(--ink); 
   .ln-document-plate-bar { display: none; }
   .ln-plate-layout-well[data-plate-tone] { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+.ln-plate-layout-well[data-lines] { flex-direction: column; gap: 1px; aspect-ratio: 5 / 4; padding: 0; border-radius: var(--ln-radius-control-sm, 4px); font-family: var(--font-sans); font-size: clamp(7.5px, 1.5cqi, 13px); line-height: 1.15; font-weight: 400; letter-spacing: -0.02em; white-space: nowrap; }
+.ln-plate-layout-well[data-lines] > span:first-child { color: var(--ink); font-weight: 500; }
+.ln-plate-layout-well[data-lines] > span + span { color: var(--graphite); }
+.tool-output .ln-plate-layout-grid, .tool-image-preview .ln-plate-layout-grid { gap: 2px; max-width: none; container-type: inline-size; }
+.tool-output .ln-plate-layout { margin: 8px -8px 12px; break-inside: avoid; }
+.tool-output .ln-plate-layout-well, .tool-image-preview .ln-plate-layout-well { aspect-ratio: 5 / 4; border-radius: var(--ln-radius-control-sm, 4px); }
+.tool-output .ln-plate-layout[data-size="384"] .ln-plate-layout-well { aspect-ratio: 1; border-radius: 2px; }

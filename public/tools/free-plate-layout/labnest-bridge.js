@@ -9,11 +9,34 @@
     'kill-curve': ['杀灭曲线', 'Kill curve'],
     moi: ['病毒感染 MOI', 'Viral MOI'],
   };
+  // Master Mix opens filled in, with the same example components and overage as the release's reaction module.
+  const startingInputs = {
+    'master-mix': { overagePercent: '10', reactionVolumeUl: '20', rows: [{ name: '2× Mix', volume: '10', premix: true }, { name: 'Forward primer', volume: '0.5', premix: true }, { name: 'Reverse primer', volume: '0.5', premix: true }, { name: 'Template', volume: '2', premix: false }] },
+  };
+  // The drawer already names the calculation and the wells, so the embedded page drops its own title.
+  const embeddedCalculatorCss = `
+    :root { --color-moss: #3f625d; --color-moss-hover: #34534f; }
+    main { min-height: 100vh !important; padding: 10px 12px !important; background: #ffffff !important; }
+    .calculator-heading > :not(.calculator-heading-actions) { display: none !important; }
+    .calculator-heading { justify-content: flex-end; min-height: 0; margin: 0; padding: 0; }
+    .calculator-workbench > p.text-xs.text-muted, .calculator-workbench > div.border-info\\/20 { display: none !important; }
+  `;
   const text = (zh, en) => host.context().locale === 'en' ? en : zh;
   const isEmbedded = /^https?:$/.test(location.protocol) && location.pathname.startsWith('/tools/free-plate-layout/');
+  const tabFor = calculatorId => calculatorId === 'master-mix' ? { module: 'reaction' } : { calculatorId };
+
+  function dressFrame(frame) {
+    frame.addEventListener('load', () => {
+      const page = frame.contentDocument;
+      if (!page?.head) return;
+      const style = page.createElement('style');
+      style.textContent = embeddedCalculatorCss;
+      page.head.append(style);
+    });
+  }
 
   function open(calculatorId, plan) {
-    if (!isEmbedded) return window.LabNestOffline.open({host, calculatorId, plan, publish: (saved, context) => host.publish(saved, mappings(saved.resultSnapshot, context))});
+    if (!isEmbedded) return window.LabNestOffline.open({host: {...host, open: node => host.open(node, tabFor(calculatorId))}, calculatorId, plan, publish: (saved, context) => host.publish(saved, mappings(saved.resultSnapshot, context))});
     if (!plan && session?.calculatorId === calculatorId && session.frame.isConnected) return;
     const { locale, ...context } = host.context();
     if (plan) context.wellIds = [...plan.scopeWellIds];
@@ -23,8 +46,9 @@
     frame.className = 'plate-calculator-frame';
     frame.title = text('主 Calculator 配液编辑器', 'Main Calculator preparation editor');
     frame.src = `/tools/calculator/${calculatorId}?${query}`;
-    host.open(frame);
-    session = { frame, context, calculatorId, input: plan?.input, snapshot: host.snapshot() };
+    dressFrame(frame);
+    host.open(frame, tabFor(calculatorId));
+    session = { frame, context, calculatorId, input: plan?.input ?? startingInputs[calculatorId], snapshot: host.snapshot() };
   }
 
   function mappings(result, context) {
@@ -42,6 +66,41 @@
     return (fields[result.calculatorId] || []).filter(row => Number.isFinite(Number(row[3]))).map(([zh, en, unit, value]) => ({ name: text(zh, en), unit, values: context.wellIds.map(() => Number(value)) }));
   }
 
+  /* Record protocol: the same labnest-tool-v1 messages the qPCR tools send. */
+  function connectRecord() {
+    if (window.parent === window) return;
+    const protocol = 'labnest-tool-v1';
+    let sessionId = '';
+    let draftTimer = 0;
+    const send = message => window.parent.postMessage({ protocol, sessionId, ...message }, location.origin);
+    const fail = (error, fallback) => send({ type: 'SAVE_ERROR', error: error instanceof Error && error.message ? error.message : fallback });
+    host.onStateChange(() => {
+      if (!sessionId) return;
+      clearTimeout(draftTimer);
+      draftTimer = setTimeout(() => send({ type: 'DRAFT_CHANGED', state: host.state() }), 250);
+    });
+    window.addEventListener('message', event => {
+      if (event.origin !== location.origin || event.source !== window.parent || event.data?.protocol !== protocol) return;
+      const { type } = event.data;
+      if (type === 'CONTEXT_INIT') {
+        sessionId = event.data.sessionId;
+        document.documentElement.dataset.labnestEmbedded = 'true';
+        try {
+          host.enterRecord(event.data);
+          send({ type: 'CONTEXT_READY' });
+        } catch (error) { fail(error, '方案读取失败'); }
+        return;
+      }
+      if (!sessionId || event.data.sessionId !== sessionId) return;
+      if (type === 'REQUEST_DRAFT') send({ type: 'DRAFT_FLUSH', state: host.state() });
+      if (type === 'REQUEST_OUTPUT') {
+        clearTimeout(draftTimer);
+        try { send({ type: 'OUTPUT_SUBMIT', state: host.state(), output: host.output() }); } catch (error) { fail(error, '请检查当前输入'); }
+      }
+    });
+    send({ type: 'TOOL_READY' });
+  }
+
   window.LabNestPlateBridge = {
     reset() { session = null; window.LabNestOffline.reset(); },
     edit(plan) { open(plan.calculatorId, plan); },
@@ -51,31 +110,27 @@
         calculators['fold-dilution'] = ['倍数稀释', 'Fold dilution'];
         window.LabNestOffline.installCacheControl();
       }
-      const grid = document.querySelector('.liquid-module-grid');
-      // A single Master Mix entry opens the full host editor. Offline keeps its own editor.
-      const reaction = grid.querySelector('[data-liquid-module="reaction"]');
-      reaction.removeAttribute('data-liquid-module');
-      reaction.dataset.plateCalculator = 'master-mix';
-      reaction.classList.add('plate-calculator-launch');
-      for (const [id, labels] of Object.entries(calculators).filter(([id]) => id !== 'master-mix')) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'liquid-module-card plate-calculator-launch';
-        button.dataset.plateCalculator = id;
-        button.textContent = text(...labels);
-        grid.append(button);
+      // The release lists these calculations but only this adapter can run them.
+      const gradientGroup = document.querySelector('[data-liquid-module="drug"]').parentElement;
+      for (const [id, [zh, en]] of Object.entries(calculators).filter(([id]) => id !== 'master-mix')) {
+        let button = document.querySelector(`[data-plate-calculator="${id}"]`);
+        if (!button) {
+          button = document.createElement('button');
+          button.type = 'button';
+          button.dataset.plateCalculator = id;
+          Object.assign(button.dataset, { zh, en });
+          button.textContent = text(zh, en);
+          gradientGroup.append(button);
+        }
+        button.hidden = false;
       }
       document.addEventListener('click', event => {
-        const button = event.target.closest('[data-plate-calculator], [data-liquid-module="reaction"]');
+        const button = event.target.closest('[data-plate-calculator], #liquidModuleTabs [data-liquid-module="reaction"]');
         if (!button) return;
-        // The original reaction button has the release's listener; intercept before it runs.
+        // The reaction tab has the release's listener; intercept before it runs.
         event.stopImmediatePropagation();
         open(button.dataset.plateCalculator || 'master-mix');
       }, true);
-      document.addEventListener('click', event => {
-        if (!event.target.closest('.language-option')) return;
-        for (const button of grid.querySelectorAll('.liquid-module-card[data-plate-calculator]')) button.textContent = text(...calculators[button.dataset.plateCalculator]);
-      });
       window.addEventListener('message', event => {
         const current = session;
         if (!current || event.origin !== location.origin || event.source !== current.frame.contentWindow || event.data?.calculatorId !== current.calculatorId || JSON.stringify(event.data?.plateContext) !== JSON.stringify(current.context)) return;
@@ -93,6 +148,7 @@
           session = null;
         } catch (error) { host.notify(error.message); }
       });
+      setTimeout(connectRecord);
     },
   };
 })();

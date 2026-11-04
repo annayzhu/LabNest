@@ -103,7 +103,7 @@
     installCacheControl() {
       const button=document.createElement('button');button.id='cacheStandalone';button.textContent='缓存离线使用 / Cache for offline';
       const status=document.createElement('span');status.id='cacheStandaloneStatus';
-      document.querySelector('.liquid-module-grid').after(button,status);
+      status.className='tool-menu-field';button.type='button';document.getElementById('exportXlsxButton').parentElement.append(button,status);
       button.addEventListener('click',async()=>{
         try {
           status.textContent='Caching / 正在缓存';

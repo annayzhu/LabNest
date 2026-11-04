@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Editor, JSONContent } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -18,6 +18,10 @@ import { BlockHandles } from "@/lib/editor-block-handle";
 import { HeadingShortcuts, savedBlocksOnly, writingPlaceholder } from "@/lib/editor-writing";
 import { DocumentMediaNode } from "./DocumentMediaNode";
 import { DocumentPlateNode } from "./DocumentPlateNode";
+import { DocumentToolNode } from "./DocumentToolNode";
+import { ToolEditContext } from "./ToolOutput";
+import { toolInserts } from "./toolInserts";
+import { KeepLineAfterBlocks } from "@/lib/editor-block-line";
 import { RecordReferenceNode } from "./RecordReference";
 import { chooseFiles, useDocumentMediaUploads } from "./DocumentMediaUploads";
 import { useCommandMenu } from "./EditorCommandMenu";
@@ -67,9 +71,11 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
       Typography.configure({ oneHalf: false, oneQuarter: false, threeQuarters: false }),
       SlashCommandTrigger,
       BlockHandles,
+      KeepLineAfterBlocks,
       ...(media ? [DocumentMediaNode] : []),
       // Always known, so text holding a tag or a plate never loses it, whatever "/" offers here.
       DocumentPlateNode,
+      DocumentToolNode,
       RecordReferenceNode,
     ],
     editorProps: { attributes: { class: cn("ln-protocol-tiptap ln-compact-rich-tiptap", minHeightClass), spellcheck: "true" } },
@@ -77,6 +83,8 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
   });
   useDocumentMediaUploads(media ? editor : null, mediaDraftId);
   const commands = useCommandMenu(editor);
+  const openTool = useContext(ToolEditContext);
+  const inserts = useMemo(() => openTool ? toolInserts((_, toolId) => openTool(undefined, undefined, undefined, toolId)) : [], [openTool]);
   useEffect(() => { if (editor && registerEditor) return registerEditor(editor); }, [editor, registerEditor]);
   useEffect(() => {
     if (!editor || isLocalEcho || editor.isFocused || JSON.stringify(editor.getJSON()) === contentHash || lastEmitted.current === contentHash) return;
@@ -90,7 +98,7 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
   if (!editor) return <div className="ln-wysiwyg-loading">Loading editor…</div>;
   return <div className={cn("ln-compact-rich-editor", className)}>
     <EditorSurface editor={editor} handles={page} openCommands={commands.openSearch} insertImage={media ? () => chooseFiles(editor, mediaDraftId, "image/*") : undefined}><EditorContent editor={editor} /></EditorSurface>
-    {commands.menu ? <WritingCommandMenu editor={editor} state={commands.menu} draftId={mediaDraftId} keyRef={commands.keyRef} onClose={commands.close} media={media} references={references} /> : null}
+    {commands.menu ? <WritingCommandMenu editor={editor} state={commands.menu} draftId={mediaDraftId} keyRef={commands.keyRef} onClose={commands.close} media={media} references={references} inserts={inserts} /> : null}
     {actionsHostId ? <DocumentAttachmentsButton editor={editor} hostId={actionsHostId} /> : null}
   </div>;
 }

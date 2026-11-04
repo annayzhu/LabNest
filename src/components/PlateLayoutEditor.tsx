@@ -25,7 +25,8 @@ const union = (a: Iterable<string>, b: Iterable<string>) => new Set([...a, ...b]
  * from the sample library too; fill a list in turn; rename and colour parameters; move layouts to and from the planner.
  * Nothing reaches the document until Done; Cancel leaves it as it was.
  */
-export function PlateLayoutEditor({ initial, experimentId, onDone, onCancel }: {
+export function PlateLayoutEditor({ initial, experimentId, onDone, onCancel, onOpenPlanner }: {
+  /** Offered inside a record the planner can save back to. */ onOpenPlanner?: (layout: PlateLayout) => void;
   initial: PlateLayout; experimentId?: string; onDone: (layout: PlateLayout, more: PlateLayout[]) => void; onCancel: () => void;
 }) {
   const { t, locale } = useI18n();
@@ -231,6 +232,7 @@ export function PlateLayoutEditor({ initial, experimentId, onDone, onCancel }: {
         </select>
         <button type="button" className="ln-plate-button focus-ring" disabled={!history.past.length} onClick={undo} aria-label="Undo"><Undo2 aria-hidden /></button>
         <button type="button" className="ln-plate-button focus-ring" onClick={() => void cancel()}>Cancel</button>
+        {onOpenPlanner ? <button type="button" className="ln-plate-button focus-ring" onClick={() => { const final = withDrafts(layout); onOpenPlanner({ ...final, name: final.name.trim() }); }}>{t("Open the plate planner")}</button> : null}
         <button type="button" className="ln-plate-button is-primary focus-ring" onClick={() => { const final = withDrafts(layout); onDone({ ...final, name: final.name.trim() }, more); }}>Done</button>
       </header>
       <div className="ln-plate-editor-body">
@@ -297,7 +299,7 @@ export function PlateLayoutEditor({ initial, experimentId, onDone, onCancel }: {
           <details>
             <summary>Plate planner</summary>
             <div>
-              <p className="ln-plate-editor-hint">Liquid calculations and multi-plate summaries stay in the plate planner. Bring its project backup in here, or take this plate there.</p>
+              <p className="ln-plate-editor-hint">Backup files for offline use of the plate planner.</p>
               <input ref={fileInput} type="file" accept=".json,application/json" hidden onChange={(event) => { void importBackup(event.target.files?.[0]); event.target.value = ""; }} />
               <div className="ln-plate-editor-row">
                 <button type="button" className="ln-plate-button focus-ring" onClick={() => fileInput.current?.click()}><Upload aria-hidden />Import a backup…</button>

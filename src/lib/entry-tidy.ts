@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { jsonObject } from './copilot/structured';
 import { documentMediaFromMarkdown } from './document-media';
 import { plateLayoutFromMarkdown } from './plate-layout';
+import { toolOutputFromMarkdown } from './tool-workflow';
 import { scientificTableFromMarkdown } from './scientific-document';
 
 /**
@@ -53,7 +54,7 @@ export function tidyMarkdown(tidy: EntryTidy) {
 }
 
 /** The lines a tidy leaves alone: pictures, tables and plate layouts written into the record. */
-export const keptLines = (markdown: string) => markdown.split('\n').filter(line => documentMediaFromMarkdown(line) || scientificTableFromMarkdown(line) || plateLayoutFromMarkdown(line));
+export const keptLines = (markdown: string) => markdown.split('\n').filter(line => documentMediaFromMarkdown(line) || scientificTableFromMarkdown(line) || plateLayoutFromMarkdown(line) || toolOutputFromMarkdown(line));
 
 /**
  * Numbers and record codes in the draft that the original words do not have (Q339: nothing added). Numbers count by

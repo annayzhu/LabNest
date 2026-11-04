@@ -19,6 +19,7 @@ import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { ExperimentResultRecordingCard } from "@/components/ExperimentResultRecording";
 import { ExperimentSamples } from "@/components/ExperimentSamples";
 import { sampleLocationOptions, sampleTypes } from "@/lib/samples.server";
+import { isToolOutputFile } from "@/lib/tool-workflow";
 import { documentPlateLayouts, documentSampleIds, experimentSections, normalizeScientificDocument } from "@/lib/scientific-document";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { PageActionsMenu } from "@/components/PageActionsMenu";
@@ -42,7 +43,7 @@ const secondaryButton = buttonStyles({ size: "md", className: "bg-surface font-m
 
 export default async function ExperimentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [experiment, attachmentLinks] = await Promise.all([
+  const [experiment, allAttachmentLinks] = await Promise.all([
     prisma.experiment.findUnique({ where: { id }, include: {
       project: true, researchPlan: true, primaryProtocolVersion: { include: { protocol: true } },
       protocolVersions: { orderBy: { order: "asc" }, include: { protocolVersion: { include: { protocol: true } } } },
@@ -54,6 +55,7 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
     } }),
     prisma.attachmentLink.findMany({ where: { targetType: "experiment", targetId: id }, include: { attachment: true }, orderBy: { createdAt: "desc" } }),
   ]);
+  const attachmentLinks = allAttachmentLinks.filter((link) => !isToolOutputFile(link.attachment));
   if (!experiment) notFound();
   // What the record itself names: its plate layouts, and samples tagged or plated there but not yet among the experiment's samples (Q254, Q257).
   const record = normalizeScientificDocument(experiment.contentJson, experimentSections);

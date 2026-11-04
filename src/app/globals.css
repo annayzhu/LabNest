@@ -5347,3 +5347,21 @@ input[type="file"]::file-selector-button:hover {
   color: var(--ink);
 }
 
+
+/* qPCR outputs share the scientific record's typography and controls. */
+.tool-record-workspace{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;background:var(--color-surface);color:var(--color-ink)}
+.tool-record-workspace[open]{display:flex;flex-direction:column}
+.tool-record-workspace>header{flex:none;display:flex;align-items:center;gap:12px;min-height:52px;padding:6px 16px;border-bottom:1px solid var(--color-hairline);font-size:14px}
+.tool-record-workspace>iframe{flex:1;min-height:0;width:100%;border:0}
+.tool-save-error{padding:8px 16px;color:var(--color-error);display:flex;align-items:center;gap:12px}
+.tool-output{margin:16px 0;padding:12px 16px;border:1px solid var(--color-hairline);border-radius:var(--ln-radius-panel-inner);background:var(--color-surface);font-family:var(--font-sans);font-size:13px}
+.tool-output>header{margin-bottom:8px}.tool-output header h3{margin:0;font-family:var(--font-sans);font-size:14px;font-weight:600}.tool-output figure{margin:12px 0;break-inside:avoid}
+.tool-output img{display:block;width:auto;max-width:100%;height:auto;max-height:none;margin-inline:auto}.tool-output figcaption,.tool-method{font-size:12px;line-height:1.5;margin:4px 0 8px;color:var(--color-graphite)}
+.tool-output figcaption{text-align:center}
+.tool-method{margin-top:8px}
+.tool-output h4{margin:12px 0 4px;font-family:var(--font-sans);font-size:13px;font-weight:600}
+.tool-table-scroll{overflow-x:auto}.tool-output table{width:100%;border-collapse:collapse}.tool-output table th,.tool-output table td{padding:5px 8px;font-family:var(--font-sans);font-size:12px;line-height:1.4;text-align:left;border-bottom:1px solid var(--color-hairline);word-break:normal;overflow-wrap:break-word;font-variant-numeric:tabular-nums}.tool-output table td:first-child{white-space:nowrap}.tool-output table th{font-weight:500;color:var(--color-graphite)}.tool-output details{margin-top:8px;font-size:12px}.tool-output details>summary{cursor:pointer;color:var(--color-graphite)}.tool-output details a{display:block;margin-top:4px;color:var(--color-moss);text-decoration:underline}
+@media print{.tool-record-workspace{display:none!important}.tool-output{padding:0!important;border:0!important}.tool-output,.tool-table-scroll{overflow:visible!important;break-inside:auto!important}.tool-output figure{break-inside:avoid;page-break-inside:avoid}.tool-output img{width:auto;max-width:100%;max-height:none!important}.tool-output thead{display:table-header-group}.tool-output tr{break-inside:avoid}.tool-output figcaption,.tool-method,.tool-output table{font-size:9pt}.tool-output details{display:none}}
+
+.tool-expand-image{margin-left:12px;color:var(--color-moss);text-decoration:underline;cursor:pointer}.tool-image-preview{width:96vw;max-width:1100px;max-height:92dvh;padding:16px;border:1px solid var(--color-hairline);border-radius:var(--ln-radius-panel-inner);background:var(--color-surface)}.tool-image-preview>header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:12px}.tool-image-preview>div{overflow:auto}.tool-image-preview img{width:900px;min-width:640px;max-width:none;height:auto}.tool-image-preview .ln-plate-layout{min-width:640px}@media print{.tool-image-preview,.tool-expand-image{display:none!important}}
+.tool-output div>.tool-expand-image{display:block;margin:0 0 8px;font-size:12px}

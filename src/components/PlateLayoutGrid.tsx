@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useI18n } from "@/components/I18nProvider";
-import { plateLegend, plateRowLabel, plateShape, plateValueKey, plateValueText, plateWellId, type PlateLayout } from "@/lib/plate-layout";
+import { clipPlateLabel, plateLegend, plateRowLabel, plateShape, plateValueKey, plateValueText, plateWellId, type PlateLayout } from "@/lib/plate-layout";
 import "./plate-layout.css";
 
 /** Interaction the editor adds to the grid; without it the grid is a picture of the plate. */
@@ -18,7 +18,7 @@ export type PlateGridHandlers = {
  * A plate drawn as its wells, coloured by one parameter, with a legend of each value and how many wells hold it.
  * Shared by the document block, its editor, read-only pages and the run's preparation list.
  */
-export function PlateLayoutGrid({ layout, handlers, caption = true }: { layout: PlateLayout; handlers?: PlateGridHandlers; caption?: boolean }) {
+export function PlateLayoutGrid({ layout, handlers, caption = true, wellLines, wellLineUnits = 9 }: { layout: PlateLayout; handlers?: PlateGridHandlers; caption?: boolean; /** Parameters written in each well, for a plate read as a run sheet. */ wellLines?: string[]; wellLineUnits?: number }) {
   // Also drawn inside editors, which the page translator skips; so the few words here are translated in place.
   const { t, locale } = useI18n();
   const { rows, columns } = plateShape(layout.plateSize);
@@ -51,12 +51,14 @@ export function PlateLayoutGrid({ layout, handlers, caption = true }: { layout: 
             const props = { className: "ln-plate-layout-well", "data-well": id, "data-filled": layout.wells[id] ? "" : undefined, "data-plate-tone": value !== undefined ? tones.get(plateValueKey(value)) : undefined, title: wellTitle(id), "data-i18n-ignore": "" };
             return handlers
               ? <button key={id} type="button" {...props} aria-pressed={handlers.selected.has(id)} aria-label={wellTitle(id).replaceAll("\n", " · ")} onPointerDown={(event) => handlers.onWellDown(id, event)}>{wellText(value)}</button>
-              : <span key={id} {...props}>{wellText(value)}</span>;
+              : wellLines && layout.plateSize <= 96 && layout.wells[id]
+                ? <span key={id} {...props} data-lines="">{wellLines.map((field) => { const line = layout.wells[id]?.[field]; return line === undefined ? null : <span key={field}>{clipPlateLabel(plateValueText(line), wellLineUnits)}</span>; })}</span>
+                : <span key={id} {...props}>{wellLines ? "" : wellText(value)}</span>;
           }),
         ])}
       </div>
     </div>
-    {legend.length ? <ul className="ln-plate-layout-legend">{legend.map((entry, index) => <li key={entry.key}><span className="ln-plate-layout-swatch" data-plate-tone={entry.tone}>{numbered ? index + 1 : null}</span><span data-i18n-ignore>{entry.label}</span><small>{entry.count}</small></li>)}</ul> : null}
+    {legend.length ? <ul className="ln-plate-layout-legend">{legend.map((entry, index) => <li key={entry.key}><span className="ln-plate-layout-swatch" data-plate-tone={entry.tone}>{numbered && !wellLines ? index + 1 : null}</span><span data-i18n-ignore>{entry.label}</span><small>{entry.count}</small></li>)}</ul> : null}
     {layout.caption ? <p className="ln-plate-layout-note" data-i18n-ignore>{layout.caption}</p> : null}
   </figure>;
 }

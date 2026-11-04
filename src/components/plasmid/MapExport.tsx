@@ -37,6 +37,12 @@ function save(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1_000);
 }
 
+/** The map on screen as a standalone SVG, for a record's snapshot; undefined when the map is not showing. */
+export function mapSnapshot() {
+  const found = document.querySelector<SVGSVGElement>(".ln-pw-map .ln-pw-map-svg");
+  return found ? standalone(found).text : undefined;
+}
+
 /** 图谱导出 (Q380): the map as SVG, or as a PNG at twice its size; PDF goes through printing. */
 export function MapExport({ name }: { name: string }) {
   const file = name.replace(/[^\w.-]+/g, "_").slice(0, 80) || "plasmid";

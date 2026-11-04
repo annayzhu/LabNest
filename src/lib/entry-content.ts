@@ -5,6 +5,7 @@ import { stripLabNestFontSizeMarkup } from "./rich-text-font-size";
 import { stripLabNestLineHeightMarkup } from "./rich-text-line-height";
 import { collectDocumentMedia, documentMediaAttachmentId, documentMediaFromMarkdown } from "./document-media";
 import { plateLayoutFromMarkdown, plateLayoutPlainText } from "./plate-layout";
+import { isToolOutputFile, toolOutputFromMarkdown } from "./tool-workflow";
 import { stripRecordReferenceLinks } from "./record-references";
 
 export const ENTRY_CONTENT_SCHEMA_VERSION = 1;
@@ -136,7 +137,7 @@ export function getOrderedAttachmentIds(value: unknown) {
 }
 
 export function plainTextFromEntryMarkdown(markdown: string): string {
-  const searchable = markdown.split("\n").map(line => { const table=scientificTableFromMarkdown(line);if(table)return table.rows.map(row=>row.map(plainTextFromEntryMarkdown).join(" ")).join("\n"); const media = documentMediaFromMarkdown(line); if (media) return [media.filename, media.caption].filter(Boolean).join(" "); const plate = plateLayoutFromMarkdown(line); return plate ? plateLayoutPlainText(plate) : line; }).join("\n");
+  const searchable = markdown.split("\n").map(line => { const table=scientificTableFromMarkdown(line);if(table)return table.rows.map(row=>row.map(plainTextFromEntryMarkdown).join(" ")).join("\n"); const media = documentMediaFromMarkdown(line); if (media) return [media.filename, media.caption].filter(Boolean).join(" "); const plate = plateLayoutFromMarkdown(line); if (plate) return plateLayoutPlainText(plate); const tool = toolOutputFromMarkdown(line); return tool ? [tool.label, ...(tool.plates ?? []).map(plateLayoutPlainText)].join(" ") : line; }).join("\n");
   return stripRecordReferenceLinks(stripLabNestFontFamilyMarkup(stripLabNestLineHeightMarkup(stripLabNestFontSizeMarkup(stripParagraphLayoutMarkup(searchable)))))
     .replace(/```[\s\S]*?```/g, (block) => block.replaceAll("```", ""))
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
@@ -149,7 +150,7 @@ export function plainTextFromEntryMarkdown(markdown: string): string {
 }
 
 /** Current logical originals; historical links and preview derivatives are never extra files. */
-export function selectEntryAttachments<T extends { id: string; derivedFromId?: string | null }>(
+export function selectEntryAttachments<T extends { id: string; derivedFromId?: string | null; metadataJson?: unknown }>(
   content: unknown,
   links: Array<{ attachment: T; linkType: string }>,
 ): T[] {
@@ -161,7 +162,8 @@ export function selectEntryAttachments<T extends { id: string; derivedFromId?: s
   const selected = new Map<string, T>();
   for (const link of links) {
     const file = link.attachment;
-    if (file.derivedFromId) continue;
+    // A tool's own files are reached through its block in the text.
+    if (file.derivedFromId || isToolOutputFile({ metadataJson: file.metadataJson })) continue;
     const current = inline.has(file.id) || (!history.has(file.id) && (explicit.has(file.id) || ["entry_content", "attached_to"].includes(link.linkType)));
     if (current && !selected.has(file.id)) selected.set(file.id, file);
   }

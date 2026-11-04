@@ -16,7 +16,7 @@ async function observeReadiness(context){
 }
 async function assertReady(page){const states=await page.evaluate(()=>window.calculatorReadyStates);assert(states.length>0&&states.every(state=>state==='false'),'The host must receive ready only after the calculator accepts input');}
 async function saved(page){return page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);}
-async function open(page){await page.locator('.plate-calculator-launch[data-plate-calculator="master-mix"]').click();await page.locator('.plate-calculator-frame[data-ready="true"]').waitFor();await assertReady(page);const f=page.frameLocator('.plate-calculator-frame');await f.getByRole('button',{name:'添加组分',exact:true}).waitFor();return f;}
+async function open(page){await page.locator('#openMixButton').click();await page.locator('#liquidDrawer [data-liquid-module="reaction"]').click();await page.locator('.plate-calculator-frame[data-ready="true"]').waitFor();await assertReady(page);const f=page.frameLocator('.plate-calculator-frame');await f.getByRole('button',{name:'添加组分',exact:true}).waitFor();return f;}
 async function recipe(f,n){
  for(const [label,value] of [['样本数',String(n)],['每样本重复数','1'],['额外对照反应数','0'],['预混余量','10'],['单反应总体积','20']])await f.getByRole('textbox',{name:new RegExp(`^${label}`)}).fill(value);
  await recipeRows(f);
@@ -45,7 +45,7 @@ for(const [engine,type] of Object.entries(process.env.PLATE_BROWSER==='chromium'
   await toolsPage.goto(`${base}/tools/free-plate-layout/index.html?v=20261009-unified-release`,{waitUntil:'networkidle'});
   for(const definition of toolFixtures){
    try{
-    await toolsPage.locator(`.plate-calculator-launch[data-plate-calculator="${definition.id}"]`).click();
+    await toolsPage.locator('#openMixButton').click();await toolsPage.locator(`[data-plate-calculator="${definition.id}"]`).click();
     await toolsPage.locator('.plate-calculator-frame[data-ready="true"]').waitFor();await assertReady(toolsPage);
     const frame=toolsPage.frameLocator('.plate-calculator-frame');await frame.locator(`[data-calculator="${definition.id}"]`).waitFor();
     const inputs={...definition.exampleInputs};if('wells' in inputs)inputs.wells=24;

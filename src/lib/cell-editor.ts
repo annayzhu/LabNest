@@ -6,6 +6,7 @@ export function isCellRenderShortcut(event: { key: string; metaKey: boolean; ctr
 }
 
 export function scientificBlockHasContent(block: ScientificContentBlock) {
+  if (block.type === "tool_output") return true;
   if (block.type === "heading" || block.type === "text" || block.type === "callout") return Boolean(block.text.trim());
   if (block.type === "rich_text") return block.nodes.length>0;
   if (block.type === "checklist") return block.items.some((item) => item.trim());

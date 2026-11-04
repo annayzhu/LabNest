@@ -11,6 +11,8 @@ import { parseRichTextLineHeightLine } from "@/lib/rich-text-line-height";
 import { plateLayoutFromMarkdown } from "@/lib/plate-layout";
 import { parseRecordReferenceLink, RECORD_REFERENCE_LINK_SOURCE } from "@/lib/record-references";
 import { PlateLayoutGrid } from "./PlateLayoutGrid";
+import { toolOutputFromMarkdown } from "@/lib/tool-workflow";
+import { ToolOutput } from "./ToolOutput";
 import { RecordReferenceLink } from "./RecordReference";
 
 const inlinePattern = new RegExp(`(${LABNEST_FONT_SIZE_TOKEN_SOURCE}|${LABNEST_COLOR_TOKEN_SOURCE}|\\*\\*(?:(?!\\*\\*)[^\\n])+\\*\\*|~~[^~\\n]+~~|\\+\\+[^+\\n]+\\+\\+|\`[^\`\\n]+\`|\\*[^*\\n]+\\*|${RECORD_REFERENCE_LINK_SOURCE}|\\[[^\\]\\n]+\\]\\(https?:\\/\\/[^)\\n]+\\))`, "g");
@@ -56,6 +58,8 @@ export function EntryContentView({ markdown, compact = false }: { markdown: stri
         if (media) return <DocumentMediaView key={`${media.id}-${index}`} block={media} />;
         const plate = plateLayoutFromMarkdown(rawLine);
         if (plate) return <div key={`${plate.id}-${index}`} className="ln-document-plate is-readonly"><PlateLayoutGrid layout={plate} /></div>;
+        const tool = toolOutputFromMarkdown(rawLine);
+        if (tool) return <ToolOutput key={`${tool.id}-${index}`} block={tool} />;
         const layout = parseParagraphLayoutLine(rawLine);
         const parsedLine = parseRichTextLineHeightLine(layout.content);
         const parsedFontFamily = parseRichTextFontFamilyLine(parsedLine.content);

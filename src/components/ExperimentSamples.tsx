@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { ArrowDown, ArrowUp, Grid3x3, ListChecks, PackagePlus, Tags, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ListChecks, PackagePlus, Tags, Trash2, X } from "lucide-react";
 import { findSamples, type FoundSample } from "@/app/samples/actions";
 import {
   addExperimentSamples, assignExperimentGroups, moveExperimentSample, removeExperimentSample, saveExperimentSampleGroups, setExperimentSampleGroup,
@@ -23,7 +23,7 @@ export type ExperimentSampleRow = {
   usedAmount: number | null; usedUnit: string | null; amountUnit: string | null; parentCode: string | null;
 };
 type Option = { value: string; label: string };
-type Panel = "choose" | "groups" | "plates" | null;
+type Panel = "choose" | "groups" | null;
 
 const field = cn(formInlineInputClass, "h-8 text-[length:var(--ln-ui-body-font-size)]");
 const iconButton = "focus-ring inline-flex h-6 w-6 items-center justify-center rounded-[var(--ln-radius-control-sm)] text-muted hover:bg-stone hover:text-ink disabled:opacity-40";
@@ -84,7 +84,6 @@ export function ExperimentSamples({ experimentId, editable, inputs, outputs, gro
           <div className="ml-auto flex flex-wrap gap-1 print:hidden">
             <Button type="button" size="sm" variant={panel === "choose" ? "secondary" : "ghost"} onClick={() => setPanel(panel === "choose" ? null : "choose")}><ListChecks className="h-3.5 w-3.5" aria-hidden />Choose samples…</Button>
             <Button type="button" size="sm" variant={panel === "groups" ? "secondary" : "ghost"} onClick={() => setPanel(panel === "groups" ? null : "groups")}><Tags className="h-3.5 w-3.5" aria-hidden />Groups…</Button>
-            <Button type="button" size="sm" variant={panel === "plates" ? "secondary" : "ghost"} onClick={() => setPanel(panel === "plates" ? null : "plates")}><Grid3x3 className="h-3.5 w-3.5" aria-hidden />Plate layout…</Button>
             <Link href={`/samples/new?experiment=${experimentId}`} className={buttonStyles({ size: "sm", variant: "secondary" })}><PackagePlus className="h-3.5 w-3.5" aria-hidden />Register outputs</Link>
           </div>
         ) : null}
@@ -100,15 +99,6 @@ export function ExperimentSamples({ experimentId, editable, inputs, outputs, gro
       ) : null}
       {panel === "choose" ? <ChoosePanel types={types} locations={locations} pending={pending} onAdd={(input) => act(() => addExperimentSamples({ experimentId, ...input }))} /> : null}
       {panel === "groups" ? <GroupsPanel key={groups.map((group) => `${group.id}:${group.label}`).join("|")} groups={groups} pending={pending} onSave={(list) => act(() => saveExperimentSampleGroups({ experimentId, groups: list }), () => setPanel(null))} onPaste={(text) => act(() => assignExperimentGroups({ experimentId, text }))} /> : null}
-      {panel === "plates" ? (
-        <div className="space-y-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-3 print:hidden">
-          <p className="text-xs text-muted">Plate layouts are written in the experiment record: type “/” and choose Plate layout. The planners below open with this experiment’s samples, grouped and in order. Their Excel exports go into the record with File attachment; a free plate planner project backup goes into a plate with Import a backup. Wells that hold a sample show beside it.</p>
-          <div className="flex flex-wrap gap-2">
-            <Link href={`/tools/qpcr-plate-layout?experiment=${experimentId}`} className={buttonStyles({ size: "sm", variant: "secondary" })}>qPCR plate planner</Link>
-            <Link href={`/tools/cnv-plate-layout?experiment=${experimentId}`} className={buttonStyles({ size: "sm", variant: "ghost" })}>CNV plate planner</Link>
-          </div>
-        </div>
-      ) : null}
 
       {inputs.length ? (
         <div className="space-y-2">

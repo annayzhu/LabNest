@@ -1,3 +1,4 @@
+import { isToolOutputFile } from "@/lib/tool-workflow";
 import { RecordStatusControl } from "@/components/RecordStatusControl";
 import { EntrySourceCards } from "@/components/EntrySourceCards";
 import Link from "next/link";
@@ -33,7 +34,7 @@ const secondaryButton = buttonStyles({ size: "md", className: "bg-surface font-m
 
 export default async function ResultDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [result, attachmentLinks] = await Promise.all([
+  const [result, allAttachmentLinks] = await Promise.all([
     prisma.result.findUnique({
       where: { id },
       include: {
@@ -48,6 +49,7 @@ export default async function ResultDetailPage({ params }: { params: Promise<{ i
     }),
     prisma.attachmentLink.findMany({ where: { targetType: "result", targetId: id }, include: { attachment: true }, orderBy: [{ order: "asc" }, { createdAt: "desc" }] }),
   ]);
+  const attachmentLinks = allAttachmentLinks.filter((link) => !isToolOutputFile(link.attachment));
   if (!result) notFound();
   const document = normalizeResultDocument(result.contentJson);
   const resultNotes = result.notes === "Template registered; no measurement has been entered." ? null : result.notes;

@@ -4,6 +4,7 @@ import { Download, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { openPlasmid } from "@/app/tools/plasmid/actions";
 import { Button } from "@/components/ui/Button";
+import { useI18n } from "@/components/I18nProvider";
 import { copyCalculation } from "@/lib/calculators/clipboard";
 import { reverseComplement } from "@/lib/sequence";
 import { builtInElements, codonMarks, detectFeatures, openReadingFrames, type LibraryElement } from "@/lib/plasmid/feature-library";
@@ -29,6 +30,7 @@ import { SearchPanel } from "./SearchPanel";
 import { SequencePicker } from "./SequencePicker";
 import { SequenceView, type CodingTrack } from "./SequenceView";
 import { StructurePanel } from "./StructurePanel";
+import { usePlasmidRecordBridge } from "./usePlasmidRecordBridge";
 import "./plasmid-workbench.css";
 
 type Selection = { segments: Segment[]; feature?: number };
@@ -43,13 +45,16 @@ const inventoryKey = (productId: string) => `product:${productId}`;
  * feature table with one shared selection, align reads to it, compare it with another, and export it. Reads open as
  * linear fragments with their chromatogram. Opening more files adds tabs and never closes what is open.
  */
-export function PlasmidWorkbench({ initial, plasmids = [], folders = [], library = [] }: {
+export function PlasmidWorkbench({ initial, plasmids = [], folders = [], library = [], embedded = false }: {
   initial?: InventoryDocument;
   plasmids?: PlasmidChoice[];
   folders?: SavedFolder[];
   /** The lab's own feature-library entries (Q362). */
   library?: LibraryElement[];
+  /** Opened from a record: what is open goes back to it as a map and a version. */
+  embedded?: boolean;
 }) {
+  const { locale } = useI18n();
   const [sources, setSources] = useState<ImportedSource[]>([]);
   const [files, setFiles] = useState<SourceFile[]>([]);
   const [progress, setProgress] = useState<{ done: number; total: number }>();
@@ -116,6 +121,7 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [], library
   const setTab = (next: Tab) => { if (activeKey) setViews((current) => ({ ...current, [activeKey]: next })); };
   // The saved version the open record is, if any: a check can only be kept against one (C1).
   const saved = inventoryDocument ? { productId: inventoryDocument.productId, versionId: inventoryDocument.versionId } : activeKey ? savedTo[activeKey] : undefined;
+  usePlasmidRecordBridge({ active: embedded, saved, showMap: () => setTab("map"), zh: locale === "zh" });
   const productId = saved?.productId;
   const notes = active?.kind === "record" && record ? genbankNotes(record) : [];
 
@@ -315,6 +321,19 @@ export function PlasmidWorkbench({ initial, plasmids = [], folders = [], library
       <section className="ln-pw-main" aria-label="Workbench">
         {showImport || !record || !active ? (
           <div className="ln-pw-start">
+            {embedded && plasmids.length ? (
+              <label className="ln-pw-pick-saved">
+                <span>Use a saved plasmid</span>
+                <select className="ln-pw-input" value="" onChange={async (event) => {
+                  const { key, error } = await openStored(event.target.value);
+                  setImportError(error);
+                  if (key) choose(key);
+                }}>
+                  <option value="">Choose a plasmid</option>
+                  {plasmids.map((plasmid) => <option key={plasmid.id} value={plasmid.id} data-i18n-ignore>{plasmid.name}</option>)}
+                </select>
+              </label>
+            ) : null}
             <ImportDropZone progress={progress} error={importError} onFiles={open} />
             {record ? <button type="button" className="ln-pw-link" onClick={() => { afterOpen.current = undefined; setShowImport(false); }}><X className="h-3 w-3" aria-hidden />Back to the open sequence</button> : null}
           </div>

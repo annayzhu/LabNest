@@ -1,0 +1,31 @@
+{
+  "repository": "https://github.com/annayzhu/CopyNumber_Analyzer",
+  "commit": "b1eb77934c480f626b7b7ac90e1f223e3dc4ba8b",
+  "publication": "branch labnest-tool-workflow-20261104",
+  "files": {
+    "index.html": {
+      "sha256": "e8eb3c79e582cda98ce0415c7378400a7b5e2e2f9c63ad5542fa903114778e76",
+      "bytes": 19422
+    },
+    "app.js": {
+      "sha256": "43f7278ae6374cb0b41806dbddb0044a91dd20e498df876932d7cbc60474db7f",
+      "bytes": 100289
+    },
+    "core.js": {
+      "sha256": "71af8a45353c437320f63bb235d3fde13a8ab8f4b0386f1374657f562b466ed0",
+      "bytes": 87892
+    },
+    "layout.js": {
+      "sha256": "3a338ecd9742628aab271c1c3e61b4e634b7ba4f7ecaaa975d023eb78200e1b5",
+      "bytes": 10732
+    },
+    "diagnostics.js": {
+      "sha256": "1d14c4031713c5fe16a3b7777b7192606cbb8e1240ecda84c4ee04732511572b",
+      "bytes": 11762
+    },
+    "styles.css": {
+      "sha256": "b06ad3942739db0fbf8e8a00f99be11843cd6c1ea89944a9a58cac180749cd46",
+      "bytes": 33577
+    }
+  }
+}

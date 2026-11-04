@@ -1,3 +1,4 @@
+import { toolOutputFromMarkdown } from "./tool-workflow";
 import {decodeDocumentTableToken} from "./document-table-token";
 import { z } from "zod";
 import { richTextFontSizeSchema } from "./rich-text-font-size-schema";
@@ -60,12 +61,20 @@ export function collectDocumentMedia(value: unknown): DocumentMedia[] {
   if (typeof value === "string") return value.split("\n").flatMap(line => {
     const table = decodeDocumentTableToken(line);
     if (table && typeof table === "object" && "type" in table && table.type === "table") return collectDocumentMedia(table);
+    const tool = toolOutputFromMarkdown(line);
+    if (tool) return collectDocumentMedia(tool);
     const media = documentMediaFromMarkdown(line);
     return media ? [media] : [];
   });
   if (Array.isArray(value)) return value.flatMap(collectDocumentMedia);
   if (!value || typeof value !== "object") return [];
   const candidate = value as Record<string, unknown>;
+  if (candidate.type === "tool_output") {
+    const images = (candidate.images ?? []) as Array<{url:string;caption:string}>;
+    const dataset=candidate.dataset as {attachmentId:string}|undefined;
+    const raw=(candidate.rawAttachments ?? []) as Array<{id:string}>;
+    return [...[...(dataset?[dataset.attachmentId]:[]),...raw.map(file=>file.id)].map(id=>({id,type:"media" as const,mediaType:"file" as const,url:`/api/attachments/${id}`,attachmentId:id})),{id:String(candidate.id)+"-state",type:"media",mediaType:"file",url:`/api/attachments/${candidate.sessionAttachmentId}`,attachmentId:String(candidate.sessionAttachmentId)},...images.map((image,index)=>({id:`${candidate.id}-${index}`,type:"media" as const,mediaType:"image" as const,url:image.url,caption:image.caption}))];
+  }
   if (candidate.type === "media") {
     const parsed = documentMediaSchema.safeParse(value);
     if (!parsed.success) throw new Error("附件信息不完整 / Invalid attachment reference");

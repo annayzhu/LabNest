@@ -7,66 +7,51 @@
     <meta name="description" content="纯浏览器本地运行的 6、12、24、96、384 孔板布局、标签与批量计算工具。" />
     <title>Plate Layout Planner · 孔板布局规划工具</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f625d'/%3E%3Cg fill='%23fff'%3E%3Ccircle cx='10' cy='10' r='3'/%3E%3Ccircle cx='22' cy='10' r='3'/%3E%3Ccircle cx='10' cy='22' r='3'/%3E%3Ccircle cx='22' cy='22' r='3'/%3E%3C/g%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="styles.css?v=20261009-42" />
+    <link rel="stylesheet" href="styles.css?v=20261104-1" />
   </head>
   <body>
-    <header class="topbar">
-      <a class="brand" href="#workspace" aria-label="返回孔板工作区">
-        <span class="brand-mark" aria-hidden="true">
-          <i></i><i></i><i></i><i></i><i></i><i></i>
-        </span>
-        <span>
-          <strong>Plate Layout Planner</strong>
-          <small>孔板布局规划工具</small>
-        </span>
-      </a>
-      <div class="topbar-actions">
-        <span class="local-pill"><i></i><span id="saveStatus">仅保存在本机</span></span>
-        <div class="language-switch" role="group" aria-label="Language">
-          <button class="language-option active" data-language="zh" type="button">中</button>
-          <button class="language-option" data-language="en" type="button">EN</button>
-        </div>
-      </div>
-    </header>
-
     <main id="workspace" class="page-shell">
-      <section class="hero">
-        <div>
-          <h1 data-i18n="heroTitle">自由板布局</h1>
-          <p data-i18n="heroBody">点选、框选或 Shift 连选孔位，叠加参数维度并批量计算；数据仅保存在本机。</p>
-        </div>
-      </section>
-
-      <section class="workspace-command card" aria-label="多板项目工作区">
+      <section class="project-bar" aria-label="多板项目工作区">
         <label class="workspace-name-field">
-          <span id="workspaceNameLabel">项目名称</span>
+          <span id="workspaceNameLabel" class="sr-only">项目名称</span>
           <input id="workspaceName" type="text" maxlength="80" value="未命名项目" />
         </label>
         <div class="plate-tab-region">
           <div id="plateTabs" class="plate-tabs" role="tablist" aria-label="项目孔板"></div>
         </div>
-        <div class="workspace-actions">
-          <button id="addPlateButton" class="primary-button compact-button" type="button">＋ 新建板</button>
-          <button id="duplicatePlateButton" class="secondary-button compact-button" type="button">复制整板</button>
-          <button id="copyStructureButton" class="secondary-button compact-button" type="button">仅复制参数</button>
-          <button id="movePlateLeftButton" class="icon-action" type="button" aria-label="孔板左移">←</button>
-          <button id="movePlateRightButton" class="icon-action" type="button" aria-label="孔板右移">→</button>
-          <button id="deletePlateButton" class="icon-action danger-action" type="button" aria-label="删除当前孔板">×</button>
-          <button id="overviewToggleButton" class="secondary-button compact-button" type="button">全部板概览</button>
-        </div>
-        <div class="workspace-export-actions" aria-label="项目导入与导出">
-          <span class="workspace-export-label">项目文件</span>
-          <button id="exportXlsxButton" class="primary-button compact-button" type="button">导出项目 XLSX</button>
-          <select id="xlsxOrderSelect" class="compact-export-order" aria-label="XLSX 加样顺序" title="XLSX 加样顺序"><option value="N">N 序</option><option value="Z">Z 序</option></select>
-          <button id="openProjectImportButton" class="secondary-button compact-button" type="button">导入孔板表格</button>
-          <button id="exportJsonButton" class="secondary-button compact-button" type="button">备份项目</button>
-          <button id="openBackupRestoreButton" class="secondary-button compact-button" type="button">恢复项目备份</button>
+        <button id="addPlateButton" class="secondary-button" type="button">＋ 新建板</button>
+        <button id="overviewToggleButton" class="secondary-button" type="button">全部板概览</button>
+        <details class="tool-menu" data-tool-menu>
+          <summary class="secondary-button" data-zh="板操作" data-en="Plate">板操作</summary>
+          <div class="tool-menu-list">
+            <button id="duplicatePlateButton" type="button">复制整板</button>
+            <button id="copyStructureButton" type="button">仅复制参数</button>
+            <button id="movePlateLeftButton" type="button" data-zh="左移" data-en="Move left">左移</button>
+            <button id="movePlateRightButton" type="button" data-zh="右移" data-en="Move right">右移</button>
+            <button id="clearPlateLayoutButton" class="danger-text" type="button" title="清空当前板布局">清空布局</button>
+            <button id="deletePlateButton" class="danger-text" type="button">删除当前板</button>
+          </div>
+        </details>
+        <details class="tool-menu" data-tool-menu>
+          <summary class="secondary-button" data-zh="项目文件" data-en="Project files">项目文件</summary>
+          <div class="tool-menu-list">
+            <button id="exportXlsxButton" type="button">导出项目 XLSX</button>
+            <label class="tool-menu-field"><span data-zh="XLSX 加样顺序" data-en="XLSX order">XLSX 加样顺序</span><select id="xlsxOrderSelect" aria-label="XLSX 加样顺序"><option value="N">N 序</option><option value="Z">Z 序</option></select></label>
+            <button id="openProjectImportButton" type="button">导入孔板表格</button>
+            <button id="exportJsonButton" type="button" data-record-hidden>备份项目</button>
+            <button id="openBackupRestoreButton" type="button" data-record-hidden>恢复项目备份</button>
+          </div>
+        </details>
+        <span class="local-pill" data-record-hidden><i></i><span id="saveStatus">仅保存在本机</span></span>
+        <div class="language-switch" role="group" aria-label="Language" data-record-hidden>
+          <button class="language-option active" data-language="zh" type="button">中</button>
+          <button class="language-option" data-language="en" type="button">EN</button>
         </div>
       </section>
 
       <section id="plateOverview" class="card plate-overview" hidden aria-labelledby="plateOverviewTitle">
         <div class="plate-overview-heading">
-          <div><span class="eyebrow">PROJECT OVERVIEW</span><h2 id="plateOverviewTitle">全部板概览</h2><p id="plateOverviewDescription">点击任意缩略孔板进入精细编辑。</p></div>
+          <div><h2 id="plateOverviewTitle">全部板概览</h2><p id="plateOverviewDescription">点击任意缩略孔板进入精细编辑。</p></div>
           <label class="overview-color-control"><span id="overviewColorLabel">统一按参数着色</span><select id="overviewColorDimension"></select></label>
         </div>
         <div id="plateOverviewGrid" class="plate-overview-grid"></div>
@@ -74,75 +59,94 @@
 
       <div class="workspace-grid">
         <section class="plate-card card">
-          <div class="plate-card-heading">
-            <div class="plate-heading-copy">
-              <div class="plate-title-line">
-                <label class="plate-name-field" title="点击修改孔板名称">
-                  <span class="sr-only">孔板名称</span>
-                  <input id="projectName" class="plate-name-editor" type="text" value="未命名孔板" placeholder="未命名孔板" maxlength="80" aria-label="孔板名称，点击修改" aria-describedby="plateNameError" />
-                  <span id="plateNameError" class="plate-name-error" role="alert" hidden></span>
-                </label>
-                <div class="history-actions" aria-label="编辑历史">
-                  <button id="clearPlateLayoutButton" class="plate-reset-button" type="button" title="清空当前板布局">清空布局</button>
-                  <button id="undoButton" class="history-button" type="button" title="撤销（Ctrl/⌘ Z）" aria-label="撤销">↶</button>
-                  <button id="redoButton" class="history-button" type="button" title="重做（Ctrl/⌘ Shift Z）" aria-label="重做">↷</button>
-                </div>
-              </div>
-              <div class="plate-spec-row">
-                <div class="plate-picker" role="group" aria-label="孔板规格">
-                  <button class="plate-option" data-size="6" type="button">6 孔</button>
-                  <button class="plate-option" data-size="12" type="button">12 孔</button>
-                  <button class="plate-option active" data-size="24" type="button">24 孔</button>
-                  <button class="plate-option" data-size="96" type="button">96 孔</button>
-                  <button class="plate-option" data-size="384" type="button">384 孔</button>
-                </div>
-              </div>
+          <div class="plate-toolbar">
+            <label class="plate-name-field" title="点击修改孔板名称">
+              <span class="sr-only" data-zh="孔板名称" data-en="Plate name">孔板名称</span>
+              <input id="projectName" class="plate-name-editor" type="text" value="未命名孔板" placeholder="未命名孔板" maxlength="80" aria-label="孔板名称，点击修改" aria-describedby="plateNameError" />
+              <span id="plateNameError" class="plate-name-error" role="alert" hidden></span>
+            </label>
+            <div class="plate-picker" role="group" aria-label="孔板规格">
+              <button class="plate-option" data-size="6" type="button">6 孔</button>
+              <button class="plate-option" data-size="12" type="button">12 孔</button>
+              <button class="plate-option active" data-size="24" type="button">24 孔</button>
+              <button class="plate-option" data-size="96" type="button">96 孔</button>
+              <button class="plate-option" data-size="384" type="button">384 孔</button>
             </div>
-            <div class="plate-heading-tools">
-              <div class="selection-actions" aria-label="孔位选择操作">
-                <span id="selectionCount" class="selection-count">已选 0 孔</span>
-                <button id="selectAllButton" class="text-button" type="button" data-i18n="selectAll">全选</button>
-                <button id="invertSelectionButton" class="text-button" type="button" data-i18n="invert">反选</button>
-                <button id="clearSelectionButton" class="text-button" type="button" data-i18n="deselect">取消选择</button>
-                <button id="clearWellsButton" class="text-button danger-text" type="button" data-i18n="clearWells">清空所选孔</button>
+            <div class="history-actions" aria-label="编辑历史">
+              <button id="undoButton" class="history-button" type="button" title="撤销（Ctrl/⌘ Z）" aria-label="撤销">↶</button>
+              <button id="redoButton" class="history-button" type="button" title="重做（Ctrl/⌘ Shift Z）" aria-label="重做">↷</button>
+            </div>
+            <label class="color-control">
+              <span data-i18n="colorBy">按参数着色</span>
+              <select id="colorDimension"></select>
+            </label>
+            <div class="toolbar-end">
+              <div class="zoom-controls" role="group" aria-label="孔板视图缩放">
+                <button id="zoomOutButton" class="history-button" type="button" data-zh-label="缩小孔板" data-en-label="Zoom out" aria-label="缩小孔板">−</button>
+                <output id="plateZoomIndicator" class="plate-zoom-indicator" aria-live="polite">100%</output>
+                <button id="zoomInButton" class="history-button" type="button" data-zh-label="放大孔板" data-en-label="Zoom in" aria-label="放大孔板">＋</button>
+                <button id="fitPlateButton" class="secondary-button" type="button" aria-pressed="true" data-zh="适合窗口" data-en="Fit window">适合窗口</button>
               </div>
-              <div class="plate-utility-stack">
-                <label class="color-control">
-                  <span data-i18n="colorBy">按参数着色</span>
-                  <select id="colorDimension"></select>
-                </label>
-                <div class="export-actions plate-export-actions" aria-label="导出布局">
-                  <button id="exportCsvButton" class="secondary-button" type="button">CSV</button>
-                  <button id="exportSvgButton" class="secondary-button" type="button">SVG</button>
-                  <button id="printButton" class="text-button" type="button" data-i18n="print">打印 / PDF</button>
+              <button id="openMixButton" class="primary-button" type="button" data-zh="配液" data-en="Mix">配液</button>
+              <details class="tool-menu tool-menu-end" data-tool-menu>
+                <summary class="secondary-button" data-zh="导出" data-en="Export">导出</summary>
+                <div class="tool-menu-list">
+                  <button id="exportCsvButton" type="button">CSV</button>
+                  <button id="exportSvgButton" type="button">SVG</button>
+                  <button id="printButton" type="button" data-i18n="print">打印 / PDF</button>
                 </div>
-              </div>
+              </details>
+              <details class="tool-menu tool-menu-end" data-tool-menu>
+                <summary class="history-button" data-zh-label="操作说明" data-en-label="How to select" aria-label="操作说明">?</summary>
+                <div class="tool-menu-list tool-menu-note"><p data-i18n="selectionHelp">单击单选，Ctrl/⌘ 单击逐个增减，拖动框选，Shift 单击连选；单击空白处取消选择。</p></div>
+              </details>
             </div>
           </div>
 
-          <div class="plate-scroll">
+          <div id="plateScroll" class="plate-scroll">
             <div id="plateCanvas" class="plate-canvas" aria-label="可交互孔板布局">
-              <div class="plate-view-head">
-                <p class="plate-interaction-help" data-i18n="selectionHelp">单击单选，Ctrl/⌘ 单击逐个增减，拖动框选，Shift 单击连选；单击空白处取消选择。滚轮缩放视图。</p>
-                <output id="plateZoomIndicator" class="plate-zoom-indicator" aria-live="polite">100%</output>
-              </div>
               <div id="plateGrid" class="plate-grid"></div>
               <div id="selectionBox" class="selection-box" hidden></div>
             </div>
           </div>
-          <div class="plate-footer-row">
+          <div id="plateLegendRow" class="plate-footer-row">
             <div id="plateLegend" class="plate-legend" aria-label="孔板颜色图例"></div>
-            <p id="wellDisplayNote" class="well-display-note">孔内最多显示孔号和 2 条参数摘要。点选孔位可查看全部信息。</p>
+            <button id="plateLegendToggle" class="text-button" type="button" hidden></button>
           </div>
+          <section id="mixSummary" class="mix-summary" aria-label="配液摘要" hidden>
+            <span id="mixSummaryText" class="mix-summary-text"></span>
+            <button id="viewMixButton" class="secondary-button" type="button" data-zh="查看配液" data-en="View mix">查看配液</button>
+            <button id="copyMixButton" class="secondary-button" type="button" data-zh="复制配液" data-en="Copy mix">复制配液</button>
+            <label id="mixCopyFallback" class="copy-fallback" hidden><span data-zh="浏览器未允许复制，请手动复制：" data-en="Clipboard was blocked. Copy this text:">浏览器未允许复制，请手动复制：</span><textarea readonly rows="4"></textarea></label>
+          </section>
         </section>
 
         <aside class="side-stack">
+          <details class="card assignment-card collapsible-card" open>
+            <summary class="collapsible-summary">
+              <div><h2 data-i18n="assignTitle">为所选孔赋值</h2></div>
+              <span class="collapsible-summary-meta"><span id="editorSelectionCount">0 孔</span><span class="collapse-toggle" aria-hidden="true"></span></span>
+            </summary>
+            <div class="collapsible-content">
+            <div class="selection-actions" aria-label="孔位选择操作">
+              <span id="selectionCount" class="selection-count">已选 0 孔</span>
+              <button id="selectAllButton" class="text-button" type="button" data-i18n="selectAll">全选</button>
+              <button id="invertSelectionButton" class="text-button" type="button" data-i18n="invert">反选</button>
+              <button id="clearSelectionButton" class="text-button" type="button" data-i18n="deselect">取消选择</button>
+              <button id="clearWellsButton" class="text-button danger-text" type="button" data-i18n="clearWells">清空所选孔</button>
+            </div>
+            <div id="selectedWellSummary" class="selected-well-summary" aria-live="polite"></div>
+            <div id="selectionEditor" class="selection-editor"></div>
+            <div class="editor-actions">
+              <button id="applyParametersButton" class="primary-button" type="button" data-i18n="applySelected">应用到所选孔</button>
+              <button id="clearParametersButton" class="secondary-button" type="button" data-i18n="clearChecked">清除勾选参数</button>
+            </div>
+            </div>
+          </details>
+
           <details class="card parameter-card collapsible-card" open>
             <summary class="collapsible-summary">
-              <div>
-                <h2 data-i18n="dimensionsTitle">参数维度</h2>
-                <p data-i18n="dimensionsBody">定义实验标签，再应用到当前选择。</p>
-              </div>
+              <div><h2 data-i18n="dimensionsTitle">参数维度</h2></div>
               <span class="collapsible-summary-meta"><span id="dimensionCount" class="count-badge">0</span><span class="collapse-toggle" aria-hidden="true"></span></span>
             </summary>
             <div class="collapsible-content">
@@ -165,67 +169,6 @@
             <div id="dimensionList" class="dimension-list"></div>
             </div>
           </details>
-
-          <details class="card assignment-card collapsible-card" open>
-            <summary class="collapsible-summary">
-              <div>
-                <h2 data-i18n="assignTitle">为所选孔赋值</h2>
-                <p data-i18n="assignBody">修改输入框会自动勾选该维度，只应用已勾选项。</p>
-              </div>
-              <span class="collapsible-summary-meta"><span id="editorSelectionCount">0 孔</span><span class="collapse-toggle" aria-hidden="true"></span></span>
-            </summary>
-            <div class="collapsible-content">
-            <div id="selectedWellSummary" class="selected-well-summary" aria-live="polite"></div>
-            <div id="selectionEditor" class="selection-editor"></div>
-            <div class="editor-actions">
-              <button id="applyParametersButton" class="primary-button" type="button" data-i18n="applySelected">应用到所选孔</button>
-              <button id="clearParametersButton" class="secondary-button" type="button" data-i18n="clearChecked">清除勾选参数</button>
-            </div>
-            </div>
-          </details>
-
-          <section class="card liquid-card" aria-labelledby="liquidCalculationTitle">
-            <div class="liquid-card-heading">
-              <div>
-                <span class="eyebrow">LIQUID PREPARATION</span>
-                <h2 id="liquidCalculationTitle" data-i18n="liquidTitle">配液计算</h2>
-                <p data-i18n="liquidBody">从当前孔板取孔数，完成常规配液、转染、梯度稀释和药物排板。</p>
-              </div>
-              <span id="liquidScopeBadge" class="liquid-scope-badge">整板 · 24 孔</span>
-            </div>
-            <div class="liquid-module-grid">
-              <button class="liquid-module-launch" type="button" data-liquid-module="basic"><span>01</span><strong>基础常规配液</strong><small>C1V1 与目标浓度配液</small></button>
-              <button class="liquid-module-launch" type="button" data-liquid-module="transfection"><span>02</span><strong>转染体系配液</strong><small>siRNA、质粒与多管 Mix</small></button>
-              <button class="liquid-module-launch" type="button" data-liquid-module="serial"><span>03</span><strong>连续梯度稀释</strong><small>直接或逐级稀释</small></button>
-              <button class="liquid-module-launch" type="button" data-liquid-module="drug"><span>04</span><strong>药物浓度梯度</strong><small>配液、预览与排板</small></button>
-              <button class="liquid-module-launch" type="button" data-liquid-module="reaction"><span>05</span><strong>反应配液 · Master Mix</strong><small>自定义组分、预混与独立加样</small></button>
-              <button class="liquid-module-launch" type="button" data-liquid-module="normalization"><span>06</span><strong>批量浓度归一化</strong><small>逐样本稀释到统一浓度</small></button>
-            </div>
-            <button id="openLiquidCalculatorButton" class="primary-button full" type="button">打开配液计算</button>
-            <p class="liquid-card-note">默认余量 10% · 最小可靠移液体积 1 µL · 结果仅保存在当前浏览器</p>
-            <section class="saved-liquid-plans" aria-labelledby="savedLiquidPlansTitle">
-              <div class="saved-liquid-plans-heading"><div><h3 id="savedLiquidPlansTitle">当前板已保存方案</h3><p id="savedLiquidPlansHelp">只有保存到项目且状态有效的方案，才会进入跨板汇总和项目导出。</p></div><span id="savedLiquidPlanCount" class="count-badge">0</span></div>
-              <div id="savedLiquidPlanList" class="saved-liquid-plan-list"></div>
-            </section>
-            <section class="project-liquid-panel" aria-labelledby="projectLiquidTitle">
-              <div class="project-liquid-heading">
-                <div>
-                  <h3 id="projectLiquidTitle">跨板配液汇总</h3>
-                  <p>合并相同配方的基础需求量，再统一加入一次余量。</p>
-                </div>
-                <div class="project-liquid-settings">
-                  <label class="project-liquid-overage"><span>统一余量</span><span><input id="projectLiquidOverage" type="number" min="0" max="100" step="0.1" value="10" />%</span></label>
-                  <label class="project-liquid-capacity"><span>单管上限</span><span><input id="projectLiquidContainerCapacity" type="number" min="1" step="any" placeholder="不限" /> µL</span></label>
-                </div>
-              </div>
-              <div class="project-liquid-controls">
-                <label><span>汇总范围</span><select id="projectLiquidScope"><option value="current">当前板</option><option value="checked">勾选板</option><option value="all">全部板</option></select></label>
-                <button id="projectLiquidSummaryButton" class="secondary-button" type="button">生成汇总</button>
-              </div>
-              <div id="projectLiquidPlatePicker" class="project-liquid-plate-picker" hidden></div>
-              <div id="projectLiquidSummary" class="project-liquid-summary" aria-live="polite"></div>
-            </section>
-          </section>
 
           <details class="card calculation-card collapsible-card legacy-calculation" hidden>
             <summary class="collapsible-summary">
@@ -264,29 +207,58 @@
           </details>
         </aside>
       </div>
-
-      <footer>
-        <span data-i18n="footerLocal">所有编辑与计算均在当前浏览器完成。</span>
-        <span data-i18n="footerReview">研究工具 · 请在实验前复核最终板图和参数。</span>
-      </footer>
     </main>
 
     <div id="liquidDrawer" class="liquid-drawer" hidden>
-      <button class="liquid-drawer-backdrop" type="button" aria-label="关闭配液计算"></button>
+      <button class="liquid-drawer-backdrop" type="button" aria-label="关闭配液"></button>
       <section class="liquid-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="liquidDrawerTitle">
         <header class="liquid-drawer-header">
-          <div><span class="eyebrow">PLATE-AWARE CALCULATOR</span><h2 id="liquidDrawerTitle">配液计算</h2><p id="liquidDrawerScope">当前板全部 24 孔</p></div>
+          <h2 id="liquidDrawerTitle" data-zh="配液" data-en="Mix">配液</h2>
+          <p id="liquidDrawerScope">当前板全部 24 孔</p>
+          <button id="liquidPlanViewButton" class="secondary-button" type="button" aria-pressed="false" data-zh="方案与汇总" data-en="Plans and summary">方案与汇总</button>
           <button id="closeLiquidDrawerButton" class="liquid-close" type="button" aria-label="关闭">×</button>
         </header>
-        <nav id="liquidModuleTabs" class="liquid-module-tabs" aria-label="配液模块">
-          <button type="button" data-liquid-module="basic">基础配液</button>
-          <button type="button" data-liquid-module="transfection">转染体系</button>
-          <button type="button" data-liquid-module="serial">梯度稀释</button>
-          <button type="button" data-liquid-module="drug">药物排板</button>
-          <button type="button" data-liquid-module="reaction">Master Mix</button>
-          <button type="button" data-liquid-module="normalization">浓度归一化</button>
+        <nav id="liquidModuleTabs" class="liquid-module-tabs" aria-label="配液计算">
+          <div class="liquid-tab-group" role="group" aria-labelledby="liquidGroupMix">
+            <span id="liquidGroupMix" data-zh="配液" data-en="Mixing">配液</span>
+            <button type="button" data-liquid-module="basic" data-zh="基础" data-en="Routine">基础</button>
+            <button type="button" data-liquid-module="reaction">Master Mix</button>
+            <button type="button" data-liquid-module="normalization" data-zh="归一化" data-en="Normalization">归一化</button>
+          </div>
+          <div class="liquid-tab-group" role="group" aria-labelledby="liquidGroupCell">
+            <span id="liquidGroupCell" data-zh="转染与细胞" data-en="Transfection and cells">转染与细胞</span>
+            <button type="button" data-liquid-module="transfection" data-zh="转染" data-en="Transfection">转染</button>
+            <button type="button" data-plate-calculator="moi" hidden>MOI</button>
+            <button type="button" data-plate-calculator="seeding" data-zh="铺板" data-en="Seeding" hidden>铺板</button>
+            <button type="button" data-plate-calculator="hydrogel" data-zh="水凝胶" data-en="Hydrogel" hidden>水凝胶</button>
+            <button type="button" data-plate-calculator="kill-curve" data-zh="杀灭曲线" data-en="Kill curve" hidden>杀灭曲线</button>
+          </div>
+          <div class="liquid-tab-group" role="group" aria-labelledby="liquidGroupGradient">
+            <span id="liquidGroupGradient" data-zh="梯度" data-en="Gradients">梯度</span>
+            <button type="button" data-liquid-module="serial" data-zh="梯度稀释" data-en="Serial dilution">梯度稀释</button>
+            <button type="button" data-liquid-module="drug" data-zh="药物" data-en="Drug">药物</button>
+          </div>
         </nav>
         <div id="liquidDrawerContent" class="liquid-drawer-content"></div>
+        <div id="liquidPlanView" class="liquid-plan-view" hidden>
+          <section class="saved-liquid-plans" aria-labelledby="savedLiquidPlansTitle">
+            <div class="saved-liquid-plans-heading"><h3 id="savedLiquidPlansTitle">当前板已保存方案</h3><span id="savedLiquidPlanCount" class="count-badge">0</span></div>
+            <div id="savedLiquidPlanList" class="saved-liquid-plan-list"></div>
+          </section>
+          <section class="project-liquid-panel" aria-labelledby="projectLiquidTitle">
+            <div class="project-liquid-heading"><h3 id="projectLiquidTitle">跨板配液汇总</h3></div>
+            <div class="project-liquid-controls">
+              <label><span>汇总范围</span><select id="projectLiquidScope"><option value="current">当前板</option><option value="checked">勾选板</option><option value="all">全部板</option></select></label>
+              <label class="project-liquid-overage"><span>统一余量</span><span><input id="projectLiquidOverage" type="number" min="0" max="100" step="0.1" value="10" />%</span></label>
+              <label class="project-liquid-capacity"><span>单管上限</span><span><input id="projectLiquidContainerCapacity" type="number" min="1" step="any" placeholder="不限" /> µL</span></label>
+              <button id="projectLiquidSummaryButton" class="primary-button" type="button">生成汇总</button>
+            </div>
+            <div id="projectLiquidPlatePicker" class="project-liquid-plate-picker" hidden></div>
+            <div id="projectLiquidSummary" class="project-liquid-summary" aria-live="polite"></div>
+            <div id="liquidSummaryActions" class="liquid-summary-actions" hidden></div>
+            <div id="liquidSummaryTables" class="liquid-summary-tables"></div>
+          </section>
+        </div>
       </section>
     </div>
 
@@ -294,7 +266,7 @@
       <button class="project-file-backdrop" type="button" aria-label="关闭项目文件面板"></button>
       <section class="project-file-panel" role="dialog" aria-modal="true" aria-labelledby="projectFileDialogTitle">
         <header class="project-file-header">
-          <div><span class="eyebrow">PROJECT FILES</span><h2 id="projectFileDialogTitle">导入孔板表格</h2><p id="projectFileDialogHelp">使用 Excel 多工作表一次导入多块板；CSV/TSV 每个文件表示一块板。</p></div>
+          <div><h2 id="projectFileDialogTitle">导入孔板表格</h2><p id="projectFileDialogHelp">使用 Excel 多工作表一次导入多块板；CSV/TSV 每个文件表示一块板。</p></div>
           <button id="closeProjectFileDialogButton" class="liquid-close" type="button" aria-label="关闭">×</button>
         </header>
         <div id="projectImportPanel" class="project-file-content">
@@ -326,32 +298,21 @@
       </section>
     </div>
 
-    <div id="summaryDrawer" class="summary-drawer" hidden>
-      <button class="summary-drawer-backdrop" type="button" aria-label="关闭完整汇总"></button>
-      <section class="summary-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="summaryDrawerTitle">
-        <header class="summary-drawer-header">
-          <div><span class="eyebrow">CROSS-PLATE SUMMARY</span><h2 id="summaryDrawerTitle">跨板配液完整汇总</h2><p id="summaryDrawerMeta"></p></div>
-          <button id="closeSummaryDrawerButton" class="liquid-close" type="button" aria-label="关闭">×</button>
-        </header>
-        <div id="summaryDrawerActions" class="summary-drawer-actions"></div>
-        <div id="summaryDrawerContent" class="summary-drawer-content"></div>
-      </section>
-    </div>
-
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script src="core.js?v=20260822-8"></script>
     <script src="color-core.js?v=20260823-15"></script>
     <script src="liquid-core.js?v=20260823-15"></script>
-    <script src="liquid-plan-core.js?v=20261104-1"></script>
+    <script src="liquid-plan-core.js?v=20260823-28"></script>
     <script src="workspace-core.js?v=20261009-42"></script>
     <script src="xlsx-core.js?v=20260822-1"></script>
     <script src="vendor/preparation-kernel.js?v=20261009-42"></script>
     <script src="preparation-core.js?v=20261009-42"></script>
-    <script src="preparation-ui.js?v=20261009-42"></script>
-    <!-- host-integration --><link rel="stylesheet" href="labnest-bridge.css?v=20261009">
-<script src="calculator-engine.js?v=20261009"></script>
-<script src="labnest-offline.js?v=20261009"></script>
-<script src="labnest-bridge.js?v=20261009"></script>
+    <script src="preparation-ui.js?v=20261104-1"></script>
+    <script src="liquid-display.js?v=20261104-1"></script>
+    <!-- host-integration --><link rel="stylesheet" href="labnest-bridge.css?v=20261104">
+<script src="calculator-engine.js?v=20261104"></script>
+<script src="labnest-offline.js?v=20261104"></script>
+<script src="labnest-bridge.js?v=20261104"></script>
     <script src="app.js?v=20261104-1"></script>
   </body>
 </html>

@@ -26,6 +26,9 @@ import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { formInputClass } from "@/components/forms";
 import { useI18n } from "@/components/I18nProvider";
 import { MarkdownRichTextEditor } from "@/components/MarkdownRichTextEditor";
+import { placeToolOutput } from "@/components/DocumentToolNode";
+import { ToolRecordIntegration } from "@/components/ToolRecordIntegration";
+import { entryToolDocument, type ToolOutputBlock, type ToolOwner } from "@/lib/tool-workflow";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
 import { Button } from "@/components/ui/Button";
 import { Disclosure } from "@/components/ui/Disclosure";
@@ -157,6 +160,9 @@ function initialFields(defaultOccurredAt: string, defaultSource: string, default
     resultType: "",
   };
 }
+
+/** An Entry's tool outputs live in its text, so the integration has no document of its own to replace. */
+const ignoreDocument = () => undefined;
 
 export function EntryComposer({
   projects,
@@ -300,10 +306,14 @@ export function EntryComposer({
     setFields((current) => ({ ...current, [key]: value }));
   }
 
+  function shownEditor() {
+    const live = [...bodyEditors.current].filter(editor => !editor.isDestroyed);
+    return live.find(editor => editor.view.dom.getClientRects().length > 0) ?? live[0];
+  }
+
   /** The camera button sits outside the page, so its photo goes into the page at its end, like everything else added to an Entry. */
   function addFiles(fileList: FileList | File[]) {
-    const live = [...bodyEditors.current].filter(editor => !editor.isDestroyed);
-    const bodyEditor = live.find(editor => editor.view.dom.getClientRects().length > 0) ?? live[0];
+    const bodyEditor = shownEditor();
     if (!bodyEditor) { setSubmitStatus("The page is still loading; try again."); return; }
     setSubmitStatus("");
     appendToPage(bodyEditor, Array.from(fileList));
@@ -409,8 +419,13 @@ export function EntryComposer({
     }
   }
 
+  const toolOwner: ToolOwner = { ownerType: "entry", ownerId: entry?.id, experimentId: fields.experimentId || undefined, researchPlanId: fields.researchPlanId || undefined };
+  const toolDocument = entryToolDocument(fields.contentMarkdown);
+  const placeOutput = (block: ToolOutputBlock, replacePlateId?: string) => { const editor = shownEditor(); if (editor) placeToolOutput(editor, block, replacePlateId); };
+
   return (
     <ReferenceScope.Provider value={{ experimentId: fields.experimentId || undefined }}>
+    <ToolRecordIntegration owner={toolOwner} title={fields.title} document={toolDocument} onChange={ignoreDocument} onOutput={placeOutput}>
     <form inert={isSubmitting} aria-busy={isSubmitting} onSubmit={submit} className="space-y-5">
       <input id={cameraInputId} className="sr-only" disabled={isSubmitting} type="file" accept="image/*" capture="environment" onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
       {captureMode ? (
@@ -627,6 +642,7 @@ export function EntryComposer({
         </Button>
       </div>
     </form>
+    </ToolRecordIntegration>
     </ReferenceScope.Provider>
   );
 }

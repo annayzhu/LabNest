@@ -1,6 +1,7 @@
 "use server";
 import { structuredRunView } from '@/lib/structured-run';
 
+import { finalizeToolDraft } from "@/lib/tool-draft.server";
 import { assertDocumentSaveVersion } from "@/lib/document-save-version";
 import { lockEntrySourceGraph } from "@/lib/entry-source-lock";
 import { revalidatePath } from "next/cache";
@@ -79,6 +80,7 @@ export async function createExperiment(
       ...data,
       ...data.parsed,
       runCode,
+      toolDraftId: String(formData.get("toolDraftId") ?? "") || undefined,
       creationKey: z.string().uuid().parse(formData.get("creationKey")),
       methodMode: data.parsed.methodMode,
       protocolVersionIds,
@@ -92,7 +94,7 @@ export async function createExperiment(
   revalidatePath("/experiments");
   revalidatePath("/results");
   if (researchPlanId) revalidatePath(`/research-plans/${researchPlanId}`);
-  redirect(`/experiments/${experimentId}`);
+  redirect(`/experiments/${experimentId}${formData.get("toolDraftId")?`?toolSaved=${encodeURIComponent(String(formData.get("toolDraftId")))}`:""}`);
 }
 
 export async function updateExperiment(
@@ -113,6 +115,7 @@ export async function updateExperiment(
       await lockEntrySourceGraph(tx);
       await tx.$queryRaw`SELECT id FROM "Experiment" WHERE id=${current.id} FOR UPDATE`;
       await associateDocumentMedia(tx, data.contentJson, "experiment", data.parsed.id!);
+      await finalizeToolDraft(tx,String(formData.get("toolDraftId") ?? "") || undefined,"experiment",data.parsed.id!);
       const fresh = await tx.experiment.findUniqueOrThrow({where:{id:current.id}, include:{protocolRun:true,steps:true}});
       if (structuredRunView(fresh.protocolSnapshotJson, fresh.protocolRun?.executionPlanJson, fresh.steps).hasSystems && data.parsed.status !== fresh.status) throw new Error('此实验的执行状态由 Run 操作管理，请在执行页面完成或继续。');
       assertRecordEditable(fresh.recordStatus);
@@ -141,7 +144,7 @@ export async function updateExperiment(
   revalidatePath("/experiments");
   revalidatePath(`/experiments/${experimentId}`);
   if (researchPlanId) revalidatePath(`/research-plans/${researchPlanId}`);
-  redirect(`/experiments/${experimentId}`);
+  redirect(`/experiments/${experimentId}${formData.get("toolDraftId")?`?toolSaved=${encodeURIComponent(String(formData.get("toolDraftId")))}`:""}`);
 }
 
 export async function archiveExperiment(

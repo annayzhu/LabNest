@@ -11,6 +11,7 @@ function readableCell(value: string) {
 }
 
 function blockMarkdown(block: ScientificContentBlock) {
+  if (block.type === "tool_output") return `${block.label}\n${block.method}\n${[block.table.headers,...block.table.rows].map(row=>row.join("\t")).join("\n")}`;
   if (block.type === "heading") return `### ${block.text}`;
   if (block.type === "text") return block.text;
   if (block.type === "rich_text") return richTextPlainText(block.nodes);

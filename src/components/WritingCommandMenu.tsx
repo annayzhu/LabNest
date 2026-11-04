@@ -13,7 +13,7 @@ import { openPlateEditorWhenShown } from './DocumentPlateNode';
 import { ReferencePicker, ReferenceScope, type ReferencePickerKind } from './ReferencePicker';
 
 /** Something an editor adds to Insert, e.g. an experiment record's metric or callout. */
-export type WritingInsert = { id: string; label: string; hint: string; keywords: string; icon: LucideIcon; insert: (editor: Editor) => void };
+export type WritingInsert = { id: string; label: string; hint: string; keywords: string; icon: LucideIcon; insert: (editor: Editor) => void; group?: 'Tools' };
 type WritingChoice = BlockKind | 'image' | 'file' | 'table' | 'plate' | 'time' | 'datetime' | ReferencePickerKind | WritingInsert;
 const time = (at: Date) => format(at, 'HH:mm'), dateTime = (at: Date) => format(at, 'yyyy-MM-dd HH:mm');
 
@@ -32,9 +32,10 @@ function writingCommands(now: Date, { checklist, media, inserts, references, inT
       { id: 'file', group: 'Insert', label: 'File attachment', hint: 'File or audio', keywords: 'fujian fj wenjian wj file attachment audio', icon: Paperclip, choice: 'file' as const },
     ] : []),
     { id: 'table', group: 'Insert', label: 'Table', hint: '3 × 3 with a header row', keywords: 'biaoge bg table', icon: Table2, choice: 'table' },
-    // A plate is a block of its own; a table cell cannot hold one.
-    ...(references && !inTable ? [{ id: 'plate', group: 'Insert', label: 'Plate layout', hint: '6–384 wells · samples and treatments per well', keywords: 'banbuju bbj kongban kb buju bj plate layout well 96 384 qpcr', icon: Grid3x3, choice: 'plate' as const }] : []),
-    ...inserts.map(insert => ({ id: insert.id, group: 'Insert', label: insert.label, hint: insert.hint, keywords: insert.keywords, icon: insert.icon, choice: insert })),
+    ...inserts.filter(insert => !insert.group).map(insert => ({ id: insert.id, group: 'Insert', label: insert.label, hint: insert.hint, keywords: insert.keywords, icon: insert.icon, choice: insert })),
+    // A plate or a tool's output is a block of its own; a table cell cannot hold one.
+    ...(references && !inTable ? [{ id: 'plate', group: 'Tools', label: 'Plate layout', hint: '6–384 wells · samples and treatments per well', keywords: 'banbuju bbj kongban kb buju bj plate layout well 96 384 ziyou', icon: Grid3x3, choice: 'plate' as const }] : []),
+    ...(!inTable ? inserts.filter(insert => insert.group).map(insert => ({ id: insert.id, group: 'Tools', label: insert.label, hint: insert.hint, keywords: insert.keywords, icon: insert.icon, choice: insert })) : []),
     ...(references ? [
       { id: 'sample', group: 'Link a record', label: 'Sample', hint: 'A sample from the sample library', keywords: 'yangben yb biaoben bb sample specimen rna dna cells', icon: TestTube, choice: 'sample' as const },
       { id: 'inventory', group: 'Link a record', label: 'Inventory item', hint: 'A product or lot in stock', keywords: 'kucun kc wupin wp shiji sj haocai hc inventory stock reagent product lot', icon: Package, choice: 'inventory' as const },

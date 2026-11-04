@@ -6,9 +6,11 @@ import { NodeViewWrapper, ReactNodeViewRenderer, type NodeViewProps } from "@tip
 import { Pencil } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
 import { cn } from "@/lib/cn";
-import { plateFilledCount, type PlateLayout } from "@/lib/plate-layout";
+import { PLANNER_PLATE_SIZES, plateFilledCount, type PlateLayout } from "@/lib/plate-layout";
+import { focusBelow } from "@/lib/editor-block-line";
 import { createDocumentWidgetExtension } from "@/lib/tiptap-document-extensions";
 import { PlateLayoutGrid } from "./PlateLayoutGrid";
+import { ToolEditContext } from "./ToolOutput";
 import { ReferenceScope } from "./ReferencePicker";
 
 // The editor is only loaded when someone edits a plate.
@@ -22,6 +24,7 @@ function PlateNodeView({ node, editor, selected, getPos }: NodeViewProps) {
   const block = node.attrs.block as PlateLayout;
   const { t } = useI18n();
   const { experimentId } = useContext(ReferenceScope);
+  const openTool = useContext(ToolEditContext);
   const [editing, setEditing] = useState(false);
   useEffect(() => {
     if (!openOnShow.delete(block.id)) return;
@@ -35,7 +38,9 @@ function PlateNodeView({ node, editor, selected, getPos }: NodeViewProps) {
     if (typeof pos !== "number") return;
     let chain = editor.chain().focus().command(({ tr }) => { tr.setNodeMarkup(pos, undefined, { ...node.attrs, block: layout }); return true; });
     if (more.length) chain = chain.insertContentAt(pos + node.nodeSize, more.map((plate) => ({ type: "documentPlate", attrs: { block: plate } })));
-    chain.setNodeSelection(pos).run();
+    chain.run();
+    const last = more.at(-1)?.id ?? layout.id;
+    focusBelow(editor, (item) => item.type.name === "documentPlate" && item.attrs.block?.id === last);
   };
 
   // The page translator skips editable content, so the words here are translated in place.
@@ -47,7 +52,7 @@ function PlateNodeView({ node, editor, selected, getPos }: NodeViewProps) {
         <button type="button" className="focus-ring" onClick={() => setEditing(true)}><Pencil aria-hidden />{t("Edit plate")}</button>
       </div> : null}
     </div>
-    {editing ? <PlateLayoutEditor initial={block} experimentId={experimentId} onDone={save} onCancel={() => { setEditing(false); editor.commands.focus(); }} /> : null}
+    {editing ? <PlateLayoutEditor initial={block} experimentId={experimentId} onOpenPlanner={openTool && PLANNER_PLATE_SIZES.includes(block.plateSize) ? (layout) => { save(layout, []); openTool(undefined, undefined, undefined, "free-plate-layout", layout); } : undefined} onDone={save} onCancel={() => { setEditing(false); editor.commands.focus(); }} /> : null}
   </NodeViewWrapper>;
 }
 

@@ -1100,7 +1100,10 @@
     return select ? select.value : "all";
   }
 
+  var plotAssayOverride = null;
+
   function selectedPlotAssay() {
+    if (plotAssayOverride) return plotAssayOverride;
     var key = currentAssayFilter();
     if (key !== "all") return state.analysis.assays.filter(function (assay) { return assay.key === key; })[0] || state.analysis.assays[0];
     return state.analysis.assays.filter(function (assay) { return assay.calibration.ok; })[0] || state.analysis.assays[0];
@@ -1548,6 +1551,100 @@
     });
   }
 
+  /** Runs inside a LabNest record: the record holds the session, and saved figures and tables go back to it. */
+  function connectRecord() {
+    if (window.parent === window) return false;
+    var protocol = "labnest-tool-v1", session = "", changeTimer = 0;
+    function send(message) { window.parent.postMessage(Object.assign({ protocol: protocol, sessionId: session }, message), window.location.origin); }
+    function recordState() {
+      if (!state.parsed) return null;
+      if (state.analysis) syncRegistrationFromUi();
+      return { schemaVersion: 1, fileName: state.fileName, fileFingerprint: state.fileFingerprint, sheetName: state.sheetName, parsed: state.parsed, registration: state.registration, settings: state.settings, sampleAssignments: state.sampleAssignments, selectedBatchIds: selectedBatchIds };
+    }
+    function restoreRecord(saved) {
+      if (saved.schemaVersion !== 1) throw new Error("方案格式不兼容");
+      state.fileName = saved.fileName;
+      state.fileFingerprint = saved.fileFingerprint;
+      state.sheetName = saved.sheetName;
+      state.parsed = saved.parsed;
+      state.registration = saved.registration;
+      state.settings = Object.assign({}, core.DEFAULTS, saved.settings);
+      state.sampleAssignments = saved.sampleAssignments || [];
+      selectedBatchIds = saved.selectedBatchIds || {};
+      runAnalysis(false);
+      $("#uploaded-file-name").textContent = state.fileName;
+      $("#uploaded-file-details").textContent = "工作表 " + state.sheetName;
+      $("#uploaded-file").hidden = false;
+      $("#drop-zone").hidden = true;
+      $("#import-actions").hidden = true;
+      $("#workspace").classList.remove("is-hidden");
+    }
+    /** Static figures: one per assay with plottable values, at a size that stays readable on paper. */
+    function figures() {
+      var plot = $("#copy-number-plot"), shown = [];
+      state.analysis.assays.forEach(function (assay) {
+        plotAssayOverride = assay;
+        renderCopyNumberPlot();
+        var svg = plot.querySelector("svg");
+        if (!svg) return;
+        var clone = svg.cloneNode(true);
+        clone.removeAttribute("class");
+        clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        clone.setAttribute("font-family", "Arial, 'PingFang SC', sans-serif");
+        Array.prototype.forEach.call(clone.querySelectorAll("text"), function (text) { if (Number(text.getAttribute("font-size")) < 12) text.setAttribute("font-size", "12"); });
+        shown.push({ svg: new XMLSerializer().serializeToString(clone), caption: assay.targetName + (assay.calibration.ok ? " · 校准：" + assay.calibration.label : " · 尚未校准") });
+      });
+      plotAssayOverride = null;
+      renderActiveResult();
+      return shown;
+    }
+    function sheetTable(sheet) {
+      return { headers: sheet.headers, rows: sheet.rows.map(function (row) { return sheet.headers.map(function (header) { var value = row[header]; return value === null || value === undefined ? "" : String(value); }); }) };
+    }
+    function recordOutput() {
+      if (!state.analysis) throw new Error("请先导入仪器文件并开始分析");
+      syncRegistrationFromUi();
+      var exported = core.buildIntegratedExport(state.analysis, { fileName: state.fileName, sheetName: state.sheetName, registration: state.registration });
+      var named = function (name) { return exported.sheets.filter(function (sheet) { return sheet.name === name; })[0]; };
+      var uncalibrated = state.analysis.assays.filter(function (assay) { return !assay.calibration.ok; }).length;
+      var number = function (value) { return value === null || value === undefined ? "" : String(Number(Number(value).toPrecision(4))); };
+      // One row per sample and assay reads on a page; the full export stays attached.
+      var compact = { headers: ["样本", "检测", "CN 判定", "连续 CN", "有效复孔", "结果状态"], rows: [] };
+      core.flattenResults(state.analysis).forEach(function (row) {
+        compact.rows.push([row.sample, row.assay, row.copy_number_predicted === null || row.copy_number_predicted === undefined ? "No call" : String(row.copy_number_predicted), number(row.copy_number_calculated), row.valid_replicates + "/" + row.total_replicates, diagnostics.qualityLabel(row.quality_status)]);
+      });
+      return {
+        label: "CNV 分析", images: figures(), table: compact, fullTable: sheetTable(named("CN计算明细")),
+        method: "文件 " + state.fileName + " · 工作表 " + state.sheetName + " · 参照 " + (state.analysis.referenceName || "未提供") + (uncalibrated ? " · " + uncalibrated + " 个检测尚未校准" : "") + "。孔数为技术重复，不代表生物学样本量。"
+      };
+    }
+    function changed() {
+      clearTimeout(changeTimer);
+      changeTimer = setTimeout(function () { if (session && state.parsed) send({ type: "DRAFT_CHANGED", state: recordState() }); }, 500);
+    }
+    window.addEventListener("message", function (event) {
+      if (event.origin !== window.location.origin || event.source !== window.parent || !event.data || event.data.protocol !== protocol) return;
+      var message = event.data;
+      if (message.type === "CONTEXT_INIT") {
+        session = message.sessionId;
+        document.documentElement.dataset.labnestEmbedded = "true";
+        try { if (message.state) restoreRecord(message.state); send({ type: "CONTEXT_READY" }); }
+        catch (error) { send({ type: "SAVE_ERROR", error: error.message || "方案读取失败" }); }
+        return;
+      }
+      if (message.sessionId !== session) return;
+      if (message.type === "REQUEST_DRAFT") send({ type: "DRAFT_FLUSH", state: recordState() });
+      if (message.type === "REQUEST_OUTPUT") {
+        try { send({ type: "OUTPUT_SUBMIT", state: recordState(), output: recordOutput() }); }
+        catch (error) { send({ type: "SAVE_ERROR", error: error.message || "请检查当前输入" }); }
+      }
+    });
+    document.addEventListener("input", changed, true);
+    document.addEventListener("change", changed, true);
+    send({ type: "TOOL_READY" });
+    return true;
+  }
+
   bindEvents();
-  restoreLastSession();
+  if (!connectRecord()) restoreLastSession();
 })();

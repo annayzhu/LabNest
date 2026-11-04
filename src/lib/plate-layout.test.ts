@@ -1,3 +1,4 @@
+import { plannerFieldsLeftOut } from "./plate-layout";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -99,5 +100,15 @@ describe("free plate planner backups", () => {
     expect(restored.plates[0].plates[96]).toEqual({ A1: { params: { sample: "RNA-0001 NC", dose: 2.5 } }, A2: { params: { sample: "RNA-0001 NC" } } });
     expect(restored.plates[0].dimensions.find((dimension) => dimension.id === "dose")).toMatchObject({ type: "number", unit: "µM" });
     expect(plateLayoutsFromPlannerBackup(restored, nextId)[0].wells.A1).toEqual({ sample: "RNA-0001 NC", dose: "2.5" });
+  });
+});
+
+describe("planner parameters a plate block cannot show", () => {
+  const dimensions = Array.from({ length: 8 }, (_, index) => ({ id: `d${index}`, name: `参数${index}` }));
+  const wells = { A1: { params: Object.fromEntries(dimensions.slice(0, 7).map((item) => [item.id, "x"])) } };
+  it("are named, unless nothing was entered for them", () => {
+    expect(plannerFieldsLeftOut({ version: 2, plates: [{ dimensions, wells }] })).toHaveLength(1);
+    expect(plannerFieldsLeftOut({ dimensions: dimensions.slice(0, 6), wells })).toEqual([]);
+    expect(plannerFieldsLeftOut(null)).toEqual([]);
   });
 });

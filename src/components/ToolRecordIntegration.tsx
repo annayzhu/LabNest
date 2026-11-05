@@ -8,7 +8,7 @@ import { ToolEditContext, type ToolOpener } from './ToolOutput';
 import { Button } from './ui/Button';
 import type { ScientificDocument } from '@/lib/scientific-document';
 import { toolEmbed, toolFrameSource, type EmbeddedToolId } from '@/lib/tool-embeds';
-import { freshToolDraft, type ToolOutputBlock, type ToolOwner } from '@/lib/tool-workflow';
+import { freshToolDraft, recordTables, type ToolOutputBlock, type ToolOwner } from '@/lib/tool-workflow';
 type Launch = {
     mappingConfirmed?: boolean;
     submissionId: string;
@@ -28,9 +28,14 @@ type Launch = {
         ownerId: string;
     }>;
     source?: ToolOutputBlock["source"];
+    /** Where a tool on another address lives, and the record's tables it can draw from. */
+    externalUrl?: string;
+    datasets?: Array<{ name: string; raw: string }>;
 };
+/** Only the address the tool runs at may talk to this page. */
+const toolOrigin = (launch: Pick<Launch, 'externalUrl'>) => launch.externalUrl ? new URL(launch.externalUrl).origin : location.origin;
 /** Where an output goes when it was not placed at the cursor. */
-const defaultSection = (ownerType: ToolOwner['ownerType'], toolId: EmbeddedToolId) => ownerType === 'result' || ownerType === 'entry' ? 'analysis' : ownerType === 'experiment' ? 'setup' : ownerType === 'report' ? (toolId.endsWith('-analysis') ? 'results' : 'methods') : 'material_methods';
+const defaultSection = (ownerType: ToolOwner['ownerType'], toolId: EmbeddedToolId) => ownerType === 'result' || ownerType === 'entry' ? 'analysis' : ownerType === 'experiment' ? 'setup' : ownerType === 'report' ? (toolId.endsWith('-analysis') || toolId === 'visualization-studio' ? 'results' : 'methods') : 'material_methods';
 export function ToolRecordIntegration({ owner, title, document, onChange, onOutput, children }: {
     owner: ToolOwner;
     title?: string | null;
@@ -64,6 +69,8 @@ export function ToolRecordIntegration({ owner, title, document, onChange, onOutp
     const [newRecordKey,setNewRecordKey]=useState('');
     const [restored, setRestored] = useState(false);
     const edited = useRef(false);
+    const lastDraft = useRef('');
+    const refusedAt = useRef(0);
     const draftContext=useRef('');
     useEffect(()=>{
         if(owner.ownerId)return;
@@ -192,29 +199,44 @@ export function ToolRecordIntegration({ owner, title, document, onChange, onOutp
                 toolId?: ToolOutputBlock["toolId"];
             } | undefined;
 
+            let externalUrl: string | undefined;
+            let datasets: Launch['datasets'];
+            if (desiredTool === 'visualization-studio') {
+                const found = await fetch('/api/tool-workflow?visualization=1').then(r => r.json()) as { url: string | null };
+                if (!found.url)
+                    throw new Error(tr('可视化还没有配置地址：请在部署设置里填写 VISUALIZATION_STUDIO_URL', 'Visualization has no address yet: set VISUALIZATION_STUDIO_URL in the deployment settings'));
+                externalUrl = found.url;
+                datasets = (await Promise.all(recordTables(current.document).map(async table => {
+                    if (table.raw)
+                        return { name: table.name, raw: table.raw };
+                    const response = await fetch(`/api/attachments/${table.attachmentId}`);
+                    return response.ok ? { name: table.name, raw: await response.text() } : undefined;
+                }))).filter(table => table !== undefined);
+            }
             returnFocus.current = window.document.activeElement as HTMLElement;
             const state = pending?.state && (!block || pending.artifactId === block.id) ? pending.state : block ? await fetch(`/api/attachments/${block.sessionAttachmentId}`).then(r => { if (!r.ok)
                 throw new Error('方案读取失败，请重试'); return r.json(); }).then(r => r.state) : pending?.state;
             setReady(false);
             setConflict(false);
-            setLaunch({ submissionId: pending?.submissionId ?? newClientMutationId(), owner: { ...current.owner }, id: pendingEntry?.[0] ?? newClientMutationId(), artifactId: block?.id ?? pending?.artifactId ?? newClientMutationId(), baseRevision: pending?.baseRevision ?? block?.revision ?? 0, toolId: desiredTool, state: plate ? plateLayoutsToPlannerBackup([plate], plate.name) : state, replacePlateId: plate?.id, anchorId, insertionSection, samples: context.samples, layouts: context.layouts, planLayouts: context.planLayouts ?? [] });
+            setLaunch({ submissionId: pending?.submissionId ?? newClientMutationId(), owner: { ...current.owner }, id: pendingEntry?.[0] ?? newClientMutationId(), artifactId: block?.id ?? pending?.artifactId ?? newClientMutationId(), baseRevision: pending?.baseRevision ?? block?.revision ?? 0, toolId: desiredTool, state: plate ? plateLayoutsToPlannerBackup([plate], plate.name) : state, replacePlateId: plate?.id, anchorId, insertionSection, samples: context.samples, layouts: context.layouts, planLayouts: context.planLayouts ?? [], externalUrl, datasets });
         }
         catch (e) {
             setError(e instanceof Error ? e.message : '尚未打开，请重试');
         }
     }, [persist]);
     useEffect(() => { if (launch) { dialog.current?.showModal(); iframe.current?.focus(); } }, [launch]);
-    useEffect(() => { if (!busy && (!launch || ready || toolEmbed(launch.toolId)?.mode !== 'bridged'))
+    useEffect(() => { if (!busy && (!launch || ready))
         return; const timer = setTimeout(() => { setBusy(false); setError('工具暂未响应，请重试；当前草稿已保留'); }, 15000); return () => clearTimeout(timer); }, [busy, launch, ready]);
     useEffect(() => {
         if (!launch)
             return;
+        const origin = toolOrigin(launch);
         const receive = async (event: MessageEvent) => {
-            if (event.origin !== location.origin || event.source !== iframe.current?.contentWindow || event.data?.protocol !== 'labnest-tool-v1')
+            if (event.origin !== origin || event.source !== iframe.current?.contentWindow || event.data?.protocol !== 'labnest-tool-v1')
                 return;
             const message = event.data;
             if (message.type === 'TOOL_READY') {
-                iframe.current!.contentWindow!.postMessage({ protocol: 'labnest-tool-v1', type: 'CONTEXT_INIT', sessionId: launch.id, state: launch.state, samples: launch.samples, layouts: launch.layouts, title, language: locale }, location.origin);
+                iframe.current!.contentWindow!.postMessage({ protocol: 'labnest-tool-v1', type: 'CONTEXT_INIT', sessionId: launch.id, state: launch.state, samples: launch.samples, layouts: launch.layouts, datasets: launch.datasets, title, language: locale }, origin);
                 setStatus('');
                 return;
             }
@@ -243,7 +265,11 @@ export function ToolRecordIntegration({ owner, title, document, onChange, onOutp
             }
             if (message.type === 'DRAFT_CHANGED') {
                 setPendingApply(Boolean(message.pendingApply));
-                setError('');
+                // A refusal stands until the person changes something; tools also report drafts on their own just after one.
+                const draftText = JSON.stringify(message.state);
+                if (draftText !== lastDraft.current && Date.now() - refusedAt.current > 700)
+                    setError('');
+                lastDraft.current = draftText;
                 try {
                     await persist({ state: message.state, artifactId: launch.artifactId, baseRevision: launch.baseRevision, submissionId: launch.submissionId, toolId: launch.toolId }, launch.id);
                 }
@@ -253,6 +279,7 @@ export function ToolRecordIntegration({ owner, title, document, onChange, onOutp
                 return;
             }
             if (message.type === 'SAVE_ERROR') {
+                refusedAt.current = Date.now();
                 setError(message.error);
                 setBusy(false);
                 return;
@@ -289,7 +316,7 @@ export function ToolRecordIntegration({ owner, title, document, onChange, onOutp
                     }
                     catch { }
                 }
-                iframe.current?.contentWindow?.postMessage({ protocol: 'labnest-tool-v1', type: 'SAVE_ACK', sessionId: launch.id }, location.origin);
+                iframe.current?.contentWindow?.postMessage({ protocol: 'labnest-tool-v1', type: 'SAVE_ACK', sessionId: launch.id }, origin);
                 delete sessions.current[launch.id];
                 setLaunch(null);
                 setStatus(current.onOutput ? '' : current.owner.ownerId ? '已保存到当前记录' : '已保存到草稿');
@@ -307,15 +334,14 @@ export function ToolRecordIntegration({ owner, title, document, onChange, onOutp
         window.addEventListener('message', receive);
         return () => window.removeEventListener('message', receive);
     }, [launch, draftId, formValues, persist, storageKey, title, locale]);
-    const saveLabel = (tool: EmbeddedToolId, ownerType: ToolOwner['ownerType']) => tool === 'plasmid-workbench' ? tr('插入图谱', 'Insert map') : ['qpcr-analysis', 'cnv-analysis', 'calculator'].includes(tool) ? (pendingApply ? tr('应用并插入', 'Apply and insert') : tr('插入结果', 'Insert results')) : ownerType === 'result' ? tr('保存到结果', 'Save to result') : ownerType === 'report' ? tr('保存到报告', 'Save to report') : ownerType === 'entry' ? tr('插入记录', 'Insert into entry') : tr('保存到计划', 'Save to plan');
+    const saveLabel = (tool: EmbeddedToolId, ownerType: ToolOwner['ownerType']) => tool === 'visualization-studio' ? tr('插入图表', 'Insert figure') : tool === 'plasmid-workbench' ? tr('插入图谱', 'Insert map') : ['qpcr-analysis', 'cnv-analysis', 'calculator'].includes(tool) ? (pendingApply ? tr('应用并插入', 'Apply and insert') : tr('插入结果', 'Insert results')) : ownerType === 'result' ? tr('保存到结果', 'Save to result') : ownerType === 'report' ? tr('保存到报告', 'Save to report') : ownerType === 'entry' ? tr('插入记录', 'Insert into entry') : tr('保存到计划', 'Save to plan');
     const embed = launch ? toolEmbed(launch.toolId) : undefined;
-    const bridged = embed?.mode === 'bridged';
     function close() { if (!launch || busy)
-        return; if (!ready || !bridged) {
+        return; if (!ready) {
         dialog.current?.close();
         setLaunch(null);
         return;
-    } closing.current = true; setBusy(true); iframe.current?.contentWindow?.postMessage({ protocol: 'labnest-tool-v1', type: 'REQUEST_DRAFT', sessionId: launch.id }, location.origin); }
+    } closing.current = true; setBusy(true); iframe.current?.contentWindow?.postMessage({ protocol: 'labnest-tool-v1', type: 'REQUEST_DRAFT', sessionId: launch.id }, toolOrigin(launch)); }
     return <ToolEditContext.Provider value={open}><div ref={host}>
     <input type="hidden" name="toolDraftId" value={draftId}/>{recordRevision ? <input type="hidden" name="expectedUpdatedAt" value={recordRevision}/> : null}
     {children}
@@ -331,8 +357,8 @@ export function ToolRecordIntegration({ owner, title, document, onChange, onOutp
         }
         catch {
             setError('布局读取失败，请重试');
-        } }}><option value="">{tr('选用研究计划布局', 'Use a research plan layout')}</option>{launch.planLayouts.map((item, index) => <option key={item.id} value={item.id}>{tr('布局', 'Layout')} {index + 1} · {tr('修订', 'rev')} {item.revision}</option>)}</select> : null}<span role="status" className="text-xs text-muted">{bridged ? status : tr('暂不能存回这条记录', 'Not saved to this record yet')}</span>{launch.mappingConfirmed === false ? <label className="text-xs"><input type="checkbox" onChange={() => setLaunch({ ...launch, mappingConfirmed: true })}/> {tr('已核对左侧样本与当前实验一致', 'Samples on the left match this experiment')}</label> : null}{bridged ? <Button type="button" variant="primary" disabled={!ready || busy || launch.mappingConfirmed === false} onClick={() => { setBusy(true); iframe.current?.contentWindow?.postMessage({ protocol: 'labnest-tool-v1', type: 'REQUEST_OUTPUT', sessionId: launch.id }, location.origin); }}>{busy ? tr('正在保存…', 'Saving…') : saveLabel(launch.toolId, launch.owner.ownerType)}</Button> : null}</header>
+        } }}><option value="">{tr('选用研究计划布局', 'Use a research plan layout')}</option>{launch.planLayouts.map((item, index) => <option key={item.id} value={item.id}>{tr('布局', 'Layout')} {index + 1} · {tr('修订', 'rev')} {item.revision}</option>)}</select> : null}<span role="status" className="text-xs text-muted">{status}</span>{launch.mappingConfirmed === false ? <label className="text-xs"><input type="checkbox" onChange={() => setLaunch({ ...launch, mappingConfirmed: true })}/> {tr('已核对左侧样本与当前实验一致', 'Samples on the left match this experiment')}</label> : null}<Button type="button" variant="primary" disabled={!ready || busy || launch.mappingConfirmed === false} onClick={() => { setBusy(true); iframe.current?.contentWindow?.postMessage({ protocol: 'labnest-tool-v1', type: 'REQUEST_OUTPUT', sessionId: launch.id }, toolOrigin(launch)); }}>{busy ? tr('正在保存…', 'Saving…') : saveLabel(launch.toolId, launch.owner.ownerType)}</Button></header>
     {error ? <div role="alert" className="tool-save-error">{error}{conflict ? <Button type="button" onClick={() => { setLaunch({ ...launch, forkFromId: launch.artifactId, artifactId: newClientMutationId(), baseRevision: 0, submissionId: newClientMutationId() }); setConflict(false); setError(''); }}>{tr('另存为新版本', 'Save as a new version')}</Button> : null}</div> : null}
-    <iframe ref={iframe} title={embed?.label ?? launch.toolId} src={embed ? toolFrameSource(embed, launch.id, locale) : undefined} allow="clipboard-write"/>
+    <iframe ref={iframe} title={embed?.label ?? launch.toolId} src={embed ? toolFrameSource(embed, launch.id, locale, launch.externalUrl) : undefined} allow="clipboard-write"/>
   </dialog>, window.document.body) : null}</ToolEditContext.Provider>;
 }

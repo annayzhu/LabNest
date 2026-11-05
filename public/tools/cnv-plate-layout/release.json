@@ -1,0 +1,29 @@
+{
+  "repository": "https://github.com/annayzhu/CNV-Assay-Plate-Layout-Planner",
+  "commit": "aa4416e9be6ed5ee1d38a1c4e2a473244093acbc",
+  "dirty": false,
+  "build": "vite build --base ./",
+  "lockfileSha256": "c1b5005781fb170141d1f7c81fdf3a19604c00c6314f6a4bbcef984c594ac662",
+  "files": {
+    "assets/index-DHSi7pBn.js": {
+      "sha256": "d82ea2d91b0ff97a8245e1360297dce387692ebb3bc92ff4467172f6aeccc79a",
+      "bytes": 260537
+    },
+    "assets/index-lldqeIOH.css": {
+      "sha256": "98256174697a281e7c7965f6092253c33b81edd584414e005a921d3b54fd9cc1",
+      "bytes": 28492
+    },
+    "assets/xlsx.min-Byt-uu-g.js": {
+      "sha256": "f4936173fb57048211eb4a869cf830d090b5dadb1e941e5d46f1e6823e607464",
+      "bytes": 862990
+    },
+    "favicon.svg": {
+      "sha256": "e6d2e59b7b5bbb0342e0fb496dfc262decbfe4426bbb7b047aec8d467d1dc6f7",
+      "bytes": 712
+    },
+    "index.html": {
+      "sha256": "4537f05e12a7a15a0d5b340a197bdb97085fb6a049e8199bbbb81bcfc04f8a1b",
+      "bytes": 623
+    }
+  }
+}

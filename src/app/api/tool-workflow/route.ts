@@ -13,6 +13,7 @@ import { assertRecordEditable } from '@/lib/record-lifecycle';
 import { currentPlasmidVersion, plasmidOutput } from '@/lib/plasmid/tool-output.server';
 import { savedRecordDocument } from '@/lib/tool-remote-document';
 import { plannerFieldsLeftOut } from '@/lib/plate-layout';
+import { visualizationStudioUrl } from '@/lib/visualization-link';
 import { prepareAttachmentFile, writePreparedAttachmentFiles, cleanupPreparedAttachmentFiles, type PreparedAttachmentFile } from '@/lib/attachment-files';
 import { associateDocumentMedia } from '@/lib/document-media.server';
 const ownerSchema = z.object({ ownerType: z.enum(['result', 'experiment', 'research_plan', 'report', 'entry']), ownerId: z.string().optional(), experimentId: z.string().optional() });
@@ -82,6 +83,8 @@ export async function GET(request: Request) {
     const plasmid = url.searchParams.get('plasmid');
     if (plasmid)
         return Response.json({ current: await currentPlasmidVersion(plasmid) });
+    if (url.searchParams.has('visualization'))
+        return Response.json({ url: visualizationStudioUrl(process.env.VISUALIZATION_STUDIO_URL) });
     const draftId = url.searchParams.get('draftId');
     if (draftId)
         return Response.json({ draft: await prisma.toolWorkflowDraft.findUnique({ where: { id: draftId } }) });
@@ -114,11 +117,13 @@ export async function POST(request: Request) {
             if (!isDeepStrictEqual(JSON.parse(JSON.stringify(calculate({ calculatorId: session.calculatorId, inputs: session.inputs }))), session.snapshot))
                 throw new Error('结果与输入不一致，请重新计算');
         }
+        if (output?.toolId === 'visualization-studio' && !output.images.length)
+            throw new Error('没有收到图');
         if (output && data.session === undefined)
             throw new Error('缺少可恢复方案');
         if (output) {
             // These ship inside LabNest, so the host commit below already identifies its build.
-            const build=output.toolId==="calculator"||output.toolId==="plasmid-workbench"?{bundledWithHost:true}:JSON.parse(await readFile(path.join(process.cwd(),"public/tools",output.toolId,"release.json"),"utf8"));
+            const build=output.toolId==="visualization-studio"?{studio:visualizationStudioUrl(process.env.VISUALIZATION_STUDIO_URL)}:output.toolId==="calculator"||output.toolId==="plasmid-workbench"?{bundledWithHost:true}:JSON.parse(await readFile(path.join(process.cwd(),"public/tools",output.toolId,"release.json"),"utf8"));
             const fullTable = output.fullTable ?? output.table;
             const cell = (value: string) => /[\t\r\n"]/.test(value) ? '"' + value.replaceAll('"', '""') + '"' : value;
             const fullTsv = [fullTable.headers, ...fullTable.rows].map(row => row.map(cell).join('\t')).join('\n');

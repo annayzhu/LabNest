@@ -332,6 +332,8 @@ export const zhUi: Record<string, string> = {
   "Inputs and results, checked by the server": "输入和结果，由服务器重算核对",
   "Map snapshot and version reference": "图谱快照和版本引用",
   "Save Report": "保存报告",
+  "Figures from this record's tables": "用这条记录里的表格作图",
+  "Plate, controls and reaction mix": "孔板、对照和反应配液",
   "Record content": "记录内容",
   "Saving originals…": "正在保存原始文件…",
   "Draft recovery is ready": "草稿可恢复",

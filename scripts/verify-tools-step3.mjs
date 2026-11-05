@@ -200,7 +200,8 @@ try {
   });
 
   await check('repeat: several plates and tool outputs fit in one record, the next "/" right after the last', async () => {
-    const keyboardSlash = async (search, option) => { await page.keyboard.type(`/${search}`); await page.getByRole('option', { name: option }).first().click(); };
+    // A person's pause: focus reaches the new line a moment after a save, and a key pressed sooner is lost.
+    const keyboardSlash = async (search, option) => { await page.waitForTimeout(300); await page.keyboard.type(`/${search}`); await page.getByRole('option', { name: option }).first().click(); };
     const plannerOnce = async (save) => {
       const planner = page.frameLocator('.tool-record-workspace iframe');
       await planner.getByRole('button', { name: '载入示例', exact: true }).click();

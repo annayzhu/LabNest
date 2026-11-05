@@ -5,7 +5,7 @@ import { scientificDocumentSchema } from "./scientific-document";
 import { markdownRichTextToTiptap, tiptapToMarkdownRichText } from "./scientific-tiptap";
 import { entryToolDocument, toolOutputFromMarkdown, toolOutputToMarkdown, toolOutputs as toolOutputsInDocument } from "./tool-workflow";
 import { describe, expect, it } from 'vitest';
-import { freshToolDraft, mergeToolDocumentDraft, mergeToolOutput, type ToolOutputBlock } from './tool-workflow';
+import { freshToolDraft, mergeToolDocumentDraft, mergeToolOutput, recordTables, type ToolOutputBlock } from './tool-workflow';
 import { documentPlainText, documentPlateLayouts, documentSampleIds, type ScientificDocument } from './scientific-document';
 const doc = (): ScientificDocument => ({ schemaVersion: 1, sections: [{ key: 'custom', title: 'Observations', blocks: [{id:'note',type:'text',text:'Human observation'}] }] });
 const output: ToolOutputBlock = {id:'artifact-a',type:'tool_output',label:'qPCR 分析',toolId:'qpcr-analysis',revision:1,submissionId:'submit-a',sessionAttachmentId:'session-a',images:[],table:{headers:['Sample','Value'],rows:[['S1','2']]},method:'Technical replicates'};
@@ -105,5 +105,13 @@ describe("a draft in this browser", () => {
   it("of a record not yet saved has nothing to go stale against", () => {
     const saved = { form: {} };
     expect(freshToolDraft(saved, undefined, false)).toBe(saved);
+  });
+});
+
+describe("the tables a figure can start from", () => {
+  const block = (toolId: ToolOutputBlock["toolId"], id: string): ToolOutputBlock => ({ id, type: "tool_output", label: id, toolId, revision: 1, submissionId: id, sessionAttachmentId: "s", images: [], table: { headers: ["Item", "Value"], rows: [["a\tb", "1"]] }, method: "", dataset: { attachmentId: `file-${id}`, rowCount: 1, headers: [], preview: [] } });
+  it("take an analysis's whole file, a planner's mix, and a document table", () => {
+    const tables = recordTables({ schemaVersion: 1, sections: [{ key: "s", title: "S", blocks: [block("qpcr-analysis", "analysis"), block("cnv-plate-layout", "planner"), { id: "t", type: "table", rows: [["X", "Y"], ["1", "2"]] }, { id: "one", type: "table", rows: [["only header"]] }] }] });
+    expect(tables).toEqual([{ name: "analysis", attachmentId: "file-analysis" }, { name: "planner", raw: "Item\tValue\na b\t1" }, { name: "S · t", raw: "X\tY\n1\t2" }]);
   });
 });

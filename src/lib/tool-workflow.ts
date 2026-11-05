@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { escapeToken, plateLayoutFromMarkdown, plateLayoutSchema } from './plate-layout';
 import type { ScientificDocument } from './scientific-document';
 /** Tools whose results save back to a record. */
-export const toolOutputIds = ['free-plate-layout', 'qpcr-plate-layout', 'qpcr-analysis', 'cnv-analysis', 'calculator', 'plasmid-workbench'] as const;
+export const toolOutputIds = ['free-plate-layout', 'qpcr-plate-layout', 'cnv-plate-layout', 'qpcr-analysis', 'cnv-analysis', 'calculator', 'plasmid-workbench', 'visualization-studio'] as const;
 const tableSchema = z.object({ headers: z.array(z.string()), rows: z.array(z.array(z.string())) });
 export const toolOutputFields = {
     type: z.literal('tool_output'), label: z.string(),
@@ -45,6 +45,24 @@ export function toolOutputFromMarkdown(line: string): ToolOutputBlock | undefine
 }
 /** An Entry's tool outputs as a document, which is what the save route checks revisions against. */
 export const entryToolDocument = (markdown: string): ScientificDocument => ({ schemaVersion: 1, sections: [{ key: 'analysis', title: 'Analysis', blocks: markdown.split('\n').flatMap(line => toolOutputFromMarkdown(line) ?? []) }] });
+/** A table in a record that a figure can be made from: its text, or the saved file that holds all of it. */
+export type RecordTable = { name: string; raw?: string; attachmentId?: string };
+const tableText = (headers: string[], rows: string[][]) => [headers, ...rows].map(row => row.map(cell => cell.replace(/[\t\r\n]+/g, ' ')).join('\t')).join('\n');
+export function recordTables(document: ScientificDocument): RecordTable[] {
+    return document.sections.flatMap(section => section.blocks.flatMap((block): RecordTable[] => {
+        if (block.type === 'table')
+            return block.rows.length > 1 ? [{ name: `${section.title} · ${block.caption || block.id}`, raw: tableText(block.rows[0], block.rows.slice(1)) }] : [];
+        if (block.type !== 'tool_output')
+            return [];
+        // A planner's full file lists its wells, which are not data to draw; an analysis's holds its results.
+        if (block.dataset && block.toolId.endsWith('-analysis'))
+            return [{ name: block.label, attachmentId: block.dataset.attachmentId }];
+        return [
+            ...(block.table.rows.length ? [{ name: block.label, raw: tableText(block.table.headers, block.table.rows) }] : []),
+            ...(block.tables ?? []).filter(table => table.rows.length).map(table => ({ name: `${block.label} · ${table.title}`, raw: tableText(table.headers, table.rows) })),
+        ];
+    }));
+}
 export function toolOutputs(document: ScientificDocument) {
     return document.sections.flatMap(section => section.blocks.filter((block): block is ToolOutputBlock => block.type === 'tool_output'));
 }

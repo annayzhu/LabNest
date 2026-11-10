@@ -70,7 +70,7 @@ function breaksIn({ selection: { from, to, empty, $from, $to }, doc }: EditorSta
   return found;
 }
 
-/** Deletes `from`–`to` but leaves every day divider in it standing. */
+/** Deletes `from`–`to` but leaves every day divider in it standing; follow with `fillEmptyDays`. */
 export function deleteAroundBreaks(tr: Transaction, from: number, to: number) {
   const cuts: Array<[number, number]> = [];
   let start = from;
@@ -83,7 +83,14 @@ export function deleteAroundBreaks(tr: Transaction, from: number, to: number) {
   if (to > start) cuts.push([start, to]);
   // Last to first, so the positions still to come stay valid.
   for (const [cutFrom, cutTo] of cuts.reverse()) tr.deleteRange(cutFrom, cutTo);
-  // Each day keeps a line to write on, in this same step, so one undo brings back exactly what was there.
+  return tr;
+}
+
+/**
+ * Gives every day without a line its line to write on, in the same step as the delete before it, so one undo brings back exactly
+ * what was there. Call it once, after all the deleting: it inserts across the whole document.
+ */
+export function fillEmptyDays(tr: Transaction) {
   const bare: number[] = [];
   tr.doc.descendants((node, at, parent, index) => {
     if (!isBreak(node)) return true;
@@ -96,6 +103,6 @@ export function deleteAroundBreaks(tr: Transaction, from: number, to: number) {
 }
 
 function clearAroundBreaks(state: EditorState) {
-  const { from, to } = state.selection, tr = deleteAroundBreaks(state.tr, from, to);
+  const { from, to } = state.selection, tr = fillEmptyDays(deleteAroundBreaks(state.tr, from, to));
   return tr.setSelection(Selection.near(tr.doc.resolve(tr.mapping.map(from)), 1)).scrollIntoView();
 }

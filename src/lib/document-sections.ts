@@ -1,7 +1,7 @@
 import { Fragment, Slice, type Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { Plugin, PluginKey, Selection, type EditorState, type Transaction } from '@tiptap/pm/state';
 import type { EditorView } from '@tiptap/pm/view';
-import { deleteAroundBreaks } from './editor-day-breaks';
+import { deleteAroundBreaks, fillEmptyDays } from './editor-day-breaks';
 
 declare module '@tiptap/core' {
   interface EditorEvents {
@@ -85,6 +85,8 @@ export function clearSelectionInSections(state: EditorState): Transaction {
     deleteAroundBreaks(tr, start, end);
     if (!tr.doc.nodeAt(at)!.childCount) tr.insert(at + 1, state.schema.nodes.paragraph.create());
   }
+  // Only now, with every section done, so no line goes in ahead of a section still to clear.
+  fillEmptyDays(tr);
   return tr.setSelection(Selection.near(tr.doc.resolve(tr.mapping.map(from)), 1)).scrollIntoView();
 }
 

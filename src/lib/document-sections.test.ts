@@ -12,7 +12,7 @@ import { ProtocolStepNode } from './protocol-step-node';
 import { ScientificDocumentNode } from './scientific-document-node';
 import { normalizeScientificDocument, parseScientificDocumentJson } from './scientific-document';
 import { tiptapTableRows } from './tiptap-table-serialization';
-import { createDayBreakExtension, deleteAroundBreaks } from './editor-day-breaks';
+import { createDayBreakExtension, deleteAroundBreaks, fillEmptyDays } from './editor-day-breaks';
 
 const noView = () => ({ dom: { nodeType: 1 } as unknown as HTMLElement });
 const section = (name: string, content?: string) => createDocumentSectionExtension({ name, tag: `section[data-${name}]`, content, attributes: { sectionKey: { default: 'x', htmlAttribute: `data-${name}` } }, nodeView: noView });
@@ -262,9 +262,33 @@ describe('the days of 执行记录 in a cleared selection', () => {
     expect(allOfType(after, 'scientificSection')).toHaveLength(2);
   });
 
+  it('clears a selection from 执行记录 into a later section when a day has nothing written yet', () => {
+    const later = schema.nodeFromJSON({ type: 'doc', content: [
+      { type: 'scientificSection', attrs: { sectionKey: 'setup' }, content: [paragraph('Setup line')] },
+      { type: 'scientificSection', attrs: { sectionKey: 'execution' }, content: [day('2026-11-09'), day('2026-11-10'), paragraph('Keep this, then drop this')] },
+      { type: 'scientificSection', attrs: { sectionKey: 'results' }, content: [paragraph('Result line')] },
+    ] });
+    const all = EditorState.create({ doc: later, selection: new AllSelection(later) });
+    const cleared = all.apply(clearSelectionInSections(all)).doc;
+    expect(days(cleared)).toEqual(['2026-11-09', '2026-11-10']);
+    expect(allOfType(cleared, 'scientificSection').map(found => found.node.attrs.sectionKey)).toEqual(['setup', 'execution', 'results']);
+    expect(allText(cleared).replace(/\n/g, '')).toBe('');
+    const line = allOfType(later, 'paragraph').find(found => found.node.textContent.startsWith('Keep'))!;
+    const from = line.pos + 1 + 'Keep this'.length, to = later.content.size - 2;
+    const partial = EditorState.create({ doc: later, selection: TextSelection.create(later, from, to) });
+    const after = partial.apply(clearSelectionInSections(partial)).doc;
+    expect(days(after)).toEqual(['2026-11-09', '2026-11-10']);
+    expect(allText(after)).toContain('Setup line');
+    expect(allText(after)).toContain('Keep this');
+    expect(allText(after)).not.toContain('drop this');
+    const execution: string[] = [];
+    after.child(1).forEach(node => { execution.push(node.type.name); });
+    expect(execution).toEqual(['scientificDayBreak', 'paragraph', 'scientificDayBreak', 'paragraph']);
+  });
+
   it('deletes around the days inside one section', () => {
     const notes = allOfType(doc, 'paragraph').filter(found => found.node.textContent.startsWith('Day'));
-    const tr = deleteAroundBreaks(EditorState.create({ doc }).tr, notes[0].pos, notes[1].pos + notes[1].node.nodeSize);
+    const tr = fillEmptyDays(deleteAroundBreaks(EditorState.create({ doc }).tr, notes[0].pos, notes[1].pos + notes[1].node.nodeSize));
     expect(days(tr.doc)).toEqual(['2026-11-09', '2026-11-10', '']);
     expect(allText(tr.doc)).not.toMatch(/Day/);
   });

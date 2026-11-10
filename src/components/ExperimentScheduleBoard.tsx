@@ -306,7 +306,7 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
         <div className="ln-schedule-field">
           <span id="ln-schedule-days-label">Days</span>
           <div className="ln-schedule-stepper" role="group" aria-labelledby="ln-schedule-days-label">
-            <button type="button" className="focus-ring" disabled={!editable || dayCount <= minDays} aria-label={zh ? "少一天" : "One day fewer"} title={dayCount <= minDays && dayCount > 1 ? (zh ? `第 ${dayCount} 天还有事项` : `Day ${dayCount} still has blocks`) : undefined} onClick={() => resize(dayCount - 1)}><Minus aria-hidden /></button>
+            <button type="button" className="focus-ring" disabled={!editable || dayCount <= 1} aria-disabled={dayCount <= minDays} aria-label={zh ? "少一天" : "One day fewer"} onClick={() => { if (dayCount > minDays) resize(dayCount - 1); else setNotice(zh ? `第 ${dayCount} 天还有事项，请先移走或删除后再减少天数。` : `Day ${dayCount} still has blocks. Move or delete them before removing a day.`); }}><Minus aria-hidden /></button>
             <output data-i18n-ignore>{dayCount}</output>
             <button type="button" className="focus-ring" disabled={!editable || dayCount >= MAX_SCHEDULE_DAYS} aria-label={zh ? "多一天" : "One day more"} onClick={() => resize(dayCount + 1)}><Plus aria-hidden /></button>
           </div>
@@ -335,8 +335,10 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
         <button type="button" className="ln-schedule-button ln-key-action" disabled={!steps.some(step => !step.completed)} onClick={draft}><Wand2 aria-hidden />Draft from the Protocols</button>
       </div>
       {!steps.length ? <p className="ln-schedule-hint">This experiment has no steps yet. Add items for each day, or add steps to the experiment first.</p> : null}
+      {steps.length && !steps.some(step => !step.completed) ? <p className="ln-schedule-hint">Every step is already completed, so there is nothing to schedule.</p> : null}
     </section> : null}
 
+    {editable && dayCount >= MAX_SCHEDULE_DAYS ? <p className="ln-schedule-hint">{zh ? `日程最长 ${MAX_SCHEDULE_DAYS} 天，已达上限。` : `A schedule spans ${MAX_SCHEDULE_DAYS} days at most; that limit is reached.`}</p> : null}
     {notice ? <p role="status" className="ln-schedule-notice">{notice}</p> : null}
     {error ? <p role="alert" className="ln-schedule-error">{error}</p> : null}
 
@@ -368,6 +370,7 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
                     <button type="button" role="menuitem" data-danger="" disabled={dayCount <= 1} onClick={() => takeDay(dayKey)}><Trash2 aria-hidden />{confirmDay === dayKey
                       ? (zh ? `再点一次：连同 ${dayBlocks.length} 项删除` : `Click again: take out with ${dayBlocks.length} block${dayBlocks.length === 1 ? "" : "s"}`)
                       : (zh ? "删除这一天" : "Take out this day")}</button>
+                    {dayCount <= 1 ? <small className="ln-schedule-hint" style={{ padding: "0 0.6rem 0.3rem" }}>{zh ? "日程至少保留一天。" : "A schedule keeps at least one day."}</small> : null}
                   </span> : null}
                 </span> : null}
               </header>

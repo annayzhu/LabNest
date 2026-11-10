@@ -114,6 +114,7 @@ function PasteMethod({ sessionId, query, pending, onDone }: { sessionId: string;
       <div className="ln-source-pair"><label>Link (optional)<input value={draft.url} inputMode="url" onChange={event => setDraft({ ...draft, url: event.target.value })} placeholder="https://www.jove.com/…" /></label><label>License (optional)<input value={draft.license} onChange={event => setDraft({ ...draft, license: event.target.value })} placeholder="e.g. CC BY-NC-ND 3.0, or “subscription content”" /></label></div>
       <label>Method text<textarea rows={8} value={draft.text} onChange={event => setDraft({ ...draft, text: event.target.value })} placeholder="Paste the Protocol part; one step per paragraph works best." /></label>
       <div><Button type="button" size="sm" variant="primary" disabled={pending || adding || !draft.title.trim() || draft.text.trim().length < 40} onClick={() => start(async () => { const result = await addPastedMethod(sessionId, { title: draft.title, url: draft.url || undefined, license: draft.license || undefined, text: draft.text }); onDone(result.error ?? result.message ?? ''); if (!result.error) { setDraft({ title: '', url: '', license: '', text: '' }); setOpen(false); } })}>Add to candidates</Button></div>
+      {!draft.title.trim() || draft.text.trim().length < 40 ? <p className="ln-design-note">Enter a title and paste at least 40 characters of method text.</p> : null}
       <p className="ln-design-note">Pasted text is kept only as an attachment on this site and is never sent to an outside service; it goes to the model only when you click “Summarize as a method card”.</p>
     </div> : null}
   </section>;
@@ -163,6 +164,7 @@ function DraftPanel({ draft, pending }: { draft: Draft; pending: boolean }) {
       <label className="is-check" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><input type="checkbox" checked={explain} disabled={!ai.ready} onChange={event => setForm({ ...form, explain: event.target.checked })} />Ask the model to explain (numbers unchanged){!ai.ready ? <button type="button" className="focus-ring text-xs text-muted underline" onClick={ai.openPanel}>Needs AI turned on</button> : null}</label>
       <Button type="button" variant="primary" disabled={pending || working || draft.reviewStage !== 'draft'} onClick={() => start(async () => { setResult(await scaleDraft({ versionId: draft.versionId, fromValue: Number(form.fromValue), fromUnit: form.fromUnit, toValue: Number(form.toValue), toUnit: form.toUnit, label: form.label, explain: explain })); })}>{working ? 'Scaling…' : 'Scale and write into the draft'}</Button>
     </div>
+    {draft.reviewStage !== 'draft' ? <p className="ln-design-note">Only a draft version can be scaled; derive a revision from a reviewed version first</p> : null}
     {result?.error ? <p role="alert" className="text-sm text-error">{result.error}</p> : null}
     {result?.message ? <p role="status" className="text-sm text-success">{result.message}</p> : null}
     {result?.changes?.length ? <ul className="ln-scale-changes">{result.changes.map(change => <li key={change.parameterId} data-rule={change.rule}>{scaleChangeLine(change)}</li>)}</ul> : null}

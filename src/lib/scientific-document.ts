@@ -294,11 +294,15 @@ export function parseScientificDocumentJson(
   definitions: ScientificSectionDefinition[],
 ): ScientificDocument {
   if (typeof value !== "string" || !value.trim()) return createScientificDocument(definitions);
+  let json: unknown;
   try {
-    return normalizeScientificDocument(JSON.parse(value), definitions);
+    json = JSON.parse(value);
   } catch {
     throw new Error("The structured document could not be parsed. Reload the page and try again.");
   }
+  // Opening a record can fall back to an empty document; saving one would erase what is stored.
+  if (!scientificDocumentSchema.safeParse(json).success) throw new Error("This document holds content that can’t be saved, so nothing was saved. Your edits are still on this page: copy them out, then reload and try again.");
+  return normalizeScientificDocument(json, definitions);
 }
 
 export function documentPlainText(document: ScientificDocument) {

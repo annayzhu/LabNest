@@ -105,4 +105,5 @@
 .ln-block-drop-line { position: fixed; z-index: 70; height: 3px; border-radius: 2px; background: var(--action); pointer-events: none; }
 
 @media (prefers-reduced-motion: reduce) { .ln-block-handle, .ln-block-ghost { animation: none; } }
-@media print { .ln-block-handle, .ln-selection-bubble, .ln-table-bar, .ln-keyboard-bar { display: none !important; } }
+.ln-editor-notice { position: fixed; z-index: 70; max-width: min(24rem, calc(100vw - 16px)); padding: 0.4rem 0.65rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: var(--surface); color: var(--ink); font: var(--ln-control-font-size-xs)/1.5 var(--font-ui); box-shadow: var(--shadow-soft); }
+@media print { .ln-block-handle, .ln-selection-bubble, .ln-table-bar, .ln-keyboard-bar, .ln-editor-notice { display: none !important; } }

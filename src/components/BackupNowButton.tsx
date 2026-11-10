@@ -10,6 +10,7 @@ export function BackupNowButton({ disabled }: { disabled?: boolean }) {
     <button type="submit" disabled={disabled || pending} className="focus-ring inline-flex h-10 items-center rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-4 text-sm font-medium text-moss transition hover:bg-warm disabled:text-muted">
       {pending ? "Backing up…" : "Back up now"}
     </button>
+    {disabled && !pending ? <p className="text-xs text-muted">A backup is already running. Wait for it to finish, then try again.</p> : null}
     <p role="status" className={state && !state.ok ? "text-error" : "text-muted"}>
       {pending ? "Exporting the database, copying new files and checking the backup by restoring it." : state ? state.message : null}
       {state?.detail ? <span className="backup-detail" data-i18n-ignore>{state.detail}</span> : null}

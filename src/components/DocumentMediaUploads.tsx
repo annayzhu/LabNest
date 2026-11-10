@@ -4,6 +4,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import type { Editor } from "@tiptap/core";
 import type { DocumentMedia } from "@/lib/document-media";
 import { newClientMutationId } from "@/lib/client-mutation-id";
+import { clearSelectionInSections, onlySections, spansSections } from "@/lib/document-sections";
 
 type Upload = { file: File; preview?: string; status: "uploading" | "failed"; error?: string; retry: () => void; dispose: () => void };
 const uploads = new Map<string, Upload>();
@@ -52,7 +53,14 @@ export function insertDocumentMediaFiles(editor: Editor, files: File[], draftId:
     pendingUploadId: newClientMutationId(),
   } }));
   if (replacement && records[0]) updateAtIdentity(editor, replacement.id, records[0].block);
-  else editor.chain().focus().insertContentAt(position ?? editor.state.selection.from, records.map(({ block }) => ({ type: "documentMedia", attrs: { block } }))).run();
+  else {
+    if (position === undefined && onlySections(editor.state) && spansSections(editor.state)) editor.view.dispatch(clearSelectionInSections(editor.state));
+    editor.chain().focus().insertContentAt(position ?? editor.state.selection.from, records.map(({ block }) => ({ type: "documentMedia", attrs: { block } }))).run();
+  }
+  // A document can refuse the insert (a place outside its sections); then there is nothing to upload into.
+  const inDocument = new Set<string>();
+  editor.state.doc.descendants((node) => { if (typeof node.attrs.block?.id === "string") inDocument.add(node.attrs.block.id); });
+  if (!records.every(({ block }) => inDocument.has(block.id))) return;
   for (const { file, block } of records) {
     const preview = block.mediaType === "image" ? URL.createObjectURL(file) : undefined;
     let inFlight = false, abandoned = false;

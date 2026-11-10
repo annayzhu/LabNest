@@ -6,14 +6,18 @@ import { Children, useId, useState, type KeyboardEvent, type ReactNode } from "r
 import { useI18n } from "@/components/I18nProvider";
 import { cn } from "@/lib/cn";
 
-export function DocumentEditorLayout({ children, className, initialView = "document" }: {
+export function DocumentEditorLayout({ children, className, initialView = "document", metadataRequest = 0 }: {
   children: ReactNode;
   className?: string;
   /** "metadata" opens the metadata drawer on arrival, e.g. when a new record still needs its plan and method. */
   initialView?: "document" | "metadata";
+  /** Raised to open the metadata drawer from elsewhere on the page, e.g. a save bar saying what is missing there. */
+  metadataRequest?: number;
 }) {
   const [activeView, setActiveView] = useState<"document" | "metadata">(initialView);
   const [activation, setActivation] = useState(initialView === "metadata" ? 1 : 0);
+  const [seenRequest, setSeenRequest] = useState(metadataRequest);
+  if (seenRequest !== metadataRequest) { setSeenRequest(metadataRequest); setActiveView("metadata"); setActivation(n => n + 1); }
   const { t } = useI18n();
   const id = useId();
   const panels = Children.toArray(children);

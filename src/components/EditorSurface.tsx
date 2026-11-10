@@ -94,7 +94,28 @@ export function EditorSurface({ editor, handles = true, kinds = allKinds, openCo
       onBlockMenu={anchor => { const unit = blockUnitAt(editor.state.doc, editor.state.selection.from); if (unit) setMenu({ unit, anchor }); }} />
       : <SelectionBubble editor={editor} linking={linking} setLinking={setLinking} kinds={kinds} />}
     <TableBar editor={editor} items={tableItems} />
+    <EditorNotice editor={editor} />
   </div>;
+}
+
+/** Why an edit did not happen, by the caret until the next edit or for a few seconds. */
+function EditorNotice({ editor }: { editor: Editor }) {
+  const [notice, setNotice] = useState<{ text: string; anchor: MenuAnchor } | null>(null);
+  const panel = useRef<HTMLDivElement>(null);
+  const style = useAnchoredPosition(notice?.anchor ?? null, panel);
+  useEffect(() => {
+    const show = (text: string) => { const { top, left, bottom } = editor.view.coordsAtPos(editor.state.selection.from); setNotice({ text, anchor: { top, left, bottom } }); };
+    const hide = ({ transaction }: { transaction: Transaction }) => { if (transaction.docChanged || transaction.selectionSet) setNotice(null); };
+    editor.on('notice', show);
+    editor.on('transaction', hide);
+    return () => { editor.off('notice', show); editor.off('transaction', hide); };
+  }, [editor]);
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(null), 6000);
+    return () => clearTimeout(timer);
+  }, [notice]);
+  return notice ? createPortal(<div ref={panel} className="ln-editor-notice" role="status" style={style} data-print-hidden>{notice.text}</div>, document.body) : null;
 }
 
 /** ＋: write on an empty line where it is, or start a new line below (⌥: above), and open "/" there. */
@@ -169,9 +190,12 @@ function BlockMenu({ editor, unit: opened, anchor, kinds, blockItems, afterDelet
       <div className="ln-block-menu-row" role="group" aria-label="Text alignment">
         {([['left', AlignLeft, 'Align left'], ['center', AlignCenter, 'Align center'], ['right', AlignRight, 'Align right'], ['justify', AlignJustify, 'Justify']] as const).map(([align, Icon, label]) =>
           <button key={align} type="button" role="menuitemradio" aria-checked={(attrs.textAlign ?? 'left') === align} aria-label={label} title={label} onClick={() => run(() => selectBlock(editor, unit).setTextAlign(align).run())}><Icon aria-hidden /></button>)}
-        <span className="ln-block-menu-gap" />
-        <button type="button" role="menuitem" aria-label="Decrease indent" title="Decrease indent" disabled={unit.node.type.name !== 'paragraph'} onClick={() => run(() => selectBlock(editor, unit).indentDocumentParagraph(-1).run())}><IndentDecrease aria-hidden /></button>
-        <button type="button" role="menuitem" aria-label="Increase indent" title="Increase indent" disabled={unit.node.type.name !== 'paragraph'} onClick={() => run(() => selectBlock(editor, unit).indentDocumentParagraph(1).run())}><IndentIncrease aria-hidden /></button>
+        {/* Only a plain paragraph indents: lists have their own levels. */}
+        {unit.node.type.name === 'paragraph' ? <>
+          <span className="ln-block-menu-gap" />
+          <button type="button" role="menuitem" aria-label="Decrease indent" title="Decrease indent" onClick={() => run(() => selectBlock(editor, unit).indentDocumentParagraph(-1).run())}><IndentDecrease aria-hidden /></button>
+          <button type="button" role="menuitem" aria-label="Increase indent" title="Increase indent" onClick={() => run(() => selectBlock(editor, unit).indentDocumentParagraph(1).run())}><IndentIncrease aria-hidden /></button>
+        </> : null}
       </div>
       <label className="ln-block-menu-field"><span>Font size</span><select defaultValue="" onChange={event => { const value = event.target.value; run(() => { selectBlock(editor, unit).run(); setSelectionFontSize(editor, value === 'default' ? null : Number(value)); }); }}>
         <option value="" disabled>Choose…</option><option value="default">Default</option>{RICH_TEXT_FONT_SIZES_PT.map(size => <option key={size} value={size}>{size} pt</option>)}
@@ -187,7 +211,7 @@ function BlockMenu({ editor, unit: opened, anchor, kinds, blockItems, afterDelet
       <button type="button" role="menuitem" className="ln-block-menu-item is-touch" onClick={() => run(() => addLine(editor, unit, false, openCommands))}><Plus aria-hidden />Insert below…</button>
       <button type="button" role="menuitem" className="ln-block-menu-item" onClick={() => run(() => dispatch(moveBlock(editor.state, unit, -1)))}><ArrowUp aria-hidden />Move up<kbd>⌘⇧↑</kbd></button>
       <button type="button" role="menuitem" className="ln-block-menu-item" onClick={() => run(() => dispatch(moveBlock(editor.state, unit, 1)))}><ArrowDown aria-hidden />Move down<kbd>⌘⇧↓</kbd></button>
-      <button type="button" role="menuitem" className="ln-block-menu-item" disabled={!canDuplicateBlock(unit)} onClick={() => run(() => dispatch(duplicateBlock(editor.state, unit)))}><Copy aria-hidden />Duplicate</button>
+      <button type="button" role="menuitem" className="ln-block-menu-item" disabled={!canDuplicateBlock(unit)} onClick={() => run(() => dispatch(duplicateBlock(editor.state, unit)))}><Copy aria-hidden />{canDuplicateBlock(unit) ? 'Duplicate' : 'Duplicate (a picture is still uploading)'}</button>
       <button type="button" role="menuitem" className="ln-block-menu-item is-danger" onClick={() => run(() => { dispatch(deleteBlock(editor.state, unit)); afterDelete?.(unit); })}><Trash2 aria-hidden />{media ? 'Remove (keeps the file)' : 'Delete'}</button>
     </section>
   </div>, document.body);

@@ -33,7 +33,8 @@ export function useDismiss(panel: React.RefObject<HTMLElement | null>, anchor: P
   useEffect(() => { close.current = onClose; });
   useEffect(() => {
     const press = (event: PointerEvent) => { const target = event.target as Node; if (!panel.current?.contains(target) && !(anchor instanceof HTMLElement && anchor.contains(target))) close.current(); };
-    const key = (event: KeyboardEvent) => { if (event.key === 'Escape') { event.preventDefault(); close.current(); } };
+    // Escape while an input method composes cancels the composition, not the panel.
+    const key = (event: KeyboardEvent) => { if (event.key === 'Escape' && !event.isComposing && event.keyCode !== 229) { event.preventDefault(); close.current(); } };
     document.addEventListener('pointerdown', press, true);
     document.addEventListener('keydown', key, true);
     return () => { document.removeEventListener('pointerdown', press, true); document.removeEventListener('keydown', key, true); };

@@ -9,12 +9,15 @@
 .ln-plate-layout[data-size="24"] .ln-plate-layout-grid { max-width: 34rem; }
 .ln-plate-layout-axis { display: flex; align-items: center; justify-content: center; min-width: 0; padding: 0; font: 500 0.66rem/1 var(--font-data); color: var(--muted); border-radius: var(--ln-radius-control-sm); }
 button.ln-plate-layout-axis:hover { background: var(--warm); color: var(--ink); }
-.ln-plate-layout-well { display: flex; align-items: center; justify-content: center; aspect-ratio: 1; min-width: 0; overflow: hidden; padding: 0 0.12rem; border: 1px solid var(--hairline); border-radius: 999px; background: var(--surface); color: var(--graphite); font: 500 0.6rem/1.1 var(--font-data); text-align: center; white-space: nowrap; text-overflow: ellipsis; }
+.ln-plate-layout-well { display: flex; align-items: center; justify-content: center; aspect-ratio: 1; min-width: 0; overflow: hidden; padding: 0 0.12rem; border: 1px solid var(--hairline); border-radius: 999px; background: var(--surface); color: var(--graphite); font: 500 0.75rem/1.1 var(--font-data); text-align: center; white-space: nowrap; text-overflow: ellipsis; }
 .ln-plate-layout-well[data-plate-tone] { border-color: color-mix(in srgb, var(--ln-tone) 60%, var(--hairline)); background: color-mix(in srgb, var(--ln-tone) 22%, var(--surface)); color: var(--ink); }
 .ln-plate-layout-well[data-filled]:not([data-plate-tone]) { border-style: dashed; border-color: var(--muted); }
 .ln-plate-layout[data-size="384"] .ln-plate-layout-well { font-size: 0; border-width: 1px; }
 .ln-plate-layout[data-size="384"] .ln-plate-layout-axis { font-size: 0.5rem; }
-.ln-plate-layout[data-size="6"] .ln-plate-layout-well, .ln-plate-layout[data-size="12"] .ln-plate-layout-well, .ln-plate-layout[data-size="24"] .ln-plate-layout-well { font-size: 0.74rem; white-space: normal; }
+.ln-plate-layout[data-size="6"] .ln-plate-layout-well, .ln-plate-layout[data-size="12"] .ln-plate-layout-well, .ln-plate-layout[data-size="24"] .ln-plate-layout-well { font-size: 0.75rem; white-space: normal; }
+.ln-plate-layout-well[data-stacked] { flex-direction: column; gap: 1px; line-height: 1.15; }
+.ln-plate-layout-well[data-stacked] > span { max-width: 84%; overflow-wrap: anywhere; }
+.ln-plate-layout-well[data-stacked] > span + span { color: var(--graphite); }
 .ln-plate-layout-grid[data-interactive] .ln-plate-layout-well { cursor: pointer; touch-action: manipulation; }
 .ln-plate-layout-grid[data-interactive] .ln-plate-layout-well:hover { border-color: var(--graphite); }
 .ln-plate-layout-well[aria-pressed="true"] { outline: 2px solid var(--action-border, var(--moss)); outline-offset: 1px; box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--moss) 10%, transparent); }
@@ -52,7 +55,10 @@ button.ln-plate-layout-axis:hover { background: var(--warm); color: var(--ink); 
 .ln-plate-editor button.ln-plate-button svg { width: 0.95rem; height: 0.95rem; }
 .ln-plate-editor-body { display: grid; grid-template-columns: minmax(0, 1fr) 19rem; min-height: 0; overflow: auto; }
 .ln-plate-editor-plate { display: grid; align-content: start; gap: 0.6rem; padding: 1rem; min-width: 0; }
-.ln-plate-editor-plate .ln-plate-layout-grid { max-width: 40rem; }
+/* The plate is what this dialog is for: it takes the room, up to what fits without scrolling. */
+.ln-plate-editor-plate .ln-plate-layout .ln-plate-layout-grid { max-width: min(46rem, calc((100dvh - 15rem) * var(--ln-plate-aspect, 1.5))); }
+.ln-plate-editor-plate .ln-plate-layout[data-size="6"] { --ln-plate-aspect: 1.55; }
+.ln-plate-editor-plate .ln-plate-layout[data-size="12"] { --ln-plate-aspect: 1.36; }
 .ln-plate-editor-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.75rem; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
 .ln-plate-editor-tools strong { color: var(--ink); font-family: var(--font-data); }
 .ln-plate-editor-side { display: grid; align-content: start; gap: 0.9rem; padding: 1rem; border-left: 1px solid var(--hairline); background: var(--warm); font-size: var(--ln-control-font-size-xs); }

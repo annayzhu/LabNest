@@ -2,6 +2,7 @@ import { Extension } from '@tiptap/core';
 import { NodeSelection, Plugin, PluginKey } from '@tiptap/pm/state';
 import type { EditorView } from '@tiptap/pm/view';
 import { blockUnitAt, moveBlock, type BlockUnit } from './editor-blocks';
+import { clearSelectionInSections, onlySections, spansSections } from './document-sections';
 
 /** The block under the pointer, for its ＋ and ⋮⋮ handle. EditorSurface sets no `show` on a touch screen, which has no handle. */
 export type BlockHover = { unit: BlockUnit; dom: HTMLElement };
@@ -15,10 +16,12 @@ const report = (storage: HandleStorage, view: EditorView, pos: number | null) =>
 
 /** Paste without formatting, one paragraph per line. */
 async function pastePlainText(view: EditorView) {
-  const { from, to } = view.state.selection, before = view.state.doc;
+  const before = view.state.doc;
   const text = await navigator.clipboard.readText().catch(() => '');
   if (!text || !view.state.doc.eq(before)) return;
-  const { schema } = view.state;
+  // Over several fixed sections, each is cleared first, as for any other paste.
+  if (onlySections(view.state) && spansSections(view.state)) view.dispatch(clearSelectionInSections(view.state));
+  const { selection: { from, to }, schema } = view.state;
   const lines = text.split(/\r?\n/).map(line => schema.nodes.paragraph.create(null, line ? schema.text(line) : null));
   view.dispatch(view.state.tr.replaceWith(from, to, lines).scrollIntoView());
 }

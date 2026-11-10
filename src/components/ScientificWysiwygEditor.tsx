@@ -34,6 +34,7 @@ import { ScientificBlockView } from "@/components/ScientificBlockView";
 import { cn } from "@/lib/cn";
 import type { ScientificContentBlock, ScientificDocument } from "@/lib/scientific-document";
 import { scientificSectionAnchorId } from "@/lib/document-outline";
+import { ScientificDocumentNode } from "@/lib/scientific-document-node";
 import { scientificDocumentToTiptap, tiptapToScientificDocument } from "@/lib/scientific-tiptap";
 import { createDocumentBlockLineHeightExtension, createDocumentLegacyAttributesExtension, createDocumentSectionExtension, createDocumentWidgetExtension, createResizableDocumentTableExtension } from "@/lib/tiptap-document-extensions";
 
@@ -194,7 +195,8 @@ export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSection
     immediatelyRender: false,
     content: initialContent as JSONContent,
     extensions: [
-      StarterKit.configure({ link: { openOnClick: false, autolink: false }, trailingNode: false, ...savedBlocksOnly }),
+      StarterKit.configure({ document: false, link: { openOnClick: false, autolink: false }, trailingNode: false, ...savedBlocksOnly }),
+      ScientificDocumentNode,
       HeadingShortcuts,
       TextStyleKit.configure({ backgroundColor: false }),
       createDocumentBlockLineHeightExtension(),
@@ -237,7 +239,8 @@ export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSection
     previousHiddenSectionSignatureRef.current = hiddenSectionSignature;
     let active = true;
     queueMicrotask(() => {
-      if (active && !editor.isDestroyed) editor.commands.setContent(scientificDocumentToTiptap(originalRef.current, hiddenSectionKeysRef.current), { emitUpdate: false });
+      // Not an undo step: undoing it would bring back sections that are hidden now, which keepSections refuses.
+      if (active && !editor.isDestroyed) editor.chain().command(({ tr }) => { tr.setMeta("addToHistory", false); return true; }).setContent(scientificDocumentToTiptap(originalRef.current, hiddenSectionKeysRef.current), { emitUpdate: false }).run();
     });
     return () => { active = false; };
   }, [editor, hiddenSectionSignature]);

@@ -91,6 +91,15 @@ function withWells(layout: PlateLayout, wells: PlateLayout["wells"]): PlateLayou
   return { ...layout, wells: Object.fromEntries(Object.entries(wells).filter(([, values]) => Object.keys(values).length)) };
 }
 
+/**
+ * Text typed for the chosen wells, applied to the layout as it was before the typing began: a well whose value already
+ * reads so keeps it, so a sample link survives text typed away and back.
+ */
+export function typePlateValue(start: PlateLayout, wellIds: string[], fieldId: string, text: string): PlateLayout {
+  const changing = wellIds.filter((id) => plateValueText(start.wells[id]?.[fieldId]) !== text.trim());
+  return changing.length ? setPlateValue(start, changing, fieldId, text) : start;
+}
+
 /** Gives one parameter the same value in every chosen well; an empty value clears it there. */
 export function setPlateValue(layout: PlateLayout, wellIds: string[], fieldId: string, value: PlateWellValue | null): PlateLayout {
   const wells = { ...layout.wells };

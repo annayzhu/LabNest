@@ -60,7 +60,6 @@ export const referencesZh: Record<string, string> = {
   "Each repeated": "每个重复",
   "Parameter name": "参数名",
   "Colour": "着色",
-  "Colour the plate by this parameter": "按这个参数给板着色",
   "Remove parameter": "删除参数",
   "Add parameter": "添加参数",
   "Plate planner": "板布局规划器",

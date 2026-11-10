@@ -60,5 +60,6 @@ export function CompletionConsumptionDialog({ lines, stock, onCancel, onSkip, on
         <Button type="button" onClick={onSkip}>Complete without deducting</Button>
         <Button type="button" variant="primary" disabled={!chosen.length || invalid} onClick={deduct}>{`Complete and record use (${chosen.length})`}</Button>
       </div>
+      {!chosen.length || invalid ? <p role="status" className="mt-2 text-right text-xs text-muted">Tick at least one line and give every ticked line an actual amount of 0 or more; or use “Complete without deducting”.</p> : null}
   </dialog>, document.body);
 }

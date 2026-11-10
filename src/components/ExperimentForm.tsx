@@ -77,6 +77,12 @@ export function ExperimentForm({ intro, action, plans, protocolVersions = [], in
   const activeMethodMode = initial.id ? lockedMethodMode : methodMode;
   const selectedVersions=selectedIds.map(id=>protocolVersions.find(version=>version.id===id)).filter(version=>!!version);
   const executionUnconfirmed=selectedVersions.some(version=>version.execution?.executionNeedsReview) || (selectedVersions.length>0 && selectedVersions.every(version=>version.execution && !version.execution.steps.length));
+  // Said beside the Save button, which stays off until it is dealt with.
+  const saveBlocked = initial.id || methodMode !== "protocol" ? null
+    : !selectedIds.length ? "Can’t save yet: this Experiment follows a Protocol, and none is chosen."
+    : executionUnconfirmed ? "Can’t save yet: a chosen Protocol’s steps aren’t confirmed. Tidy and save them in the Protocol first."
+    : null;
+  const [metadataRequest, setMetadataRequest] = useState(0);
   const structuredRun = initial.id ? structuredRunView(initial.protocolSnapshotJson, initial.executionPlan, []) : undefined;
   const structuredExecution = structuredRun ? structuredRun.hasSystems : selectedVersions.some(version => version.hasSystems);
   const stepProgress = runProgressFromSource(initial.protocolSnapshotJson, initial.executionPlan, initial.steps?.map(step => ({ ...step, groupKey: step.groupKey ?? "manual", protocolStepRef: step.protocolStepRef ?? null })) ?? []);
@@ -95,7 +101,7 @@ export function ExperimentForm({ intro, action, plans, protocolVersions = [], in
     {initial.updatedAt ? <input type="hidden" name="expectedUpdatedAt" value={new Date(initial.updatedAt).toISOString()} /> : null}
     <input type="hidden" name="methodMode" value={activeMethodMode} />
     {lockedPlan ? <input type="hidden" name="researchPlanId" value={planId} /> : null}
-    <DocumentEditorLayout initialView={initial.id ? "document" : "metadata"}>
+    <DocumentEditorLayout initialView={initial.id ? "document" : "metadata"} metadataRequest={metadataRequest}>
       <div className="document-editor-main"><ReferenceScope.Provider value={{ experimentId: initial.id }}><ScientificDocumentEditor toolOwner={{ownerType:"experiment",ownerId:initial.id,experimentId:initial.id,researchPlanId:planId}} initialDocument={initial.document} compact sectionAddons={executionPreview ? { execution: executionPreview } : runAddons} documentType="Experiment" identifier={identifier} title={title} titlePlaceholder="Untitled Experiment" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Experiment" aria-label="Experiment title" />} subtitle={purpose} hiddenSectionKeys={activeMethodMode === "protocol" ? ["background"] : []} headerFacts={[
         { label: "Plan", value: plan?.title ?? "No plan chosen" },
         { label: "Experiment date", value: date || "Not set" },
@@ -150,7 +156,8 @@ export function ExperimentForm({ intro, action, plans, protocolVersions = [], in
     </DocumentEditorLayout>
     <div className="document-editor-save-bar sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">
       {state.error ? <p role="alert" className="max-w-xl rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error shadow-soft">{state.error}</p> : null}
-      <Button type="submit" variant="primary" size="lg" disabled={pending || (!initial.id && methodMode === "protocol" && (!selectedIds.length || executionUnconfirmed))} aria-busy={pending} className="shadow-soft">{pending ? "Saving…" : "Save Experiment"}</Button>
+      {saveBlocked ? <p role="status" className="max-w-xl rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-3 py-2 text-sm text-graphite shadow-soft">{saveBlocked} <button type="button" className="focus-ring font-medium text-moss underline" onClick={() => setMetadataRequest(count => count + 1)}>Choose a Protocol</button> · <button type="button" className="focus-ring font-medium text-moss underline" onClick={() => setMethodMode("custom")}>Write my own steps</button></p> : null}
+      <Button type="submit" variant="primary" size="lg" disabled={pending || Boolean(saveBlocked)} aria-busy={pending} className="shadow-soft">{pending ? "Saving…" : "Save Experiment"}</Button>
     </div>
   </form>;
 }

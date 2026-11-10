@@ -1,6 +1,7 @@
 import { importZh, translateImportDynamic } from "./i18n-import";
 import { inventoryZh, translateInventoryDynamic } from "./i18n-inventory";
 import { samplesZh, translateSamplesDynamic } from "./i18n-samples";
+import { blockedReasonsZh } from "./i18n-blocked-reasons";
 import { referencesZh } from "./i18n-references";
 import { scheduleZh, translateScheduleDynamic } from "./i18n-schedule";
 import { designZh, translateDesignDynamic } from "./i18n-design";
@@ -54,6 +55,7 @@ export const protocolLabelsZh: Record<string, string> = {
 export const zhUi: Record<string, string> = {
   ...samplesZh,
   ...referencesZh,
+  ...blockedReasonsZh,
   ...scheduleZh,
   ...designZh,
   ...copilotZh,

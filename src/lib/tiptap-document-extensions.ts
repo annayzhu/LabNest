@@ -1,6 +1,7 @@
 import { paragraphLayout, type ParagraphLayout } from "./document-paragraph-layout";
 import { Extension, mergeAttributes, Mark, Node, type NodeViewRenderer } from "@tiptap/core";
 import { TableKit } from "@tiptap/extension-table";
+import { keepSections } from "./document-sections";
 
 const documentBlockTypes = ["paragraph", "heading", "blockquote", "bulletList", "orderedList", "taskList", "table"];
 const documentTextBlockTypes = ["paragraph", "heading", "blockquote"];
@@ -47,10 +48,12 @@ export function createDocumentSectionExtension({
 }) {
   return Node.create({
     name,
-    group: "block",
+    // In no group: a document names its sections, and nothing else may hold one.
     content,
     defining: true,
     isolating: true,
+    // A triple click or ⌘-click on a title would select the whole section with nothing drawn to show it.
+    selectable: false,
     addAttributes() {
       return Object.fromEntries(Object.entries(attributes).map(([key, value]) => [key, { default: value.default }]));
     },
@@ -67,23 +70,8 @@ export function createDocumentSectionExtension({
     addNodeView() {
       return nodeView;
     },
-    addKeyboardShortcuts() {
-      const atProtectedBoundary = (edge: "start" | "end") => {
-        const { selection } = this.editor.state;
-        if (!selection.empty) return false;
-        const position = selection.$from;
-        let sectionDepth = -1;
-        for (let depth = position.depth; depth > 0; depth -= 1) {
-          if (position.node(depth).type.name === name) { sectionDepth = depth; break; }
-        }
-        if (sectionDepth < 0) return false;
-        if (edge === "start") return position.parentOffset === 0 && position.index(sectionDepth) === 0;
-        return position.parentOffset === position.parent.content.size && position.indexAfter(sectionDepth) === position.node(sectionDepth).childCount;
-      };
-      return {
-        Backspace: () => atProtectedBoundary("start"),
-        Delete: () => atProtectedBoundary("end"),
-      };
+    addProseMirrorPlugins() {
+      return [keepSections(name, text => this.editor.emit("notice", text))];
     },
   });
 }

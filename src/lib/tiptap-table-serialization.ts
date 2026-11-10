@@ -30,6 +30,11 @@ function cloneContent(content: JSONContent[]) {
   return structuredClone(content);
 }
 
+/** A cell holds lines, never a document's fixed sections. A section pasted into a cell by an older version comes back as its lines. */
+function withoutSections(content: JSONContent[]): JSONContent[] {
+  return content.flatMap(node => node.type === "scientificSection" || node.type === "protocolSection" ? withoutSections(node.content ?? []) : [node.content ? { ...node, content: withoutSections(node.content) } : node]);
+}
+
 export function tiptapTableCell(value: string, header: boolean, width?: number | null, fontSizePt?: RichTextFontSizePt | null, color?: RichTextColor | null, richContent?: JSONContent[] | null, column?: string | null): JSONContent {
   const textStyle = { ...(fontSizePt ? { fontSize: `${fontSizePt}pt` } : {}), ...(color === "risk" ? { color: RICH_TEXT_RISK_COLOR_HEX } : {}) };
   const marks = Object.keys(textStyle).length ? [{ type: "textStyle", attrs: textStyle }] : undefined;
@@ -40,7 +45,7 @@ export function tiptapTableCell(value: string, header: boolean, width?: number |
   return {
     type: header ? "tableHeader" : "tableCell",
     attrs: width || column ? { ...(width ? { colwidth: [Math.round(width)] } : {}), ...(column ? { protocolColumn: column } : {}) } : undefined,
-    content: richContent ? cloneContent(richContent) : value.split("\n").some(documentMediaFromMarkdown) ? value.split("\n").map(line => {
+    content: richContent?.length ? cloneContent(withoutSections(richContent)) : value.split("\n").some(documentMediaFromMarkdown) ? value.split("\n").map(line => {
       const media = documentMediaFromMarkdown(line);
       return media ? { type: "documentMedia", attrs: { block: media } } : { type: "paragraph", content: line ? [{ type: "text", text: line, marks }] : [] };
     }) : [{ type: "paragraph", content }],

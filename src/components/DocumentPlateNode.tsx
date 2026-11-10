@@ -6,7 +6,7 @@ import { NodeViewWrapper, ReactNodeViewRenderer, type NodeViewProps } from "@tip
 import { Pencil } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
 import { cn } from "@/lib/cn";
-import { PLANNER_PLATE_SIZES, plateFilledCount, type PlateLayout } from "@/lib/plate-layout";
+import { newPlateId, PLANNER_PLATE_SIZES, plateFilledCount, type PlateLayout } from "@/lib/plate-layout";
 import { focusBelow } from "@/lib/editor-block-line";
 import { createDocumentWidgetExtension } from "@/lib/tiptap-document-extensions";
 import { PlateLayoutGrid } from "./PlateLayoutGrid";
@@ -17,18 +17,20 @@ import { ReferenceScope } from "./ReferencePicker";
 const PlateLayoutEditor = dynamic(() => import("./PlateLayoutEditor").then((module) => module.PlateLayoutEditor), { ssr: false });
 
 // A plate just inserted from "/" opens its editor once it is on the page.
-const openOnShow = new Set<string>();
-export function openPlateEditorWhenShown(plateId: string) { openOnShow.add(plateId); }
+const openOnShow = new Map<string, { copied: boolean }>();
+export function openPlateEditorWhenShown(plateId: string, copied = false) { openOnShow.set(plateId, { copied }); }
 
 function PlateNodeView({ node, editor, selected, getPos }: NodeViewProps) {
   const block = node.attrs.block as PlateLayout;
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { experimentId } = useContext(ReferenceScope);
   const openTool = useContext(ToolEditContext);
   const [editing, setEditing] = useState(false);
+  const [copied, setCopied] = useState(false);
   useEffect(() => {
-    if (!openOnShow.delete(block.id)) return;
-    queueMicrotask(() => setEditing(true));
+    const opening = openOnShow.get(block.id);
+    if (!opening || !openOnShow.delete(block.id)) return;
+    queueMicrotask(() => { setCopied(opening.copied); setEditing(true); });
   }, [block.id]);
 
   /** One undoable change: the plate as edited, and any further plates its imported backup held, right after it. */
@@ -42,6 +44,12 @@ function PlateNodeView({ node, editor, selected, getPos }: NodeViewProps) {
     const last = more.at(-1)?.id ?? layout.id;
     focusBelow(editor, (item) => item.type.name === "documentPlate" && item.attrs.block?.id === last);
   };
+  /** This plate stays as edited; a copy goes right below it, then any plates an imported backup held, and the editor carries on in the copy. */
+  const duplicate = (layout: PlateLayout, more: PlateLayout[]) => {
+    const copy = { ...layout, id: newPlateId(), name: `${layout.name}${locale === "zh" ? " 副本" : " copy"}`.slice(0, 80) };
+    openPlateEditorWhenShown(copy.id, true);
+    save(layout, [copy, ...more]);
+  };
 
   // The page translator skips editable content, so the words here are translated in place.
   return <NodeViewWrapper className={cn("ln-document-plate", selected && "is-selected")} data-plate-id={block.id}>
@@ -52,7 +60,7 @@ function PlateNodeView({ node, editor, selected, getPos }: NodeViewProps) {
         <button type="button" className="focus-ring" onClick={() => setEditing(true)}><Pencil aria-hidden />{t("Edit plate")}</button>
       </div> : null}
     </div>
-    {editing ? <PlateLayoutEditor initial={block} experimentId={experimentId} onOpenPlanner={openTool && PLANNER_PLATE_SIZES.includes(block.plateSize) ? (layout) => { save(layout, []); openTool(undefined, undefined, undefined, "free-plate-layout", layout); } : undefined} onDone={save} onCancel={() => { setEditing(false); editor.commands.focus(); }} /> : null}
+    {editing ? <PlateLayoutEditor initial={block} experimentId={experimentId} copied={copied} onDuplicate={duplicate} onOpenPlanner={openTool && PLANNER_PLATE_SIZES.includes(block.plateSize) ? (layout) => { save(layout, []); openTool(undefined, undefined, undefined, "free-plate-layout", layout); } : undefined} onDone={save} onCancel={() => { setEditing(false); editor.commands.focus(); }} /> : null}
   </NodeViewWrapper>;
 }
 

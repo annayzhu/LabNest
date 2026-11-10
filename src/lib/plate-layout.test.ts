@@ -4,7 +4,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   clearPlateWells, fillPlateInOrder, newPlateLayout, plateLayoutFromMarkdown, plateLayoutPlainText, plateLayoutsFromPlannerBackup, plateLayoutsToPlannerBackup,
-  plateLayoutTableRows, plateLayoutToMarkdown, plateLegend, plateSampleIds, plateWellIds, plateWellRange, plateWellsInRect, platesAsText, resizePlateLayout, setPlateValue,
+  plateLayoutTableRows, plateLayoutToMarkdown, plateLegend, plateSampleIds, plateWellIds, plateWellRange, plateWellsInRect, platesAsText, resizePlateLayout, setPlateValue, typePlateValue,
 } from "./plate-layout";
 
 const plate = () => newPlateLayout({ id: "plate-1", name: "qPCR 板 1", plateSize: 96, fieldNames: ["样本", "处理"] });
@@ -110,5 +110,23 @@ describe("planner parameters a plate block cannot show", () => {
     expect(plannerFieldsLeftOut({ version: 2, plates: [{ dimensions, wells }] })).toHaveLength(1);
     expect(plannerFieldsLeftOut({ dimensions: dimensions.slice(0, 6), wells })).toEqual([]);
     expect(plannerFieldsLeftOut(null)).toEqual([]);
+  });
+});
+
+describe('typing a value for the chosen wells', () => {
+  const sample = { sampleId: 'smp-1', label: 'Cells A' };
+  const start = setPlateValue(setPlateValue(newPlateLayout({ id: 'p', name: 'p', plateSize: 12, fieldNames: ['Sample', 'Treatment'] }), ['A1', 'A2'], 'sample', sample), ['A3'], 'sample', 'Cells B');
+  it('keeps a sample link in a well whose value the typed text still reads as', () => {
+    const typed = typePlateValue(start, ['A1', 'A2', 'A3'], 'sample', 'Cells A ');
+    expect(typed.wells.A1.sample).toEqual(sample);
+    expect(typed.wells.A2.sample).toEqual(sample);
+    expect(typed.wells.A3.sample).toBe('Cells A');
+  });
+  it('replaces what reads differently, and clears on empty text', () => {
+    expect(typePlateValue(start, ['A1'], 'sample', 'Cells A2').wells.A1.sample).toBe('Cells A2');
+    expect(typePlateValue(start, ['A1'], 'sample', '').wells.A1?.sample).toBeUndefined();
+  });
+  it('changes nothing when every chosen well already reads so', () => {
+    expect(typePlateValue(start, ['A1', 'A2'], 'sample', 'Cells A')).toBe(start);
   });
 });

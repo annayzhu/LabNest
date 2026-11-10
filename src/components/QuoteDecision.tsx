@@ -68,6 +68,7 @@ export function QuoteDecision({
         保存决定
       </button>
       {message ? <span role="status">{message}</span> : null}
+      {status === "converted" ? <p className="basis-full text-xs text-muted">该报价已转为采购记录，决定不能再修改。</p> : null}
     </form>
   );
 }

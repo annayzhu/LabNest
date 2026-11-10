@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Download, Eraser, Plus, TestTube, Trash2, Undo2, Upload } from "lucide-react";
+import { Copy, Download, Eraser, Plus, TestTube, Trash2, Undo2, Upload } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
 import { useModalDialog } from "@/components/ui/ModalDialogProvider";
 import {
-  clearPlateWells, fillPlateInOrder, isPlateSize, MAX_PLATE_FIELDS, newPlateId, PLANNER_PLATE_SIZES, PLATE_SIZES, plateColumnWells, plateLayoutsFromPlannerBackup, plateLayoutsToPlannerBackup,
+  clearPlateWells, fillPlateInOrder, typePlateValue, isPlateSize, MAX_PLATE_FIELDS, newPlateId, PLANNER_PLATE_SIZES, PLATE_SIZES, plateColumnWells, plateLayoutsFromPlannerBackup, plateLayoutsToPlannerBackup,
   plateRowWells, plateSizeName, plateValueKey, plateValueText, plateWellIds, plateWellRange, plateWellsInRect, resizePlateLayout, setPlateValue,
   type PlateField, type PlateLayout, type PlateOrder, type PlateWellValue,
 } from "@/lib/plate-layout";
@@ -17,16 +17,20 @@ import { RecordReferenceTag } from "./RecordReference";
 import { ReferencePicker } from "./ReferencePicker";
 import "./plate-layout.css";
 
+/** What a well value may hold (`plateWellValueSchema`); a longer one would make the whole plate fail to save. */
+const MAX_WELL_TEXT = 200;
 const isSampleField = (field: PlateField) => field.id === "sample" || /^(样本|samples?)$/i.test(field.name.trim());
 const union = (a: Iterable<string>, b: Iterable<string>) => new Set([...a, ...b]);
 
 /**
  * The plate editor "/板布局" opens (Q256): choose wells by click, drag, Shift range, row, column or all; give them values,
  * from the sample library too; fill a list in turn; rename and colour parameters; move layouts to and from the planner.
- * Nothing reaches the document until Done; Cancel leaves it as it was.
+ * What is typed shows on the plate at once. Nothing reaches the document until Done; Cancel leaves it as it was.
  */
-export function PlateLayoutEditor({ initial, experimentId, onDone, onCancel, onOpenPlanner }: {
+export function PlateLayoutEditor({ initial, experimentId, copied = false, onDone, onCancel, onOpenPlanner, onDuplicate }: {
   /** Offered inside a record the planner can save back to. */ onOpenPlanner?: (layout: PlateLayout) => void;
+  /** Keeps this plate as edited, with any further plates an imported backup held, and goes on in a copy of it. */ onDuplicate?: (layout: PlateLayout, more: PlateLayout[]) => void;
+  /** This plate is the copy just made from the one above it. */ copied?: boolean;
   initial: PlateLayout; experimentId?: string; onDone: (layout: PlateLayout, more: PlateLayout[]) => void; onCancel: () => void;
 }) {
   const { t, locale } = useI18n();
@@ -36,7 +40,7 @@ export function PlateLayoutEditor({ initial, experimentId, onDone, onCancel, onO
   const layout = history.present;
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const [message, setMessage] = useState<{ text: string; tone?: "warning" } | null>(null);
+  const [message, setMessage] = useState<{ text: string; tone?: "warning" } | null>(() => copied ? { text: zh ? "已复制。现在编辑的是副本，原来的板保存在它上方。" : "Copied. You are editing the copy; the original is just above it." } : null);
   const [more, setMore] = useState<PlateLayout[]>([]);
   const [picker, setPicker] = useState<{ anchor: HTMLElement; target: { field: string } | "fill" } | null>(null);
   const [fill, setFill] = useState<{ source: "experiment" | "picked" | "paste"; text: string; picked: RecordReference[]; order: PlateOrder; replicates: number; field: string }>(
@@ -49,23 +53,27 @@ export function PlateLayoutEditor({ initial, experimentId, onDone, onCancel, onO
   const anchorWell = useRef<string | null>(null);
   const busy = useRef(false);
   const fileInput = useRef<HTMLInputElement>(null);
-  const changed = history.past.length > 0 || layout !== initial || Object.keys(drafts).length > 0;
+  // One run of typing in one field is one undo step.
+  const typingField = useRef<string | null>(null);
+  const changed = history.past.length > 0 || layout !== initial;
 
   const commit = (next: PlateLayout) => setHistory((current) => next === current.present ? current : { past: [...current.past.slice(-49), current.present], present: next });
   const edit = (patch: Partial<PlateLayout>) => setHistory((current) => ({ ...current, present: { ...current.present, ...patch } }));
-  const undo = () => setHistory(undoStep);
+  const undo = () => { typingField.current = null; setDrafts({}); setHistory(undoStep); };
   const selectedIds = useMemo(() => plateWellIds(layout.plateSize).filter((id) => selected.has(id)), [layout.plateSize, selected]);
-  /** The layout with typed drafts applied to the chosen wells (a draft equal to the shared value changes nothing). */
-  const withDrafts = (base: PlateLayout) => Object.entries(drafts).reduce((next, [fieldId, text]) =>
-    text.trim() === plateValueText(commonValue(next, selectedIds, fieldId).value) ? next : setPlateValue(next, selectedIds, fieldId, text), base);
-  const flush = () => {
-    if (!Object.keys(drafts).length) return layout;
-    const next = withDrafts(layout);
-    commit(next);
-    setDrafts({});
-    return next;
+  /** The field keeps the text as typed, spaces included; the wells take it trimmed, as it is typed. An input method's unfinished text stays in the field. */
+  const typeValue = (fieldId: string, text: string, composing: boolean) => {
+    setDrafts((current) => ({ ...current, [fieldId]: text }));
+    if (composing) return;
+    const sameRun = typingField.current === fieldId;
+    typingField.current = fieldId;
+    setHistory((current) => {
+      const past = sameRun ? current.past : [...current.past.slice(-49), current.present];
+      return { past, present: typePlateValue(past.at(-1)!, selectedIds, fieldId, text) };
+    });
   };
-  const select = (next: Set<string>) => { flush(); setSelected(next); };
+  const endTyping = () => { typingField.current = null; setDrafts({}); };
+  const select = (next: Set<string>) => { endTyping(); setSelected(next); };
 
   const cancel = async () => {
     if (busy.current) return;
@@ -84,7 +92,7 @@ export function PlateLayoutEditor({ initial, experimentId, onDone, onCancel, onO
       if (event.defaultPrevented || busy.current) return;
       if (event.key === "Escape") { event.preventDefault(); void cancelRef.current(); }
       const typing = event.target instanceof HTMLElement && event.target.closest("input, textarea, select");
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z" && !event.shiftKey && !typing) { event.preventDefault(); setHistory(undoStep); }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z" && !event.shiftKey && !typing) { event.preventDefault(); typingField.current = null; setHistory(undoStep); }
     };
     window.addEventListener("keydown", onKey);
     return () => { document.body.style.overflow = previous; window.removeEventListener("keydown", onKey); };
@@ -124,7 +132,7 @@ export function PlateLayoutEditor({ initial, experimentId, onDone, onCancel, onO
       const base = adding ? new Set(selected) : new Set<string>();
       anchorWell.current = id;
       select(union(base, [id]));
-      // While dragging, only the rectangle changes; the drafts were applied when the drag began.
+      // While dragging, only the rectangle changes.
       const move = (moveEvent: PointerEvent) => {
         const well = (document.elementFromPoint(moveEvent.clientX, moveEvent.clientY) as HTMLElement | null)?.closest<HTMLElement>("[data-well]")?.dataset.well;
         if (well) setSelected(union(base, plateWellsInRect(id, well)));
@@ -149,21 +157,20 @@ export function PlateLayoutEditor({ initial, experimentId, onDone, onCancel, onO
       if (!ok) return;
     }
     commit(layout.name.trim() === plateSizeName(layout.plateSize, zh) ? { ...next, name: plateSizeName(size, zh) } : next);
-    setDrafts({});
-    setSelected(new Set());
+    select(new Set());
   };
 
   const fillValues = (): PlateWellValue[] => fill.source === "paste"
-    ? fill.text.split("\n").map((line) => line.trim()).filter(Boolean)
+    ? fill.text.split("\n").map((line) => line.trim().slice(0, MAX_WELL_TEXT)).filter(Boolean)
     : fill.source === "picked" ? fill.picked.map((reference) => ({ sampleId: reference.id, label: reference.label }))
       : (experimentSamples ?? []).map((sample) => ({ sampleId: sample.id, label: sampleReferenceLabel(sample) }));
   const runFill = () => {
     const values = fillValues();
     if (!values.length) { setMessage({ text: zh ? "名单是空的。" : "The list is empty.", tone: "warning" }); return; }
     const targets = selectedIds.length ? selectedIds : plateWellIds(layout.plateSize);
-    const result = fillPlateInOrder(withDrafts(layout), targets, fill.field, values, { order: fill.order, replicates: fill.replicates });
+    const result = fillPlateInOrder(layout, targets, fill.field, values, { order: fill.order, replicates: fill.replicates });
     commit(result.layout);
-    setDrafts({});
+    endTyping();
     setMessage(result.leftover
       ? { text: zh ? `已填 ${result.filled} 孔；还有 ${result.leftover} 孔的内容放不下。` : `Filled ${result.filled} wells; ${result.leftover} more did not fit.`, tone: "warning" }
       : { text: zh ? `已填 ${result.filled} 孔。` : `Filled ${result.filled} wells.` });
@@ -197,8 +204,7 @@ export function PlateLayoutEditor({ initial, experimentId, onDone, onCancel, onO
     const [first, ...rest] = plates;
     commit({ ...first, id: layout.id, name: first.name || layout.name, caption: layout.caption });
     setMore(rest);
-    setDrafts({});
-    setSelected(new Set());
+    select(new Set());
     setMessage({ text: rest.length ? (zh ? `已导入“${first.name}”；点完成后，另外 ${rest.length} 块板会接在这块板后面。` : `Imported “${first.name}”; the other ${rest.length} plates are added after this one when you click Done.`) : (zh ? `已导入“${first.name}”。` : `Imported “${first.name}”.`) });
   };
   const downloadBackup = () => {
@@ -216,10 +222,8 @@ export function PlateLayoutEditor({ initial, experimentId, onDone, onCancel, onO
     setPicker(null);
     if (!target || !references.length) return;
     if (target === "fill") { setFill((current) => ({ ...current, source: "picked", picked: references })); return; }
-    const others = { ...drafts };
-    delete others[target.field];
-    commit(setPlateValue(withDrafts(layout), selectedIds, target.field, { sampleId: references[0].id, label: references[0].label }));
-    setDrafts(others);
+    commit(setPlateValue(layout, selectedIds, target.field, { sampleId: references[0].id, label: references[0].label }));
+    endTyping();
   };
 
   const fillCount = fillValues().length * fill.replicates;
@@ -232,8 +236,9 @@ export function PlateLayoutEditor({ initial, experimentId, onDone, onCancel, onO
         </select>
         <button type="button" className="ln-plate-button focus-ring" disabled={!history.past.length} onClick={undo} aria-label="Undo"><Undo2 aria-hidden /></button>
         <button type="button" className="ln-plate-button focus-ring" onClick={() => void cancel()}>Cancel</button>
-        {onOpenPlanner ? <button type="button" className="ln-plate-button focus-ring" onClick={() => { const final = withDrafts(layout); onOpenPlanner({ ...final, name: final.name.trim() }); }}>{t("Open the plate planner")}</button> : null}
-        <button type="button" className="ln-plate-button is-primary focus-ring" onClick={() => { const final = withDrafts(layout); onDone({ ...final, name: final.name.trim() }, more); }}>Done</button>
+        {onOpenPlanner ? <button type="button" className="ln-plate-button focus-ring" onClick={() => onOpenPlanner({ ...layout, name: layout.name.trim() })}>{t("Open the plate planner")}</button> : null}
+        {onDuplicate ? <button type="button" className="ln-plate-button focus-ring" onClick={() => onDuplicate({ ...layout, name: layout.name.trim() }, more)}><Copy aria-hidden />Duplicate plate</button> : null}
+        <button type="button" className="ln-plate-button is-primary focus-ring" onClick={() => onDone({ ...layout, name: layout.name.trim() }, more)}>Done</button>
       </header>
       <div className="ln-plate-editor-body">
         <div className="ln-plate-editor-plate">
@@ -244,6 +249,10 @@ export function PlateLayoutEditor({ initial, experimentId, onDone, onCancel, onO
               : (zh ? "单击选孔，拖动框选，Shift 连选，⌘/Ctrl 加选；点行号或列号选整行整列。" : "Click a well, drag a rectangle, Shift for a range, ⌘/Ctrl to add; row and column labels take the whole row or column.")}</span>
           </p>
           <PlateLayoutGrid layout={layout} handlers={handlers} caption={false} />
+          {layout.fields.length > 1 ? <div className="ln-plate-editor-row">
+            <span>Colour by</span>
+            <div className="ln-segmented" role="group" aria-label="Colour by">{layout.fields.map((field) => <button key={field.id} type="button" className="focus-ring" aria-pressed={layout.colorField === field.id} onClick={() => commit({ ...layout, colorField: field.id })} data-i18n-ignore>{field.name}</button>)}</div>
+          </div> : null}
           {message ? <p className="ln-plate-editor-message" data-tone={message.tone} role="status">{message.text}</p> : null}
         </div>
         <aside className="ln-plate-editor-side">
@@ -252,7 +261,7 @@ export function PlateLayoutEditor({ initial, experimentId, onDone, onCancel, onO
             {!selectedIds.length ? <p className="ln-plate-editor-hint">Select wells on the plate to give them values.</p> : null}
             {layout.fields.map((field) => { const shared = commonValue(layout, selectedIds, field.id); return <FieldInput key={field.id}
               field={field} common={shared.value} mixed={shared.mixed} draft={drafts[field.id]} disabled={!selectedIds.length} zh={zh}
-              onDraft={(text) => setDrafts((current) => ({ ...current, [field.id]: text }))} onApply={flush}
+              onType={(text, composing) => typeValue(field.id, text, composing)} onEnd={endTyping}
               onPickSample={isSampleField(field) ? (anchor) => setPicker({ anchor, target: { field: field.id } }) : undefined} />; })}
             <div className="ln-plate-editor-row">
               <button type="button" className="ln-plate-button focus-ring" disabled={!selectedIds.length} onClick={() => commit(clearPlateWells(layout, selectedIds))}><Eraser aria-hidden />Clear wells</button>
@@ -282,6 +291,7 @@ export function PlateLayoutEditor({ initial, experimentId, onDone, onCancel, onO
               <button type="button" className="ln-plate-button focus-ring" disabled={!fillCount} onClick={runFill}>
                 {zh ? `填入${selectedIds.length ? "所选" : "整块板"}（${fillCount} 孔）` : `Fill ${selectedIds.length ? "the selected wells" : "the plate"} (${fillCount} wells)`}
               </button>
+              {!fillCount && fill.source !== "experiment" ? <p className="ln-plate-editor-hint">{fill.source === "picked" ? "Choose samples first, then fill." : "Paste the names first, one per line, then fill."}</p> : null}
             </div>
           </details>
           <details>
@@ -290,10 +300,11 @@ export function PlateLayoutEditor({ initial, experimentId, onDone, onCancel, onO
               {layout.fields.map((field) => <div key={field.id} className="ln-plate-editor-param">
                 <input defaultValue={field.name} aria-label="Parameter name" maxLength={30} onBlur={(event) => { const name = event.target.value.trim(); if (name && name !== field.name) setField(field.id, { name }); }} />
                 <input defaultValue={field.unit ?? ""} aria-label="Unit" placeholder="Unit" maxLength={16} onBlur={(event) => { const unit = event.target.value.trim(); if (unit !== (field.unit ?? "")) setField(field.id, { unit: unit || undefined }); }} />
-                <label className="ln-plate-editor-row" title="Colour the plate by this parameter"><input type="radio" name="plate-colour" checked={layout.colorField === field.id} onChange={() => commit({ ...layout, colorField: field.id })} />Colour</label>
                 <button type="button" className="ln-plate-button focus-ring" disabled={layout.fields.length < 2} aria-label="Remove parameter" onClick={() => removeField(field.id)}><Trash2 aria-hidden /></button>
               </div>)}
               <button type="button" className="ln-plate-button focus-ring" disabled={layout.fields.length >= MAX_PLATE_FIELDS} onClick={addField}><Plus aria-hidden />Add parameter</button>
+              {layout.fields.length < 2 ? <p className="ln-plate-editor-hint">A plate keeps at least one parameter.</p> : null}
+              {layout.fields.length >= MAX_PLATE_FIELDS ? <p className="ln-plate-editor-hint">{zh ? `一块板最多 ${MAX_PLATE_FIELDS} 个参数，已达上限。` : `A plate holds at most ${MAX_PLATE_FIELDS} parameters.`}</p> : null}
             </div>
           </details>
           <details>
@@ -322,17 +333,18 @@ function commonValue(layout: PlateLayout, wellIds: string[], fieldId: string) {
   return { value: keys.size === 1 ? values[0] : undefined, mixed: keys.size > 1 };
 }
 
-/** One parameter's value in the chosen wells. What is typed is kept as a draft and applied on Enter, on leaving the field, before the selection changes and on Done. */
-function FieldInput({ field, common, mixed, draft, disabled, zh, onDraft, onApply, onPickSample }: {
+/** One parameter's value in the chosen wells: what is typed reaches them at once. */
+function FieldInput({ field, common, mixed, draft, disabled, zh, onType, onEnd, onPickSample }: {
   field: PlateField; common: PlateWellValue | undefined; mixed: boolean; draft: string | undefined; disabled: boolean; zh: boolean;
-  onDraft: (value: string) => void; onApply: () => void; onPickSample?: (anchor: HTMLElement) => void;
+  onType: (value: string, composing: boolean) => void; onEnd: () => void; onPickSample?: (anchor: HTMLElement) => void;
 }) {
   return <label>
     <span>{field.name}{field.unit ? ` (${field.unit})` : ""}</span>
     {common && typeof common !== "string" && draft === undefined ? <span><RecordReferenceTag kind="sample" label={common.label} /></span> : null}
     <span className="ln-plate-editor-field">
-      <input value={draft ?? plateValueText(common)} disabled={disabled} placeholder={mixed ? (zh ? "多个值" : "Several values") : ""}
-        onChange={(event) => onDraft(event.target.value)} onBlur={onApply} onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); onApply(); } }} />
+      <input value={draft ?? plateValueText(common)} disabled={disabled} maxLength={MAX_WELL_TEXT} placeholder={mixed ? (zh ? "多个值" : "Several values") : ""}
+        onChange={(event) => onType(event.target.value, (event.nativeEvent as InputEvent).isComposing)} onCompositionEnd={(event) => onType(event.currentTarget.value, false)}
+        onBlur={onEnd} onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); onEnd(); } }} />
       {onPickSample ? <button type="button" className="ln-plate-button focus-ring" disabled={disabled} onClick={(event) => onPickSample(event.currentTarget)}><TestTube aria-hidden />Samples…</button> : null}
     </span>
   </label>;

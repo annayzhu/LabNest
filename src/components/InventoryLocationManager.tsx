@@ -13,6 +13,7 @@ import {
 } from "@/app/inventory/locations/actions";
 import { formInputClass, formLabelClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
+import { useI18n } from "@/components/I18nProvider";
 import { inventoryLocationDeleteBlockers, inventoryLocationTypes, readLocationTemperature, temperatureLabel } from "@/lib/inventory-location-lifecycle";
 
 const initialState: InventoryLocationActionState = {};
@@ -83,6 +84,8 @@ const iconButton = "focus-ring inline-flex h-8 w-8 items-center justify-center r
 function InventoryLocationEditor({ location, locations }: { location: InventoryLocationManagerRecord; locations: InventoryLocationManagerRecord[] }) {
   const [editing, setEditing] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  // Most places hold something, so why this one can't go is said when someone tries, not on every row.
+  const [deleteRefused, setDeleteRefused] = useState(false);
   const [updateState, updateAction, updating] = useActionState(async (previous: InventoryLocationActionState, formData: FormData) => {
     const result = await updateInventoryLocation(previous, formData);
     if (result.success) setEditing(false);
@@ -94,6 +97,7 @@ function InventoryLocationEditor({ location, locations }: { location: InventoryL
   const blockers = inventoryLocationDeleteBlockers(location.counts);
   const movementReferences = location.counts.itemsFrom + location.counts.itemsTo;
   const pending = updating || archiving || restoring || deleting;
+  const zh = useI18n().locale === "zh";
 
   return (
     <li className={location.status === "active" ? undefined : "bg-warm/60"}>
@@ -115,9 +119,10 @@ function InventoryLocationEditor({ location, locations }: { location: InventoryL
           ) : (
             <form action={restoreAction}><input type="hidden" name="id" value={location.id} /><button type="submit" disabled={pending} aria-label="Restore location" title="Restore location" className={iconButton}><RotateCcw className="h-4 w-4" /></button></form>
           )}
-          <button type="button" onClick={() => setDeleteOpen(true)} disabled={pending || blockers.length > 0} aria-label="Delete location" title={blockers.length ? `Archive instead: ${blockers.join(", ")}.` : "Delete location"} className={`${iconButton} hover:bg-error-surface hover:text-error`}><Trash2 className="h-4 w-4" /></button>
+          <button type="button" onClick={() => { if (blockers.length) setDeleteRefused((value) => !value); else setDeleteOpen(true); }} disabled={pending} aria-disabled={blockers.length > 0} aria-label="Delete location" title="Delete location" className={`${iconButton} ${blockers.length ? "opacity-40" : "hover:bg-error-surface hover:text-error"}`}><Trash2 className="h-4 w-4" /></button>
         </span>
       </div>
+      {deleteRefused && blockers.length ? <p role="status" className="mx-4 mb-2 text-xs text-muted"><span>This location cannot be deleted; it still has</span> {blockers.map((blocker, index) => <span key={blocker}>{index ? (zh ? "、" : ", ") : null}<span>{blocker}</span></span>)}{zh ? "。" : "."} <span>Empty it first, or archive it instead.</span></p> : null}
       <ActionMessage state={archiveState.error ? archiveState : restoreState.error ? restoreState : location.status === "active" ? restoreState : archiveState} className="mx-4 mb-2" />
 
       {editing ? (

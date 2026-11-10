@@ -14,6 +14,9 @@ export type PlateGridHandlers = {
   onAll: () => void;
 };
 
+/** Past this a value is clipped in the well, in Latin characters (a Chinese character counts as two); up to it, it wraps. */
+const stackUnits: Record<number, number> = { 6: 48, 12: 32, 24: 20 };
+
 /**
  * A plate drawn as its wells, coloured by one parameter, with a legend of each value and how many wells hold it.
  * Shared by the document block, its editor, read-only pages and the run's preparation list.
@@ -29,6 +32,11 @@ export function PlateLayoutGrid({ layout, handlers, caption = true, wellLines, w
   const numbers = useMemo(() => new Map(legend.map((entry, index) => [entry.key, index + 1])), [legend]);
   const wellText = (value: PlateLayout["wells"][string][string] | undefined) => value === undefined ? "" : numbered ? String(numbers.get(plateValueKey(value)) ?? "") : plateValueText(value);
   const colorField = layout.fields.find((field) => field.id === layout.colorField);
+  // A well big enough to read says every value it holds, the colouring parameter's first; the tooltip is not the only place to find them.
+  const stack = (id: string) => numbered || wellLines ? null : [layout.colorField, ...layout.fields.map((field) => field.id).filter((field) => field !== layout.colorField)].flatMap((field) => {
+    const line = layout.wells[id]?.[field];
+    return line === undefined ? [] : [<span key={field}>{clipPlateLabel(plateValueText(line), stackUnits[layout.plateSize] ?? 20)}</span>];
+  });
   const Axis = handlers ? "button" : "span";
   const wellTitle = (id: string) => {
     const values = layout.wells[id];
@@ -49,11 +57,12 @@ export function PlateLayoutGrid({ layout, handlers, caption = true, wellLines, w
           ...Array.from({ length: columns }, (_, column) => {
             const id = plateWellId(row, column), value = layout.wells[id]?.[layout.colorField];
             const props = { className: "ln-plate-layout-well", "data-well": id, "data-filled": layout.wells[id] ? "" : undefined, "data-plate-tone": value !== undefined ? tones.get(plateValueKey(value)) : undefined, title: wellTitle(id), "data-i18n-ignore": "" };
+            const stacked = stack(id);
             return handlers
-              ? <button key={id} type="button" {...props} aria-pressed={handlers.selected.has(id)} aria-label={wellTitle(id).replaceAll("\n", " · ")} onPointerDown={(event) => handlers.onWellDown(id, event)}>{wellText(value)}</button>
+              ? <button key={id} type="button" {...props} data-stacked={stacked?.length ? "" : undefined} aria-pressed={handlers.selected.has(id)} aria-label={wellTitle(id).replaceAll("\n", " · ")} onPointerDown={(event) => handlers.onWellDown(id, event)}>{stacked?.length ? stacked : wellText(value)}</button>
               : wellLines && layout.plateSize <= 96 && layout.wells[id]
                 ? <span key={id} {...props} data-lines="">{wellLines.map((field) => { const line = layout.wells[id]?.[field]; return line === undefined ? null : <span key={field}>{clipPlateLabel(plateValueText(line), wellLineUnits)}</span>; })}</span>
-                : <span key={id} {...props}>{wellLines ? "" : wellText(value)}</span>;
+                : <span key={id} {...props} data-stacked={stacked?.length ? "" : undefined}>{wellLines ? "" : stacked?.length ? stacked : wellText(value)}</span>;
           }),
         ])}
       </div>

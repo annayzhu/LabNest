@@ -44,7 +44,7 @@ export default async function ExperimentSchedulePage({ params }: { params: Promi
     <PageHeader identifier={experiment.runCode} eyebrow={experiment.researchPlan?.code ?? undefined} title={`Schedule · ${experiment.title}`} description="Each day’s work, drafted from the waits in its Protocols. Drag a block to another day; what waits for it moves along."
       actions={<><Link href={`/experiments/${experiment.id}`} className={secondaryButton}><ArrowLeft className="h-4 w-4" aria-hidden />Experiment record</Link>{isExportableExperiment(experiment) && blocks.length ? <CalendarExportButton scope={`experiment=${experiment.id}`} /> : null}</>} />
     <ExperimentScheduleBoard experiment={{ id: experiment.id, runCode: experiment.runCode, status: experiment.status }} editable={editable} steps={steps} blocks={blocks}
-      token={scheduleToken(experiment.scheduleBlocks)} others={others} suggestedStart={suggestedStart} todayKey={labDayKey(now)}
+      token={scheduleToken(experiment.scheduleBlocks, experiment)} others={others} suggestedStart={suggestedStart} todayKey={labDayKey(now)}
       startDay={startDay} savedDays={experiment.scheduleDays} />
   </div></AppShell>;
 }

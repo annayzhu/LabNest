@@ -76,7 +76,7 @@ export function mergeToolOutput(document: ScientificDocument, output: ToolOutput
         throw new Error('此结果已有新版本');
     if (existing) {
         for (const section of next.sections)
-            section.blocks = section.blocks.map(block => block.id === output.id ? output : block);
+            section.blocks = section.blocks.map(block => block.id === output.id ? (block.day ? { ...output, day: block.day } as typeof output : output) : block);
     }
     else {
         let section = next.sections.find(item => item.key === insertionSection) ?? next.sections.find(item => anchorId && item.blocks.some(block => block.id === anchorId)) ?? next.sections.find(item => item.key === sectionKey);
@@ -84,8 +84,17 @@ export function mergeToolOutput(document: ScientificDocument, output: ToolOutput
             section = { key: sectionKey, title: sectionKey === 'analysis' ? 'Analysis' : sectionKey === 'setup' ? 'Setup & samples' : 'Material & methods', blocks: [] };
             next.sections.push(section);
         }
+        // "day:<key>": the start of a day of 执行记录 with nothing written yet (Q427); otherwise the output joins its anchor's day.
+        // A day key the document schema would refuse is no day: the output lands at the end, never breaking the record.
+        const day = anchorId?.startsWith('day:') ? (/^\d{4}-\d{2}-\d{2}$/.test(anchorId.slice(4)) ? anchorId.slice(4) : undefined) : section.blocks.find(block => block.id === anchorId)?.day;
+        const placed = (day ? { ...output, day } : output) as typeof output;
+        if (anchorId?.startsWith('day:')) {
+            const first = day ? section.blocks.findIndex(block => block.day === day) : -1;
+            section.blocks.splice(first < 0 ? section.blocks.length : first, 0, placed);
+            return next;
+        }
         const index = anchorId ? section.blocks.findIndex(block => block.id === anchorId) : -1;
-        section.blocks.splice(index < 0 ? (insertionSection ? 0 : section.blocks.length) : index + 1, 0, output);
+        section.blocks.splice(index < 0 ? (insertionSection ? 0 : section.blocks.length) : index + 1, 0, placed);
     }
     return next;
 }
@@ -103,7 +112,7 @@ export function replacePlateWithOutput(document: ScientificDocument, plateId: st
             if (at < 0)
                 continue;
             const before = lines.slice(0, at).join('\n'), after = lines.slice(at + 1).join('\n');
-            section.blocks.splice(index, 1, ...(before.trim() ? [{ ...block, text: before }] : []), output, ...(after.trim() ? [{ ...block, id: `${block.id}-after`, text: after }] : []));
+            section.blocks.splice(index, 1, ...(before.trim() ? [{ ...block, text: before }] : []), (block.day ? { ...output, day: block.day } : output) as typeof output, ...(after.trim() ? [{ ...block, id: `${block.id}-after`, text: after }] : []));
             return next;
         }
     return undefined;

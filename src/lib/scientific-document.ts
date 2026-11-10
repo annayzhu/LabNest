@@ -14,15 +14,17 @@ import { plateLayoutPlainText, plateLayoutsInText, plateSampleIds, platesAsText 
 import { recordReferencesInText, stripRecordReferenceLinks } from "./record-references";
 
 /**
- * Run-derived metadata (never authored): a Protocol part (`group`), a checkable step, content that belongs to a step or part (`detail`),
+ * Run-derived metadata (never authored): a day of the schedule (`day`: index, day key in `meta`, status), a Protocol part (`group`), a checkable step, content that belongs to a step or part (`detail`),
  * a Protocol note kept where it was written among the steps (`note`), and a deviation line in 偏差与事件. `fold` groups consecutive
- * details under one disclosure.
+ * details under one disclosure. A day or part heading also names its part (`groupKey`), its day (`dayKey`) and how many parts a day holds (`parts`).
+ * `day` on an authored block of 执行记录 is the day it was written under (Q427); without it the block is 未分天的记录.
  */
-const baseBlockSchema = z.object({ id: z.string().min(1), execution: z.object({
- role:z.enum(["group","step","confirmation","detail","note","deviation"]),stepId:z.string().optional(),title:z.string(),completed:z.boolean().optional(),completedAt:z.string().optional(),
+const baseBlockSchema = z.object({ id: z.string().min(1), day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), execution: z.object({
+ role:z.enum(["day","group","step","confirmation","detail","note","deviation"]),stepId:z.string().optional(),title:z.string(),completed:z.boolean().optional(),completedAt:z.string().optional(),
  deviationLabel:z.enum(["偏差","异常"]).optional(),deviationNote:z.string().optional(),impact:z.string().optional(),author:z.string().optional(),
  index:z.number().int().optional(),meta:z.string().optional(),number:z.number().int().optional(),status:z.string().optional(),blockedReason:z.string().optional(),
  allowsDeviation:z.boolean().optional(),deviationType:z.string().optional(),deviationAt:z.string().optional(),fold:z.string().optional(),
+ groupKey:z.string().optional(),dayKey:z.string().optional(),parts:z.number().int().optional(),
 }).optional() });
 
 export const scientificContentBlockSchema = z.discriminatedUnion("type", [
@@ -263,7 +265,8 @@ export function normalizeScientificDocument(
             ...existing,
             key,
             title,
-            blocks: existing.blocks.flatMap((block) => block.type === "text" ? scientificBlocksFromText(block.text, block.id) : [block]),
+            // A text block may hold several kinds of content; each part keeps the day it was written under (Q427).
+            blocks: existing.blocks.flatMap((block) => block.type === "text" ? scientificBlocksFromText(block.text, block.id).map((part) => block.day ? { ...part, day: block.day } : part) : [block]),
           }
         : { key, title, blocks: [] };
     }), ...parsed.data.sections.filter(section => !definitions.some(definition => definition.key === section.key || definition.aliases?.includes(section.key)))],

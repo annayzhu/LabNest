@@ -1,4 +1,5 @@
 import { distinctDocumentBlockIds } from "./document-block-identity";
+import { writingRunKey } from "./experiment-days";
 import { paragraphLayoutPrefix, parseParagraphLayoutLine } from "./document-paragraph-layout";
 import type { JSONContent } from "@tiptap/core";
 import { documentMediaFromMarkdown, documentMediaToMarkdown, documentMediaSchema } from "./document-media";
@@ -163,13 +164,28 @@ function blockToTiptap(block: ScientificContentBlock): JSONContent[] {
   return [{ type: "scientificWidget", attrs: { block } }];
 }
 
-export function scientificDocumentToTiptap(document: ScientificDocument, hiddenSectionKeys: string[] = []): JSONContent {
+/**
+ * The days of 执行记录 as the editor shows them (Q427): each run of days by its first and last day's key, and whether a last part holds
+ * steps placed on no day. Writing on a day of no run goes to that last part, 未分天的记录.
+ */
+export type EditorDayRuns = { runs: Array<{ first: string; last: string }>; tail: boolean };
+
+function executionContent(blocks: readonly ScientificContentBlock[], days: EditorDayRuns): JSONContent[] {
+  const runs = days.runs.map(run => ({ first: { dayKey: run.first }, last: { dayKey: run.last } }));
+  const runOf = (block: ScientificContentBlock) => writingRunKey(block.day, runs);
+  const part = (dayKey: string, own: readonly ScientificContentBlock[]): JSONContent[] => [{ type: "scientificDayBreak", attrs: { dayKey } }, ...own.flatMap(blockToTiptap)];
+  const loose = blocks.filter(block => !runOf(block));
+  return [...days.runs.flatMap(run => part(run.first, blocks.filter(block => runOf(block) === run.first))), ...(days.tail || loose.length ? part("", loose) : [])];
+}
+
+export function scientificDocumentToTiptap(document: ScientificDocument, hiddenSectionKeys: string[] = [], days?: EditorDayRuns): JSONContent {
   return {
     type: "doc",
     content: document.sections.filter((section) => !hiddenSectionKeys.includes(section.key)).map((section) => ({
       type: "scientificSection",
       attrs: { sectionKey: section.key, sectionTitle: section.title, titleFontSizePt: section.titleFontSizePt ?? null },
-      content: section.blocks.length ? section.blocks.flatMap(blockToTiptap) : [{ type: "paragraph", attrs: legacyAttrs(uniqueId(section.key), "text") }],
+      content: section.key === "execution" && days?.runs.length ? executionContent(section.blocks, days)
+        : section.blocks.length ? section.blocks.flatMap(blockToTiptap) : [{ type: "paragraph", attrs: legacyAttrs(uniqueId(section.key), "text") }],
     })),
   };
 }
@@ -279,10 +295,18 @@ function identity(node: JSONContent) {
 }
 
 function sectionBlocks(section: JSONContent): ScientificContentBlock[] {
-  const blocks: ScientificContentBlock[] = [];
+  const collected: ScientificContentBlock[] = [];
   const content = section.content ?? [];
+  // Under a day of 执行记录, what is written belongs to that day; before any day or under 未分天的记录 it belongs to none (Q427).
+  let day: string | undefined;
+  const blocks = { push: (block: ScientificContentBlock) => { const { day: _previous, ...rest } = block; void _previous; collected.push((day ? { ...rest, day } : rest) as ScientificContentBlock); } };
   for (let index = 0; index < content.length;) {
     const node = content[index];
+    if (node.type === "scientificDayBreak") {
+      day = typeof node.attrs?.dayKey === "string" && node.attrs.dayKey ? node.attrs.dayKey : undefined;
+      index += 1;
+      continue;
+    }
     if (node.type === "scientificWidget" || node.type === "documentMedia") {
       const block = safeWidget(node);
       if (block) blocks.push(block);
@@ -314,7 +338,7 @@ function sectionBlocks(section: JSONContent): ScientificContentBlock[] {
     }
     const groupId = nodeIdentity.id;
     const nodes: JSONContent[] = [];
-    while (content[index] && !["scientificWidget", "documentMedia", "table"].includes(content[index].type ?? "")) {
+    while (content[index] && !["scientificWidget", "documentMedia", "table", "scientificDayBreak"].includes(content[index].type ?? "")) {
       const currentIdentity = identity(content[index]);
       if (nodes.length && (currentIdentity.id !== groupId || (content[index].type === "heading" && !currentIdentity.id))) break;
       if (!groupId && nodes.length && content[index].type === "heading") break;
@@ -325,7 +349,7 @@ function sectionBlocks(section: JSONContent): ScientificContentBlock[] {
     if (nodes.length) blocks.push({ id: groupId ?? uniqueId("text"), type: "text", text: tiptapNodesToMarkdown(nodes) });
     else index += 1;
   }
-  return distinctDocumentBlockIds(blocks.filter(scientificBlockHasContent));
+  return distinctDocumentBlockIds(collected.filter(scientificBlockHasContent));
 }
 
 export function tiptapToScientificDocument(json: JSONContent, original: ScientificDocument): ScientificDocument {

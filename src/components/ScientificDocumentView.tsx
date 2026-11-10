@@ -14,6 +14,7 @@ export function ScientificDocumentView({
   subtitle,
   leadingContent,
   sectionLeading = {},
+  sectionTrailing = {},
 }: {
   document: ScientificDocument;
   showEmptySections?: boolean;
@@ -23,8 +24,10 @@ export function ScientificDocumentView({
   leadingContent?: ReactNode;
   /** Live content at the head of a section, by section key (an experiment's samples in 实验设置与样本); such a section always shows. */
   sectionLeading?: Record<string, ReactNode>;
+  /** Live content at the end of a section (the record's "＋ 加一天" after the last day). */
+  sectionTrailing?: Record<string, ReactNode>;
 }) {
-  const populatedSections = document.sections.filter((section) => section.blocks.length > 0 || sectionLeading[section.key]);
+  const populatedSections = document.sections.filter((section) => section.blocks.length > 0 || sectionLeading[section.key] || sectionTrailing[section.key]);
   const displayedSections = showEmptySections ? document.sections : populatedSections;
 
   const canvas = <DocumentCanvas label={title ?? "Scientific document"}>
@@ -47,7 +50,8 @@ export function ScientificDocumentView({
                 : segment.kind === "step"
                   ? <div key={segment.block.id} className="document-block"><ExecutionStepLine execution={segment.block.execution!}>{segment.details.map((block) => <div key={block.id} className="document-block"><ScientificBlockView block={{ ...block, execution: undefined }} /></div>)}</ExecutionStepLine></div>
                   : <details key={segment.blocks[0].id} className="document-block ln-execution-fold"><summary className="focus-ring">{segment.label}</summary>{segment.blocks.map((block) => <div key={block.id} className="document-block"><ScientificBlockView block={block} /></div>)}</details>)
-              : sectionLeading[section.key] ? null : <p className="text-sm italic text-muted">Not recorded.</p>}
+              : sectionLeading[section.key] || sectionTrailing[section.key] ? null : <p className="text-sm italic text-muted">Not recorded.</p>}
+            {sectionTrailing[section.key]}
           </div>
         </section>
       )) : <p className="text-sm text-muted">No structured sections have been recorded yet.</p>}

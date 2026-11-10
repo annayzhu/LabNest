@@ -13,6 +13,11 @@ export type BlockUnit = { pos: number; node: ProseMirrorNode };
 
 /** The block a handle stands for at `pos`: the outermost block inside the document or one of its sections. */
 export function blockUnitAt(doc: ProseMirrorNode, pos: number, within = containers): BlockUnit | null {
+  const unit = outermostBlockAt(doc, pos, within);
+  // A day of 执行记录 is fixed, as a section is: no handle moves or removes it.
+  return unit?.node.type.name === 'scientificDayBreak' ? null : unit;
+}
+function outermostBlockAt(doc: ProseMirrorNode, pos: number, within: ReadonlySet<string>): BlockUnit | null {
   const $pos = doc.resolve(Math.max(0, Math.min(pos, doc.content.size)));
   for (let depth = 1; depth <= $pos.depth; depth += 1) {
     if (within.has($pos.node(depth - 1).type.name) && !within.has($pos.node(depth).type.name)) return { pos: $pos.before(depth), node: $pos.node(depth) };

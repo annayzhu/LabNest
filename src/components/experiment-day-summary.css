@@ -1,0 +1,34 @@
+/* 日程 at the head of 实验设置与样本 (Q432): tiles wrap onto further lines, never a sideways scroll. */
+.ln-day-summary { display: grid; gap: 0.4rem; min-width: 0; margin: 0 0 1rem; }
+.ln-day-summary-title { margin: 0; font: 500 var(--ln-control-font-size-xs)/1.4 var(--font-ui); color: var(--muted); }
+.ln-day-summary-days { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
+.ln-day-summary-day { display: flex; min-width: 0; }
+.ln-day-summary-wait { margin-left: auto; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ln-day-summary-tile {
+  flex: 1 1 auto; display: grid; align-content: start; gap: 0.15rem; min-width: 0; padding: 0.45rem 0.6rem;
+  border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel-inner); background: var(--surface); color: var(--graphite); text-decoration: none;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+.ln-day-summary-tile:hover { border-color: color-mix(in srgb, var(--moss) 45%, var(--hairline)); background: var(--action-surface); }
+.ln-day-summary-tile[data-status="unplanned"] { border-style: dashed; background: transparent; }
+.ln-day-summary-tile[data-status="active"] { border-color: color-mix(in srgb, var(--moss) 55%, var(--hairline)); }
+.ln-day-summary-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.4rem; font: var(--ln-control-font-size-xs)/1.4 var(--font-ui); color: var(--muted); font-variant-numeric: tabular-nums; }
+.ln-day-summary-head strong { font-weight: 600; color: var(--ink); }
+.ln-day-summary-content { font: var(--ln-control-font-size-sm, 0.8125rem)/1.45 var(--font-ui); color: var(--graphite); overflow-wrap: anywhere; }
+.ln-day-summary-status { display: inline-flex; align-items: center; gap: 0.3rem; font: var(--ln-control-font-size-xs)/1.4 var(--font-ui); color: var(--muted); }
+.ln-day-summary-dot { width: 0.45rem; height: 0.45rem; border-radius: 999px; border: 1.5px solid var(--muted); }
+.ln-day-summary-tile[data-status="active"] .ln-day-summary-status { color: var(--moss); }
+.ln-day-summary-tile[data-status="active"] .ln-day-summary-dot { border-color: var(--moss); background: color-mix(in srgb, var(--moss) 40%, transparent); }
+.ln-day-summary-tile[data-status="done"] .ln-day-summary-dot { border-color: var(--moss); background: var(--moss); }
+/* Phones: a compact list, one day per row — the day and date on the left, what it holds and its state on the right. */
+@media (max-width: 520px) {
+  .ln-day-summary-days { grid-template-columns: 1fr; gap: 0; border-top: 1px solid var(--hairline); }
+  .ln-day-summary-tile { grid-template-columns: 6.2rem minmax(0, 1fr); column-gap: 0.6rem; row-gap: 0.1rem; padding: 0.4rem 0.15rem; border: 0; border-bottom: 1px solid var(--hairline); border-radius: 0; background: none; }
+  .ln-day-summary-tile[data-status="unplanned"] { border-style: none none solid; }
+  .ln-day-summary-head { grid-row: span 2; flex-direction: column; align-items: flex-start; gap: 0; }
+  .ln-day-summary-wait { margin-left: 0; }
+}
+@media print {
+  .ln-day-summary-tile { break-inside: avoid; background: none; }
+}
+@media (prefers-reduced-motion: reduce) { .ln-day-summary-tile { transition: none; } }

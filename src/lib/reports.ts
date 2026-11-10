@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db";
 import type { Prisma } from "@/generated/prisma/client";
 import { experimentExecutionDocument } from "@/lib/experiment-document";
+import { withExperimentDays } from "@/lib/experiment-days";
+import { experimentDayPlanOf } from "@/lib/experiment-schedule.server";
 import { withExperimentSamples } from "@/lib/experiment-samples";
 import { experimentSampleLines } from "@/lib/samples.server";
 import { experimentReportBlocks, resultReportBlocks } from "@/lib/report-content";
@@ -17,7 +19,7 @@ export async function collectReportSources(projectId: string, researchPlanId?: s
   const planWhere = researchPlanId ? { id: researchPlanId, projectId } : { projectId };
   const [plans, experiments, results, entries] = await Promise.all([
     prisma.researchPlan.findMany({ where: planWhere, orderBy: { updatedAt: "asc" } }),
-    prisma.experiment.findMany({ where: { projectId, ...(researchPlanId ? { researchPlanId } : {}) }, include: { protocolRun: true, steps: { orderBy: [{ groupOrder: "asc" }, { order: "asc" }] }, protocolVersions: { include: { protocolVersion: { include: { protocol: true } } } } }, orderBy: { date: "asc" } }),
+    prisma.experiment.findMany({ where: { projectId, ...(researchPlanId ? { researchPlanId } : {}) }, include: { scheduleBlocks: { orderBy: { startAt: "asc" } }, protocolRun: true, steps: { orderBy: [{ groupOrder: "asc" }, { order: "asc" }] }, protocolVersions: { include: { protocolVersion: { include: { protocol: true } } } } }, orderBy: { date: "asc" } }),
     prisma.result.findMany({ where: { projectId, ...(researchPlanId ? { researchPlanId } : {}) }, orderBy: { updatedAt: "asc" } }),
     prisma.entry.findMany({ where: { projectId, ...(researchPlanId ? { researchPlanId } : {}) }, orderBy: { occurredAt: "asc" } }),
   ]);
@@ -44,8 +46,10 @@ export async function collectReportSources(projectId: string, researchPlanId?: s
   };
   // Each run's record as the Experiment page shows it, so the report can carry its steps, values and deviations.
   const sampleLines = await experimentSampleLines(prisma, experiments.map((experiment) => experiment.id));
-  const records = Object.fromEntries(await Promise.all(experiments.map(async (experiment) => [experiment.id,
-    withExperimentSamples(experimentExecutionDocument(experiment.contentJson, await stepsWithExecutionEvidence(experiment.steps), experiment.protocolRun?.parametersJson, experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson), sampleLines.get(experiment.id) ?? [])] as const)));
+  const records = Object.fromEntries(await Promise.all(experiments.map(async (experiment) => {
+    const days = experimentDayPlanOf(experiment);
+    return [experiment.id, withExperimentDays(withExperimentSamples(experimentExecutionDocument(experiment.contentJson, await stepsWithExecutionEvidence(experiment.steps), experiment.protocolRun?.parametersJson, experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson, days), sampleLines.get(experiment.id) ?? []), days)] as const;
+  })));
   return { project, plans, experiments, results, entries, sources, snapshot, records };
 }
 

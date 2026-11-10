@@ -55,22 +55,9 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
   if (input.methodMode === "custom" && versionIds.length) {
     throw new Error("A fully custom Experiment cannot submit locked ProtocolVersions.");
   }
-  const versions = await tx.protocolVersion.findMany({
-    where: { id: { in: versionIds } },
-    include: { protocol: true },
-  });
-  if (versions.length !== versionIds.length) throw new Error("One or more selected ProtocolVersions no longer exist.");
-  const versionMap = new Map(versions.map((version) => [version.id, version]));
-  const orderedVersions = versionIds.map((id) => versionMap.get(id)!);
+  const { orderedVersions, contracts, snapshotVersions, stepSources } = await captureProtocolVersions(tx, versionIds);
+  const versions = orderedVersions;
   const primary = orderedVersions[0];
-  const contracts=new Map(orderedVersions.map(version=>{
-    const compatibilityIssue=protocolCompatibilityIssue(version.contentJson);
-    if(compatibilityIssue)throw new Error(compatibilityIssue);
-    const document=normalizeProtocolDocument(version.contentJson);
-    const projection=document?projectProtocolDocument(document):undefined;
-    if(!projection || projection.executionNeedsReview)throw new Error(`${version.protocol.humanCode}: confirm execution ownership in the Protocol editor before creating a new Experiment.`);
-    return [version.id,{...projection,systems:document?.systems}] as const;
-  }));
 
   if(input.methodMode==="protocol" && [...contracts.values()].every(contract=>!contract.steps.length))throw new Error("No execution operations are confirmed. Organize the Protocol steps or select a custom freeform Experiment.");
 
@@ -92,21 +79,7 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
     methodMode: input.methodMode,
     researchPlanTitle: plan?.title ?? null,
     capturedAt: new Date().toISOString(),
-    versions: orderedVersions.map((version) => ({
-      protocolId: version.protocolId,
-      protocolVersionId: version.id,
-      humanCode: version.protocol.humanCode,
-      protocolTitle: version.protocol.canonicalTitle ?? version.protocol.title,
-      revision: version.revision,
-      displayVersion: version.displayVersion,
-      reviewStage: version.reviewStage,
-      parametersJson: cloneJson(version.parametersJson),
-      materialsJson: cloneJson(version.materialsJson),
-      equipmentJson: cloneJson(version.equipmentJson),
-      stepsJson: cloneJson(contracts.get(version.id)!.steps),
-      resultTemplatesJson: cloneJson(version.resultTemplatesJson),
-      contentJson: cloneJson(version.contentJson),
-    })),
+    versions: snapshotVersions,
   };
 
   const experiment = await tx.experiment.create({
@@ -145,15 +118,7 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
                 requiresConfirmation: step.requires_confirmation ?? true,
                 allowsDeviation: step.allows_deviation ?? true,
               }))
-            : buildProtocolExperimentSteps(orderedVersions.map((version) => ({
-                versionId: version.id,
-                humanCode: version.protocol.humanCode,
-                protocolTitle: version.protocol.title,
-                versionTitle: version.title,
-                displayVersion: version.displayVersion,
-                steps: contracts.get(version.id)!.steps,
-                systems: contracts.get(version.id)!.systems,
-              }))),
+            : buildProtocolExperimentSteps(stepSources),
         },
       },
     });
@@ -173,6 +138,50 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
   return experiment;
 }
 
+/**
+ * ProtocolVersions as an experiment fixes them: each must still exist and have its execution confirmed. Returns the snapshot entries and the
+ * sources of the run steps, in the order given. Used when an experiment is created and when a Protocol is added to one of its days (Q428).
+ */
+export async function captureProtocolVersions(tx: Prisma.TransactionClient, versionIds: string[]) {
+  const versions = await tx.protocolVersion.findMany({ where: { id: { in: versionIds } }, include: { protocol: true } });
+  if (versions.length !== versionIds.length) throw new Error("One or more selected ProtocolVersions no longer exist.");
+  const versionMap = new Map(versions.map((version) => [version.id, version]));
+  const orderedVersions = versionIds.map((id) => versionMap.get(id)!);
+  const contracts=new Map(orderedVersions.map(version=>{
+    const compatibilityIssue=protocolCompatibilityIssue(version.contentJson);
+    if(compatibilityIssue)throw new Error(compatibilityIssue);
+    const document=normalizeProtocolDocument(version.contentJson);
+    const projection=document?projectProtocolDocument(document):undefined;
+    if(!projection || projection.executionNeedsReview)throw new Error(`${version.protocol.humanCode}: confirm execution ownership in the Protocol editor before creating a new Experiment.`);
+    return [version.id,{...projection,systems:document?.systems}] as const;
+  }));
+  const snapshotVersions = orderedVersions.map((version) => ({
+    protocolId: version.protocolId,
+    protocolVersionId: version.id,
+    humanCode: version.protocol.humanCode,
+    protocolTitle: version.protocol.canonicalTitle ?? version.protocol.title,
+    revision: version.revision,
+    displayVersion: version.displayVersion,
+    reviewStage: version.reviewStage,
+    parametersJson: cloneJson(version.parametersJson),
+    materialsJson: cloneJson(version.materialsJson),
+    equipmentJson: cloneJson(version.equipmentJson),
+    stepsJson: cloneJson(contracts.get(version.id)!.steps),
+    resultTemplatesJson: cloneJson(version.resultTemplatesJson),
+    contentJson: cloneJson(version.contentJson),
+  }));
+  const stepSources = orderedVersions.map((version) => ({
+    versionId: version.id,
+    humanCode: version.protocol.humanCode,
+    protocolTitle: version.protocol.title,
+    versionTitle: version.title,
+    displayVersion: version.displayVersion,
+    steps: contracts.get(version.id)!.steps,
+    systems: contracts.get(version.id)!.systems,
+  }));
+  return { orderedVersions, contracts, snapshotVersions, stepSources };
+}
+
 export async function createExperimentWithProtocolSnapshot(input: ExperimentSnapshotInput) {
   try {return await prisma.$transaction((tx) => createExperimentWithProtocolSnapshotInTransaction(tx, input));}
   catch(error) {
@@ -185,7 +194,7 @@ export async function createExperimentWithProtocolSnapshot(input: ExperimentSnap
 }
 
 /** The Protocols an Experiment uses become available to its Research Plan and Project. */
-async function linkProtocolsToPlan(tx: Prisma.TransactionClient, plan: { id: string; projectId: string }, protocolIds: string[]) {
+export async function linkProtocolsToPlan(tx: Prisma.TransactionClient, plan: { id: string; projectId: string }, protocolIds: string[]) {
   const ids = Array.from(new Set(protocolIds));
   if (!ids.length) return;
   await tx.projectProtocol.createMany({ data: ids.map((protocolId) => ({ projectId: plan.projectId, protocolId })), skipDuplicates: true });

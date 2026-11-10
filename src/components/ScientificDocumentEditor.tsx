@@ -6,7 +6,8 @@ import { useId, useMemo, useState, type ReactNode } from "react";
 import { StandaloneDocumentEditorViewport } from "@/components/DocumentEditorViewport";
 import { DocumentPageHeader, type DocumentPageHeaderFact } from "@/components/DocumentPageHeader";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
-import { ScientificSectionAddons, ScientificWysiwygEditor } from "@/components/ScientificWysiwygEditor";
+import { ScientificDayAddons, ScientificSectionAddons, ScientificWysiwygEditor } from "@/components/ScientificWysiwygEditor";
+import type { EditorDayRuns } from "@/lib/scientific-tiptap";
 import type { ScientificDocument } from "@/lib/scientific-document";
 import type { DocumentInsertProfile } from "@/lib/document-editor-workbench";
 import { scientificDocumentOutline } from "@/lib/document-outline";
@@ -34,6 +35,8 @@ export function ScientificDocumentEditor({
   insertProfile,
   checklist,
   sectionAddons,
+  dayAddons,
+  days,
   toolOwner,
 }: {
   initialDocument: ScientificDocument;
@@ -54,6 +57,9 @@ export function ScientificDocumentEditor({
   checklist?: boolean;
   /** Read-only content at the top of a section, keyed by section key. */
   sectionAddons?: Record<string, ReactNode>;
+  /** The days of 执行记录 and what each shows above its writing (Q427). */
+  days?: EditorDayRuns;
+  dayAddons?: Record<string, ReactNode>;
 }) {
   const [document, setDocument] = useState(initialDocument);
   const serialized = useMemo(() => JSON.stringify(document), [document]);
@@ -77,8 +83,9 @@ export function ScientificDocumentEditor({
           facts={headerFacts}
         />
         {leadingContent}
-        <ScientificSectionAddons.Provider value={sectionAddons ?? noAddons}>
+        <ScientificSectionAddons.Provider value={sectionAddons ?? noAddons}><ScientificDayAddons.Provider value={dayAddons ?? noAddons}>
           <ScientificWysiwygEditor
+            days={days}
             document={document}
             actionsHostId={actionsHostId}
             hiddenSectionKeys={hiddenSectionKeys}
@@ -86,7 +93,7 @@ export function ScientificDocumentEditor({
             checklist={checklist}
             onChange={setDocument}
           />
-        </ScientificSectionAddons.Provider>
+        </ScientificDayAddons.Provider></ScientificSectionAddons.Provider>
         {trailingContent}
     </StandaloneDocumentEditorViewport>
   </>;

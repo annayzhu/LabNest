@@ -8,7 +8,10 @@ import { experimentExecutionDocument } from "@/lib/experiment-document";
 import { CopyExperimentButton } from "@/components/CopyExperimentButton";
 import { CalendarExportButton } from "@/components/CalendarExportButton";
 import { isExportableExperiment } from "@/lib/calendar-export";
-import { addDays, labDayKey, scheduleSpan } from "@/lib/experiment-schedule";
+import { experimentDayPlanOf } from "@/lib/experiment-schedule.server";
+import { ExperimentDaySummary } from "@/components/ExperimentDaySummary";
+import { AddDayButton, DayControlsProvider } from "@/components/ExperimentDayControls";
+import { loadDayControls } from "@/lib/experiment-day-methods.server";
 import { CalendarDays, Lock, Play } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -51,7 +54,7 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
       _count: { select: { results: true, inventoryTransactions: true } },
       samples: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], include: { sample: { select: { id: true, code: true, name: true, locationId: true, position: true, amountUnit: true, type: { select: { label: true } }, parent: { select: { code: true } } } } } },
       sampleGroups: { orderBy: { sortOrder: "asc" }, select: { id: true, label: true } },
-      scheduleBlocks: { orderBy: { startAt: "asc" }, select: { startAt: true } },
+      scheduleBlocks: { orderBy: { startAt: "asc" } },
     } }),
     prisma.attachmentLink.findMany({ where: { targetType: "experiment", targetId: id }, include: { attachment: true }, orderBy: { createdAt: "desc" } }),
   ]);
@@ -71,7 +74,9 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
     placePath: link.sample.locationId ? placeOf.get(link.sample.locationId)?.label ?? null : null,
     usedAmount: link.usedAmount, usedUnit: link.usedUnit, amountUnit: link.sample.amountUnit, parentCode: link.sample.parent?.code ?? null,
   }));
-  const document = experimentExecutionDocument(experiment.contentJson, await stepsWithExecutionEvidence(experiment.steps), experiment.protocolRun?.parametersJson,experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson);
+  // 按天 (Q426, Q432): the schedule cuts 执行记录 into days and heads 实验设置与样本 with a line of them.
+  const dayPlan = experimentDayPlanOf(experiment);
+  const document = experimentExecutionDocument(experiment.contentJson, await stepsWithExecutionEvidence(experiment.steps), experiment.protocolRun?.parametersJson,experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson, dayPlan);
   const structuredRun = structuredRunView(experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson, experiment.steps);
   const progress = runStepProgress(structuredRun, experiment.steps);
   const resultRecording = buildExperimentResultRecording(experiment.protocolVersions.map((link) => ({
@@ -95,6 +100,8 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
     prisma.activityLog.findMany({ where: { targetType: "experiment", targetId: experiment.id }, orderBy: { createdAt: "desc" }, take: 12 }),
   ]);
   const locked = isRecordLocked(experiment.recordStatus);
+  // The days can change (Q428–Q433) while the record is open and the run is not finished.
+  const dayControls = !locked && !["archived", "completed"].includes(experiment.status) ? await loadDayControls(experiment.id) : undefined;
   const recycledKeys = new Set(recycledAssociations.map((row) => `${row.targetType}:${row.targetId}`));
   const deletionBlockers = experimentDeleteBlockers(experiment.status, experiment.recordStatus, {
     ...experiment._count,
@@ -114,7 +121,7 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
     {recycledAssociations.some((row) => row.targetType === "result") ? <RecycleBinWarning label="Result" labelZh="结果" /> : null}
     <div className="document-preview-layout">
       <main className="document-preview-main space-y-6">
-        <ExecutionRecordProvider value={{ experimentId: experiment.id, revision: structuredRun.plan.revision, editable: !locked && experiment.status !== "archived" && !(structuredRun.hasSystems && experiment.status === "completed") }}><ScientificDocumentView document={document} title={experiment.title} identifier={experiment.runCode} subtitle={experiment.purpose} leadingContent={<ExperimentBrief id={experiment.runCode} plan={experiment.researchPlan?.title ?? null} snapshot={experiment.protocolSnapshotJson} date={experiment.date} />} sectionLeading={{ setup: <ExperimentSamples experimentId={experiment.id} editable={!locked && experiment.status !== "archived"} inputs={sampleRows.filter((row) => row.role === "input")} outputs={sampleRows.filter((row) => row.role === "output")} groups={experiment.sampleGroups} plates={attachmentLinks.filter((link) => link.linkType === "plate_layout").map((link) => ({ id: link.attachment.id, originalFilename: link.attachment.originalFilename, mimeType: link.attachment.mimeType }))} recordPlates={recordPlates} unlisted={unlistedSamples} types={sampleTypeOptions.map((type) => ({ value: type.id, label: type.label }))} locations={sampleLocations.map((location) => ({ value: location.id, label: location.label }))} /> }} /></ExecutionRecordProvider>
+        <ExecutionRecordProvider value={{ experimentId: experiment.id, revision: structuredRun.plan.revision, editable: !locked && experiment.status !== "archived" && !(structuredRun.hasSystems && experiment.status === "completed") }}><DayControlsProvider value={dayControls}><ScientificDocumentView document={document} sectionTrailing={dayControls ? { execution: <AddDayButton /> } : undefined} title={experiment.title} identifier={experiment.runCode} subtitle={experiment.purpose} leadingContent={<ExperimentBrief id={experiment.runCode} plan={experiment.researchPlan?.title ?? null} snapshot={experiment.protocolSnapshotJson} date={experiment.date} />} sectionLeading={{ setup: <>{dayPlan && dayPlan.days.length > 1 ? <ExperimentDaySummary days={dayPlan.days} /> : null}<ExperimentSamples experimentId={experiment.id} editable={!locked && experiment.status !== "archived"} inputs={sampleRows.filter((row) => row.role === "input")} outputs={sampleRows.filter((row) => row.role === "output")} groups={experiment.sampleGroups} plates={attachmentLinks.filter((link) => link.linkType === "plate_layout").map((link) => ({ id: link.attachment.id, originalFilename: link.attachment.originalFilename, mimeType: link.attachment.mimeType }))} recordPlates={recordPlates} unlisted={unlistedSamples} types={sampleTypeOptions.map((type) => ({ value: type.id, label: type.label }))} locations={sampleLocations.map((location) => ({ value: location.id, label: location.label }))} /></> }} /></DayControlsProvider></ExecutionRecordProvider>
 
         {experiment.status==="planned" && experiment.recordStatus==="draft" && experiment.steps.length?<ExperimentStepOrderEditor experimentId={experiment.id} updatedAt={experiment.updatedAt.toISOString()} steps={experiment.steps.map(({id,groupKey,title})=>({id,groupKey,title}))}/>:null}
         <EntrySourceCards type="experiment" id={experiment.id} locked={locked} />
@@ -123,14 +130,14 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
       <aside className="document-preview-sidebar" aria-label="Experiment controls and result recording">
         <Card><CardHeader className="min-h-10 px-3 py-2" title="Execution control" eyebrow="Plan and exact method provenance" action={<div className="flex gap-1"><StatusPill status={experiment.status} />{locked ? <Badge tone="neutral"><Lock className="mr-1 h-3 w-3" aria-hidden />Locked</Badge> : null}</div>} /><CardBody className="space-y-2.5 p-3">
           <div className="grid grid-cols-2 gap-x-3"><Control label="Research Plan">{experiment.researchPlan ? <span className="flex flex-wrap items-center gap-1"><Link href={`/research-plans/${experiment.researchPlan.id}`} className="text-moss hover:underline">{experiment.researchPlan.code ?? experiment.researchPlan.title}</Link>{recycledKeys.has(`research_plan:${experiment.researchPlan.id}`) ? <Badge tone="warning" className="min-h-5 px-1.5 py-0 text-xs leading-4">In Recycle Bin</Badge> : null}</span> : <span className="text-warning">未分配</span>}</Control><Control label="Project">{experiment.project?.name ?? <span className="text-warning">未分配</span>}</Control></div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-hairline pt-2"><CompactStat label="Day plan" value={<Link href={`/experiments/${experiment.id}/schedule`} className="text-moss hover:underline">{scheduleSummary(experiment.date, experiment.scheduleBlocks, experiment.scheduleDays)}</Link>} /><CompactStat label="Steps" value={`${progress.done}/${progress.total}`} /><CompactStat label="Results" value={experiment.results.length} /><CompactStat label="Attachments" value={attachmentLinks.length} /></div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-hairline pt-2"><CompactStat label="Steps" value={`${progress.done}/${progress.total}`} /><CompactStat label="Results" value={experiment.results.length} /><CompactStat label="Attachments" value={attachmentLinks.length} /></div>
           {experiment.primaryProtocolVersion ? <Link aria-label={`Primary protocol: ${experiment.primaryProtocolVersion.protocol.canonicalTitle ?? experiment.primaryProtocolVersion.protocol.title}`} href={`/protocols/${experiment.primaryProtocolVersion.protocolId}?version=${experiment.primaryProtocolVersion.id}`} className="block border-t border-hairline pt-2 text-moss hover:underline"><ProtocolIdentity compact title={experiment.primaryProtocolVersion.protocol.canonicalTitle ?? experiment.primaryProtocolVersion.protocol.title} code={experiment.primaryProtocolVersion.protocol.humanCode} version={experiment.primaryProtocolVersion.displayVersion} meta={experiment.tags.join(" · ") || undefined} /></Link> : experiment.tags.length ? <p className="border-t border-hairline pt-2 text-xs text-muted">{experiment.tags.join(" · ")}</p> : null}
           <div className="border-t border-hairline pt-2"><RecordStatusControl targetType="experiment" id={experiment.id} recordStatus={experiment.recordStatus} /></div>
         </CardBody></Card>
 
         <ExperimentResultRecordingCard experimentId={experiment.id} recording={resultRecording} />
 
-        <Card><CardHeader title="Protocol versions" eyebrow="Fixed at creation · badge shows review stage" /><CardBody className="py-1"><ul className="divide-y divide-hairline">{experiment.protocolVersions.map((row) => <li key={row.protocolVersionId} className="py-2.5"><div className="flex min-w-0 items-start justify-between gap-2"><Link href={`/protocols/${row.protocolVersion.protocolId}?version=${row.protocolVersionId}`} className="min-w-0 flex-1 text-moss hover:underline"><ProtocolIdentity compact title={row.protocolVersion.protocol.canonicalTitle ?? row.protocolVersion.protocol.title} code={row.protocolVersion.protocol.humanCode} version={row.protocolVersion.displayVersion} /></Link><div className="flex shrink-0 flex-wrap justify-end gap-1"><Badge tone={row.role === "primary" ? "sage" : "neutral"}>{row.role}</Badge><StatusPill status={row.protocolVersion.reviewStage} />{recycledKeys.has(`protocol:${row.protocolVersion.protocolId}`) ? <Badge tone="warning">In Recycle Bin</Badge> : null}</div></div></li>)}</ul></CardBody></Card>
+        <Card><CardHeader title="Protocol versions" eyebrow="Fixed when added · badge shows review stage" /><CardBody className="py-1"><ul className="divide-y divide-hairline">{experiment.protocolVersions.map((row) => <li key={row.protocolVersionId} className="py-2.5"><div className="flex min-w-0 items-start justify-between gap-2"><Link href={`/protocols/${row.protocolVersion.protocolId}?version=${row.protocolVersionId}`} className="min-w-0 flex-1 text-moss hover:underline"><ProtocolIdentity compact title={row.protocolVersion.protocol.canonicalTitle ?? row.protocolVersion.protocol.title} code={row.protocolVersion.protocol.humanCode} version={row.protocolVersion.displayVersion} /></Link><div className="flex shrink-0 flex-wrap justify-end gap-1"><Badge tone={row.role === "primary" ? "sage" : "neutral"}>{row.role}</Badge><StatusPill status={row.protocolVersion.reviewStage} />{recycledKeys.has(`protocol:${row.protocolVersion.protocolId}`) ? <Badge tone="warning">In Recycle Bin</Badge> : null}</div></div></li>)}</ul></CardBody></Card>
 
         <Card><CardHeader title="Attachments" eyebrow="Images, videos and instrument files" /><CardBody className="space-y-4"><AttachmentUploadForm targetType="experiment" targetId={experiment.id} hideTargetFields />{attachmentLinks.length ? <ul className="space-y-2 border-t border-hairline pt-4">{attachmentLinks.map((link) => <li key={link.id} className="flex items-center gap-2"><Link href={`/api/attachments/${link.attachment.id}`} className="min-w-0 flex-1 break-all text-sm font-medium text-moss hover:underline">{link.attachment.originalFilename}</Link><span className="text-xs text-muted">{(link.attachment.size / 1024).toFixed(1)} KB</span><AttachmentDeleteButton attachmentId={link.attachment.id} linkId={link.id} filename={link.attachment.originalFilename} /></li>)}</ul> : null}</CardBody></Card>
 
@@ -141,14 +148,5 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
 }
 
 function Control({ label, children }: { label: string; children: React.ReactNode }) { return <div className="min-w-0"><p className="text-xs font-medium leading-3 text-muted">{label}</p><div className="mt-0.5 min-w-0 break-words text-xs font-medium leading-4 text-ink">{children}</div></div>; }
-
-/** "11/03–11/07 · 4 blocks" (Q262, Q314): day 1 to the last day the author set; without a schedule, its day and the way to arrange it. */
-function scheduleSummary(date: Date, blocks: { startAt: Date }[], days: number | null) {
-  const label = (key: string) => key.slice(5).replace("-", "/");
-  if (!blocks.length && !days) return <><span data-i18n-ignore>{`${label(labDayKey(date))} · `}</span><span>Arrange each day</span></>;
-  const first = labDayKey(date) < labDayKey(blocks[0]?.startAt ?? date) ? labDayKey(date) : labDayKey(blocks[0].startAt);
-  const last = addDays(first, Math.max(days ?? 1, scheduleSpan(first, blocks.map(block => ({ startAt: block.startAt.toISOString() })))) - 1);
-  return <><span data-i18n-ignore>{`${first === last ? label(first) : `${label(first)}–${label(last)}`} · `}</span><span>{`${blocks.length} ${blocks.length === 1 ? "block" : "blocks"}`}</span></>;
-}
 
 function CompactStat({ label, value }: { label: string; value: React.ReactNode }) { return <span className="whitespace-nowrap text-xs leading-4 text-muted"><span className="font-medium">{label}</span><strong className="ml-1 font-medium text-ink">{value}</strong></span>; }

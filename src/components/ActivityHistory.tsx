@@ -13,6 +13,8 @@ const actionLabels: Record<string, string> = {
   repair_draft_execution: "Execution record repaired", confirm_execution_structure: "Execution structure confirmed",
   experiment_step_recorded: "Step recorded", merge_protocol_ranges: "Ranges merged", fix_protocol_range: "Range corrected",
   create_revision: "Revision created", unlink_attachment: "Attachment removed", entry_assign: "Filed", entry_tidied: "AI-tidied draft adopted",
+  experiment_schedule_saved: "Schedule saved", experiment_schedule_day_added: "Day added", experiment_day_method_added: "Method added to a day",
+  experiment_day_part_moved: "Part moved to another day", experiment_day_part_removed: "Part removed", experiment_day_part_replaced: "Version or steps changed",
 };
 const actionLabel = (action: string) => actionLabels[action] ?? `${action.charAt(0).toUpperCase()}${action.slice(1).replaceAll("_", " ")}`;
 

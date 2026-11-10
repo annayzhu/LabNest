@@ -118,8 +118,10 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
   // 日程段 (Q263): the run reads as days, each block's steps under its day; the blocks of other days fold away.
   const scheduleRows = sortBlocks(experiment.scheduleBlocks.map(blockView));
   const scheduleStepMap = new Map(scheduleSteps(experiment).map(step => [step.ref, step]));
-  const firstScheduleDay = scheduleRows[0] ? labDayKey(scheduleRows[0].startAt) : undefined;
-  const schedule = firstScheduleDay && scheduleRows.some(block => block.kind === "steps") ? { blocks: scheduleRows.filter(block => block.kind === "steps").map(block => ({
+  // Day 1 is the experiment's date, or an earlier block's day, as in the record (Q426).
+  const firstScheduleDay = scheduleRows[0] ? [labDayKey(scheduleRows[0].startAt), labDayKey(experiment.date)].sort()[0] : undefined;
+  // 执行 opens today's day when today has work left (Q430).
+  const schedule = firstScheduleDay && scheduleRows.some(block => block.kind === "steps") ? { todayKey: labDayKey(new Date()), blocks: scheduleRows.filter(block => block.kind === "steps").map(block => ({
     id: block.id, dayIndex: daysBetween(firstScheduleDay, labDayKey(block.startAt)) + 1, dayKey: labDayKey(block.startAt), clock: block.allDay ? null : labClock(block.startAt),
     title: block.title?.trim() || null, stepIds: block.stepRefs.flatMap(ref => scheduleStepMap.get(ref)?.stepIds ?? []),
   })) } : undefined;

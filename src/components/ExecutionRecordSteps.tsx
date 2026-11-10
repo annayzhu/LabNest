@@ -6,7 +6,9 @@ import { format } from 'date-fns';
 import { Check, ChevronRight } from 'lucide-react';
 import { newClientMutationId } from '@/lib/client-mutation-id';
 import { deviationTypeLabel, deviationTypeOptions, executionSegments } from '@/lib/experiment-document';
+import { dayRunLabel, dayStatusLabel, type DayStatus } from '@/lib/experiment-days';
 import { ScientificBlockView } from './ScientificBlockView';
+import { DayMethodButtons, DayPartMenu } from './ExperimentDayControls';
 import { useI18n } from './I18nProvider';
 import type { ScientificContentBlock } from '@/lib/scientific-document';
 import './execution-record.css';
@@ -19,6 +21,34 @@ type Deviation = { type: string; note: string; impact?: string; author?: string 
 const ExecutionRecordControls = createContext<Controls | null>(null);
 export function ExecutionRecordProvider({ value, children }: { value: Controls; children: ReactNode }) {
   return <ExecutionRecordControls.Provider value={value}>{children}</ExecutionRecordControls.Provider>;
+}
+
+/**
+ * A day of 执行记录 (Q426): "第 2 天 · 11/10 周二" (or a run of empty days) and how far it is, in the interface's language, with the
+ * ways to fill it (Q428). The steps placed on no day, and writing on no day, come last under their own headings.
+ */
+export function ExecutionDayHeading({ execution }: { execution: Execution }) {
+  const { locale } = useI18n();
+  const zh = locale === 'zh';
+  if (execution.index === undefined || !execution.meta) {
+    const unassigned = execution.status === 'unassigned';
+    return <div className="ln-execution-day" id={unassigned ? 'execution-day-unassigned' : 'execution-day-unscheduled'} data-status={execution.status}>
+      <h3 data-i18n-ignore>{unassigned ? (zh ? '未分天的记录' : 'Notes on no day') : (zh ? '未安排的步骤' : 'Steps on no day')}</h3>
+    </div>;
+  }
+  const status = (['unplanned', 'todo', 'active', 'done'].includes(execution.status ?? '') ? execution.status : 'todo') as DayStatus;
+  // A run of empty days carries "<first day>/<last day>".
+  const [firstKey, lastKey] = execution.meta.split('/');
+  return <div className="ln-execution-day" id={`execution-day-${execution.index}`} data-status={status}>
+    <h3 data-i18n-ignore>{dayRunLabel({ index: execution.index, dayKey: firstKey }, { index: execution.number ?? execution.index, dayKey: lastKey ?? firstKey }, zh)}</h3>
+    <span className="ln-execution-day-status" data-i18n-ignore>{dayStatusLabel(status, zh)}</span>
+    <DayMethodButtons dayKey={execution.dayKey ?? firstKey} parts={execution.parts ?? 0} />
+  </div>;
+}
+
+/** A part of the run (a Protocol, or custom steps): its number, name and progress, and its menu where the record can change (Q431). */
+export function ExecutionPartHeading({ execution }: { execution: Execution }) {
+  return <div className="ln-execution-protocol-heading document-execution-group"><span className="ln-execution-protocol-index" aria-hidden>{execution.index}</span><h3>{execution.title}</h3>{execution.meta ? <span className="ln-execution-protocol-meta">{execution.meta}</span> : null}{execution.groupKey ? <DayPartMenu groupKey={execution.groupKey} dayKey={execution.dayKey} /> : null}</div>;
 }
 
 /**

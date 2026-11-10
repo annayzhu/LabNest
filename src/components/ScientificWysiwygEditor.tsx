@@ -35,7 +35,8 @@ import { cn } from "@/lib/cn";
 import type { ScientificContentBlock, ScientificDocument } from "@/lib/scientific-document";
 import { scientificSectionAnchorId } from "@/lib/document-outline";
 import { ScientificDocumentNode } from "@/lib/scientific-document-node";
-import { scientificDocumentToTiptap, tiptapToScientificDocument } from "@/lib/scientific-tiptap";
+import { scientificDocumentToTiptap, tiptapToScientificDocument, type EditorDayRuns } from "@/lib/scientific-tiptap";
+import { createDayBreakExtension } from "@/lib/editor-day-breaks";
 import { createDocumentBlockLineHeightExtension, createDocumentLegacyAttributesExtension, createDocumentSectionExtension, createDocumentWidgetExtension, createResizableDocumentTableExtension } from "@/lib/tiptap-document-extensions";
 
 type ScientificWidgetBlock = Extract<ScientificContentBlock, { type: "callout" | "metric" | "media" | "dataset" | "tool_output" }>;
@@ -44,12 +45,21 @@ function uniqueBlockId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-/** Read-only content shown at the top of a section, e.g. the Protocol steps inside 执行记录. Never part of the saved document. */
+/** Read-only content shown at the top of a section, e.g. the Protocol steps inside 执行记录; `<key>:after` shows at its end. Never part of the saved document. */
 export const ScientificSectionAddons = createContext<Record<string, ReactNode>>({});
+/** What each day of 执行记录 shows above its writing (its heading and run, read only), by the day's key; "" is 未分天. */
+export const ScientificDayAddons = createContext<Record<string, ReactNode>>({});
+
+function ScientificDayBreakView({ node }: NodeViewProps) {
+  const addon = useContext(ScientificDayAddons)[node.attrs.dayKey ?? ""];
+  return <NodeViewWrapper className="ln-scientific-day" contentEditable={false} data-day-break={node.attrs.dayKey || "none"}>{addon}</NodeViewWrapper>;
+}
+const ScientificDayBreak = createDayBreakExtension(ReactNodeViewRenderer(ScientificDayBreakView));
 
 function ScientificSectionNodeView({ node }: NodeViewProps) {
   const { t } = useI18n();
-  const addon = useContext(ScientificSectionAddons)[node.attrs.sectionKey];
+  const addons = useContext(ScientificSectionAddons);
+  const addon = addons[node.attrs.sectionKey], after = addons[`${node.attrs.sectionKey}:after`];
   // Section titles are stored in English; the page translator skips editable content, so translate here.
   return <NodeViewWrapper as="section" id={scientificSectionAnchorId(node.attrs.sectionKey)} className="ln-protocol-section ln-scientific-section" data-section-key={node.attrs.sectionKey}>
     <header className="ln-protocol-section-heading" contentEditable={false}>
@@ -59,6 +69,7 @@ function ScientificSectionNodeView({ node }: NodeViewProps) {
     </header>
     {addon ? <div className="ln-scientific-section-addon" contentEditable={false}>{addon}</div> : null}
     <NodeViewContent as="div" className="ln-protocol-section-content" />
+    {after ? <div className="ln-scientific-section-addon is-after" contentEditable={false}>{after}</div> : null}
   </NodeViewWrapper>;
 }
 
@@ -163,13 +174,18 @@ function openToolAtCursor(editor: Editor, original: ScientificDocument, open: (a
     const prefix = editor.getJSON();
     const section = prefix.content?.find(node => node.attrs?.sectionKey === sectionKey);
     if (section) section.content = section.content?.slice(0, childIndex + 1);
-    const anchorId = tiptapToScientificDocument(prefix, original).sections.find(section => section.key === sectionKey)?.blocks.at(-1)?.id;
-      open(anchorId, sectionKey);
+    const last = tiptapToScientificDocument(prefix, original).sections.find(section => section.key === sectionKey)?.blocks.at(-1);
+    // Under a day of 执行记录 with nothing written above the cursor yet, what the tool saves starts that day (Q427).
+    let cursorDay: string | undefined;
+    for (let index = childIndex; index >= 0; index -= 1) { const node = selectedSection.child(index); if (node.type.name === "scientificDayBreak") { cursorDay = node.attrs.dayKey || ""; break; } }
+    open(cursorDay !== undefined && (last?.day ?? "") !== cursorDay ? `day:${cursorDay}` : last?.id, sectionKey);
 }
 
 
-export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSectionKeys = [], insertProfile = "scientific-full", checklist = true, onChange }: {
+export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSectionKeys = [], insertProfile = "scientific-full", checklist = true, days, onChange }: {
   document: ScientificDocument;
+  /** The days of 执行记录 (Q427); without them it is one writing area. */
+  days?: EditorDayRuns;
   /** Where the page header shows this document's actions. */
   actionsHostId?: string;
   hiddenSectionKeys?: string[];
@@ -177,7 +193,10 @@ export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSection
   checklist?: boolean;
   onChange: (document: ScientificDocument) => void;
 }) {
-  const [initialContent] = useState(() => scientificDocumentToTiptap(document, hiddenSectionKeys));
+  const [initialContent] = useState(() => scientificDocumentToTiptap(document, hiddenSectionKeys, days));
+  const daysRef = useRef(days);
+  const daySignature = JSON.stringify(days ?? null);
+  const previousDaySignatureRef = useRef(daySignature);
   const [mediaDraftId] = useState(newClientMutationId);
   const originalRef = useRef(document);
   const lastEmittedDocument = useRef<ScientificDocument | null>(null);
@@ -189,6 +208,7 @@ export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSection
   const inserts: WritingInsert[] = [...scientificInserts(insertProfile), ...(openTool ? toolInserts((editor, toolId) => openToolAtCursor(editor, originalRef.current, (anchorId, sectionKey) => openTool(undefined, anchorId, sectionKey, toolId))) : [])];
   useEffect(() => { originalRef.current = document; }, [document]);
   useEffect(() => { hiddenSectionKeysRef.current = hiddenSectionKeys; }, [hiddenSectionSignature, hiddenSectionKeys]);
+  useEffect(() => { daysRef.current = days; }, [daySignature, days]);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
 
   const editor = useEditor({
@@ -209,6 +229,7 @@ export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSection
       ScientificLegacyAttributes,
       ScientificSection,
       ScientificWidget,
+      ScientificDayBreak,
       DocumentMediaNode,
       DocumentPlateNode,
       DocumentToolNode,
@@ -229,7 +250,7 @@ export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSection
   useEffect(() => {
     // Local typing already lives in the editor; resetting it would move the caret.
     if (document === lastEmittedDocument.current) return;
-    if (editor && JSON.stringify(tiptapToScientificDocument(editor.getJSON(),document)) !== JSON.stringify(document)) { let active=true; queueMicrotask(()=>{if(active&&!editor.isDestroyed){const known=toolOutputIdsIn(editor);editor.commands.setContent(scientificDocumentToTiptap(document,hiddenSectionKeysRef.current),{emitUpdate:false});focusBelow(editor,(node)=>node.attrs.block?.type==="tool_output"&&!known.has(node.attrs.block.id));}}); return ()=>{active=false;}; }
+    if (editor && JSON.stringify(tiptapToScientificDocument(editor.getJSON(),document)) !== JSON.stringify(document)) { let active=true; queueMicrotask(()=>{if(active&&!editor.isDestroyed){const known=toolOutputIdsIn(editor);editor.commands.setContent(scientificDocumentToTiptap(document,hiddenSectionKeysRef.current,daysRef.current),{emitUpdate:false});focusBelow(editor,(node)=>node.attrs.block?.type==="tool_output"&&!known.has(node.attrs.block.id));}}); return ()=>{active=false;}; }
   }, [document,editor]);
   useDocumentMediaUploads(editor, mediaDraftId);
   const commands = useCommandMenu(editor);
@@ -240,10 +261,21 @@ export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSection
     let active = true;
     queueMicrotask(() => {
       // Not an undo step: undoing it would bring back sections that are hidden now, which keepSections refuses.
-      if (active && !editor.isDestroyed) editor.chain().command(({ tr }) => { tr.setMeta("addToHistory", false); return true; }).setContent(scientificDocumentToTiptap(originalRef.current, hiddenSectionKeysRef.current), { emitUpdate: false }).run();
+      if (active && !editor.isDestroyed) editor.chain().command(({ tr }) => { tr.setMeta("addToHistory", false); return true; }).setContent(scientificDocumentToTiptap(originalRef.current, hiddenSectionKeysRef.current, daysRef.current), { emitUpdate: false }).run();
     });
     return () => { active = false; };
   }, [editor, hiddenSectionSignature]);
+
+  // A day added, moved or given a method elsewhere on the page: the days are redrawn, and what is written keeps its day.
+  useEffect(() => {
+    if (!editor || previousDaySignatureRef.current === daySignature) return;
+    previousDaySignatureRef.current = daySignature;
+    let active = true;
+    queueMicrotask(() => {
+      if (active && !editor.isDestroyed) editor.chain().command(({ tr }) => { tr.setMeta("addToHistory", false); return true; }).setContent(scientificDocumentToTiptap(originalRef.current, hiddenSectionKeysRef.current, daysRef.current), { emitUpdate: false }).run();
+    });
+    return () => { active = false; };
+  }, [editor, daySignature]);
 
   if (!editor) return <div className="ln-wysiwyg-loading">Loading document editor…</div>;
   return <section className="ln-wysiwyg-editor ln-scientific-wysiwyg-editor">

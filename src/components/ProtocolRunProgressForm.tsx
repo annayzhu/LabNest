@@ -64,7 +64,7 @@ const fieldClass = `${formTextareaClass} bg-surface`;
 
 export function ProtocolRunProgressForm({ experimentId, status, steps, editable, evidenceByStep, frozenReferences, frozenReferenceTitles, protocolBased=false, structured, chipContexts = {}, consumption = [], stock = [], bench = false, schedule }: {
   /** 日程段 (Q263): the days the steps are planned on; the current day's block stays open, the others fold away. */
-  schedule?: { blocks: RunScheduleBlock[] };
+  schedule?: { blocks: RunScheduleBlock[]; /** Today on the lab clock, from the server so the page renders the same on both sides. */ todayKey?: string };
   /** Materials this run used and not yet recorded: completing the run first asks whether to deduct them. */
   consumption?: ConsumptionLine[];
   stock?: ConsumptionStock[];
@@ -136,7 +136,9 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   const hasSteps = steps.length > 0;
   const currentStep = steps.find((step) => !completedIds.has(step.id));
   const blockOf = useMemo(() => new Map((schedule?.blocks ?? []).flatMap(block => block.stepIds.map(id => [id, block] as const))), [schedule]);
-  const currentBlockId = currentStep ? blockOf.get(currentStep.id)?.id : undefined;
+  // Today's day opens when it has work left (Q430); otherwise the day of the next open step.
+  const todayOpenStep = schedule?.todayKey ? schedule.blocks.filter(block => block.dayKey === schedule.todayKey).flatMap(block => block.stepIds).find(id => !completedIds.has(id)) : undefined;
+  const currentBlockId = todayOpenStep ? blockOf.get(todayOpenStep)?.id : currentStep ? blockOf.get(currentStep.id)?.id : undefined;
   const [openBlocks, setOpenBlocks] = useState<ReadonlySet<string>>(() => new Set());
   const blockOpen = (id: string) => id === currentBlockId || openBlocks.has(id);
   const blockLabel = (block: RunScheduleBlock) => `${scheduleDayLabel(block.dayIndex, block.dayKey, zh)}${block.clock ? ` ${block.clock}` : ""}${block.title ? ` · ${block.title}` : ""}`;

@@ -89,5 +89,59 @@ button.ln-execution-check:disabled { cursor: not-allowed; opacity: 0.45; }
 .ln-deviation-form-actions button:disabled { opacity: 0.5; cursor: not-allowed; }
 @media (pointer: coarse) { .ln-execution-step-line { grid-template-columns: 1.6rem 1.9rem minmax(0, 1fr) auto; } .ln-execution-check { position: relative; width: 1.6rem; height: 1.6rem; margin-top: 0; } .ln-execution-check::after { content: ""; position: absolute; inset: -0.6rem; } /* a 44px target around the visible box */ .ln-execution-action { opacity: 1; } .ln-execution-action, .ln-deviation-form-actions button { min-height: 2.75rem; } }
 @media (max-width: 639px) { .ln-execution-step-line { grid-template-columns: 1.6rem 1.6rem minmax(0, 1fr); } .ln-execution-step-end { grid-column: 3; padding-left: 0; } .ln-execution-detail, .ln-execution-fold { padding-left: 1rem; } }
+
+/* A day of the schedule (Q426): the level above the Protocol parts. A rule above it, the day in the document face, its state at the end. */
+.document-block:has(> .ln-execution-day) { margin-top: 1.6rem; }
+.document-block:first-child:has(> .ln-execution-day) { margin-top: 0.2rem; }
+.ln-execution-day { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.75rem; min-width: 0; padding-top: 0.7rem; border-top: 1px solid var(--hairline); scroll-margin-top: 5rem; }
+.ln-execution-day h3 { flex: 1 1 auto; min-width: 0; margin: 0; font: 600 1.14rem/1.4 var(--font-document-heading); color: var(--ink); font-variant-numeric: tabular-nums; }
+.ln-execution-day-status { flex: none; font: var(--ln-control-font-size-xs)/1.5 var(--font-ui); color: var(--muted); white-space: nowrap; }
+.ln-execution-day[data-status="active"] .ln-execution-day-status { color: var(--moss); font-weight: 600; }
+.ln-execution-day[data-status="done"] .ln-execution-day-status { color: var(--moss); }
+.ln-execution-day[data-status="unplanned"] h3 { color: var(--graphite); }
+.ln-execution-day-link { flex: none; font: var(--ln-control-font-size-xs)/1.5 var(--font-ui); color: var(--moss); text-decoration: underline; }
+.ln-execution-day:target { animation: ln-execution-day-flash 1.4s ease-out; }
+@keyframes ln-execution-day-flash { from { background: var(--action-surface); } to { background: transparent; } }
+.document-block:has(> .ln-execution-day) + .document-block:has(> .ln-execution-protocol-heading) { margin-top: 0.6rem; }
+
+@media print { .ln-execution-day-link { display: none; } .document-block:has(> .ln-execution-day) { break-after: avoid; }
+}
 @media print { .ln-execution-action, .ln-deviation-form, .ln-execution-hint { display: none; } .ln-execution-fold > :not(summary) { display: block; } }
-@media (prefers-reduced-motion: reduce) { .ln-execution-disclosure svg, .ln-execution-check { transition: none; } .ln-deviation-line:target, .ln-execution-step-line:target { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .ln-execution-disclosure svg, .ln-execution-check { transition: none; } .ln-deviation-line:target, .ln-execution-step-line:target, .ln-execution-day:target { animation: none; } }
+
+/* 每天的方法 (Q428–Q433): quiet controls beside a day and a part; nothing shows on a record that cannot change. */
+.ln-execution-day-methods { display: inline-flex; flex-wrap: wrap; gap: 0.35rem; }
+.ln-execution-day-methods button, .ln-execution-day-add, .ln-execution-add-day button {
+  display: inline-flex; align-items: center; gap: 0.3rem; min-height: 1.75rem; padding: 0 0.6rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-sm);
+  background: var(--surface); font: 500 var(--ln-control-font-size-xs)/1.4 var(--font-ui); color: var(--moss); cursor: pointer; white-space: nowrap;
+}
+.ln-execution-day-methods button:hover, .ln-execution-day-add:hover, .ln-execution-add-day button:hover:not(:disabled) { background: var(--action-surface); border-color: color-mix(in srgb, var(--moss) 40%, var(--hairline)); }
+.ln-execution-day-add { border-color: transparent; background: none; }
+.ln-execution-day-add svg, .ln-execution-add-day svg { width: 0.9rem; height: 0.9rem; }
+.ln-execution-add-day { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.75rem; margin-top: 1.4rem; padding-top: 0.8rem; border-top: 1px dashed var(--hairline); font: var(--ln-control-font-size-xs)/1.5 var(--font-ui); color: var(--muted); }
+.ln-execution-add-day button:disabled { color: var(--muted); cursor: default; }
+.ln-execution-add-day [role="alert"] { color: var(--error); }
+.ln-day-part-menu { position: relative; flex: none; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
+.ln-day-part-menu-button { display: inline-flex; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; border: 0; border-radius: var(--ln-radius-control-sm); background: none; color: var(--muted); cursor: pointer; }
+.ln-day-part-menu-button:hover, .ln-day-part-menu-button[aria-expanded="true"] { background: var(--action-surface); color: var(--moss); }
+.ln-day-part-menu-button svg { width: 1rem; height: 1rem; }
+.ln-day-part-menu-list { position: absolute; top: calc(100% + 0.25rem); right: 0; z-index: 30; display: grid; min-width: 11rem; padding: 0.25rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel-inner); background: var(--surface); box-shadow: var(--shadow-soft); }
+.ln-day-part-menu-list button { padding: 0.4rem 0.6rem; border: 0; border-radius: var(--ln-radius-control-sm); background: none; text-align: left; font: var(--ln-control-font-size-sm, 0.8125rem)/1.4 var(--font-ui); color: var(--ink); cursor: pointer; white-space: nowrap; }
+.ln-day-part-menu-list button:hover, .ln-day-part-menu-list button:focus-visible { background: var(--action-surface); }
+.ln-day-part-menu-list button.is-danger { color: var(--error); }
+/* A refusal says why right beside the part: on its own line under the heading, never only on hover. */
+.ln-day-part-message { position: absolute; top: calc(100% + 0.25rem); right: 0; z-index: 20; display: flex; align-items: flex-start; gap: 0.4rem; width: min(26rem, 80vw); padding: 0.45rem 0.6rem; border: 1px solid color-mix(in srgb, var(--warning) 35%, var(--hairline)); border-radius: var(--ln-radius-panel-inner); background: var(--surface); font: var(--ln-control-font-size-xs)/1.5 var(--font-ui); color: var(--graphite); box-shadow: var(--shadow-soft); }
+.ln-day-part-message button { flex: none; display: inline-flex; border: 0; background: none; color: var(--muted); cursor: pointer; }
+.ln-day-part-message svg { width: 0.85rem; height: 0.85rem; }
+.ln-day-dialog { max-width: min(40rem, 100%); max-height: calc(100dvh - 2rem); display: flex; flex-direction: column; }
+.ln-day-dialog-body { display: grid; gap: 0.85rem; padding: 0.9rem 1rem; overflow-y: auto; }
+.ln-day-dialog-body > .ln-segmented { justify-self: start; }
+/* One scroll area: the Protocol list gives up height first, so the dialog itself scrolls only on a very short screen. */
+.ln-day-dialog .max-h-72 { max-height: max(7.5rem, min(18rem, calc(100dvh - 27rem))); }
+.ln-day-dialog-error { margin: 0; font: var(--ln-control-font-size-xs)/1.5 var(--font-ui); color: var(--error); }
+/* In the editor each day is a fixed divider above its own writing. */
+.ln-scientific-day { margin: 0; user-select: none; }
+.ln-scientific-day .ln-execution-record > .document-block:first-child:has(> .ln-execution-day) { margin-top: 1.4rem; }
+.ln-scientific-section-addon.is-after { margin-top: 0.5rem; }
+@media (pointer: coarse) { .ln-execution-day-methods button, .ln-execution-day-add, .ln-execution-add-day button, .ln-day-part-menu-button { min-height: 2.75rem; } .ln-day-part-menu-button { width: 2.75rem; } }
+@media print { .ln-execution-day-methods, .ln-execution-day-add, .ln-execution-add-day, .ln-day-part-menu { display: none !important; } }

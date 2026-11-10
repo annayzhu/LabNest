@@ -5,15 +5,16 @@ import Link from "next/link";
 import { EntryContentView } from "@/components/EntryContentView";
 import { DocumentMediaView } from "@/components/DocumentMediaView";
 import { ScientificTableView } from "./ScientificTableView";
-import { ExecutionStepLine } from "./ExecutionRecordSteps";
+import { ExecutionDayHeading, ExecutionPartHeading, ExecutionStepLine } from "./ExecutionRecordSteps";
 import type { ScientificContentBlock } from "@/lib/scientific-document";
 
 export function ScientificBlockView({ block }: { block: ScientificContentBlock }) {
   if (block.type === "tool_output") return <ToolOutput block={block} />;
   if (block.execution) {
     const execution=block.execution;
+    if(execution.role==="day")return <ExecutionDayHeading execution={execution} />;
     if(execution.role==="group")return execution.index!==undefined
-      ? <div className="ln-execution-protocol-heading document-execution-group"><span className="ln-execution-protocol-index" aria-hidden>{execution.index}</span><h3>{execution.title}</h3>{execution.meta?<span className="ln-execution-protocol-meta">{execution.meta}</span>:null}</div>
+      ? <ExecutionPartHeading execution={execution} />
       : <h3 className="document-execution-group font-semibold">{execution.title}</h3>;
     if(execution.role==="detail")return <div className="ln-execution-detail"><ScientificBlockView block={{...block,execution:undefined}} /></div>;
     if(execution.role==="note")return <div className="ln-execution-note"><ScientificBlockView block={{...block,execution:undefined}} /></div>;

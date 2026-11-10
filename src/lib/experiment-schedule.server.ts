@@ -10,6 +10,8 @@ import {
   blockEnd, blockState, blockTitle, daysBetween, draftSchedule, labDayKey, MAX_SCHEDULE_DAYS, nextWorkMoment, overnightWindow, saysOvernight, scheduleProblems, scheduleSpan, sortBlocks, textTimes,
   type ScheduleBlock, type ScheduleStep, type ScheduleWait,
 } from "./experiment-schedule";
+import { experimentDayPlan, movedWriting, writtenDays, type DayEdit } from "./experiment-days";
+import { experimentSections, normalizeScientificDocument } from "./scientific-document";
 
 type Tx = Prisma.TransactionClient;
 type StepRow = {
@@ -82,15 +84,35 @@ export function scheduleSteps(experiment: { protocolSnapshotJson: unknown; proto
   return [...byRef.values()];
 }
 
+/** The experiment's days for its record, print and export (Q426): undefined for a one-day experiment without a schedule. */
+export function experimentDayPlanOf(experiment: { date: Date; scheduleDays: number | null; scheduleBlocks: BlockRow[]; protocolSnapshotJson: unknown; protocolRun: { executionPlanJson: unknown } | null; steps: StepRow[]; contentJson?: unknown }) {
+  if (!experiment.scheduleBlocks.length && (experiment.scheduleDays ?? 1) < 2) return undefined;
+  const written = experiment.contentJson === undefined ? [] : writtenDays(executionBlocks(experiment.contentJson));
+  return experimentDayPlan({ date: experiment.date, scheduleDays: experiment.scheduleDays, blocks: experiment.scheduleBlocks.map(blockView), steps: scheduleSteps(experiment), written });
+}
+
+/** The authored blocks of 执行记录. */
+const executionBlocks = (contentJson: unknown) => normalizeScientificDocument(contentJson, experimentSections).sections.find(section => section.key === "execution")?.blocks ?? [];
+
+/** What is written under the days follows a schedule change that moves days (Q427). Called inside the experiment's lock. */
+export async function moveExperimentWriting(tx: Tx, experiment: { id: string; contentJson: unknown }, edits: readonly DayEdit[]) {
+  const moved = movedWriting(experiment.contentJson, edits);
+  if (moved) await tx.experiment.update({ where: { id: experiment.id }, data: { contentJson: moved as unknown as Prisma.InputJsonValue } });
+}
+
 export const blockView = (row: BlockRow): ScheduleBlock => ({
   id: row.id, kind: row.kind === "task" ? "task" : "steps", title: row.title, stepRefs: row.stepRefs, startAt: row.startAt.toISOString(), allDay: row.allDay,
   estimatedMinutes: row.estimatedMinutes, afterBlockId: row.afterBlockId, minGapMinutes: row.minGapMinutes, maxGapMinutes: row.maxGapMinutes,
   gapSource: row.gapSource, note: row.note, doneAt: row.doneAt?.toISOString() ?? null,
 });
 
-/** What the page sends back to say which saved schedule it changed: a later save by anyone else makes it stale. */
-export function scheduleToken(rows: ReadonlyArray<Pick<BlockRow, "id" | "updatedAt">>) {
-  return createHash("sha1").update([...rows].sort((a, b) => a.id.localeCompare(b.id)).map(row => `${row.id}:${row.updatedAt.toISOString()}`).join("|")).digest("hex");
+/**
+ * What the page sends back to say which saved schedule it changed: a later save by anyone else makes it stale. Day 1 and the
+ * length count too, so a page left open cannot undo "＋ 加一天" or a new date from the record.
+ */
+export function scheduleToken(rows: ReadonlyArray<Pick<BlockRow, "id" | "updatedAt">>, experiment: { date: Date; scheduleDays: number | null }) {
+  const days = `${labDayKey(experiment.date)}+${experiment.scheduleDays ?? 1}`;
+  return createHash("sha1").update([days, ...[...rows].sort((a, b) => a.id.localeCompare(b.id)).map(row => `${row.id}:${row.updatedAt.toISOString()}`)].join("|")).digest("hex");
 }
 
 /** A Beijing day as `Experiment.date` stores it: UTC midnight, the way the experiment form saves a date. */
@@ -119,6 +141,8 @@ export const saveScheduleInput = z.object({
   startDay: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   days: z.number().int().min(1).max(MAX_SCHEDULE_DAYS),
   reason: z.string().trim().max(500).optional(),
+  /** Days put in or taken out on the schedule, in order: what is written under the later days moves with them (Q427). */
+  dayEdits: z.array(z.union([z.object({ insert: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }), z.object({ remove: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }), z.object({ shift: z.number().int().min(-400).max(400) })])).max(200).default([]),
 });
 
 async function lockedExperiment(tx: Tx, experimentId: string) {
@@ -140,7 +164,7 @@ export async function saveExperimentSchedule(raw: z.input<typeof saveScheduleInp
   const input = saveScheduleInput.parse(raw);
   return prisma.$transaction(async tx => {
     const experiment = await lockedExperiment(tx, input.experimentId);
-    if (scheduleToken(experiment.scheduleBlocks) !== input.token) throw new Error("The schedule was changed elsewhere; reload before changing it.");
+    if (scheduleToken(experiment.scheduleBlocks, experiment) !== input.token) throw new Error("The schedule was changed elsewhere; reload before changing it.");
     const blocks = input.blocks.map(block => ({ ...block, title: block.title?.trim() || null, note: block.note?.trim() || null, doneAt: block.kind === "task" ? block.doneAt : null }));
     const steps = scheduleSteps(experiment);
     const problems = scheduleProblems(blocks, new Set(steps.map(step => step.ref)));
@@ -169,12 +193,13 @@ export async function saveExperimentSchedule(raw: z.input<typeof saveScheduleInp
     const days = Math.max(input.days - daysBetween(input.startDay, firstDay), scheduleSpan(firstDay, blocks));
     if (days > MAX_SCHEDULE_DAYS) throw new Error(`A schedule spans ${MAX_SCHEDULE_DAYS} days at most.`);
     if (labDayKey(experiment.date) !== firstDay || experiment.scheduleDays !== days) await tx.experiment.update({ where: { id: experiment.id }, data: { date: experimentDateOf(firstDay), scheduleDays: days } });
+    await moveExperimentWriting(tx, experiment, input.dayEdits);
     // Activity entries print their fields as text: keep them flat.
     await tx.activityLog.create({ data: { action: "experiment_schedule_saved", targetType: "experiment", targetId: experiment.id, metadataJson: {
       blocks: blocks.length, created: strangers.length, removed: removed.length, moved: moved.length, firstDay, days, reason: input.reason ?? null,
     } } });
     const rows = await tx.experimentScheduleBlock.findMany({ where: { experimentId: experiment.id } });
-    return { token: scheduleToken(rows), blocks: sortBlocks(rows.map(blockView)), startDay: firstDay, days };
+    return { token: scheduleToken(rows, { date: experimentDateOf(firstDay), scheduleDays: days }), blocks: sortBlocks(rows.map(blockView)), startDay: firstDay, days };
   });
 }
 
@@ -187,7 +212,7 @@ export async function setScheduleItemDone(experimentId: string, blockId: string,
     await tx.experimentScheduleBlock.update({ where: { id: row.id }, data: { doneAt: done ? new Date() : null } });
     await tx.activityLog.create({ data: { action: done ? "experiment_schedule_item_done" : "experiment_schedule_item_reopened", targetType: "experiment", targetId: experiment.id, metadataJson: { blockId: row.id, title: row.title ?? "" } } });
     const rows = await tx.experimentScheduleBlock.findMany({ where: { experimentId: experiment.id } });
-    return { token: scheduleToken(rows), blocks: sortBlocks(rows.map(blockView)) };
+    return { token: scheduleToken(rows, experiment), blocks: sortBlocks(rows.map(blockView)) };
   });
 }
 

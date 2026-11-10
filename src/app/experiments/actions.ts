@@ -15,6 +15,8 @@ import { associateDocumentMedia } from "@/lib/document-media.server";
 import { experimentSearchText } from "@/lib/experiment-document";
 import { assignExperimentResearchPlan, createExperimentWithProtocolSnapshot } from "@/lib/experiments";
 import { shiftScheduleToDate } from "@/lib/experiment-schedule.server";
+import { movedWriting } from "@/lib/experiment-days";
+import { daysBetween, labDayKey } from "@/lib/experiment-schedule";
 import { orderedUniqueIds, parseCustomExperimentSteps } from "@/lib/experiment-planning";
 import { recordCodeFromSuffix } from "@/lib/record-codes";
 import { freezeEntrySources } from "@/lib/entry-assignment.server";
@@ -124,12 +126,16 @@ export async function updateExperiment(
       if (isRecordLocked(data.parsed.recordStatus)) await freezeEntrySources(tx, "experiment", current.id);
       // The start date is the schedule's first day (Q263): changing it moves every block by whole days.
       await shiftScheduleToDate(tx, fresh, data.parsed.date);
+      // What is written under a day moves with it (Q427).
+      const shift = fresh.date ? daysBetween(labDayKey(fresh.date), labDayKey(data.parsed.date)) : 0;
+      const contentJson = (shift ? movedWriting(data.contentJson, [{ shift }]) as Prisma.InputJsonValue | undefined : undefined) ?? data.contentJson;
       await tx.experiment.update({ where: { id: current.id }, data: {
         title: data.parsed.title, date: data.parsed.date, status: data.parsed.status, recordStatus: data.parsed.recordStatus,
-        purpose: data.purpose, tags: data.tags, contentJson: data.contentJson, searchText: data.searchText,
+        purpose: data.purpose, tags: data.tags, contentJson, searchText: data.searchText,
       } });
       // Completion belongs to Run actions; document saves must not replay stale or absent checkboxes.
-      if (current.primaryProtocolVersionId) await tx.protocolRun.updateMany({ where: { experimentId: current.id }, data: { status: data.parsed.status } });
+      // The run follows the experiment, also once its last Protocol was removed from the days and only custom steps are left.
+      await tx.protocolRun.updateMany({ where: { experimentId: current.id }, data: { status: data.parsed.status } });
       await tx.activityLog.create({ data: { action: "update", targetType: "experiment", targetId: current.id, metadataJson: {
         status: data.parsed.status, recordStatus: data.parsed.recordStatus,
         // Pre-save revision: document saves overwrite contentJson, so the log keeps what was replaced.

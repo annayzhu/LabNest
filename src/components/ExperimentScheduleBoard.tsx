@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition, type DragEvent } from "react";
 import { AlertTriangle, CalendarPlus, Check, ChevronDown, Minus, MoreHorizontal, Pencil, Plus, Scissors, Trash2, Undo2, Wand2, Workflow, List, X } from "lucide-react";
 import { saveSchedule, setItemDone, type ScheduleSaveResult } from "@/app/experiments/[id]/schedule/actions";
+import type { DayEdit } from "@/lib/experiment-days";
 import {
   addDays, blockState, blockTitle, daysBetween, defaultWorkHours, draftSchedule, formatDuration, formatWait, formatWindow, insertDay, labClock, labDayKey, labInstant, labMinuteOfDay,
   localizeBlockTitle, MAX_SCHEDULE_DAYS, moveBlock, removeDay, scheduleDayLabel, scheduleMarks, scheduleSpan, shiftSchedule, sortBlocks, weekday,
@@ -106,6 +107,9 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
   const openItems = blocks.filter(block => block.kind === "task" && !block.doneAt).length;
 
   const apply = (next: ScheduleBlock[]) => { setBlocks(next); setError(""); setNotice(""); };
+  // Days put in, taken out or moved since the last save, in order: what is written under the later days in 执行记录 moves with them (Q427).
+  const [dayEdits, setDayEdits] = useState<DayEdit[]>([]);
+  const noteDayEdit = (edit: DayEdit) => setDayEdits(current => [...current, edit]);
   const doneError = () => setError(zh ? "已完成的段不能移动；请先调整其他天。" : "A done block stays where it is; change the other days instead.");
   /** The length from the current day 1, so a day put before it is not lost. */
   const resize = (count: number) => { setStart(firstDay); setLength(Math.min(MAX_SCHEDULE_DAYS, Math.max(minDays, count))); };
@@ -113,8 +117,10 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
   function changeStart(next: string) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(next) || next === firstDay) return;
     const shift = daysBetween(firstDay, next);
+    if (blocks.length && locked.size) { doneError(); return; }
+    // The record's writing moves with day 1 whether or not there are blocks (a schedule of days only).
+    noteDayEdit({ shift });
     if (blocks.length) {
-      if (locked.size) { doneError(); return; }
       apply(shiftSchedule(blocks, shift * 86_400_000));
       setNotice(zh ? `整份日程${shift > 0 ? "推后" : "提前"} ${Math.abs(shift)} 天（${blocks.length} 项），检查后保存。` : `The whole schedule moved ${Math.abs(shift)} day${Math.abs(shift) === 1 ? "" : "s"} ${shift > 0 ? "later" : "earlier"} (${blocks.length} blocks). Check it, then save.`);
     }
@@ -124,6 +130,7 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
   function putDay(dayKey: string) {
     if (dayCount >= MAX_SCHEDULE_DAYS) { setError(zh ? `日程最长 ${MAX_SCHEDULE_DAYS} 天。` : `A schedule spans ${MAX_SCHEDULE_DAYS} days at most.`); return; }
     try { apply(insertDay(blocks, dayKey, locked)); } catch { doneError(); return; }
+    noteDayEdit({ insert: dayKey });
     setStart(firstDay); setLength(dayCount + 1); setMenuDay(null);
   }
   function takeDay(dayKey: string) {
@@ -132,8 +139,9 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
     let next: ScheduleBlock[];
     try { next = removeDay(blocks, dayKey, locked); } catch { doneError(); return; }
     apply(next);
-    // Taking out day 1 makes the next day the first; the others keep their place.
-    setStart(dayKey === firstDay ? addDays(firstDay, 1) : firstDay);
+    noteDayEdit({ remove: dayKey });
+    // Every later day moves one earlier, day 1 too: blocks, writing and day 1's date stay together.
+    setStart(firstDay);
     setLength(Math.max(1, dayCount - 1));
     setMenuDay(null); setConfirmDay(null); setSelectedId(null);
     if (count) setNotice(zh ? `删除了这一天和其中 ${count} 项，后面的事项提前了一天。` : `The day and its ${count} block${count === 1 ? "" : "s"} were taken out; later days moved one day earlier.`);
@@ -201,8 +209,8 @@ export function ExperimentScheduleBoard({ experiment, editable, steps, blocks: i
   function save() {
     if (needsReason && !reason.trim()) { setError(zh ? "实验进行中改期，请写一句原因。" : "The experiment is under way: say why the schedule changes."); return; }
     startTransition(async () => {
-      const done = settle(await saveSchedule({ experimentId: experiment.id, token: saved.token, blocks, startDay: firstDay, days: dayCount, reason: needsReason ? reason.trim() : undefined }));
-      if (done) { setReason(""); setNotice(zh ? "日程已保存。" : "Schedule saved."); }
+      const done = settle(await saveSchedule({ experimentId: experiment.id, token: saved.token, blocks, startDay: firstDay, days: dayCount, reason: needsReason ? reason.trim() : undefined, dayEdits }));
+      if (done) { setReason(""); setDayEdits([]); setNotice(zh ? "日程已保存。" : "Schedule saved."); }
     });
   }
   function toggleDone(block: ScheduleBlock) {

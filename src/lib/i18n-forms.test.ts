@@ -6,7 +6,7 @@ const zh = (text: string) => translateUiText(text, "zh");
 describe("New Experiment, Entry and Protocol usage text in Chinese", () => {
   it("translates the New Experiment metadata and protocol picker", () => {
     expect(["Plan", "No plan chosen", "Follow a Protocol", "Write my own steps", "Chosen Protocols · in run order", "Add from Protocol library", "Back to the page to keep editing or save"].map(zh))
-      .toEqual(["研究计划", "未选择", "依据实验规程", "自行记录", "已选规程 · 按执行顺序", "从实验规程库添加", "返回主界面继续填写或保存"]);
+      .toEqual(["研究计划", "未选择", "按规程执行", "自定义步骤", "已选规程 · 按执行顺序", "从实验规程库添加", "返回主界面继续填写或保存"]);
     expect(zh("Seed cells | 2.0 × 10^5 cells per well\nIncubate overnight\nImage | 20× objective")).toBe("铺板 | 每孔 2.0 × 10^5 个细胞\n孵育过夜\n拍照 | 20× 物镜");
     expect(zh("v1.2 · Draft · Protocol library · 5 steps")).toBe("v1.2 · 草稿 · 规程库 · 5 步");
     expect(zh("RNA kit v2 · v1.0 · Reviewed · Lab A · 1 step")).toBe("RNA kit v2 · v1.0 · 已审核 · Lab A · 1 步");

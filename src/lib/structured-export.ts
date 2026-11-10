@@ -7,6 +7,8 @@ import type { SheetData } from "write-excel-file/node";
 import { prisma } from "@/lib/db";
 import { documentMediaToMarkdown } from "@/lib/document-media";
 import { experimentNarrativeFromDocument, experimentExecutionDocument } from "@/lib/experiment-document";
+import { withExperimentDays } from "@/lib/experiment-days";
+import { experimentDayPlanOf } from "@/lib/experiment-schedule.server";
 import { withExperimentSamples } from "@/lib/experiment-samples";
 import { experimentSampleLines } from "@/lib/samples.server";
 import { exportedSafetyStock, lotRiskFlags } from "@/lib/inventory";
@@ -98,13 +100,14 @@ export async function structuredExportRecords(
   }
   if (module === "experiments") {
     const rows = applyExportSelection(
-      await prisma.experiment.findMany({ include: { protocolRun: true, steps: { orderBy: [{ groupOrder: "asc" }, { order: "asc" }] }, project: true, researchPlan: true, primaryProtocolVersion: { include: { protocol: true } }, protocolVersions: { include: { protocolVersion: { include: { protocol: true } } }, orderBy: { order: "asc" } } }, orderBy: { date: "desc" } }),
+      await prisma.experiment.findMany({ include: { scheduleBlocks: { orderBy: { startAt: "asc" } }, protocolRun: true, steps: { orderBy: [{ groupOrder: "asc" }, { order: "asc" }] }, project: true, researchPlan: true, primaryProtocolVersion: { include: { protocol: true } }, protocolVersions: { include: { protocolVersion: { include: { protocol: true } } }, orderBy: { order: "asc" } } }, orderBy: { date: "desc" } }),
       selection,
       (row) => ({ search: [row.runCode, row.title, row.purpose], filters: { project: row.projectId, plan: row.researchPlanId, status: row.status } }),
     );
     const sampleLines = await experimentSampleLines(prisma, rows.map((row) => row.id));
     return Promise.all(rows.map(async (row) => {
-      const document = withExperimentSamples(experimentExecutionDocument(row.contentJson, await stepsWithExecutionEvidence(row.steps),row.protocolRun?.parametersJson,row.protocolSnapshotJson,row.protocolRun?.executionPlanJson), sampleLines.get(row.id) ?? []);
+      const days = experimentDayPlanOf(row);
+      const document = withExperimentDays(withExperimentSamples(experimentExecutionDocument(row.contentJson, await stepsWithExecutionEvidence(row.steps),row.protocolRun?.parametersJson,row.protocolSnapshotJson,row.protocolRun?.executionPlanJson, days), sampleLines.get(row.id) ?? []), days);
       const narrative = experimentNarrativeFromDocument(document);
       if (preserveMedia) {
         narrative.background = scientificSectionText(document, "background");

@@ -121,7 +121,7 @@ try {
     assert.match(await page.locator('.ln-document-plate').first().locator('[data-well="A1"]').innerText(), /Mock/);
 
     // Way out of the blocked save, then a real save.
-    await bar.getByRole('button', { name: '自行记录' }).click();
+    await bar.getByRole('button', { name: '自定义步骤' }).click();
     assert.equal(await save.isDisabled(), false, 'writing own steps turns Save on');
     assert.doesNotMatch(await bar.innerText(), /还不能保存/);
     await page.getByRole('textbox', { name: '实验标题' }).fill(`Section check ${width}`);

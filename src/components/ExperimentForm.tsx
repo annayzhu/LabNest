@@ -3,7 +3,11 @@
 import { savedToolDraftForm } from "@/lib/tool-workflow";
 import { experimentExecutionDocument } from "@/lib/experiment-document";
 import { ExecutionRecordPreview } from "./ExecutionRecordPreview";
+import type { ExperimentDayPlan } from "@/lib/experiment-days";
 import { ExecutionRecordBlocks, ExecutionRecordProvider } from "./ExecutionRecordSteps";
+import { AddDayButton, DayControlsProvider, type DayControlsData } from "./ExperimentDayControls";
+import { writingRunKey } from "@/lib/experiment-days";
+import type { EditorDayRuns } from "@/lib/scientific-tiptap";
 import { isRecordLocked } from "@/lib/record-lifecycle";
 import { labDate } from "@/lib/lab-time";
 import { newClientMutationId } from "@/lib/client-mutation-id";
@@ -34,17 +38,19 @@ export type ExperimentFormAction = (
 
 const initialState: ExperimentFormState = {};
 
-export function ExperimentForm({ intro, action, plans, protocolVersions = [], initial, lockedPlan = false }: {
+export function ExperimentForm({ intro, action, plans, protocolVersions = [], initial, lockedPlan = false, dayControls }: {
   /** One line at the top of the metadata drawer: where this Experiment comes from and what to do first. */
   intro?: string;
   action: ExperimentFormAction;
   plans: PlanOption[];
   protocolVersions?: ExperimentProtocolVersionOption[];
   lockedPlan?: boolean;
+  /** The day menus (Q428–Q433), when the record can change. */
+  dayControls?: DayControlsData;
   initial: {
     id?: string; updatedAt?: Date | string; researchPlanId?: string; runCode?: string | null; suggestedCodeSuffix?: string; title?: string; date?: string; status?: string; recordStatus?: string;
     purpose?: string | null; tags?: string[]; methodMode?: "protocol" | "custom";
-    executionPlan?: unknown; executionParameters?: unknown; protocolSnapshotJson?: unknown; selectedProtocolVersionIds?: string[]; steps?: StepOption[]; document: ScientificDocument;
+    executionPlan?: unknown; executionParameters?: unknown; dayPlan?: ExperimentDayPlan; protocolSnapshotJson?: unknown; selectedProtocolVersionIds?: string[]; steps?: StepOption[]; document: ScientificDocument;
   };
 }) {
   const [creationKey,setCreationKey]=useState(()=>newClientMutationId());
@@ -87,10 +93,17 @@ export function ExperimentForm({ intro, action, plans, protocolVersions = [], in
   const structuredExecution = structuredRun ? structuredRun.hasSystems : selectedVersions.some(version => version.hasSystems);
   const stepProgress = runProgressFromSource(initial.protocolSnapshotJson, initial.executionPlan, initial.steps?.map(step => ({ ...step, groupKey: step.groupKey ?? "manual", protocolStepRef: step.protocolStepRef ?? null })) ?? []);
   // A saved Experiment's run, as in the record: steps are checked and deviations recorded one at a time, apart from this form.
-  const runRecord = initial.id && initial.steps?.length ? experimentExecutionDocument(undefined, initial.steps.map(step => ({ ...step, groupOrder: step.groupOrder ?? 0, groupTitle: step.groupTitle ?? "步骤" })), initial.executionParameters, initial.protocolSnapshotJson, initial.executionPlan) : undefined;
+  const runRecord = initial.id && (initial.steps?.length || initial.dayPlan) ? experimentExecutionDocument(undefined, (initial.steps ?? []).map(step => ({ ...step, groupOrder: step.groupOrder ?? 0, groupTitle: step.groupTitle ?? "步骤" })), initial.executionParameters, initial.protocolSnapshotJson, initial.executionPlan, initial.dayPlan) : undefined;
   const recordBlocks = (key: string) => runRecord?.sections.find(section => section.key === key)?.blocks.filter(block => block.id.startsWith("run-derived:")) ?? [];
   const runControls = initial.id ? { experimentId: initial.id, revision: structuredRun?.plan.revision, editable: !isRecordLocked(initial.recordStatus ?? "draft") && initial.status !== "archived" && !(structuredExecution && initial.status === "completed") } : undefined;
-  const runAddons = runControls && runRecord ? Object.fromEntries(["execution", "deviations"].flatMap(key => recordBlocks(key).length ? [[key, <ExecutionRecordProvider key={key} value={runControls}><ExecutionRecordBlocks blocks={recordBlocks(key)} /></ExecutionRecordProvider>]] : [])) : undefined;
+  // With days (Q427) the run is cut by day: what comes before the first day heads 执行记录, and each day shows its own run above its writing.
+  const dayParts = runControls && runRecord && initial.dayPlan ? editorDays(recordBlocks("execution"), initial.document) : undefined;
+  const runView = (blocks: ScientificDocument["sections"][number]["blocks"]) => runControls ? <ExecutionRecordProvider value={runControls}><DayControlsProvider value={dayControls}><ExecutionRecordBlocks blocks={blocks} /></DayControlsProvider></ExecutionRecordProvider> : null;
+  const runAddons = runControls && runRecord ? {
+    ...Object.fromEntries(["execution", "deviations"].flatMap(key => { const blocks = key === "execution" && dayParts ? dayParts.before : recordBlocks(key); return blocks.length ? [[key, runView(blocks)]] : []; })),
+    ...(dayControls ? { "execution:after": <DayControlsProvider value={dayControls}><AddDayButton /></DayControlsProvider> } : {}),
+  } : undefined;
+  const dayAddons = dayParts ? Object.fromEntries(Object.entries(dayParts.byDay).map(([key, blocks]) => [key, runView(blocks)])) : undefined;
   const executionPreview = !initial.id && methodMode === "protocol" && selectedVersions.some(version => version.execution)
     ? <ExecutionRecordPreview protocols={selectedVersions.flatMap(version => version.execution ? [{ id: version.id, title: version.protocol.title, displayVersion: version.displayVersion, editHref: `/protocols/${version.protocol.id}/versions/${version.id}/edit`, execution: version.execution }] : [])} />
     : null;
@@ -102,7 +115,7 @@ export function ExperimentForm({ intro, action, plans, protocolVersions = [], in
     <input type="hidden" name="methodMode" value={activeMethodMode} />
     {lockedPlan ? <input type="hidden" name="researchPlanId" value={planId} /> : null}
     <DocumentEditorLayout initialView={initial.id ? "document" : "metadata"} metadataRequest={metadataRequest}>
-      <div className="document-editor-main"><ReferenceScope.Provider value={{ experimentId: initial.id }}><ScientificDocumentEditor toolOwner={{ownerType:"experiment",ownerId:initial.id,experimentId:initial.id,researchPlanId:planId}} initialDocument={initial.document} compact sectionAddons={executionPreview ? { execution: executionPreview } : runAddons} documentType="Experiment" identifier={identifier} title={title} titlePlaceholder="Untitled Experiment" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Experiment" aria-label="Experiment title" />} subtitle={purpose} hiddenSectionKeys={activeMethodMode === "protocol" ? ["background"] : []} headerFacts={[
+      <div className="document-editor-main"><ReferenceScope.Provider value={{ experimentId: initial.id }}><ScientificDocumentEditor toolOwner={{ownerType:"experiment",ownerId:initial.id,experimentId:initial.id,researchPlanId:planId}} initialDocument={initial.document} compact sectionAddons={executionPreview ? { execution: executionPreview } : runAddons} days={dayParts?.days} dayAddons={dayAddons} documentType="Experiment" identifier={identifier} title={title} titlePlaceholder="Untitled Experiment" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Experiment" aria-label="Experiment title" />} subtitle={purpose} hiddenSectionKeys={activeMethodMode === "protocol" ? ["background"] : []} headerFacts={[
         { label: "Plan", value: plan?.title ?? "No plan chosen" },
         { label: "Experiment date", value: date || "Not set" },
       ]} /></ReferenceScope.Provider></div>
@@ -160,4 +173,27 @@ export function ExperimentForm({ intro, action, plans, protocolVersions = [], in
       <Button type="submit" variant="primary" size="lg" disabled={pending || Boolean(saveBlocked)} aria-busy={pending} className="shadow-soft">{pending ? "Saving…" : "Save Experiment"}</Button>
     </div>
   </form>;
+}
+
+/**
+ * 执行记录's run cut by day for the editor (Q427): the blocks before the first day, each day's blocks by its first day's key, and the
+ * last part ("") for steps on no day and writing on no day, with its own heading when something is written there.
+ */
+function editorDays(blocks: ScientificDocument["sections"][number]["blocks"], document: ScientificDocument): { before: typeof blocks; byDay: Record<string, typeof blocks>; days: EditorDayRuns } {
+  const before: typeof blocks = [], byDay: Record<string, typeof blocks> = {}, runs: EditorDayRuns["runs"] = [];
+  let current: typeof blocks = before;
+  for (const block of blocks) {
+    const execution = block.execution;
+    if (execution?.role === "day") {
+      const [first, last] = execution.meta?.split("/") ?? [];
+      const key = execution.index !== undefined && first ? first : "";
+      if (key) runs.push({ first, last: last ?? first });
+      current = byDay[key] = [];
+    }
+    current.push(block);
+  }
+  const ranges = runs.map(run => ({ first: { dayKey: run.first }, last: { dayKey: run.last } }));
+  const loose = (document.sections.find(section => section.key === "execution")?.blocks ?? []).some(block => !writingRunKey(block.day, ranges));
+  if (loose) (byDay[""] ??= []).push({ id: "run-derived:day:unassigned", type: "heading", text: "未分天的记录", execution: { role: "day", title: "未分天的记录", status: "unassigned" } });
+  return { before, byDay, days: { runs, tail: "" in byDay } };
 }

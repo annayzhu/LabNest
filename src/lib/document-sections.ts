@@ -1,6 +1,7 @@
 import { Fragment, Slice, type Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { Plugin, PluginKey, Selection, type EditorState, type Transaction } from '@tiptap/pm/state';
 import type { EditorView } from '@tiptap/pm/view';
+import { deleteAroundBreaks } from './editor-day-breaks';
 
 declare module '@tiptap/core' {
   interface EditorEvents {
@@ -80,7 +81,8 @@ export function clearSelectionInSections(state: EditorState): Transaction {
   for (const { at, size } of sections.reverse()) {
     const start = Math.max(from, at + 1), end = Math.min(to, at + 1 + size);
     if (start >= end) continue;
-    tr.deleteRange(start, end);
+    // The days of 执行记录 stay too; only what is written around them goes.
+    deleteAroundBreaks(tr, start, end);
     if (!tr.doc.nodeAt(at)!.childCount) tr.insert(at + 1, state.schema.nodes.paragraph.create());
   }
   return tr.setSelection(Selection.near(tr.doc.resolve(tr.mapping.map(from)), 1)).scrollIntoView();

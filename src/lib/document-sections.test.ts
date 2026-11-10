@@ -12,6 +12,7 @@ import { ProtocolStepNode } from './protocol-step-node';
 import { ScientificDocumentNode } from './scientific-document-node';
 import { normalizeScientificDocument, parseScientificDocumentJson } from './scientific-document';
 import { tiptapTableRows } from './tiptap-table-serialization';
+import { createDayBreakExtension, deleteAroundBreaks } from './editor-day-breaks';
 
 const noView = () => ({ dom: { nodeType: 1 } as unknown as HTMLElement });
 const section = (name: string, content?: string) => createDocumentSectionExtension({ name, tag: `section[data-${name}]`, content, attributes: { sectionKey: { default: 'x', htmlAttribute: `data-${name}` } }, nodeView: noView });
@@ -237,5 +238,34 @@ describe('which documents hold only sections', () => {
   });
   it('never lets a click select a whole section', () => {
     for (const [, schema, sectionType] of editors) expect(schema.nodes[sectionType].spec.selectable).toBe(false);
+  });
+});
+
+describe('the days of 执行记录 in a cleared selection', () => {
+  const schema = getSchema([...shared, ScientificDocumentNode, section('scientificSection'), createDayBreakExtension(noView)]);
+  const day = (dayKey: string): JSONContent => ({ type: 'scientificDayBreak', attrs: { dayKey } });
+  const doc = schema.nodeFromJSON({ type: 'doc', content: [
+    { type: 'scientificSection', attrs: { sectionKey: 'setup' }, content: [paragraph('Setup line')] },
+    { type: 'scientificSection', attrs: { sectionKey: 'execution' }, content: [day('2026-11-09'), paragraph('Day one note'), day('2026-11-10'), paragraph('Day two note'), day('')] },
+  ] });
+  const days = (node: ProseMirrorNode) => allOfType(node, 'scientificDayBreak').map(found => found.node.attrs.dayKey);
+
+  it('keeps every day when everything is selected and deleted', () => {
+    const state = EditorState.create({ doc, selection: new AllSelection(doc) });
+    const after = state.apply(clearSelectionInSections(state)).doc;
+    expect(days(after)).toEqual(['2026-11-09', '2026-11-10', '']);
+    expect(allText(after).replace(/\n/g, '')).toBe('');
+    // Each day keeps its line in the same step, so nothing is added afterwards that undo would leave behind.
+    const execution = after.child(1), kinds: string[] = [];
+    execution.forEach(node => { kinds.push(node.type.name); });
+    expect(kinds).toEqual(['scientificDayBreak', 'paragraph', 'scientificDayBreak', 'paragraph', 'scientificDayBreak', 'paragraph']);
+    expect(allOfType(after, 'scientificSection')).toHaveLength(2);
+  });
+
+  it('deletes around the days inside one section', () => {
+    const notes = allOfType(doc, 'paragraph').filter(found => found.node.textContent.startsWith('Day'));
+    const tr = deleteAroundBreaks(EditorState.create({ doc }).tr, notes[0].pos, notes[1].pos + notes[1].node.nodeSize);
+    expect(days(tr.doc)).toEqual(['2026-11-09', '2026-11-10', '']);
+    expect(allText(tr.doc)).not.toMatch(/Day/);
   });
 });

@@ -3,7 +3,8 @@ import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { NodeSelection, Plugin, PluginKey, TextSelection, type EditorState } from '@tiptap/pm/state';
 import type { EditorView } from '@tiptap/pm/view';
 
-const blocksWithoutCaret = new Set(['documentTool', 'documentPlate', 'documentMedia', 'scientificWidget', 'table']);
+// A day of 执行记录 counts too: each day keeps a line to write on (Q427).
+const blocksWithoutCaret = new Set(['documentTool', 'documentPlate', 'documentMedia', 'scientificWidget', 'table', 'scientificDayBreak']);
 const containers = new Set(['doc', 'scientificSection']);
 
 /** After saving a block the caret waits on the line below it, ready for the next "/". */

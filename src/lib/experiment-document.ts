@@ -15,6 +15,8 @@ import { experimentStepGroupHeading } from './experiment-planning';
 import { runStepContent, runStepIsConfirmation } from "./run-step-content";
 import { scientificContentBlockSchema, type ScientificContentBlock } from "./scientific-document";
 import { executionBlockText } from "./protocol-execution";
+import { dayRunLabel, dayRuns, dayStatusLabel, writingRunKey, type ExperimentDayPlan } from "./experiment-days";
+import { localizeBlockTitle } from "./experiment-schedule";
 import type { ProtocolContentBlock } from "./protocol-document";
 import { protocolDocumentSchema } from "./protocol-document";
 import {
@@ -137,7 +139,7 @@ type ExecutionRecordStep = {
  * step deviation, above the handwritten notes.
  * The reserved ID prefix lets the projection refresh without accumulating.
  */
-export function experimentExecutionDocument(contentJson: unknown, steps: readonly ExecutionRecordStep[], parameters?: unknown, snapshot?:unknown, executionPlan?:unknown): ScientificDocument {
+export function experimentExecutionDocument(contentJson: unknown, steps: readonly ExecutionRecordStep[], parameters?: unknown, snapshot?:unknown, executionPlan?:unknown, days?: ExperimentDayPlan): ScientificDocument {
   const document = normalizeScientificDocument(contentJson, experimentSections);
   const blocks: ScientificContentBlock[] = [], deviations: ScientificContentBlock[] = [];
   const structured = structuredRunView(snapshot, executionPlan, steps.map(step => ({ ...step, groupKey: step.groupKey ?? 'manual', protocolStepRef: step.protocolStepRef ?? null })));
@@ -181,19 +183,31 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
     const key = `${step.groupOrder}:${structured.steps[step.id]?.groupId ?? ''}`;
     parts.set(key, [...(parts.get(key) ?? []), step]);
   }
-  let partIndex = 0;
-  for (const [key, partSteps] of parts) {
-    partIndex++;
+  // One part per Protocol (and group). With a schedule (Q426, Q429) the parts are cut by day: each day shows the steps of its
+  // blocks under "第 N 天", a Protocol spread over days reads "· 第 a–b 步" there, and steps placed on no day come last.
+  const ordered = [...parts.values()].flat();
+  const rank = new Map(ordered.map((step, index) => [step.id, index]));
+  const stepById = new Map(ordered.map(step => [step.id, step]));
+  const partList = [...parts].map(([key, partSteps], index) => ({ key, partSteps, index: index + 1 }));
+  const partOf = new Map(partList.flatMap(part => part.partSteps.map(step => [step.id, part] as const)));
+  const opened = new Set<string>();
+  const emitChunk = (part: (typeof partList)[number], chunk: readonly ExecutionRecordStep[], suffix: string, dayPrefix: string, dayKey?: string) => {
+    const { key, partSteps, index: partIndex } = part;
     const first = partSteps[0], adoptedFirst = structured.steps[first.id];
     const captured = versions.find(version => version.protocolVersionId === first.groupKey);
     const protocolTitle = captured?.protocolTitle ?? experimentStepGroupHeading(first.groupTitle).title;
-    const title = [adoptedFirst?.groupLabel, protocolTitle].filter(Boolean).join(' · ');
     const applicable = partSteps.filter(step => structured.steps[step.id]?.applicability !== 'not-applicable');
-    const required = applicable.filter(step => !structured.steps[step.id]?.optional);
+    const shown = chunk.filter(step => structured.steps[step.id]?.applicability !== 'not-applicable');
+    const range = shown.length === applicable.length || !shown.length ? '' : shown.length === 1 ? ` · 第 ${shown[0].order} 步` : ` · 第 ${shown[0].order}–${shown.at(-1)!.order} 步`;
+    const title = [adoptedFirst?.groupLabel, protocolTitle].filter(Boolean).join(' · ') + range;
+    const required = shown.filter(step => !structured.steps[step.id]?.optional);
     const meta = [captured?.displayVersion ? `v${captured.displayVersion}` : undefined, `已完成 ${required.filter(step => step.completed).length}/${required.length} 步`].filter(Boolean).join(' · ');
-    blocks.push({ id: `run-derived:group:${key}`, type: 'heading', text: `${partIndex}. ${title}`, execution: { role: 'group', title, index: partIndex, meta } });
+    // The part's own key and day, for its menu (Q431): "unscheduled" for steps placed on no day.
+    blocks.push({ id: `run-derived:group:${key}${suffix}`, type: 'heading', text: `${partIndex}. ${title}`, execution: { role: 'group', title, index: partIndex, meta, groupKey: first.groupKey ?? 'manual', ...(dayKey ? { dayKey } : {}) } });
+    const firstChunk = !opened.has(key);
+    opened.add(key);
     // Shared preparation belongs to every group; its system is each group's own, so it shows none.
-    const version = adoptedFirst && adoptedFirst.groupId !== 'shared' ? structured.versions.find(item => item.id === adoptedFirst.versionId) : undefined;
+    const version = firstChunk && adoptedFirst && adoptedFirst.groupId !== 'shared' ? structured.versions.find(item => item.id === adoptedFirst.versionId) : undefined;
     if (version) {
       const adopted = structured.plan.versions[version.id], systems = version.document.systems!;
       const marks = optionMarks(systems);
@@ -201,7 +215,7 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
       // A Protocol without systems has nothing to confirm, so the record says nothing about them.
       if (systems.dimensions.length) blocks.push(detail({ id: `run-derived:system:${key}`, type: 'text', text: adopted ? `本次体系 · ${choice}（确认于 ${recordTime(adopted.confirmedAt)}）` : '尚未确认本次体系' }));
     }
-    for (const step of applicable) {
+    for (const step of shown) {
       const adoptedStep = structured.steps[step.id];
       const content = stepContent(step);
       blocks.push(...(adoptedStep ? notes.before[step.id] ?? [] : content.notesBefore).map(block => note(scientific(block, `run-derived:note:${step.id}:`))));
@@ -232,14 +246,51 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
       const values = Object.entries(structured.plan.actualValues[step.id] ?? {});
       if (values.length) blocks.push(detail({ id: `run-derived:actual:${step.id}`, type: 'table', caption: '实际记录（不覆盖规定用量）', rows: [['记录项', '实际值', '记录时间'], ...values.map(([id, v]) => [adoptedStep?.actualFields.find(f => f.id === id)?.label ?? id, chipAmount(v.value, v.unit), recordTime(v.recordedAt)])] }, step.id));
       blocks.push(...(step.evidence ?? []).map((block, index) => detail({ ...block, id: `run-derived:${step.id}:evidence:${index}` }, step.id)));
-      if (deviation) deviations.push({ id: `run-derived:deviation:${step.id}`, type: 'text', text: [parts.size > 1 ? `${partIndex}. ${protocolTitle}` : '', `第 ${step.order} 步`, deviationTypeLabel(step.deviationType), step.deviationImpact ? `${deviation}（影响：${step.deviationImpact}）` : deviation, step.deviationAt ? recordTime(step.deviationAt) : '', step.deviationAuthor ?? ''].filter(Boolean).join(' · '), execution: { role: 'deviation', stepId: step.id, title: `第 ${step.order} 步`, number: step.order, deviationLabel: label, deviationNote: deviation, deviationType: step.deviationType ?? 'other' } });
+      if (deviation) deviations.push({ id: `run-derived:deviation:${step.id}`, type: 'text', text: [dayPrefix, parts.size > 1 ? `${partIndex}. ${protocolTitle}` : '', `第 ${step.order} 步`, deviationTypeLabel(step.deviationType), step.deviationImpact ? `${deviation}（影响：${step.deviationImpact}）` : deviation, step.deviationAt ? recordTime(step.deviationAt) : '', step.deviationAuthor ?? ''].filter(Boolean).join(' · '), execution: { role: 'deviation', stepId: step.id, title: `第 ${step.order} 步`, number: step.order, deviationLabel: label, deviationNote: deviation, deviationType: step.deviationType ?? 'other' } });
     }
     const last = applicable.at(-1);
-    if (last) blocks.push(...(structured.steps[last.id] ? notes.after[last.id] ?? [] : stepContent(last).notesAfter).map(block => note(scientific(block, `run-derived:note-after:${last.id}:`))));
-    const other = partSteps.filter(step => structured.steps[step.id]?.applicability === 'not-applicable');
+    if (last && shown.includes(last)) blocks.push(...(structured.steps[last.id] ? notes.after[last.id] ?? [] : stepContent(last).notesAfter).map(block => note(scientific(block, `run-derived:note-after:${last.id}:`))));
+    const other = firstChunk ? partSteps.filter(step => structured.steps[step.id]?.applicability === 'not-applicable') : [];
     if (other.length) blocks.push(detail({ id: `run-derived:inapplicable:${key}`, type: 'text', text: other.map(step => `${step.order}. ${structured.steps[step.id]?.title_source === 'derived' ? stepOpening(structured.steps[step.id]?.content_blocks) : structured.steps[step.id]?.title ?? step.title}`).join('\n') }, undefined, `其他体系的步骤 · 不适用 · ${other.length} 步`));
+  };
+  /** A day's steps in run order, one part after another. */
+  const emitSteps = (stepIds: readonly string[], suffix: string, dayPrefix: string, dayKey: string) => {
+    const runs: Array<{ part: (typeof partList)[number]; steps: ExecutionRecordStep[] }> = [];
+    for (const step of stepIds.flatMap(id => stepById.get(id) ?? []).sort((a, b) => rank.get(a.id)! - rank.get(b.id)!)) {
+      const part = partOf.get(step.id)!, run = runs.at(-1);
+      if (run?.part === part) run.steps.push(step); else runs.push({ part, steps: [step] });
+    }
+    for (const run of runs) emitChunk(run.part, run.steps, suffix, dayPrefix, dayKey);
+    return new Set(runs.map(run => run.part.partSteps[0].groupKey ?? 'manual')).size;
+  };
+  const authored = document.sections.find(section => section.key === 'execution')?.blocks.filter(block => !block.id.startsWith('run-derived:')) ?? [];
+  let execution: ScientificContentBlock[];
+  if (!days) {
+    for (const part of partList) emitChunk(part, part.partSteps, '', '');
+    execution = [...authored, ...blocks];
+  } else {
+    // Each day reads: its heading, items, parts, then what was written under it (Q427). Writing on no day of the schedule comes last.
+    const runs = dayRuns(days.days);
+    const writtenUnder = (run: (typeof runs)[number]) => authored.filter(block => writingRunKey(block.day, runs) === run.first.dayKey);
+    for (const run of runs) {
+      const { first: day, last } = run;
+      const label = dayRunLabel(day, last, true);
+      const heading: ScientificContentBlock = { id: `run-derived:day:${day.index}`, type: 'heading', text: `${label} · ${dayStatusLabel(day.status, true)}`, execution: { role: 'day', title: label, index: day.index, meta: last.index !== day.index ? `${day.dayKey}/${last.dayKey}` : day.dayKey, status: day.status, dayKey: day.dayKey, ...(last.index !== day.index ? { number: last.index } : {}) } };
+      blocks.push(heading);
+      for (const item of day.items) blocks.push(detail({ id: `run-derived:item:${item.id}`, type: 'text', text: `${item.done ? '☑' : '☐'} 事项 · ${item.clock ?? '全天'} · ${localizeBlockTitle(item.title, true)}${item.note ? `（${item.note}）` : ''}` }));
+      // A run of empty days has no steps; its parts count is that of its first day.
+      heading.execution!.parts = emitSteps(day.stepIds, `:d${day.index}`, label.split(' · ')[0], day.dayKey);
+      blocks.push(...writtenUnder(run));
+    }
+    if (days.unscheduledStepIds.some(id => stepById.has(id))) {
+      blocks.push({ id: 'run-derived:day:unscheduled', type: 'heading', text: '未安排的步骤', execution: { role: 'day', title: '未安排的步骤', status: 'unscheduled' } });
+      emitSteps(days.unscheduledStepIds, ':unscheduled', '', 'unscheduled');
+    }
+    const loose = authored.filter(block => !writingRunKey(block.day, runs));
+    if (loose.length) blocks.push({ id: 'run-derived:day:unassigned', type: 'heading', text: '未分天的记录', execution: { role: 'day', title: '未分天的记录', status: 'unassigned' } }, ...loose);
+    execution = blocks;
   }
-  return {...document,sections:document.sections.map(section=>section.key==='execution' ? {...section,blocks:[...section.blocks.filter(block=>!block.id.startsWith('run-derived:')),...blocks]}
+  return {...document,sections:document.sections.map(section=>section.key==='execution' ? {...section,blocks:execution}
     : section.key==='deviations' ? {...section,blocks:[...deviations,...section.blocks.filter(block=>!block.id.startsWith('run-derived:'))]} : section)};
 }
 

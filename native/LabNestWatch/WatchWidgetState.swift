@@ -13,6 +13,11 @@ struct WatchWidgetState: Codable, Equatable {
     var pausedSeconds: Int?
     /// Every step is done or skipped.
     var finished = false
+    /// Steps done or skipped, and all steps: the face's progress bar. Older saved states have neither.
+    var doneSteps: Int?
+    var totalSteps: Int?
+    /// The running timer's full length, so the face can draw how much of it is left.
+    var durationSeconds: Int?
 
     static let appGroup = "group.org.labnest.mobile"
     private static var file: URL? {

@@ -24,7 +24,7 @@ struct StepEntry: TimelineEntry {
 
 struct StepProvider: TimelineProvider {
     func placeholder(in context: Context) -> StepEntry {
-        StepEntry(date: .now, state: WatchWidgetState(experimentTitle: "实验", stepTitle: "37 °C 孵育", endsAt: .now.addingTimeInterval(600)))
+        StepEntry(date: .now, state: WatchWidgetState(experimentTitle: "实验", stepTitle: "37 °C 孵育", endsAt: .now.addingTimeInterval(420), doneSteps: 3, totalSteps: 9, durationSeconds: 600))
     }
 
     func getSnapshot(in context: Context, completion: @escaping (StepEntry) -> Void) {
@@ -47,6 +47,12 @@ struct StepWidgetView: View {
 
     private var running: Date? { entry.state?.endsAt.flatMap { $0 > entry.date ? $0 : nil } }
     private var timeUp: Bool { entry.state?.endsAt.map { $0 <= entry.date } ?? false }
+    /// When the running timer started, from its end and full length; the ring then empties on its own.
+    private var runningRange: ClosedRange<Date>? {
+        guard let end = running, let length = entry.state?.durationSeconds, length > 0 else { return nil }
+        let start = end.addingTimeInterval(-Double(length))
+        return start < end ? start...end : nil
+    }
 
     var body: some View {
         switch family {
@@ -63,13 +69,17 @@ struct StepWidgetView: View {
                 Text(state.experimentTitle).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
                 Text(state.finished ? "步骤已全部完成" : state.stepTitle ?? "").font(.headline).lineLimit(1)
                 if let running {
-                    Text(timerInterval: entry.date...running, countsDown: true).font(.body.monospacedDigit()).foregroundStyle(.green)
+                    Text(timerInterval: entry.date...running, countsDown: true).font(.body.monospacedDigit()).foregroundStyle(Color.labnestAccent)
                 } else if timeUp {
                     Text("计时结束").foregroundStyle(.orange)
                 } else if let paused = state.pausedSeconds {
                     Text("已暂停 \(clock(paused))").foregroundStyle(.secondary)
                 } else if !state.finished {
                     Text("下一步").foregroundStyle(.secondary)
+                }
+                if let done = state.doneSteps, let total = state.totalSteps, total > 0 {
+                    ProgressView(value: Double(done), total: Double(total)).tint(Color.labnestAccent)
+                        .accessibilityLabel("已完成 \(done) / \(total) 步")
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -83,11 +93,20 @@ struct StepWidgetView: View {
     }
 
     @ViewBuilder private var circular: some View {
-        if let running {
+        if let range = runningRange {
+            // A ring that empties as the timer runs, the time in the middle.
+            ProgressView(timerInterval: range, countsDown: true) { EmptyView() } currentValueLabel: {
+                Text(timerInterval: range, countsDown: true).font(.system(size: 11, weight: .semibold).monospacedDigit()).multilineTextAlignment(.center)
+            }
+            .progressViewStyle(.circular).tint(Color.labnestAccent)
+        } else if let running {
             VStack(spacing: 0) {
                 Image(systemName: "timer").font(.caption)
                 Text(timerInterval: entry.date...running, countsDown: true).font(.system(size: 12, weight: .semibold).monospacedDigit()).multilineTextAlignment(.center)
             }
+        } else if let done = entry.state?.doneSteps, let total = entry.state?.totalSteps, total > 0, !timeUp {
+            Gauge(value: Double(done), in: 0...Double(total)) { Image(systemName: "testtube.2") } currentValueLabel: { Text("\(done)/\(total)").monospacedDigit() }
+                .gaugeStyle(.accessoryCircularCapacity).tint(Color.labnestAccent)
         } else {
             Image(systemName: timeUp ? "bell.fill" : "testtube.2").font(.title3)
         }
@@ -115,4 +134,9 @@ struct StepWidgetView: View {
         let value = max(0, seconds)
         return value >= 3600 ? String(format: "%d:%02d:%02d", value / 3600, value % 3600 / 60, value % 60) : String(format: "%d:%02d", value / 60, value % 60)
     }
+}
+
+extension Color {
+    /// LabNest's dai-cyan at the lightness its dark theme uses, as in the watch app.
+    static let labnestAccent = Color(red: 0.49, green: 0.76, blue: 0.71)
 }

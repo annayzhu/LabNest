@@ -3,6 +3,7 @@ import { cn } from "@/lib/cn";
 import { buttonStyles } from "@/components/ui/Button";
 import { ResizableTableFrame } from "@/components/ui/ResizableTableFrame";
 import { SelectAllRows } from "@/components/ui/SelectAllRows";
+import { TraditionalMotif } from "@/components/TraditionalMotif";
 
 const selectionExportButtonClass = buttonStyles({
   variant: "primary",
@@ -106,7 +107,7 @@ export function DataTable<T>({
             ) : (
               <tr>
                 <td colSpan={columns.length + (selection ? 1 : 0)} className="ln-data-table-empty-cell">
-                  <span className="sticky left-0 block w-[calc(100vw-2rem)] text-center md:static md:w-auto">{emptyMessage}</span>
+                  <span className="sticky left-0 block w-[calc(100vw-2rem)] text-center md:static md:w-auto"><TraditionalMotif motif="huiwen" strokeWidth={1.3} className="mx-auto mb-2 block h-7 w-7 text-border-strong" aria-hidden />{emptyMessage}</span>
                 </td>
               </tr>
             )}

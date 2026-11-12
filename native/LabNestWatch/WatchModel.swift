@@ -181,19 +181,20 @@ enum WatchStorage {
     func publishWidget() {
         guard credential != nil, let snapshot else { WatchWidgetState.publish(nil); return }
         let now = Date()
+        let done = snapshot.steps.filter { $0.completed || $0.skipped != nil }.count, total = snapshot.steps.count
         let running = snapshot.steps.filter { $0.timer.startedAt != nil && remaining($0, now: now) > 0 }.min { remaining($0, now: now) < remaining($1, now: now) }
         if let running {
             let end = Date(timeIntervalSince1970: (now.timeIntervalSince1970 + Double(remaining(running, now: now))).rounded())
-            WatchWidgetState.publish(WatchWidgetState(experimentTitle: snapshot.title, stepTitle: running.title, endsAt: end))
+            WatchWidgetState.publish(WatchWidgetState(experimentTitle: snapshot.title, stepTitle: running.title, endsAt: end, doneSteps: done, totalSteps: total, durationSeconds: running.timer.durationSeconds))
             return
         }
         let open = snapshot.steps.filter { !$0.completed && $0.skipped == nil }
         guard let focus = open.first(where: { $0.id == focusStepId }) ?? open.first else {
-            WatchWidgetState.publish(WatchWidgetState(experimentTitle: snapshot.title, finished: true)); return
+            WatchWidgetState.publish(WatchWidgetState(experimentTitle: snapshot.title, finished: true, doneSteps: done, totalSteps: total)); return
         }
         var paused: Int?
         if let total = focus.timer.durationSeconds, let left = focus.timer.remainingSeconds, left > 0, left < total { paused = left }
-        WatchWidgetState.publish(WatchWidgetState(experimentTitle: snapshot.title, stepTitle: focus.title, pausedSeconds: paused))
+        WatchWidgetState.publish(WatchWidgetState(experimentTitle: snapshot.title, stepTitle: focus.title, pausedSeconds: paused, doneSteps: done, totalSteps: total))
     }
     func discardPending() {
         do { try FileManager.default.removeItem(at: WatchStorage.url("pending.json")); pending = nil; message = "已丢弃未同步操作，请在手机核对当前状态。" }

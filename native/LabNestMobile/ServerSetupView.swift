@@ -11,6 +11,8 @@ struct ServerSetupView: View {
     @State private var scanning = false
     @State private var busy = false
     @State private var error: String?
+    /// The address field; open from the start where there is no camera to scan with, or when an address is already set.
+    @State private var manual = false
 
     private var canScan: Bool { DataScannerViewController.isSupported && DataScannerViewController.isAvailable }
     /// On iPad a sheet is a small card in the middle of the screen; the camera gets the whole screen there instead.
@@ -20,18 +22,21 @@ struct ServerSetupView: View {
         NavigationStack {
             Form {
                 Section {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Image(systemName: "qrcode.viewfinder").font(.system(size: 36)).foregroundStyle(Color.labnestMoss).accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 12) {
+                        HuiwenMark().stroke(Color.labnestMoss, style: StrokeStyle(lineWidth: 2.2, lineCap: .round, lineJoin: .round))
+                            .frame(width: 30, height: 30).padding(9)
+                            .background(Color.labnestMoss.opacity(0.1), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            .accessibilityHidden(true)
                         Text("连接你的 LabNest").font(.title2.bold())
                         Text("在电脑上打开 LabNest，进入「现场模式」，点任一实验的「其他设备」，扫描那里的二维码。").foregroundStyle(.secondary)
-                    }.padding(.vertical, 6)
+                        if canScan {
+                            Button { error = nil; scanning = true } label: { Label("扫描二维码", systemImage: "camera.viewfinder").font(.headline).frame(maxWidth: .infinity, minHeight: 36) }
+                                .buttonStyle(.borderedProminent).tint(.labnestMoss).disabled(busy).accessibilityIdentifier("scan-server")
+                                .padding(.top, 4)
+                        }
+                    }.padding(.vertical, 8)
                 }
-                if canScan {
-                    Section {
-                        Button { error = nil; scanning = true } label: { Label("扫描二维码", systemImage: "camera.viewfinder").frame(maxWidth: .infinity) }
-                            .disabled(busy).accessibilityIdentifier("scan-server")
-                    }
-                }
+                if !canScan || manual {
                 Section {
                     // Verbatim: a string literal here would turn the example address into a link.
                     TextField("服务器地址", text: $typed, prompt: Text(verbatim: "例如 http://192.168.1.10:3001"))
@@ -44,6 +49,9 @@ struct ServerSetupView: View {
                 } header: { Text(canScan ? "或者填写地址" : "服务器地址") } footer: {
                     Text("填电脑的局域网地址或 Tailscale 地址，不能填 localhost。手机和电脑要能互相访问。")
                 }
+                } else {
+                    Section { Button("手动填写地址") { manual = true }.accessibilityIdentifier("manual-address") }
+                }
                 if let error {
                     Section { Text(error).foregroundStyle(.orange).accessibilityIdentifier("setup-error") }
                 }
@@ -52,10 +60,12 @@ struct ServerSetupView: View {
             .frame(maxWidth: 560)
             .frame(maxWidth: .infinity)
             .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
-            .navigationTitle("LabNest")
+            // The card says “连接你的 LabNest”; a large title would repeat the name outside the centered column on iPad.
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar { if cancellable { ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } } } }
             .onAppear {
                 if typed.isEmpty { typed = app.address?.origin.absoluteString ?? "" }
+                if app.address != nil { manual = true }
                 #if DEBUG
                 // Simulator QA only: `-LabNestSetupAddress <address>` connects as if it had been typed.
                 if let index = ProcessInfo.processInfo.arguments.firstIndex(of: "-LabNestSetupAddress"), index + 1 < ProcessInfo.processInfo.arguments.count {
@@ -144,5 +154,19 @@ struct QRScanner: UIViewControllerRepresentable {
                 }
             }
         }
+    }
+}
+
+/// LabNest's 回纹 mark, the same path as the web app's brand mark (24-unit grid).
+struct HuiwenMark: Shape {
+    func path(in rect: CGRect) -> Path {
+        let points: [(CGFloat, CGFloat)] = [(5.5, 5.5), (18.5, 5.5), (18.5, 18.5), (8.5, 18.5), (8.5, 8.5), (15.5, 8.5), (15.5, 15.5), (11.5, 15.5), (11.5, 11.5), (13, 11.5)]
+        let scale = min(rect.width, rect.height) / 24
+        var path = Path()
+        for (index, point) in points.enumerated() {
+            let p = CGPoint(x: rect.minX + point.0 * scale, y: rect.minY + point.1 * scale)
+            if index == 0 { path.move(to: p) } else { path.addLine(to: p) }
+        }
+        return path
     }
 }

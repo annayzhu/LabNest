@@ -1,4 +1,4 @@
-import { FilePlus2 } from "lucide-react";
+import { TraditionalMotif } from "./TraditionalMotif";
 import Link from "next/link";
 import { Button } from "./ui/Button";
 
@@ -15,9 +15,7 @@ export function EmptyState({
 }) {
   return (
     <div className="rounded-[var(--ln-radius-panel)] border border-dashed border-border-strong bg-surface p-7 text-center sm:p-9">
-      <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-[var(--ln-radius-panel-inner)] bg-action-surface text-moss">
-        <FilePlus2 className="h-5 w-5" aria-hidden />
-      </div>
+      <TraditionalMotif motif="huiwen" strokeWidth={1.3} className="mx-auto block h-7 w-7 text-border-strong" aria-hidden />
       <h3 className="mt-4 text-base font-semibold tracking-[-0.015em] text-ink">{title}</h3>
       <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-graphite">{body}</p>
       {actionHref ? (

@@ -12,6 +12,7 @@ import { translateUiText } from "./i18n";
 import { parseProtocolDocxBytes } from "./protocol-docx";
 import { convertLegacyProtocol, isLegacyProtocol } from "./protocol-conversion";
 import { extractDocxMedia, type DocxEmbeddedImage } from "./docx-media-import";
+import { readProtocolTransfer, type ProtocolTransferInfo } from "./protocol-transfer";
 import { decideProtocolImportState, type ProtocolImportDecision } from "./protocol-import-state";
 import { exportProtocolDocxTemplate, protocolDocxTemplateFilename } from "./protocol-docx-template";
 import { createEmptyProtocolDocument, type ProtocolDocument } from "./protocol-document";
@@ -37,6 +38,8 @@ export type ParsedStructuredFile = {
   warnings: string[];
   protocolDecisions?: ProtocolImportDecision[];
   embeddedImages?: DocxEmbeddedImage[];
+  /** Set when the file is a LabNest Protocol export: it is imported as a copy that belongs to this LabNest (Q438–Q442). */
+  protocolTransfer?: ProtocolTransferInfo;
   /** Set once preview edits are laid over the file: where each record comes from, and the edits themselves. */
   origins?: ImportRowOrigin[];
   edits?: ImportRowEdits;
@@ -125,8 +128,7 @@ function workbookRows(rows: unknown[][]) {
   ).filter((record) => Object.values(record).some((value) => String(value ?? "").trim()));
 }
 
-function parseJsonRecords(text: string, module: StructuredModuleKey) {
-  const parsed = JSON.parse(text) as unknown;
+function parseJsonRecords(parsed: unknown, module: StructuredModuleKey) {
   if (Array.isArray(parsed)) return parsed as Record<string, unknown>[];
   if (!parsed || typeof parsed !== "object") throw new Error("The JSON root must be an object or array.");
   const object = parsed as Record<string, unknown>;
@@ -256,7 +258,7 @@ function protocolDocxRecord(bytes: Uint8Array, fileName: string) {
 }
 
 export async function parseStructuredFile(file: File, module: StructuredModuleKey, overrides: Record<string,string> = {}): Promise<ParsedStructuredFile> {
-  const { format, checksum, rawRecords, warnings, embedded } = await readRawRecords(file, module);
+  const { format, checksum, rawRecords, warnings, embedded, protocolTransfer } = await readRawRecords(file, module);
   if (rawRecords.length > 500) throw new Error("A single structured import is limited to 500 records.");
   if (!rawRecords.length) throw new Error("No data rows were found in the import file.");
   const mapped = mapRecords(module, rawRecords, overrides);
@@ -268,7 +270,7 @@ export async function parseStructuredFile(file: File, module: StructuredModuleKe
     if (Array.isArray(recordWarnings)) warnings.push(...recordWarnings.map(String));
   }
   const protocolDecisions = module === "protocols" ? mapped.records.map((record) => decideProtocolImportState({ fileName: file.name, availability: record.availability, reviewStage: record.reviewStage, compareFilename: format === "docx" })) : undefined;
-  return { module, format, fileName: file.name, checksum, records: mapped.records, mapping: mapped.mapping, warnings: [...new Set(warnings)], protocolDecisions, embeddedImages: embedded?.images };
+  return { module, format, fileName: file.name, checksum, records: mapped.records, mapping: mapped.mapping, warnings: [...new Set(warnings)], protocolDecisions, embeddedImages: embedded?.images, protocolTransfer };
 }
 
 /**
@@ -470,12 +472,21 @@ async function readRawRecords(file: File, module: StructuredModuleKey) {
   const checksum = createHash("sha256").update(buffer).digest("hex");
   let rawRecords: Record<string, unknown>[];
   const warnings: string[] = [];
-  const embedded = format === "docx" ? extractDocxMedia(new Uint8Array(buffer)) : undefined;
+  let embedded: { images: DocxEmbeddedImage[]; warnings: string[] } | undefined = format === "docx" ? extractDocxMedia(new Uint8Array(buffer)) : undefined;
   if (embedded) warnings.push(...embedded.warnings);
+  let protocolTransfer: ProtocolTransferInfo | undefined;
 
   if (format === "csv" || format === "tsv") rawRecords = parseDelimited(buffer.toString("utf8"), format === "tsv" ? "\t" : ",");
   else if (format === "xlsx") rawRecords = workbookRows(await readSheet(buffer, { trim: true }) as unknown[][]);
-  else if (format === "json") rawRecords = parseJsonRecords(buffer.toString("utf8"), module);
+  else if (format === "json") {
+    const root = JSON.parse(buffer.toString("utf8")) as unknown;
+    const transfer = module === "protocols" ? readProtocolTransfer(root) : undefined;
+    if (transfer) {
+      protocolTransfer = transfer.info;
+      embedded = { images: transfer.images, warnings: [] };
+    }
+    rawRecords = parseJsonRecords(root, module);
+  }
   else if (format === "md") {
     rawRecords = buffer.toString("utf8")
       .split(/\n?<!-- LabNest record boundary -->\n?/g)
@@ -485,7 +496,7 @@ async function readRawRecords(file: File, module: StructuredModuleKey) {
   }
   else if (module === "protocols") rawRecords = [protocolDocxRecord(new Uint8Array(buffer), file.name)];
   else rawRecords = [parseStructuredDocx(new Uint8Array(buffer), module)];
-  return { format, checksum, rawRecords, warnings, embedded };
+  return { format, checksum, rawRecords, warnings, embedded, protocolTransfer };
 }
 
 /** Each column of a file with up to five of its values and the field it is matched to now. */

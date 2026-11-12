@@ -29,6 +29,9 @@ import {
 import type { ParsedStructuredFile } from "@/lib/structured-files";
 import { structuredModules, type StructuredModuleKey } from "@/lib/structured-modules";
 import { parseTags } from "@/lib/tags";
+import { protocolCompatibilityIssue } from "@/lib/protocol-compatibility";
+import { detachFromSourceLabNest, documentAttachmentIds } from "@/lib/protocol-transfer";
+import { collectDocumentMedia } from "@/lib/document-media";
 import { decideProtocolImportState, separateLegacyImportWarnings, type ProtocolImportDecision } from "@/lib/protocol-import-state";
 import { matchesImportConfirmation } from "@/lib/structured-import-confirmation";
 import { editableImportValues, type ImportRowOrigin } from "@/lib/structured-import-edits";
@@ -78,7 +81,10 @@ type ResearchPlanData = {
 };
 type ProtocolData = {
   kind: "protocols";
-  humanCode?: string;
+  /** The code it had where it was exported or written; never reused here. */
+  sourceCode?: string;
+  /** A record of a LabNest export, as against one written by hand or added in the preview. */
+  transfer: boolean;
   canonicalTitle: string;
   shortTitle?: string;
   englishTitle?: string;
@@ -242,6 +248,15 @@ function previewValues(module: StructuredModuleKey, record: Record<string, unkno
     .map((field) => [field.label, displayValue(record[field.key])]));
 }
 
+/** What a Protocol has only in the LabNest it was written in: its Project and the Research Plans that use it. */
+const protocolContextKeys = ["scope", "project", "researchPlanCodes", "primaryResearchPlanCodes"] as const;
+
+/** A Protocol's code is given on import (Q439), so the preview says that instead of showing the file's code as its own. */
+function protocolPreviewValues(record: Record<string, unknown>) {
+  const { "Protocol code": sourceCode, ...values } = previewValues("protocols", record);
+  return { "Protocol code": sourceCode ? `Assigned on import (${sourceCode} in the file)` : "Assigned on import", ...values };
+}
+
 /**
  * A purchase row's problem in the words of the other import checks, naming the column as the template does. An empty
  * required column is already reported as “X is required.”.
@@ -306,6 +321,8 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
   const previewRows: StructuredImportRowPreview[] = [];
   const globalErrors = duplicateAttachment ? ["This exact source file has already been imported."] : [];
   const batchKeys = new Set<string>();
+  // The pictures a LabNest Protocol export carries, by the ID they had there.
+  const embeddedAttachmentIds = new Set((parsed.protocolTransfer ? parsed.embeddedImages ?? [] : []).flatMap((image) => image.sourceAttachmentId ? [image.sourceAttachmentId] : []));
 
   const resolveProject = (value: unknown) => {
     const needle = requiredText(value, "Project", []);
@@ -327,6 +344,8 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
   for (const [index, record] of parsed.records.entries()) {
     const errors: string[] = [];
     const warnings: string[] = [];
+    // What the preview shows and lets a person edit; a LabNest Protocol export leaves out what is not carried over.
+    let previewRecord = record;
     let data: PreparedData | undefined;
     for (const field of structuredModules[parsed.module].fields.filter((field) => field.required)) {
       if (record[field.key] === undefined || record[field.key] === null || String(record[field.key]).trim() === "") errors.push(`${field.label} is required.`);
@@ -369,17 +388,27 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
     if (parsed.module === "protocols") {
       const canonicalTitle = requiredText(record.canonicalTitle, "Protocol title", errors);
       if (isPlaceholder(canonicalTitle)) errors.push("Replace the template Protocol title before importing.");
-      const humanCode = optionalText(record.humanCode)?.toUpperCase();
-      if (humanCode && !isValidRecordCode("protocol", humanCode)) errors.push("Protocol code must use PRT- followed by at least six digits.");
-      if (humanCode && protocols.some((protocol) => protocol.humanCode === humanCode)) errors.push(`${humanCode} already exists.`);
-      const key = `protocol:${humanCode || lower(canonicalTitle)}`;
+      // Every imported Protocol gets this LabNest's next code (Q439); the code written in the file is kept as where it came from.
+      const sourceCode = optionalText(record.humanCode)?.toUpperCase();
+      const key = `protocol:${sourceCode || lower(canonicalTitle)}`;
       if (batchKeys.has(key)) errors.push("This Protocol is duplicated in the import file."); else batchKeys.add(key);
-      const scope = enumValue(record.scope, ["general", "project"] as const, "general", "Scope", errors);
-      const projectMatch = optionalText(record.project) ? resolveProject(record.project) : undefined;
+      // A LabNest export arrives without the Project and Research Plans it had there, even when the names match here
+      // (Q440). Whoever imports it can still choose their own in the preview: a field changed there is theirs, and so is
+      // every field of a record added there.
+      const origin = parsed.origins?.[index];
+      const transfer = Boolean(parsed.protocolTransfer) && !(origin && "added" in origin);
+      const chosenHere = new Set(origin && "changed" in origin ? origin.changed : []);
+      const local = { ...record };
+      if (transfer) for (const key of protocolContextKeys) if (!chosenHere.has(key)) delete local[key];
+      // Choosing a Project says the Protocol belongs to it.
+      if (transfer && chosenHere.has("project") && !chosenHere.has("scope") && optionalText(local.project)) local.scope = "project";
+      const sourceProject = transfer && !chosenHere.has("project") ? optionalText(record.project) : undefined;
+      const scope = enumValue(local.scope, ["general", "project"] as const, "general", "Scope", errors);
+      const projectMatch = optionalText(local.project) ? resolveProject(local.project) : undefined;
       if (projectMatch?.error) errors.push(projectMatch.error);
       if (scope === "project" && !projectMatch?.value) errors.push("A Project-scoped Protocol requires a resolvable Project.");
-      const planCodes = listValue(record.researchPlanCodes);
-      const primaryPlanCodes = listValue(record.primaryResearchPlanCodes);
+      const planCodes = listValue(local.researchPlanCodes);
+      const primaryPlanCodes = listValue(local.primaryResearchPlanCodes);
       const planMatches = [...new Set([...planCodes, ...primaryPlanCodes])].map((codeValue) => resolvePlan(codeValue, projectMatch?.value?.id));
       planMatches.filter((match) => match.error).forEach((match) => errors.push(match.error!));
       const researchPlanIds = planMatches.flatMap((match) => match.value ? [match.value.id] : []);
@@ -387,11 +416,30 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
         const match = resolvePlan(codeValue, projectMatch?.value?.id);
         return match.value ? [match.value.id] : [];
       });
+      if (sourceProject) warnings.push(`It belonged to the Project “${sourceProject}”, which is not carried over. It is imported into the Protocol library.`);
+      else if (transfer && !chosenHere.has("researchPlanCodes") && listValue(record.researchPlanCodes).length) warnings.push("Its Research Plan links are not carried over.");
+      previewRecord = local;
       const displayVersion = optionalText(record.displayVersion) ?? "0.1";
       if (!/^\d+\.\d+(?:\.\d+)?$/.test(displayVersion)) errors.push("Version must look like 0.1 or 1.0.");
-      const document = protocolDocumentFromRecord(record);
+      // Content this LabNest cannot read is refused whole, never imported in part (Q438).
+      const storedDocument = parseJsonValue(record.contentJson);
+      if (storedDocument && typeof storedDocument === "object" && protocolCompatibilityIssue(storedDocument)) errors.push("This Protocol has content this LabNest cannot read yet. Update this LabNest, then import it again.");
+      let document = protocolDocumentFromRecord(record);
+      if (transfer) {
+        const detached = detachFromSourceLabNest(document, embeddedAttachmentIds);
+        // What it was tidied or recognised from are records of the other LabNest.
+        const { provenance: _provenance, ...carried } = detached.value; void _provenance;
+        document = carried;
+        if (detached.unlinked) warnings.push(`${detached.unlinked} link(s) to records of the LabNest it came from are kept as plain text.`);
+      }
+      let attachmentIds: string[] = [];
+      try { attachmentIds = documentAttachmentIds(document); } catch { errors.push("A picture in this Protocol cannot be read. Export it again."); }
+      const storedAttachments = attachmentIds.length ? await prisma.attachment.findMany({ where: { id: { in: attachmentIds } }, select: { id: true } }) : [];
+      if (storedAttachments.length !== attachmentIds.length) errors.push(transfer
+        ? "Some of its pictures are not in the file. Export it again from a current LabNest; the file then carries its pictures."
+        : "Some of its pictures are not stored in this LabNest. Export the Protocol from the LabNest it is in; the file then carries its pictures.");
       const importDecision = decideProtocolImportState({ fileName: parsed.fileName, availability: record.availability, reviewStage: record.reviewStage, compareFilename: parsed.format === "docx" });
-      data = { kind: "protocols", humanCode, canonicalTitle, shortTitle: optionalText(record.shortTitle), englishTitle: optionalText(record.englishTitle), scope, projectId: projectMatch?.value?.id, availability: importDecision.importedAvailability, reviewStage: importDecision.importedReviewStage, displayVersion, tags: parseTags(record.tags), researchPlanIds, primaryResearchPlanIds, document, importDecision };
+      data = { kind: "protocols", sourceCode, transfer, canonicalTitle, shortTitle: optionalText(record.shortTitle), englishTitle: optionalText(record.englishTitle), scope, projectId: projectMatch?.value?.id, availability: importDecision.importedAvailability, reviewStage: importDecision.importedReviewStage, displayVersion, tags: parseTags(record.tags), researchPlanIds, primaryResearchPlanIds, document, importDecision };
     }
 
     if (parsed.module === "experiments") {
@@ -521,7 +569,7 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
     }
 
     if (!errors.length && data) prepared.push({ index, data });
-    previewRows.push({ index: index + 1, origin: parsed.origins?.[index] ?? { row: index + 1, changed: [] }, values: previewValues(parsed.module, record), fields: editableImportValues(parsed.module, record), errors: [...new Set(errors)], warnings: [...new Set(warnings)], ...(data?.kind === "protocols" ? { protocolDecision: data.importDecision } : {}) });
+    previewRows.push({ index: index + 1, origin: parsed.origins?.[index] ?? { row: index + 1, changed: [] }, values: parsed.module === "protocols" ? protocolPreviewValues(previewRecord) : previewValues(parsed.module, record), fields: editableImportValues(parsed.module, previewRecord), errors: [...new Set(errors)], warnings: [...new Set(warnings)], ...(data?.kind === "protocols" ? { protocolDecision: data.importDecision } : {}) });
   }
 
   const preview: StructuredImportPreview = {
@@ -561,7 +609,10 @@ export async function commitStructuredImport(
   if (!validation.preview.canImport) throw new Error("Resolve every import validation error before confirming.");
   if (parsed.module === "protocols" && !matchesImportConfirmation(parsed, confirmationToken)) throw new Error("Preview the Protocol file again before confirming.");
   const sourceMetadata = { sourceFileName: parsed.fileName, sourceFileChecksum: parsed.checksum, sourceFormat: parsed.format };
-  const created = await withPreparedDocxImages(parsed.embeddedImages ?? [], async files => prisma.$transaction(async (tx) => {
+  // A LabNest export carries the pictures of every record in it; only those of the records being imported are stored.
+  const usedImageKeys = new Set(parsed.protocolTransfer ? validation.prepared.flatMap((row) => row.data.kind === "protocols" ? collectDocumentMedia(row.data.document).flatMap((block) => block.importImageKey ? [block.importImageKey] : []) : []) : []);
+  const embeddedImages = (parsed.embeddedImages ?? []).filter((image) => !parsed.protocolTransfer || usedImageKeys.has(image.key));
+  const created = await withPreparedDocxImages(embeddedImages, async files => prisma.$transaction(async (tx) => {
     if (["purchases","inventory"].includes(parsed.module)) {
       await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${parsed.checksum}, 0))::text`;
       if(await tx.attachmentLink.findFirst({where:{linkType:"structured_import_source",attachment:{sha256:parsed.checksum}}}))throw new Error("This exact source file has already been imported.");
@@ -571,7 +622,7 @@ export async function commitStructuredImport(
       if (await tx.protocolVersion.findFirst({ where: { sourceFileChecksum: parsed.checksum }, select: { id: true } })) throw new Error("This exact source file has already been imported.");
     }
     const createdTargets: Array<{ targetType: string; targetId: string; href?: string }> = [];
-    const importedMediaIds = await createImportedMedia(tx, files, attachmentId);
+    const importedMediaIds = await createImportedMedia(tx, files, attachmentId, parsed.protocolTransfer ? "transfer_embedded_original" : "docx_embedded_original");
 
     let quoteInquiryId:string|undefined;
     for (const row of validation.prepared) {
@@ -592,7 +643,7 @@ export async function commitStructuredImport(
       if (data.kind === "protocols") {
         const decision = decideProtocolImportState({ fileName: parsed.fileName, availability: parsed.records[row.index].availability, reviewStage: parsed.records[row.index].reviewStage, compareFilename: parsed.format === "docx" });
         if (data.availability !== decision.importedAvailability || data.reviewStage !== decision.importedReviewStage || JSON.stringify(data.importDecision) !== JSON.stringify(decision)) throw new Error("The Protocol import decision changed. Preview it again.");
-        const humanCode = data.humanCode ?? await reserveRecordCode(tx, "protocol");
+        const humanCode = await reserveRecordCode(tx, "protocol");
         const legacy = separateLegacyImportWarnings(data.document.importWarnings);
         const importedDocument = { ...data.document, importWarnings: legacy.contentWarnings };
         const projection = projectProtocolDocument(data.document);
@@ -603,7 +654,7 @@ export async function commitStructuredImport(
           action: "structured_import", targetType: "protocol", targetId: record.id,
           // No authenticated user resolver exists here. Never accept an actor from the upload.
           actorUserId: null,
-          metadataJson: { ...rowMetadata, protocolVersionId: record.versions[0].id, rowIndex: row.index + 1, actorResolution: "unidentified", protocolImport: { decision, legacyIssues: legacy.history, confirmation: "preview_confirmed", sourceAttachmentId: attachmentId } } as Prisma.InputJsonValue,
+          metadataJson: { ...rowMetadata, protocolVersionId: record.versions[0].id, rowIndex: row.index + 1, actorResolution: "unidentified", protocolImport: { decision, legacyIssues: legacy.history, confirmation: "preview_confirmed", sourceAttachmentId: attachmentId, ...(data.sourceCode ? { originalCode: data.sourceCode } : {}), ...(data.transfer ? { originalVersion: data.displayVersion, fromLabNestExport: true, exportedAt: parsed.protocolTransfer?.exportedAt } : {}) } } as Prisma.InputJsonValue,
         } });
         await associateDocumentMedia(tx, importedDocument, "protocol_version", record.versions[0].id);
         createdTargets.push({ targetType: "protocol", targetId: record.id, href: `/protocols/${record.id}` });

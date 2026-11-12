@@ -15,10 +15,10 @@ export async function withPreparedDocxImages<T>(images: DocxEmbeddedImage[], wor
   }
 }
 
-export async function createImportedMedia(tx: Prisma.TransactionClient, files: PreparedDocxImage[], sourceAttachmentId: string) {
+export async function createImportedMedia(tx: Prisma.TransactionClient, files: PreparedDocxImage[], sourceAttachmentId: string, derivativeKind = "docx_embedded_original") {
   const ids = new Map<string, string>();
   for (const { key, file, sourceAttachmentId: previousId } of files) {
-    const attachment = await tx.attachment.create({ data: { filename: file.filename, originalFilename: file.originalFilename, mimeType: file.mimeType, size: file.size, storagePath: file.storagePath, sha256: file.sha256, metadataJson: file.metadataJson, derivedFromId: sourceAttachmentId, derivativeKind: "docx_embedded_original" } });
+    const attachment = await tx.attachment.create({ data: { filename: file.filename, originalFilename: file.originalFilename, mimeType: file.mimeType, size: file.size, storagePath: file.storagePath, sha256: file.sha256, metadataJson: file.metadataJson, derivedFromId: sourceAttachmentId, derivativeKind } });
     ids.set(key, attachment.id);
     if (previousId) ids.set(`source:${previousId}`, attachment.id);
   }

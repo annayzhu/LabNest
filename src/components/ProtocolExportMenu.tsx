@@ -15,7 +15,7 @@ export function ProtocolExportMenu({ docxHref, jsonHref }: { docxHref: string; j
       </button>
       <div ref={panel} id={id} popover="auto" style={anchoredPopoverStyle} className="protocol-export-menu-popover" onClick={close}>
         <a download href={docxHref}><FileText aria-hidden /><span><strong>DOCX</strong><small>Editable document</small></span></a>
-        <a download href={jsonHref}><FileJson2 aria-hidden /><span><strong>JSON</strong><small>Structured record</small></span></a>
+        <a download href={jsonHref}><FileJson2 aria-hidden /><span><strong>JSON</strong><small>File to import, pictures included</small></span></a>
       </div>
     </div>
   );

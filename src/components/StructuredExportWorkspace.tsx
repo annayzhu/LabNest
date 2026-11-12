@@ -9,7 +9,8 @@ function values(params: ExportSearchParams, key: string) {
   return Array.isArray(value) ? value : value ? [value] : [];
 }
 
-function formatDescription(format: StructuredFileFormat) {
+function formatDescription(format: StructuredFileFormat, module: StructuredModuleKey) {
+  if (format === "json" && module === "protocols") return "One file with the full document and its pictures. Send it to someone to import into their LabNest.";
   if (format === "json") return "Lossless structured package for backup, migration, and re-import.";
   if (format === "md") return "Readable, editable scientific document with stable section headings.";
   if (format === "xlsx") return "Spreadsheet for review, collaboration, and controlled bulk editing.";
@@ -61,7 +62,7 @@ export function StructuredExportWorkspace({
             <button key={format} type="submit" name="format" value={format} className="focus-ring flex min-h-24 items-center justify-between gap-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm px-4 py-4 text-left transition hover:border-border-strong hover:bg-sage-surface/50">
               <span>
                 <strong className="block text-sm text-ink">{formatLabel(format)}</strong>
-                <span className="mt-1 block text-xs leading-5 text-muted">{formatDescription(format)}</span>
+                <span className="mt-1 block text-xs leading-5 text-muted">{formatDescription(format, module)}</span>
               </span>
               <Download className="h-4 w-4 shrink-0 text-moss" aria-hidden />
             </button>

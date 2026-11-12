@@ -4,6 +4,7 @@ import { exportProtocolDocx, protocolDocxFilename } from "../src/lib/protocol-do
 import { parseProtocolDocxBytes } from "../src/lib/protocol-docx";
 import { createProtocolTemplateDocument } from "../src/lib/protocol-document";
 import { prisma } from "../src/lib/db";
+import { getProtocolImportHistory } from "../src/lib/protocol-import-history-server";
 import { execFileSync } from "node:child_process";
 
 // Only run writes against the dedicated acceptance database, never a user's production server.
@@ -49,13 +50,19 @@ async function main() {
     const edit = await page.locator('a[href*="/versions/"][href$="/edit"]').first().getAttribute("href");
     assert(edit);
     const jsonUrl = `${base}/api${edit.replace(/\/edit$/, "/json")}`;
-    const saved = await (await fetch(jsonUrl)).json();
+    // The Protocol page's JSON is the file for another LabNest; the record's state and import history are read where they are kept.
+    const [, protocolId, , versionId] = edit.split("/").slice(1);
+    const read = async () => {
+      const version = await prisma.protocolVersion.findUniqueOrThrow({ where: { id: versionId }, include: { protocol: true } });
+      return { protocol: version.protocol, version, importHistory: await getProtocolImportHistory(protocolId) };
+    };
+    const saved = await read();
     assert.equal(saved.protocol.availability, "draft");
     assert.equal(saved.version.reviewStage, "draft");
     assert.equal(saved.version.recordStatus, "draft");
     assert.equal(saved.importHistory[0].actorUserId, null);
-    assert.equal(saved.importHistory[0].decision.issues[0].resolution, "import_as_draft");
-    assert(saved.importHistory[0].importedAt.startsWith(new Date().getUTCFullYear().toString()));
+    assert.equal(saved.importHistory[0].decision!.issues[0].resolution, "import_as_draft");
+    assert(saved.importHistory[0].importedAt!.startsWith(new Date().getUTCFullYear().toString()));
     assert.equal(await page.locator('[data-protocol-import-history][open]').count(), 0);
     const historyBefore = JSON.stringify(saved.importHistory);
     await page.goto(`${base}${edit}`, { waitUntil: "networkidle" });
@@ -63,7 +70,7 @@ async function main() {
     await page.locator('input[name="availability"][value="active"]').check();
     await page.getByRole("button", { name: "Save metadata", exact: true }).click();
     await page.waitForURL(`${base}${href}`);
-    const updated = await (await fetch(jsonUrl)).json();
+    const updated = await read();
     assert.equal(updated.protocol.availability, "active");
     assert.equal(updated.version.reviewStage, "draft");
     assert.equal(JSON.stringify(updated.importHistory), historyBefore, "Changing current state must preserve original import history");
@@ -76,7 +83,7 @@ async function main() {
     assert(!roundTrip.importDecision.issues.some((issue) => issue.code === "PROTOCOL_AVAILABILITY_MISMATCH"));
     assert.equal(roundTrip.importDecision.importedAvailability, "draft");
     const reimport = await preview(file(exportedBytes, exportName));
-    assert(!reimport.canImport, "Reimport of the same Protocol must preserve duplicate-code protection");
+    assert(reimport.canImport, "A Protocol imported again gets a new code instead of clashing with its own (Q439)");
     const cloneIdentity = { ...identity, humanCode: `PRT-${String((Number(code.slice(4)) + 1) % 1000000).padStart(6, "0")}`, canonicalTitle: `Round trip ${stamp}`, reviewStage: "draft" };
     const clone = file(exportProtocolDocx(cloneIdentity, roundTrip.document), protocolDocxFilename(cloneIdentity));
     const clonePreview = await preview(clone);

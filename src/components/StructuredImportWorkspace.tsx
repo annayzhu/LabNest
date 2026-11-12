@@ -125,7 +125,9 @@ function groupPreviewFields(module: StructuredModuleKey, values: Record<string, 
 
 function recordPreviewTitle(module: StructuredModuleKey, values: Record<string, string>, origin: ImportRowOrigin) {
   const fields = groupPreviewFields(module, values);
+  // A Protocol's code is assigned on import, so its title is what names it in the preview.
   const candidates = identityPreviewLabels
+    .filter((label) => !(module === "protocols" && label === "Protocol code"))
     .map((label) => fields.core.find((field) => field.label === label)?.value)
     .filter(Boolean);
   if (candidates.length) return candidates.slice(0, 2).join(" · ");

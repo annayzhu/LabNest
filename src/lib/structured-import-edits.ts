@@ -40,6 +40,8 @@ const documentSectionKeys: Partial<Record<StructuredModuleKey, readonly string[]
 
 // Columns an export writes that the import does not read.
 const exportOnlyKeys: Partial<Record<StructuredModuleKey, readonly string[]>> = {
+  // A Protocol's code is assigned on import; the file's code only says where it came from (Q439).
+  protocols: ["humanCode"],
   experiments: ["researchPlanName", "methodSources"],
   results: ["validationStatus"],
 };

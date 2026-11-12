@@ -36,14 +36,14 @@ await check('A05 A06 A10 A14 A21 create preview shows three operations with full
 await check('A08 A09 author confirmation is visible, grouping saves and reopens without fabricated completion',async()=>{
  await go(`/experiments/new?plan=${fixture.planId}&protocolVersionId=${fixture.reviewVersionId}`);assert(await page.getByRole('button',{name:/^(Save Experiment|保存实验)$/}).isDisabled());
  await go(`/protocols/${fixture.reviewProtocolId}/versions/${fixture.reviewVersionId}/edit`);
- const original=(await (await page.request.get(`${base}/api/protocols/${fixture.reviewProtocolId}/versions/${fixture.reviewVersionId}/json`)).json()).document;
+ const original=(await (await page.request.get(`${base}/api/protocols/${fixture.reviewProtocolId}/versions/${fixture.reviewVersionId}/json`)).json()).records[0].contentJson;
  await convertLegacySteps(page);
  const convertedId=page.url().split('/versions/')[1].split('/')[0];assert.notEqual(convertedId,fixture.reviewVersionId);
  const converted=JSON.parse(await page.locator('input[name="contentJson"]').inputValue());
  // Unmarked prose stays prose; conversion must not invent executable steps.
  assert(converted.sections.find(s=>s.key==='steps').blocks.length>0);
  const old=await (await page.request.get(`${base}/api/protocols/${fixture.reviewProtocolId}/versions/${fixture.reviewVersionId}/json`)).json();
- assert.deepEqual(old.contentJson??old.document,original);
+ assert.deepEqual(old.records[0].contentJson,original);
  await screenshot('author-conversion-draft');
 });
 await check('A16 A17 A18 A20 actual Run completion, note, timer, save, refresh and page readback retain step IDs',async()=>{
@@ -67,7 +67,7 @@ await check('A23 real DOCX file import preserves operation identity and embedded
  await go('/protocols/import');await page.locator('input[type="file"]').setInputFiles(dir+'/source.docx');await page.getByRole('button',{name:/Preview mapping|预览.*映射/}).click();await page.locator('[data-protocol-import-decision]').waitFor();await screenshot('docx-import-preview');
  const responsePromise=page.waitForResponse(r=>r.url().endsWith('/api/structured-import/protocols/confirm')&&r.request().method()==='POST');
  const confirm=page.getByRole('button',{name:/^(Confirm import|确认导入)$/});await confirm.click();const imported=await (await responsePromise).json();assert(imported.result?.href,JSON.stringify(imported));await go(imported.result.href);report.importedAt=page.url();
- const jsonHref=await page.locator('a[href$="/json"]').getAttribute('href');assert(jsonHref);const importedJson=await (await page.request.get(base+jsonHref)).json();assert.equal(importedJson.structuredProjection.steps.length,3);const versionId=jsonHref.split('/')[5];
+ const jsonHref=await page.locator('a[href$="/json"]').getAttribute('href');assert(jsonHref);const importedJson=await (await page.request.get(base+jsonHref)).json();assert.equal(importedJson.records[0].contentJson.sections.find(s=>s.key==='steps').blocks.filter(b=>b.execution?.role==='step').length,3);const versionId=jsonHref.split('/')[5];
  await go(`/experiments/new?plan=${fixture.planId}&protocolVersionId=${versionId}`);assert.equal(await page.locator('[data-preview-step], .ln-execution-step-line').count(),3);await page.waitForFunction(()=>[...document.querySelectorAll('[data-execution-record-preview] img')].every(i=>i.complete&&i.naturalWidth>0));await screenshot('docx-imported-create');
  await page.locator('.document-page-title-input').fill('实际 DOCX 创建实验');await closeProperties(page);await page.getByRole('button',{name:/^(Save Experiment|保存实验)$/}).click();await page.waitForURL(u=>/^\/experiments\/[^/]+$/.test(u.pathname)&&!u.pathname.endsWith('/new'));const id=page.url().split('/').pop();assert.equal((await saved(id)).steps.length,3);await go(`/experiments/${id}/run`);await page.waitForFunction(()=>[...document.querySelectorAll('[data-run-step-content] img')].every(i=>i.complete&&i.naturalWidth>0));await screenshot('docx-imported-run');
 });
@@ -80,7 +80,7 @@ if(fixture.originalProtocols.length)await check('A24 A25 all included current pr
  await page.setViewportSize({width:1440,height:1000});
  for(const item of fixture.originalProtocols){
   await go(`/protocols/${item.protocolId}?version=${item.versionId}`);await screenshot(`catalog-${item.code}-protocol`);
-  await go(`/protocols/${item.protocolId}/versions/${item.versionId}/edit`);const original=(await (await page.request.get(`${base}/api/protocols/${fixture.reviewProtocolId}/versions/${fixture.reviewVersionId}/json`)).json()).document;assert.equal(original.executionConfirmed,true);await screenshot(`catalog-${item.code}-editor`);
+  await go(`/protocols/${item.protocolId}/versions/${item.versionId}/edit`);const original=(await (await page.request.get(`${base}/api/protocols/${fixture.reviewProtocolId}/versions/${fixture.reviewVersionId}/json`)).json()).records[0].contentJson;assert.equal(original.executionConfirmed,true);await screenshot(`catalog-${item.code}-editor`);
   await go(`/experiments/new?plan=${fixture.planId}&protocolVersionId=${item.versionId}`);assert.equal(await page.locator('[data-preview-step], .ln-execution-step-line').count(),item.steps);await screenshot(`catalog-${item.code}-create`);
   if(!item.steps){assert(await page.getByRole('button',{name:/^(Save Experiment|保存实验)$/}).isDisabled());report.catalog.push({...item,status:'零步骤保护通过；未创建临时实验'});continue;}
   await page.locator('.document-page-title-input').fill(`隔离验收 ${item.code}`);await closeProperties(page);await page.getByRole('button',{name:/^(Save Experiment|保存实验)$/}).click();await page.waitForURL(url=>/^\/experiments\/[^/]+$/.test(url.pathname)&&!url.pathname.endsWith('/new'));const id=page.url().split('/').pop();const record=await saved(id);assert.equal(record.steps.length,item.steps);assert(record.steps.every(step=>!step.completed));await screenshot(`catalog-${item.code}-experiment`);

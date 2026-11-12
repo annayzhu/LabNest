@@ -12,6 +12,9 @@ export type ProtocolImportHistoryEntry = {
   actorUserId: string | null;
   decision: ProtocolImportDecision | null;
   issues: ProtocolImportIssue[];
+  /** The code and version it had in the file it was imported from (Q439). */
+  originalCode: string | null;
+  originalVersion: string | null;
 };
 function object(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -37,6 +40,8 @@ export function readProtocolImportHistory(versions: VersionEvidence[], logs: Aud
       sourceAttachmentId: typeof imported.sourceAttachmentId === "string" ? imported.sourceAttachmentId : null,
       importedAt: archivedAudit && !decision ? (typeof archived.sourceImportedAt === "string" ? archived.sourceImportedAt : null) : (audit?.createdAt ?? version.sourceImportedAt)?.toISOString() ?? null,
       actorUserId: archivedAudit && !decision ? (typeof archived.sourceActorUserId === "string" ? archived.sourceActorUserId : null) : audit?.actorUserId ?? null, decision,
+      originalCode: typeof imported.originalCode === "string" ? imported.originalCode : null,
+      originalVersion: typeof imported.originalVersion === "string" ? imported.originalVersion : null,
       issues: decision ? [...decision.issues, ...readImportIssues(imported.legacyIssues)] : archivedAudit ? readImportIssues(archived.issues) : legacy,
     }];
   });

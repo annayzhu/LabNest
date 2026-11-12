@@ -46,7 +46,7 @@ await check('13.1 author two systems and conditional parameter using the real em
   await page.screenshot({ path: `${dir}/author-two-systems.png` });
   await save(); createdId = page.url().split('/').pop(); const jsonHref = await page.locator('a[href$="/json"]').getAttribute('href'); createdVersion = jsonHref.split('/')[5];
   report.protocolId = createdId; report.versionId = createdVersion;
-  const read = await (await page.request.get(base + jsonHref)).json(); assert.equal(read.document.systems.parameters[0].source.values[0].value, 50); assert.equal(read.structuredProjection.steps.length, 1); assert(JSON.stringify(read.structuredProjection.steps[0]).includes('操作确认后继续输入'));
+  const read = await (await page.request.get(base + jsonHref)).json(); const exported = read.records[0].contentJson, exportedSteps = exported.sections.find(section => section.key === 'steps').blocks.filter(block => block.execution?.role === 'step'); assert.equal(exported.systems.parameters[0].source.values[0].value, 50); assert.equal(exportedSteps.length, 1); assert(JSON.stringify(exportedSteps[0]).includes('操作确认后继续输入'));
   await page.goto(`${base}/protocols/${createdId}/versions/${createdVersion}/edit`, { waitUntil: 'networkidle' });
   const reopened = await readDocument(); assert.equal(reopened.systems.parameters[0].id, parameterId); assert(reopened.executionConfirmed); assert.equal(reopened.systems.dimensions[0].options.length, 2);
   await page.goto(`${base}/experiments/new?plan=${fixture.planId}&protocolVersionId=${createdVersion}`, { waitUntil: 'networkidle' }); await page.locator('.document-page-title-input').fill('真实编写规程创建的合成实验');

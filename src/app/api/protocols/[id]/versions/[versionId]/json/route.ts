@@ -1,57 +1,19 @@
-import { protocolCompatibilityIssue } from "@/lib/protocol-compatibility";
-import { prisma } from "@/lib/db";
-import { getProtocolImportHistory } from "@/lib/protocol-import-history-server";
-import { normalizeProtocolDocument, projectProtocolDocument, protocolDocumentFromLegacy } from "@/lib/protocol-document";
-import type { ConsumptionRule, ProtocolMaterial, ProtocolStep, ResultTemplate } from "@/lib/types";
+import { protocolVersionTransferExport } from "@/lib/structured-export";
 
-function asArray<T>(value: unknown): T[] { return Array.isArray(value) ? value as T[] : []; }
+export const runtime = "nodejs";
 
+/** The version on screen as the file another LabNest imports: the same file the Protocol list exports. */
 export async function GET(_request: Request, context: { params: Promise<{ id: string; versionId: string }> }) {
   const { id, versionId } = await context.params;
-  const version = await prisma.protocolVersion.findUnique({ where: { id: versionId }, include: { protocol: { include: { project: true, researchPlans: { include: { researchPlan: true } } } } } });
-  if (!version || version.protocolId !== id) return Response.json({ error: "Protocol version not found." }, { status: 404 });
-  const document = normalizeProtocolDocument(version.contentJson) ?? protocolDocumentFromLegacy({
-    description: version.protocol.description,
-    purpose: version.purpose,
-    background: version.background,
-    materials: asArray<ProtocolMaterial>(version.materialsJson),
-    equipment: asArray<ProtocolMaterial>(version.equipmentJson),
-    steps: asArray<ProtocolStep>(version.stepsJson),
-    resultTemplates: asArray<ResultTemplate>(version.resultTemplatesJson),
-    consumptionRules: asArray<ConsumptionRule>(version.consumptionRulesJson),
-  });
-  return Response.json({
-    schemaVersion: 1,
-    exportedAt: new Date().toISOString(),
-    protocol: {
-      id: version.protocol.id,
-      humanCode: version.protocol.humanCode,
-      canonicalTitle: version.protocol.canonicalTitle ?? version.protocol.title,
-      shortTitle: version.protocol.shortTitle,
-      englishTitle: version.protocol.englishTitle,
-      scope: version.protocol.scope,
-      project: version.protocol.project ? { id: version.protocol.project.id, name: version.protocol.project.name } : null,
-      availability: version.protocol.availability,
-      tags: version.protocol.tags,
-      researchPlans: version.protocol.researchPlans.map((link) => ({ id: link.researchPlan.id, code: link.researchPlan.code, title: link.researchPlan.title, isPrimary: link.isPrimary })),
-    },
-    version: {
-      id: version.id,
-      revision: version.revision,
-      displayVersion: version.displayVersion,
-      reviewStage: version.reviewStage,
-      recordStatus: version.recordStatus,
-      sourceType: version.sourceType,
-      sourceFileName: version.sourceFileName,
-      changeSummary: version.changeSummary,
-      previousVersionId: version.previousVersionId,
-      derivedFromVersionId: version.derivedFromVersionId,
-      adaptationRationale: version.adaptationRationale,
-      createdAt: version.createdAt,
-    },
-    document: protocolCompatibilityIssue(version.contentJson) ? version.contentJson : document,
-    compatibilityWarning: protocolCompatibilityIssue(version.contentJson),
-    importHistory: await getProtocolImportHistory(id),
-    structuredProjection: protocolCompatibilityIssue(version.contentJson) ? null : projectProtocolDocument(document),
-  }, { headers: { "content-disposition": `attachment; filename*=UTF-8''${encodeURIComponent(`${version.protocol.humanCode}_v${version.displayVersion}.json`)}` } });
+  try {
+    const exported = await protocolVersionTransferExport(id, versionId);
+    if (!exported) return Response.json({ error: "Protocol version not found." }, { status: 404 });
+    return new Response(exported.body, { headers: {
+      "Content-Type": exported.contentType,
+      "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(exported.filename)}`,
+      "Cache-Control": "no-store",
+    } });
+  } catch (error) {
+    return Response.json({ error: error instanceof Error ? error.message : "The export could not be generated." }, { status: 400 });
+  }
 }

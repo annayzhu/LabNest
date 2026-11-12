@@ -20,6 +20,7 @@ export function ProtocolImportHistory({ entries }: { entries: ProtocolImportHist
           <p className="text-muted">{zh ? "文档声明的科学审核状态：" : "Declared scientific review: "}{declarationLabel(entry.decision.documentReviewStage, locale)}</p>
         </>}
         <dl className="grid gap-x-3 gap-y-1 text-xs sm:grid-cols-[auto_minmax(0,1fr)]">
+          {entry.originalCode ? <><dt className="text-muted">{zh ? "原编号" : "Original code"}</dt><dd>{entry.originalCode}{entry.originalVersion ? ` · v${entry.originalVersion}` : ""}</dd></> : null}
           <dt className="text-muted">{zh ? "导入时间" : "Imported at"}</dt><dd>{formatProtocolImportTime(entry.importedAt, locale)}</dd>
           <dt className="text-muted">{zh ? "操作人" : "Actor"}</dt><dd>{entry.actorUserId ?? (zh ? "未识别操作人（当时未记录登录身份）" : "Unidentified (no authenticated identity recorded)")}</dd>
           <dt className="text-muted">{zh ? "目标版本" : "Target version"}</dt><dd className="break-all">{entry.protocolVersionId}</dd>

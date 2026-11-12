@@ -41,6 +41,21 @@ export const importZh: Record<string, string> = {
   "Research Plan code must use RP- followed by at least three digits.": "研究方案编号须为 RP- 加至少三位数字。",
   "Protocol code must use PRT- followed by at least six digits.": "实验规程编号须为 PRT- 加至少六位数字。",
   "Experiment code must use EXP- followed by at least three digits.": "实验编号须为 EXP- 加至少三位数字。",
+  // A Protocol file from another LabNest (Q438–Q443)
+  "Assigned on import": "导入时自动生成",
+  "This file was exported by a newer LabNest. Update this LabNest, then import it again.": "这个文件由更新版本的 LabNest 导出。请先升级这里的 LabNest，再导入。",
+  "This export file holds another kind of record, not Protocols.": "这个导出文件里是别的记录，不是实验规程。",
+  "The Protocol file’s format version cannot be read.": "读不出这个文件的格式版本。",
+  "The pictures in this Protocol file cannot be read. Export it again.": "读不出文件里的图片，请重新导出。",
+  "A picture in this Protocol file is damaged. Export it again.": "文件里有一张图片已损坏，请重新导出。",
+  "A picture in this Protocol cannot be read. Export it again.": "这个实验规程里有一张图片读不出，请重新导出。",
+  "This Protocol has content this LabNest cannot read yet. Update this LabNest, then import it again.": "这个实验规程里有这里的 LabNest 还读不了的内容。请先升级，再导入。",
+  "Some of its pictures are not in the file. Export it again from a current LabNest; the file then carries its pictures.": "有图片不在文件里。请用当前版本的 LabNest 重新导出，文件会带上图片。",
+  "Some of its pictures are not stored in this LabNest. Export the Protocol from the LabNest it is in; the file then carries its pictures.": "有图片不在这里的 LabNest 中。请从原来的 LabNest 导出这个实验规程，文件会带上图片。",
+  "Its Research Plan links are not carried over.": "研究方案关联未带入。",
+  "One file with the full document and its pictures. Send it to someone to import into their LabNest.": "一个文件，含完整正文和图片。发给别人，在他们的 LabNest 里导入。",
+  "File to import, pictures included": "可导入的文件，含图片",
+  "Editable document": "可编辑的文档",
   "A Project-scoped Protocol requires a resolvable Project.": "限定项目的实验规程需要一个能找到的项目。",
   "Version must look like 0.1 or 1.0.": "版本须写成 0.1 或 1.0 这样的格式。",
   "Period start must not be after period end.": "开始日期不能晚于结束日期。",
@@ -135,6 +150,9 @@ export function translateImportDynamic(value: string, zh: (text: string) => stri
   if ((match = value.match(/^Use one of the supported formats: (.+)\.$/))) return `请使用以下格式之一：${match[1]}。`;
   if ((match = value.match(/^(Project|Research Plan|Protocol|Experiment|Inventory location) “([\s\S]*)” was not found\.$/))) return `没有找到${recordKinds[match[1]]}“${match[2]}”。`;
   if ((match = value.match(/^(Project|Research Plan|Protocol|Experiment|Inventory location) “([\s\S]*)” is ambiguous; use a stable ID or a more specific code\.$/))) return `${recordKinds[match[1]]}“${match[2]}”不唯一，请改用稳定 ID 或更具体的编号。`;
+  if ((match = value.match(/^Assigned on import \((.+) in the file\)$/))) return `导入时自动生成（文件中为 ${match[1]}）`;
+  if ((match = value.match(/^It belonged to the Project “([\s\S]+)”, which is not carried over\. It is imported into the Protocol library\.$/))) return `原属项目“${match[1]}”，未带入；导入到实验规程库。`;
+  if ((match = value.match(/^(\d+) link\(s\) to records of the LabNest it came from are kept as plain text\.$/))) return `有 ${match[1]} 处指向原 LabNest 记录的链接，已保留为普通文字。`;
   if ((match = value.match(/^Project “([\s\S]+)” already exists\.$/))) return `项目“${match[1]}”已存在。`;
   if ((match = value.match(/^Project “([\s\S]+)” is duplicated in this file\.$/))) return `项目“${match[1]}”在文件里重复。`;
   if ((match = value.match(/^This (Research Plan|Protocol|Experiment|Inventory Item) is duplicated in the import file\.$/))) return `这个${recordKinds[match[1]]}在文件里重复。`;

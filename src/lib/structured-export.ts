@@ -12,7 +12,9 @@ import { experimentDayPlanOf } from "@/lib/experiment-schedule.server";
 import { withExperimentSamples } from "@/lib/experiment-samples";
 import { experimentSampleLines } from "@/lib/samples.server";
 import { exportedSafetyStock, lotRiskFlags } from "@/lib/inventory";
-import { normalizeProtocolDocument, sectionPlainText as protocolSectionPlainText, type ProtocolDocument } from "@/lib/protocol-document";
+import type { Prisma } from "@/generated/prisma/client";
+import { normalizeProtocolDocument, sectionPlainText as protocolSectionPlainText, storedProtocolDocument, type ProtocolDocument } from "@/lib/protocol-document";
+import { protocolTransferFile } from "@/lib/protocol-transfer.server";
 import { documentPlainText, normalizeResearchPlanDocument, normalizeResultDocument, normalizeScientificDocument, reportSections, type ScientificDocument } from "@/lib/scientific-document";
 import { structuredModules, type StructuredFileFormat, type StructuredModuleKey } from "@/lib/structured-modules";
 
@@ -49,6 +51,32 @@ function applyExportSelection<T extends { id: string }>(
       return Array.isArray(actual) ? actual.includes(expected) : String(actual ?? "") === expected;
     });
   });
+}
+
+type ProtocolExportRow = Prisma.ProtocolGetPayload<{ include: { project: true; researchPlans: { include: { researchPlan: true } } } }>;
+type ProtocolExportVersion = Prisma.ProtocolVersionGetPayload<object>;
+
+/** One Protocol version as an export record. `contentJson` is the document the editor shows, whichever way it is stored. */
+function protocolExportRecord(
+  row: ProtocolExportRow,
+  version: ProtocolExportVersion | undefined,
+  sectionPlainText: (document: ProtocolDocument, key: Parameters<typeof protocolSectionPlainText>[1]) => string = protocolSectionPlainText,
+): Record<string, unknown> {
+  const compatibilityWarning = protocolCompatibilityIssue(version?.contentJson);
+  // A version saved before documents existed is exported as the document built from its fields, so nothing is left behind.
+  // One with content this LabNest cannot read keeps its stored document untouched; its text columns show what can be read.
+  const authored = compatibilityWarning || !version ? undefined : storedProtocolDocument({ ...version, protocol: { description: row.description } });
+  const readable = authored ?? normalizeProtocolDocument(version?.contentJson);
+  const document = readable ? allSystemProtocolExportDocument(readable) : undefined;
+  return { humanCode: row.humanCode, canonicalTitle: row.canonicalTitle ?? row.title, shortTitle: row.shortTitle, englishTitle: row.englishTitle, scope: row.scope, project: row.project?.name, researchPlanCodes: row.researchPlans.map((link) => link.researchPlan.code ?? link.researchPlan.title), primaryResearchPlanCodes: row.researchPlans.filter((link) => link.isPrimary).map((link) => link.researchPlan.code ?? link.researchPlan.title), availability: row.availability, reviewStage: version?.reviewStage, displayVersion: version?.displayVersion, tags: row.tags, description: document ? sectionPlainText(document, "description") : row.description, purpose: document ? sectionPlainText(document, "purpose") : version?.purpose, background: document ? sectionPlainText(document, "background") : version?.background, material: document ? sectionPlainText(document, "material") : "", steps: document ? sectionPlainText(document, "steps") : "", resultTemplates: document ? sectionPlainText(document, "result_templates") : "", consumptionRules: document ? sectionPlainText(document, "consumption_rules") : "", contentJson: authored ?? version?.contentJson, compatibilityWarning };
+}
+
+/** The file the Protocol page hands out for the version on screen: the same file the list exports, with one record. */
+export async function protocolVersionTransferExport(protocolId: string, versionId: string): Promise<StructuredExport | undefined> {
+  const version = await prisma.protocolVersion.findUnique({ where: { id: versionId }, include: { protocol: { include: { project: true, researchPlans: { include: { researchPlan: true } } } } } });
+  if (!version || version.protocolId !== protocolId) return undefined;
+  const { protocol, ...row } = version;
+  return { body: await protocolTransferFile([protocolExportRecord(protocol, row)]), filename: `${protocol.humanCode}_v${version.displayVersion}.json`, contentType: "application/json; charset=utf-8" };
 }
 
 export async function structuredExportRecords(
@@ -91,12 +119,7 @@ export async function structuredExportRecords(
       selection,
       (row) => ({ search: [row.humanCode, row.title, row.canonicalTitle, row.englishTitle, row.description, ...row.tags], filters: { availability: row.availability, status: row.availability, scope: row.scope, review: row.versions[0]?.reviewStage } }),
     );
-    return rows.map((row) => {
-      const version = row.versions[0];
-      const authored = normalizeProtocolDocument(version?.contentJson);
-      const document = authored ? allSystemProtocolExportDocument(authored) : undefined;
-      return { humanCode: row.humanCode, canonicalTitle: row.canonicalTitle ?? row.title, shortTitle: row.shortTitle, englishTitle: row.englishTitle, scope: row.scope, project: row.project?.name, researchPlanCodes: row.researchPlans.map((link) => link.researchPlan.code ?? link.researchPlan.title), primaryResearchPlanCodes: row.researchPlans.filter((link) => link.isPrimary).map((link) => link.researchPlan.code ?? link.researchPlan.title), availability: row.availability, reviewStage: version?.reviewStage, displayVersion: version?.displayVersion, tags: row.tags, description: document ? sectionPlainText(document, "description") : row.description, purpose: document ? sectionPlainText(document, "purpose") : version?.purpose, background: document ? sectionPlainText(document, "background") : version?.background, material: document ? sectionPlainText(document, "material") : "", steps: document ? sectionPlainText(document, "steps") : "", resultTemplates: document ? sectionPlainText(document, "result_templates") : "", consumptionRules: document ? sectionPlainText(document, "consumption_rules") : "", contentJson: version?.contentJson, compatibilityWarning: protocolCompatibilityIssue(version?.contentJson) };
-    });
+    return rows.map((row) => protocolExportRecord(row, row.versions[0], sectionPlainText));
   }
   if (module === "experiments") {
     const rows = applyExportSelection(
@@ -198,6 +221,7 @@ export async function buildStructuredExport(
   if (!records.length) throw new Error("The selected export scope contains no records.");
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const base = `LabNest_${definition.title.replaceAll(" ", "_")}_${stamp}`;
+  if (format === "json" && module === "protocols") return { body: await protocolTransferFile(records), filename: `${base}.json`, contentType: "application/json; charset=utf-8" };
   if (format === "json") return { body: JSON.stringify({ schemaVersion: "labnest.structured-export/v1", module, exportedAt: new Date().toISOString(), records }, null, 2), filename: `${base}.json`, contentType: "application/json; charset=utf-8" };
   if (format === "md") return { body: markdownExport(module, records), filename: `${base}.md`, contentType: "text/markdown; charset=utf-8" };
   const headers = definition.fields.filter((field) => field.key !== "contentJson").map((field) => field.key);

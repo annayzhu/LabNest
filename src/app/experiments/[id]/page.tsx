@@ -1,9 +1,11 @@
 import { ExperimentStepOrderEditor } from "@/components/ExperimentStepOrderEditor";
+import { CompleteRunButton } from "@/components/CompleteRunButton";
+import { consumptionRecorded, runConsumption } from "@/lib/run-consumption";
 import { EntrySourceCards } from "@/components/EntrySourceCards";
 import { stepsWithExecutionEvidence } from "@/lib/run-evidence.server";
 import { ExperimentBrief } from "@/components/ExperimentBrief";
 import { ExecutionRecordProvider } from "@/components/ExecutionRecordSteps";
-import { runStepProgress, structuredRunView } from "@/lib/structured-run";
+import { requiredRunSteps, runStepProgress, structuredRunView } from "@/lib/structured-run";
 import { experimentExecutionDocument } from "@/lib/experiment-document";
 import { CopyExperimentButton } from "@/components/CopyExperimentButton";
 import { CalendarExportButton } from "@/components/CalendarExportButton";
@@ -102,6 +104,13 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
   const locked = isRecordLocked(experiment.recordStatus);
   // The days can change (Q428–Q433) while the record is open and the run is not finished.
   const dayControls = !locked && !["archived", "completed"].includes(experiment.status) ? await loadDayControls(experiment.id) : undefined;
+  // 完成执行 (Q462): offered here once every required step is checked, wherever it was checked.
+  const requiredSteps = requiredRunSteps(structuredRun, experiment.steps);
+  const readyToComplete = !locked && ["planned", "running", "failed"].includes(experiment.status) && requiredSteps.length > 0 && requiredSteps.every((step) => step.completed);
+  const [materialUses, stock] = readyToComplete ? await Promise.all([
+    prisma.runMaterialUse.findMany({ where: { experimentId: experiment.id }, select: { source: true } }),
+    prisma.inventoryItem.findMany({ where: { status: "active" }, select: { id: true, name: true, managementMode: true, lotNumber: true }, orderBy: { name: "asc" }, take: 250 }),
+  ]) : [[], []];
   const recycledKeys = new Set(recycledAssociations.map((row) => `${row.targetType}:${row.targetId}`));
   const deletionBlockers = experimentDeleteBlockers(experiment.status, experiment.recordStatus, {
     ...experiment._count,
@@ -131,6 +140,7 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
         <Card><CardHeader className="min-h-10 px-3 py-2" title="Execution control" eyebrow="Plan and exact method provenance" action={<div className="flex gap-1"><StatusPill status={experiment.status} />{locked ? <Badge tone="neutral"><Lock className="mr-1 h-3 w-3" aria-hidden />Locked</Badge> : null}</div>} /><CardBody className="space-y-2.5 p-3">
           <div className="grid grid-cols-2 gap-x-3"><Control label="Research Plan">{experiment.researchPlan ? <span className="flex flex-wrap items-center gap-1"><Link href={`/research-plans/${experiment.researchPlan.id}`} className="text-moss hover:underline">{experiment.researchPlan.code ?? experiment.researchPlan.title}</Link>{recycledKeys.has(`research_plan:${experiment.researchPlan.id}`) ? <Badge tone="warning" className="min-h-5 px-1.5 py-0 text-xs leading-4">In Recycle Bin</Badge> : null}</span> : <span className="text-warning">未分配</span>}</Control><Control label="Project">{experiment.project?.name ?? <span className="text-warning">未分配</span>}</Control></div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-hairline pt-2"><CompactStat label="Steps" value={`${progress.done}/${progress.total}`} /><CompactStat label="Results" value={experiment.results.length} /><CompactStat label="Attachments" value={attachmentLinks.length} /></div>
+          {readyToComplete ? <CompleteRunButton experimentId={experiment.id} executionPlanRevision={structuredRun.hasSystems ? structuredRun.plan.revision : undefined} consumption={runConsumption(structuredRun).filter((line) => !consumptionRecorded(line, materialUses))} stock={stock} /> : null}
           {experiment.primaryProtocolVersion ? <Link aria-label={`Primary protocol: ${experiment.primaryProtocolVersion.protocol.canonicalTitle ?? experiment.primaryProtocolVersion.protocol.title}`} href={`/protocols/${experiment.primaryProtocolVersion.protocolId}?version=${experiment.primaryProtocolVersion.id}`} className="block border-t border-hairline pt-2 text-moss hover:underline"><ProtocolIdentity compact title={experiment.primaryProtocolVersion.protocol.canonicalTitle ?? experiment.primaryProtocolVersion.protocol.title} code={experiment.primaryProtocolVersion.protocol.humanCode} version={experiment.primaryProtocolVersion.displayVersion} meta={experiment.tags.join(" · ") || undefined} /></Link> : experiment.tags.length ? <p className="border-t border-hairline pt-2 text-xs text-muted">{experiment.tags.join(" · ")}</p> : null}
           <div className="border-t border-hairline pt-2"><RecordStatusControl targetType="experiment" id={experiment.id} recordStatus={experiment.recordStatus} /></div>
         </CardBody></Card>

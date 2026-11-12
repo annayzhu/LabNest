@@ -153,6 +153,10 @@ export function stepVersion(view: Pick<StructuredRunView, 'steps' | 'versions'>,
  * A run's step progress as the run page lists its steps: another system's (not applicable) steps count in neither number.
  * A skipped step stays in the total; steps outside the structured view (legacy, custom) all count.
  */
+/** The steps a run must check before it can complete: not the optional ones, nor those of a system that does not apply. */
+export function requiredRunSteps<T extends { id: string }>(view: Pick<StructuredRunView, 'steps'>, steps: readonly T[]) {
+  return steps.filter(step => view.steps[step.id]?.applicability !== 'not-applicable' && !view.steps[step.id]?.optional);
+}
 export function runStepProgress(view: Pick<StructuredRunView, 'steps'>, steps: ReadonlyArray<{ id: string; completed: boolean }>) {
   const counted = steps.filter(step => view.steps[step.id]?.applicability !== 'not-applicable');
   return { done: counted.filter(step => step.completed).length, total: counted.length };

@@ -10,7 +10,7 @@ import { appendExperimentObservation, experimentSearchText } from "@/lib/experim
 import { formActionErrorMessage } from "@/lib/form-actions";
 import { assertRecordEditable } from "@/lib/record-lifecycle";
 import { updateRunTimer } from "@/lib/run-timer.server";
-import { structuredRunView, assertStructuredStepExecutable } from '@/lib/structured-run';
+import { requiredRunSteps, structuredRunView, assertStructuredStepExecutable } from '@/lib/structured-run';
 import { advanceExecutionRevision, updateRunSystemSelections, configureRunGroups, recordStructuredStep } from '@/lib/structured-run.server';
 
 export type ProtocolRunProgressState = { error?: string; message?: string; savedAt?: string; completedStepIds?: string[]; completedCurrentStepId?: string; continuationUrl?: string };
@@ -118,11 +118,11 @@ export async function saveProtocolRunProgress(
     }
     if (structured.hasSystems && experiment.status === 'completed') throw new Error('A finished run record cannot be changed');
 
-    if (parsed.completedCurrentStepId) {
-      // A single-step command is not a replacement of the client's full snapshot.
+    if (parsed.completedCurrentStepId || formData.get("checklist") === "saved") {
+      // A single-step command, or completing from the record, is not a replacement of the client's full snapshot: the saved ticks stand.
       completedStepIds.clear();
       experiment.steps.filter((step) => step.completed).forEach((step) => completedStepIds.add(step.id));
-      completedStepIds.add(parsed.completedCurrentStepId);
+      if (parsed.completedCurrentStepId) completedStepIds.add(parsed.completedCurrentStepId);
     }
 
     const knownStepIds = new Set(experiment.steps.map((step) => step.id));
@@ -131,7 +131,7 @@ export async function saveProtocolRunProgress(
 
     if(parsed.intent==="complete" && !experiment.steps.length && (experiment.protocolSnapshotJson as {methodMode?:string}).methodMode==="protocol")throw new Error("No execution steps were planned. This Protocol-only record needs an explicitly organized operation contract before completion.");
 
-    const requiredSteps = experiment.steps.filter(step => structured.steps[step.id]?.applicability !== 'not-applicable' && !structured.steps[step.id]?.optional);
+    const requiredSteps = requiredRunSteps(structured, experiment.steps);
     if (parsed.intent === "complete" && requiredSteps.some((step) => !completedStepIds.has(step.id) || structured.steps[step.id]?.blocked)) {
       throw new Error("Complete every execution step before marking the Experiment completed.");
     }

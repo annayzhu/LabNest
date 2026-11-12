@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { CollectionFilterForm } from "./CollectionFilterForm";
 import { cn } from "@/lib/cn";
 import { buttonStyles } from "./ui/Button";
+import { PageActions } from "./MobilePageMenu";
 
 export type CollectionFilterOption = { value: string; label: string };
 export type CollectionFilter = {
@@ -58,15 +59,17 @@ export function CollectionToolbar({
   const hasNonDefaultSort = Boolean(sort && sort !== defaultSort);
 
   return (
-    <section className={cn("border-y border-hairline bg-surface", className)} aria-label="Collection tools">
-      <div className="flex flex-col gap-3 px-3 py-3 xl:flex-row xl:items-center xl:justify-between">
+    <section className={cn("ln-collection-toolbar border-y border-hairline bg-surface", className)} aria-label="Collection tools">
+      <div className="ln-collection-toolbar-row flex flex-col gap-3 px-3 py-3 xl:flex-row xl:items-center xl:justify-between">
         <CollectionFilterForm path={path} query={query} searchPlaceholder={searchPlaceholder} filters={filters} sort={sort} sortOptions={sortOptions} defaultSort={defaultSort} />
 
-        <div className="flex flex-wrap items-center justify-between gap-3 xl:justify-end">
-          <span className="whitespace-nowrap text-xs text-muted">
+        <div className="ln-collection-toolbar-side flex flex-wrap items-center justify-between gap-3 xl:justify-end">
+          <span className="ln-collection-count whitespace-nowrap text-xs text-muted">
             {resultCount === totalCount ? `${totalCount} ${totalCount === 1 ? "record" : "records"}` : `${resultCount} of ${totalCount}`}
           </span>
-          {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+          {actions ? <div className="ln-collection-actions flex flex-wrap items-center gap-2">{actions}</div> : null}
+          {/* On a phone only the primary action stays in the toolbar; the others are listed behind ··· in the top bar. */}
+          {actions ? <PageActions className="hidden" menuClassName="ln-collection-menu-actions">{actions}</PageActions> : null}
         </div>
       </div>
 

@@ -3,7 +3,7 @@ import {ChevronLeft,ChevronRight,X} from 'lucide-react';
 import type {CalculatorState} from '@/lib/calculators/calculator-storage';
 import {CalculatorIcon} from './CalculatorIcon';
 import {TaskIcon} from './TaskIcon';
-import {TaskLink,TaskHelp} from './TaskHelp';
+import {TaskLink} from './TaskHelp';
 import {taskPresentation} from '@/lib/calculators/task-presentation';
 const shown=6;
 /** The first `shown` pins show here; the rest fold into 全部收藏. Editing reorders and removes pins on the tiles themselves; tools below gain a pin toggle. */
@@ -13,7 +13,7 @@ export function CommonTasks({pins,state,update,zh,contextQuery="",editing,onEdit
  const move=(index:number,step:number)=>{const next=[...pins];[next[index],next[index+step]]=[next[index+step],next[index]];save(next);};
  const tile=(id:string)=><TaskLink contextQuery={contextQuery} id={id} zh={zh} key={id} className="common-task-tile focus-ring"><TaskIcon taskId={id}/><span className="common-task-name">{name(id)}</span></TaskLink>;
  return <section className="common-tasks" data-testid="common-tasks" data-editing={editing||undefined}>
-  <header><h2>{zh?'常用任务':'Pinned tasks'}</h2>{editing?null:<TaskHelp ids={pins.slice(0,shown)} zh={zh}/>}<button type="button" className="common-tasks-edit focus-ring" disabled={!state} onClick={()=>onEditing(!editing)}>{editing?(zh?'完成':'Done'):(zh?'编辑':'Edit')}</button></header>
+  <header><h2>{zh?'常用任务':'Pinned tasks'}</h2><button type="button" className="common-tasks-edit focus-ring" disabled={!state} onClick={()=>onEditing(!editing)}>{editing?(zh?'完成':'Done'):(zh?'编辑':'Edit')}</button></header>
   {editing?<div className="common-task-grid">{pins.map((id,index)=><div key={id} className="common-task-tile is-editing" data-folded={index>=shown||undefined}>
    <TaskIcon taskId={id}/><span className="common-task-name">{name(id)}</span>
    <button type="button" className="common-task-remove focus-ring" aria-label={`${zh?'移除':'Remove'} ${name(id)}`} onClick={()=>save(pins.filter(key=>key!==id))}><X aria-hidden/></button>

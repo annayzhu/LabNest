@@ -1,4 +1,5 @@
 "use client";
+import { DialogHeader, dialogClass } from "@/components/ui/DialogShell";
 import { QuantityInput } from "./QuantityInput";
 import { convert, parseScalar } from "@/lib/calculators/quantities";
 import {newClientMutationId} from "@/lib/client-mutation-id";
@@ -230,13 +231,14 @@ export function RunMaterials({
       </div>
       {editable ? (
         <>
-          {mounted ? createPortal(<dialog ref={dialogRef} aria-label="Add consumable" className="ln-material-dialog bg-surface text-ink" onCancel={event=>{if(busy){event.preventDefault();return;}setDialogActive(false);triggerRef.current?.focus();}}>
-          <div className="flex items-center justify-between gap-3"><h3 className="font-semibold">{correction ? 'Correct consumable record' : sessionKey.startsWith('edit:') ? 'Edit consumable' : 'Add consumable'}</h3><Button type="button" disabled={busy} onClick={closeDialog}>Close</Button></div>
-          {status && dialogActive ? <p role="alert" className="my-2 text-sm">{status}</p> : null}
+          {mounted ? createPortal(<dialog ref={dialogRef} aria-label="Add consumable" data-form="sheet" className={dialogClass("ln-material-dialog")} onCancel={event=>{if(busy){event.preventDefault();return;}setDialogActive(false);triggerRef.current?.focus();}}>
+          <DialogHeader title={correction ? 'Correct consumable record' : sessionKey.startsWith('edit:') ? 'Edit consumable' : 'Add consumable'} onClose={closeDialog} closeDisabled={busy} />
+          <div className="ln-dialog-body">
+          {status && dialogActive ? <p role="alert" className="mb-2 text-sm">{status}</p> : null}
           <form
             onSubmit={save}
             onKeyDown={preventImplicitEnterSubmit}
-            className="mt-4 flex flex-wrap items-end gap-3"
+            className="flex flex-wrap items-end gap-3"
           >
             <fieldset disabled={busy} className="contents">
             <label className="text-sm">
@@ -299,7 +301,7 @@ export function RunMaterials({
               {correction ? "Save correction" : "Save usage record"}
             </Button>
             <Button type="submit" data-continue="true" disabled={busy}>Add and continue</Button>
-          </fieldset></form></dialog>, document.body) : null}
+          </fieldset></form></div></dialog>, document.body) : null}
           {selection.length ? (
             <Button
               type="button"

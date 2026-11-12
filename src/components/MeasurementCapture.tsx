@@ -1,9 +1,9 @@
 "use client";
 
+import { DialogHeader } from "@/components/ui/DialogShell";
 import { newClientMutationId } from "@/lib/client-mutation-id";
 
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useImperativeHandle, useRef, useState, type Ref, type RefObject } from "react";
 import { enqueueMobileMutation } from "@/lib/mobile-mutation-queue";
@@ -78,9 +78,10 @@ export function MeasurementCapture({ experimentId, step, ref, returnFocusTo }: {
 
   return <>
     {!open && status ? <p role="status" className="col-span-full text-xs text-muted">{status}</p> : null}
-    {hasOpened && step ? createPortal(<div hidden={!open} className="ln-modal-layer fixed inset-0 z-50 tablet:grid tablet:place-items-center"><button type="button" aria-label="Close measurement" onClick={() => { if(saving)return;setOpen(false); returnFocusTo?.current?.focus(); }} className="ln-modal-backdrop absolute inset-0 bg-ink/25" /><section role="dialog" aria-modal="true" aria-labelledby="measurement-title" className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-soft tablet:relative tablet:inset-auto tablet:w-[min(32rem,calc(100vw-2rem))] tablet:rounded-[var(--ln-radius-panel)] tablet:border tablet:pb-4">
-      <div className="flex items-start justify-between gap-3"><div><h2 id="measurement-title" className="text-xl font-semibold text-ink">Record measurement</h2><p className="mt-1 text-xs text-muted">Step {step.order} · {step.title}</p></div><button type="button" onClick={() => { if(saving)return;setOpen(false); returnFocusTo?.current?.focus(); }} aria-label="Close measurement" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-hairline"><X className="h-4 w-4" /></button></div>
-      <form ref={formRef} onInput={()=>{try{if(formRef.current)sessionStorage.setItem(draftKey,JSON.stringify(Object.fromEntries(new FormData(formRef.current))));}catch{setStatus("Draft could not be saved. Keep this page open.");}}} onSubmit={submit} className="mt-4 grid grid-cols-2 gap-3">
+    {hasOpened && step ? createPortal(<div hidden={!open} className="ln-modal-layer fixed inset-0 z-50 tablet:grid tablet:place-items-center"><button type="button" aria-label="Close measurement" onClick={() => { if(saving)return;setOpen(false); returnFocusTo?.current?.focus(); }} className="ln-modal-backdrop absolute inset-0 bg-ink/25" /><section role="dialog" aria-modal="true" aria-labelledby="measurement-title" data-form="sheet" className="ln-dialog absolute inset-x-0 bottom-0 max-h-[88dvh] tablet:relative tablet:inset-auto tablet:w-[min(32rem,calc(100vw-2rem))]">
+      <DialogHeader title="Record measurement" titleId="measurement-title" subtitle={<>Step {step.order} · {step.title}</>} closeLabel="Close measurement" onClose={() => { if(saving)return;setOpen(false); returnFocusTo?.current?.focus(); }} />
+      <div className="ln-dialog-body">
+      <form ref={formRef} onInput={()=>{try{if(formRef.current)sessionStorage.setItem(draftKey,JSON.stringify(Object.fromEntries(new FormData(formRef.current))));}catch{setStatus("Draft could not be saved. Keep this page open.");}}} onSubmit={submit} className="grid grid-cols-2 gap-3">
         <label><span className="text-xs font-semibold text-muted">Value *</span><input ref={valueInput} required name="value" type="number" step="any" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
         <label><span className="text-xs font-semibold text-muted">Unit *</span><input required name="unit" maxLength={32} placeholder="ng/µL, %, fold…" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
         <label className="col-span-2"><span className="text-xs font-semibold text-muted">Observed at *</span><input required name="observedAt" type="datetime-local" value={observedAt} onChange={(event) => setObservedAt(event.target.value)} className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-sm text-ink" /></label>
@@ -91,6 +92,7 @@ export function MeasurementCapture({ experimentId, step, ref, returnFocusTo }: {
         {status ? <p role="status" className="col-span-2 rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-sm text-graphite">{status}</p> : null}
         <button disabled={saving} className="focus-ring col-span-2 min-h-12 rounded-[var(--ln-radius-control-lg)] bg-action px-4 text-sm font-semibold text-white">{saving ? "Saving…" : "Save measurement"}</button>
       </form>
+      </div>
     </section></div>, document.body) : null}
   </>;
 }

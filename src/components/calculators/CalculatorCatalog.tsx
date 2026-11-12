@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
-import {Search} from 'lucide-react';
+import {ArrowLeft,Search} from 'lucide-react';
 import {useI18n} from '@/components/I18nProvider';
 import {getCalculatorCatalog} from '@/lib/calculators/catalog';
 import {defaultTasks,legacyTaskMap} from '@/lib/calculators/task-definitions';
@@ -11,7 +11,6 @@ import {useCalculatorState} from './useCalculatorState';
 import {CommonTasks,PinToggle} from './CommonTasks';
 import {CalculatorToolTile} from './CalculatorToolTile';
 import {CalculatorBack} from './CalculatorNavigation';
-import {TaskHelp} from './TaskHelp';
 import {StorageRecovery} from './StorageRecovery';
 import {CalculatorMore} from './CalculatorMore';
 const groups=[['solutions','Solutions','配液'],['cell-culture','Cells','细胞'],['virology-microbiology','Microbiology','微生物'],['molecular-biology','Nucleic acids','核酸'],['protein','Protein','蛋白'],['general','Units & equipment','单位与设备']];
@@ -28,11 +27,11 @@ export function CalculatorCatalog({contextQuery=''}:{contextQuery?:string}){
  const filtered=catalog.filter(t=>[t.name,t.nameZh,...t.aliases,taskPresentation(t.id,zh).name].join(' ').toLowerCase().includes(query.trim().toLowerCase()));
  const context=new URLSearchParams(contextQuery),back=context.get('experimentId')&&context.get('experimentStepId')?`/experiments/${encodeURIComponent(context.get('experimentId')!)}/run#step-${encodeURIComponent(context.get('experimentStepId')!)}`:'/tools';
  const recent=recentCalculators(state?.recent??[]).filter(item=>catalog.some(t=>t.id===item.calculatorId)).slice(0,6);
- return <div className="calculator-catalog"><div className="calculator-catalog-heading"><CalculatorBack href={back} zh={zh} catalog/><h1>{zh?'实验计算':'Lab Calculations'}</h1><label><Search size={18}/><input aria-label={zh?'搜索计算':'Search calculations'} value={query} onChange={e=>search(e.target.value)} placeholder={zh?'搜索工具…':'Search…'}/></label><CalculatorMore zh={zh}/></div>
- {context.get('experimentId')?<a className="text-sm text-moss min-h-11 flex items-center" href={back}>{zh?'返回实验':'Return to experiment'}</a>:null}
+ return <div className="calculator-catalog"><div className="calculator-catalog-heading"><CalculatorBack href={back} zh={zh} catalog/><h1>{zh?'实验计算':'Lab Calculations'}</h1><label><Search size={18}/><input aria-label={zh?'搜索计算':'Search calculations'} value={query} onChange={e=>search(e.target.value)} placeholder={zh?'搜索工具…':'Search…'}/></label><CalculatorMore zh={zh} help={{ids:catalog.map(t=>t.id),sections:groups.map(([category,en,cn])=>({title:zh?cn:en,ids:catalog.filter(t=>t.category===category).map(t=>t.id)})).filter(section=>section.ids.length)}}/></div>
+ {context.get('experimentId')?<p className="calculator-context"><a className="focus-ring" href={back}><ArrowLeft size={16} aria-hidden/>{zh?'返回实验步骤':'Return to experiment step'}</a>{context.get('contextLabel')?<span>{context.get('contextLabel')}</span>:null}</p>:null}
  <StorageRecovery message={persistenceWarning} onRetry={retry} zh={zh}/>
  {!query||editing?<><CommonTasks pins={pins} state={state} update={update} zh={zh} contextQuery={contextQuery} editing={editing} onEditing={setEditing}/>{recent.length&&!editing?<section className="calculator-recent"><h2>{zh?'最近使用':'Recently used'}</h2><div className="calculator-recent-grid">{recent.map(item=><CalculatorToolTile key={item.calculatorId} id={item.calculatorId} zh={zh} contextQuery={contextQuery}/>)}</div></section>:null}</>:null}
- <div className="calculator-categories" data-testid="calculator-categories">{groups.map(([category,en,cn])=>{const tools=filtered.filter(t=>t.category===category);return tools.length?<section className={`calculator-category category-${category}`} key={category}><header><h2>{zh?cn:en} <small>{tools.length}</small></h2><TaskHelp ids={tools.map(t=>t.id)} zh={zh}/></header><div className="calculator-category-tools">{tools.map(t=><div key={t.id} className="calculator-tool-cell"><CalculatorToolTile id={t.id} zh={zh} contextQuery={contextQuery}/>{editing&&state?<PinToggle pinned={pins.includes(t.id)} name={taskPresentation(t.id,zh).name} zh={zh} onToggle={()=>update(toggleFavorite({...state,favorites:[...pins]},t.id))}/>:null}</div>)}</div></section>:null;})}</div>
+ <div className="calculator-categories" data-testid="calculator-categories">{groups.map(([category,en,cn])=>{const tools=filtered.filter(t=>t.category===category);return tools.length?<section className={`calculator-category category-${category}`} key={category}><header><h2>{zh?cn:en} <small>{tools.length}</small></h2></header><div className="calculator-category-tools">{tools.map(t=><div key={t.id} className="calculator-tool-cell"><CalculatorToolTile id={t.id} zh={zh} contextQuery={contextQuery}/>{editing&&state?<PinToggle pinned={pins.includes(t.id)} name={taskPresentation(t.id,zh).name} zh={zh} onToggle={()=>update(toggleFavorite({...state,favorites:[...pins]},t.id))}/>:null}</div>)}</div></section>:null;})}</div>
  {!filtered.length?<p>{zh?'没有匹配工具':'No matching tools'}</p>:null}
  <div className="calculator-catalog-footer"><details><summary>{zh?'我的配方':'My recipes'} ({state?.presets.length??0})</summary>{state?.presets.map(p=><Link key={p.id} href={`/tools/calculator/${p.calculatorId}${contextQuery?'?'+contextQuery:''}`}>{p.name}</Link>)}</details><details><summary>{zh?'计算记录':'Calculation records'} ({state?.history.length??0})</summary>{state?.history.map(r=><Link key={r.id} href={`/tools/calculator/${r.calculatorId}?record=${encodeURIComponent(r.id)}${contextQuery?'&'+contextQuery:''}`}>{zh?r.calculatorNameZh:r.calculatorName}</Link>)}</details></div></div>;
 }

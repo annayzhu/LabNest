@@ -1,9 +1,10 @@
 "use client";
 
+import { DialogHeader } from "@/components/ui/DialogShell";
 import { createContext, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
-import { Ellipsis, X } from "lucide-react";
+import { Ellipsis } from "lucide-react";
 import { useMediaQuery } from "@/lib/use-media-query";
 
 /**
@@ -15,7 +16,7 @@ import { useMediaQuery } from "@/lib/use-media-query";
 export const InPageMenu = createContext(false);
 
 /** A page header's actions. `className` lays them out in the header on a computer. */
-export function PageActions({ children, className }: { children: ReactNode; className?: string }) {
+export function PageActions({ children, className, menuClassName }: { children: ReactNode; className?: string; /** Added to the list in the phone sheet. */ menuClassName?: string }) {
   const phone = useMediaQuery("(max-width: 743.98px)");
   const { target } = useMenu();
   // A header the phone layout hides (e.g. the computer's half of the home page) adds nothing to ···.
@@ -27,7 +28,7 @@ export function PageActions({ children, className }: { children: ReactNode; clas
     update({ count: state.count + 1 });
     return () => { setShown(false); update({ count: state.count - 1 }); };
   }, [phone]);
-  if (phone) return <><span ref={probe} className="block h-0 w-0" aria-hidden />{shown && target ? createPortal(<InPageMenu.Provider value><div className="ln-page-menu-items">{children}</div></InPageMenu.Provider>, target) : null}</>;
+  if (phone) return <><span ref={probe} className="block h-0 w-0" aria-hidden />{shown && target ? createPortal(<InPageMenu.Provider value><div className={`ln-page-menu-items ${menuClassName ?? ""}`}>{children}</div></InPageMenu.Provider>, target) : null}</>;
   // Before the page knows it is on a phone, the header must not flash its buttons.
   return <div className={`${className ?? ""} max-tablet:hidden`}>{children}</div>;
 }
@@ -75,16 +76,12 @@ export function PageMenuSheet() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="page-menu-title"
-        className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[82dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface px-4 pt-3 shadow-soft pb-[calc(1rem+env(safe-area-inset-bottom))]"
+        data-form="sheet"
+        className="ln-dialog absolute inset-x-0 bottom-0 max-h-[82dvh]"
       >
-        <div className="mb-2 flex items-center justify-between gap-3">
-          <h2 id="page-menu-title" className="text-sm font-semibold text-muted">Page actions</h2>
-          <button type="button" onClick={close} aria-label="Close page actions" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full text-muted">
-            <X className="h-5 w-5" aria-hidden />
-          </button>
-        </div>
+        <DialogHeader title="Page actions" titleId="page-menu-title" closeLabel="Close page actions" onClose={close} />
         {/* A link leaves the page; a button may open its own dialog, so the sheet stays until closed. */}
-        <div ref={setItems} onClick={(event) => { if ((event.target as HTMLElement).closest("a[href]")) close(); }} />
+        <div ref={setItems} className="ln-dialog-body" onClick={(event) => { if ((event.target as HTMLElement).closest("a[href]")) close(); }} />
       </section>
     </div>,
     document.body,

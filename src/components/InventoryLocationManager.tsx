@@ -1,8 +1,9 @@
 "use client";
 
+import { DialogHeader } from "@/components/ui/DialogShell";
 import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
-import { Archive, MapPin, Pencil, RotateCcw, Trash2, X } from "lucide-react";
+import { Archive, MapPin, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import {
   archiveInventoryLocation,
   createInventoryLocation,
@@ -141,16 +142,16 @@ function InventoryLocationEditor({ location, locations }: { location: InventoryL
       {deleteOpen ? (
         <div role="presentation" className="ln-modal-layer fixed inset-0 z-50 flex items-center justify-center p-4" onMouseDown={(event) => { if (event.target === event.currentTarget && !deleting) setDeleteOpen(false); }}>
           <div className="ln-modal-backdrop pointer-events-none absolute inset-0 bg-ink/35 backdrop-blur-[2px]" aria-hidden />
-          <section role="dialog" aria-modal="true" aria-labelledby={`delete-location-${location.id}`} className="ln-modal-card relative w-full max-w-lg rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-soft">
-            <div className="flex items-start justify-between gap-4"><h2 id={`delete-location-${location.id}`} className="text-lg font-semibold text-ink">Delete unused location forever?</h2><button type="button" aria-label="Close" disabled={deleting} onClick={() => setDeleteOpen(false)} className="focus-ring rounded-[var(--ln-radius-control-sm)] p-1.5 text-muted hover:bg-stone"><X className="h-4 w-4" /></button></div>
-            <p className="mt-3 text-sm leading-6 text-graphite"><span>This location has no inventory or historical references. Enter the name to confirm permanent deletion:</span> <strong className="font-mono text-error">{location.name}</strong></p>
+          <section role="dialog" aria-modal="true" aria-labelledby={`delete-location-${location.id}`} className="ln-dialog relative w-full max-w-lg">
+            <DialogHeader title="Delete unused location forever?" titleId={`delete-location-${location.id}`} onClose={() => setDeleteOpen(false)} closeDisabled={deleting} /><div className="ln-dialog-body">
+            <p className="text-sm leading-6 text-graphite"><span>This location has no inventory or historical references. Enter the name to confirm permanent deletion:</span> <strong className="font-mono text-error">{location.name}</strong></p>
             <form action={deleteAction} className="mt-4 space-y-4">
               <input type="hidden" name="id" value={location.id} />
               <input required autoFocus autoComplete="off" name="confirmation" className={formInputClass} />
               <ActionMessage state={deleteState} />
               <div className="flex justify-end gap-2 border-t border-hairline pt-4"><Button type="button" disabled={deleting} onClick={() => setDeleteOpen(false)}>Cancel</Button><Button type="submit" variant="destructive" disabled={deleting}><Trash2 className="h-4 w-4" />{deleting ? "Deleting…" : "Delete forever"}</Button></div>
             </form>
-          </section>
+          </div></section>
         </div>
       ) : null}
     </li>

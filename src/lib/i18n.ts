@@ -53,6 +53,12 @@ export const protocolLabelsZh: Record<string, string> = {
 // Exact UI-source translations deliberately avoid translating user-authored
 // scientific content. English is the canonical source string in the codebase.
 export const zhUi: Record<string, string> = {
+  "Step timer": "步骤计时",
+  "Search protocol title, code, tags…": "搜索规程名称、编号、标签…",
+  "What happened at this stage? This is timestamped and appended to execution notes.": "这一阶段发生了什么？会带时间戳追加到执行记录。",
+  "Appearance": "外观",
+  "Experiment result": "实验结果",
+  "Step calculation": "步骤计算",
   ...samplesZh,
   ...referencesZh,
   ...blockedReasonsZh,

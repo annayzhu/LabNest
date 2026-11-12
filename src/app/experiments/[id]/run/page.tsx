@@ -154,7 +154,7 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
         />
 
         <details className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface px-3 py-2">
-          <summary className="focus-ring cursor-pointer text-sm font-medium text-moss">Experiment information</summary>
+          <summary className="ln-summary-row focus-ring text-sm font-medium text-moss">Experiment information</summary>
           <section className="mt-2">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -197,11 +197,11 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
           stock={inventoryItems.map(item => ({ id: item.id, name: item.name, managementMode: item.managementMode, lotNumber: item.lotNumber }))}
           schedule={schedule}
         />
-        {Object.values(structured.steps).some(step => step.applicability === 'not-applicable') ? <details className="rounded border border-hairline p-3" data-not-applicable><summary>Show other systems’ content (not applicable, not counted in this run’s progress)</summary>{Object.values(structured.steps).filter(step => step.applicability === 'not-applicable').map(step => <section key={`${step.versionId}:${step.source_ref}`} className="mt-3"><h3>{step.title} · not applicable</h3>{step.content_blocks?.map(block => <ProtocolContentBlockView key={block.id} block={block} executionContext/>)}</section>)}</details> : null}
+        {Object.values(structured.steps).some(step => step.applicability === 'not-applicable') ? <details className="rounded border border-hairline p-3" data-not-applicable><summary className="ln-summary-row focus-ring text-sm">Show other systems’ content (not applicable, not counted in this run’s progress)</summary>{Object.values(structured.steps).filter(step => step.applicability === 'not-applicable').map(step => <section key={`${step.versionId}:${step.source_ref}`} className="mt-3"><h3>{step.title} · not applicable</h3>{step.content_blocks?.map(block => <ProtocolContentBlockView key={block.id} block={block} executionContext/>)}</section>)}</details> : null}
 
 
 
-        <details className="rounded-[var(--ln-radius-panel)] border border-hairline px-3 py-2"><summary className="focus-ring cursor-pointer text-sm font-medium text-moss">Files, materials and results</summary>
+        <details className="rounded-[var(--ln-radius-panel)] border border-hairline px-3 py-2"><summary className="ln-summary-row focus-ring text-sm font-medium text-moss">Files, materials and results</summary>
         <div className="mt-3 grid gap-4 xl:grid-cols-2">
           <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4">
             <div className="mb-4 flex items-center gap-2"><Camera className="h-4 w-4 text-moss" aria-hidden /><h2 className="text-lg font-semibold text-ink">Photos and files</h2></div>

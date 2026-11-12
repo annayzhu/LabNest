@@ -39,7 +39,7 @@ export default async function SettingsPage({ searchParams }: { searchParams?: Pr
           <SettingsNav />
           <div className="settings-content">
             <Card>
-              <CardHeader title="Appearance / 外观" />
+              <CardHeader title="Appearance" />
               <CardBody className="space-y-5"><AppearanceSettings /></CardBody>
             </Card>
 

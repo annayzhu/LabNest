@@ -206,8 +206,8 @@ const quickNoteHref = "/entries/new?mode=capture&experiment=active";
 
 function mobileNavItemClass(current: boolean) {
   return cn(
-    "focus-ring flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] px-0.5 text-center text-xs font-normal leading-none tracking-[-0.005em]",
-    current ? "bg-action-surface/45 font-semibold text-moss" : "text-muted",
+    "focus-ring relative flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] px-0.5 text-center text-xs font-normal leading-none tracking-[-0.005em]",
+    current ? "ln-mobile-nav-current font-semibold text-moss" : "text-muted",
   );
 }
 

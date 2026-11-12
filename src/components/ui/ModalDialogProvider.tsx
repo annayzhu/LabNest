@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
+import { DialogHeader } from "@/components/ui/DialogShell";
 import { Button } from "@/components/ui/Button";
 import { formInputClass } from "@/components/forms";
 
@@ -71,14 +72,8 @@ function ModalDialog({ request, onDone }: { request: DialogRequest; onDone: () =
 
   return <div className="ln-modal-layer fixed inset-0 z-[90] grid place-items-center p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) close(false); }}>
     <div className="ln-modal-backdrop pointer-events-none absolute inset-0 bg-ink/35 backdrop-blur-[2px]" aria-hidden />
-    <section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className="ln-modal-card relative z-10 w-full max-w-md overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface shadow-soft">
-      <div className="flex items-start justify-between gap-4 border-b border-hairline px-4 py-3.5">
-        <div className="min-w-0">
-          {request.tone === "destructive" ? <p className="mb-1 flex items-center gap-1 text-xs font-medium text-error"><AlertTriangle className="h-3 w-3" aria-hidden />Irreversible</p> : null}
-          <h2 id={titleId} className="text-lg font-semibold leading-tight text-ink">{request.title}</h2>
-        </div>
-        <button type="button" onClick={() => close(false)} className="focus-ring flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-sm)] text-muted hover:bg-stone hover:text-ink" aria-label="Close dialog"><X className="h-4 w-4" aria-hidden /></button>
-      </div>
+    <section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className="ln-dialog relative z-10 w-full max-w-md">
+      <DialogHeader title={request.title} titleId={titleId} subtitle={request.tone === "destructive" ? <span className="inline-flex items-center gap-1 text-error"><AlertTriangle className="h-3 w-3" aria-hidden />Irreversible</span> : undefined} closeLabel="Close dialog" onClose={() => close(false)} />
       <form className="p-4" onSubmit={(event) => { event.preventDefault(); close(true); }}>
         {request.description ? <p className="whitespace-pre-line text-sm leading-6 text-graphite">{request.description}</p> : null}
         {request.kind === "prompt" ? <label className="mt-3 block"><span className="mb-1 block text-xs font-semibold text-graphite">{request.inputLabel ?? "Value"}</span><input className={formInputClass} value={value} onChange={(event) => { valueRef.current = event.target.value; setValue(event.target.value); }} autoFocus /></label> : null}

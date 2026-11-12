@@ -112,12 +112,20 @@
 .calculator-more > summary { min-height:44px; display:flex; align-items:center; cursor:pointer; padding-inline:8px; }
 .calculator-more > div { position:absolute; right:0; z-index:20; min-width:150px; background:var(--color-surface); border:1px solid var(--color-hairline); border-radius:var(--ln-radius-control-md); padding:4px; }
 .calculator-more button { display:block; width:100%; min-height:44px; text-align:left; padding-inline:8px; }
-.calculator-management { margin:auto; width:min(560px,calc(100% - 32px)); max-height:80dvh; overflow:auto; padding:16px; color:var(--color-graphite); background:var(--color-surface); border:1px solid var(--color-hairline); border-radius:var(--ln-radius-panel); }
-.calculator-management::backdrop { background:rgb(0 0 0 / .35); }
-.calculator-management > header { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:12px; }
-.calculator-management h2 { font-size:var(--ln-ui-section-title-font-size); font-weight:600; }
-.calculator-management button { min-height:44px; }
+.calculator-management { --ln-dialog-width:35rem; }
 .calculator-management p { overflow-wrap:anywhere; }
+.calculator-offline { display:grid; gap:12px; font-size:var(--ln-ui-body-font-size); color:var(--color-graphite); }
+.calculator-offline-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.calculator-offline [role=status] { font-size:var(--ln-ui-label-font-size); color:var(--color-muted); }
+/* 使用说明: one hairline-divided list; a catalog-wide dialog groups it by category. */
+.task-help-dialog { --ln-dialog-width:35rem; }
+.task-help-item { padding-block:10px; }
+.task-help-item + .task-help-item { border-top:1px solid var(--color-hairline); }
+.task-help-body > .task-help-item:first-child, .task-help-group + .task-help-item { padding-top:0; }
+.task-help-item h3 { font-size:14px; font-weight:600; color:var(--color-ink); }
+.task-help-item p { margin-top:2px; font-size:13px; line-height:1.5; }
+.task-help-section + .task-help-section { margin-top:16px; padding-top:16px; border-top:1px solid var(--color-hairline); }
+.task-help-group { margin-bottom:10px; font-size:12px; font-weight:500; color:var(--color-muted); }
 @media(max-width:767px) { .calculator-presets :is(button,select,summary) { min-height:44px; } .calculator-presets select { font-size:max(16px,var(--ln-control-font-size-md)); } }
 
 .calculator-presets summary { display:flex; align-items:center; }
@@ -216,3 +224,123 @@
 .calculator-compact .calculator-data-scroll input[type=checkbox] { width:18px; height:18px; min-width:18px; min-height:18px; accent-color:var(--color-moss); }
 .calculator-result-toolbar .calculator-action, .reaction-result-toolbar .calculator-action { font-size:var(--ln-control-font-size-md); }
 .calculator-workbench label:has(input[type=file]:focus-visible) { outline:2px solid var(--color-moss); outline-offset:2px; }
+
+/* Workbench layout. These later rules override the panel paddings above.
+   The workbench uses the content width; a short form keeps a readable column and the result takes the rest. */
+.calculator-workbench.calculator-compact, .calculator-workbench.calculator-compact[data-layout="simple"] { max-width:none; margin-inline:0; container:calc-workbench / inline-size; }
+/* Two columns depend on the workbench's own width, not the window's. */
+.calculator-workbench.calculator-compact .calculator-workspace-grid { grid-template-columns:minmax(0,1fr); gap:16px 32px; }
+@container calc-workbench (min-width:960px) {
+ .calculator-workbench.calculator-compact .calculator-workspace-grid { grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); }
+ .calculator-workbench.calculator-compact[data-layout="simple"] .calculator-workspace-grid { grid-template-columns:minmax(440px,520px) minmax(0,1fr); }
+ .calculator-workbench.calculator-compact[data-layout="transfection"] .calculator-workspace-grid { grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); }
+}
+.calculator-workbench.calculator-compact[data-layout="simple"] .calculator-result-panel { max-width:640px; }
+.calculator-workbench .calculator-result-values { max-width:560px; }
+
+/* One left edge per column. Header, toolbar, fields and the primary button start on the column edge. */
+.calculator-workbench.calculator-compact :is(.calculator-input-panel,.calculator-result-panel .ln-section) > div:first-child { min-height:48px; padding:6px 0; align-items:center; flex-wrap:wrap; gap:8px 12px; }
+.calculator-workbench.calculator-compact :is(.calculator-input-panel,.calculator-result-panel .ln-section) > div:last-child { padding:12px 0 16px; }
+.calculator-workbench.calculator-compact :is(.calculator-input-panel,.calculator-result-panel .ln-section) > div:first-child h2 { line-height:36px; }
+.calculator-workbench .card-action { min-width:0; }
+.calculator-workbench.calculator-compact :is(input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea) { border-radius:var(--ln-calculator-control-radius); }
+.calculator-workbench.calculator-compact .calculator-field :is(input,select), .calculator-workbench.calculator-compact .calculator-quantity > select { min-width:72px; }
+.calculator-workbench summary.calculator-action { height:var(--calc-control); list-style:none; }
+.calculator-workbench summary.calculator-action::-webkit-details-marker { display:none; }
+.calculator-workbench .calculator-example-menu { height:var(--calc-control); }
+.calculator-workbench .calculator-field .font-mono { font-family:inherit; font-size:12px; }
+
+/* The input tools are one row of siblings; on a narrow workbench they sit under the title in equal cells. */
+.calculator-workbench .calculator-input-panel .reaction-input-tools { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:8px; }
+.calculator-workbench .reaction-input-tools > :is(.calculator-presets,div) { display:contents; }
+.calculator-workbench .reaction-input-tools .calculator-preset-menu { flex:0 1 auto; }
+.calculator-workbench .reaction-input-tools .calculator-preset-menu[open] { flex-basis:100%; }
+@container calc-workbench (max-width:560px) {
+ .calculator-workbench .calculator-input-panel > div:first-child > .card-action { flex-basis:100%; }
+ .calculator-workbench .calculator-input-panel .reaction-input-tools { justify-content:stretch; }
+ .calculator-workbench .reaction-input-tools :is(.calculator-action,select) { flex:1 1 auto; padding-inline:8px; }
+}
+/* Mode choices are equal cells: one row when it fits, otherwise 2 or 3 columns with the last row left-aligned. */
+.calculator-workbench .calculator-mode { container:calc-mode / inline-size; }
+.calculator-workbench .calculator-mode-options { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); gap:6px; }
+.calculator-workbench .calculator-mode-options :is(label,a) { flex:none; min-width:0; white-space:normal; text-align:center; overflow-wrap:anywhere; }
+.calculator-workbench .calculator-mode-options:has(> :nth-child(4)) { grid-auto-flow:row; grid-template-columns:repeat(2,minmax(0,1fr)); }
+.calculator-workbench .calculator-mode-options:has(> :nth-child(5)) { grid-template-columns:repeat(3,minmax(0,1fr)); }
+@container calc-mode (min-width:560px) { .calculator-workbench .calculator-mode-options:has(> :nth-child(4)):not(:has(> :nth-child(5))) { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+@container calc-mode (min-width:720px) { .calculator-workbench .calculator-mode-options:has(> :nth-child(5)):not(:has(> :nth-child(7))) { grid-auto-flow:column; grid-template-columns:none; } }
+
+/* Table headers never break inside a word; a table that does not fit scrolls inside its own frame. */
+.calculator-workbench .calculator-data-scroll :is(th,td) { overflow-wrap:normal; word-break:keep-all; }
+.calculator-workbench .calculator-data-scroll th { white-space:nowrap; }
+.calculator-workbench .calculator-data-scroll table { min-width:max-content; }
+.calculator-workbench .calculator-data-scroll :is(input:not([type=checkbox]),select) { min-width:72px; }
+
+/* The headline result stands alone; the rest is a quiet list with numbers on one right edge. */
+.calculator-workbench .calculator-result-values > div { grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:12px; min-height:36px; padding:2px 0; border-top:1px solid var(--color-hairline); }
+.calculator-workbench .calculator-result-values dt { color:var(--color-graphite); }
+.calculator-workbench .calculator-result-values dd { justify-content:flex-end; gap:6px; color:var(--color-ink); }
+.calculator-workbench .calculator-result-values dd:has(> :nth-child(2)) { display:grid; grid-template-columns:auto 76px; justify-items:start; }
+.calculator-workbench .calculator-result-values dd > :first-child { justify-self:end; }
+.calculator-workbench .calculator-result-values dd > :is(select,span:nth-child(2)) { width:auto; min-width:0; max-width:76px; font-size:13px; color:var(--color-graphite); }
+.calculator-workbench .calculator-result-values > div:first-child { display:block; margin-bottom:10px; padding:2px 0 2px 12px; border-top:0; border-left:2px solid var(--color-moss); }
+.calculator-workbench .calculator-result-values > div:first-child dt { font-size:12px; color:var(--color-muted); }
+.calculator-workbench .calculator-result-values > div:first-child dd { display:flex; justify-content:flex-start; align-items:baseline; font-size:24px; line-height:1.3; font-weight:600; }
+.calculator-workbench .calculator-result-values > div:first-child + div { border-top:0; }
+/* A unit switch reads as its unit; the frame appears on hover or focus. */
+.calculator-workbench .calculator-result-values dd select { height:28px; min-height:28px; padding-left:4px; padding-right:22px!important; background-position:right 3px center; background-color:transparent; border-color:transparent!important; font-weight:400; }
+.calculator-workbench .calculator-result-values dd select:is(:hover,:focus-visible) { border-color:var(--control-border,var(--color-hairline))!important; background-color:var(--color-surface); }
+@media(pointer:coarse) { .calculator-workbench .calculator-result-values dd select { height:36px; min-height:36px; } }
+
+/* One disclosure row: text, an arrow on the right, hairlines, no box. */
+.calculator-workbench .calculator-disclosure-trigger { min-height:40px; padding:0; border:0; border-top:1px solid var(--color-hairline); border-radius:0; background:transparent; color:var(--color-ink); }
+.calculator-workbench .calculator-disclosure-trigger:hover { color:var(--color-moss); }
+.calculator-workbench .calculator-result-panel > .calculator-disclosure { border-bottom:1px solid var(--color-hairline); }
+.calculator-workbench .calculator-result-panel > .calculator-disclosure > .calculator-disclosure-trigger { border-top:0; }
+.calculator-workbench .calculator-disclosure-content { padding-block:4px 12px; }
+.calculator-workbench details:not(.calculator-more):not(.calculator-preset-menu) > summary:not(.calculator-action) { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:40px; padding:0; border-top:1px solid var(--color-hairline); list-style:none; font-size:var(--ln-control-font-size-md); color:var(--color-ink); }
+.calculator-workbench details:not(.calculator-more):not(.calculator-preset-menu) > summary:not(.calculator-action)::-webkit-details-marker { display:none; }
+.calculator-workbench details:not(.calculator-more):not(.calculator-preset-menu) > summary:not(.calculator-action)::after { content:""; flex:none; width:16px; height:16px; background:var(--ln-calculator-select-arrow) center / 16px 16px no-repeat; }
+.calculator-workbench details[open]:not(.calculator-more):not(.calculator-preset-menu) > summary:not(.calculator-action)::after { transform:rotate(180deg); }
+
+/* Back, title, pin and one More menu stay on one row at every width. */
+.calculator-workbench .calculator-heading { flex-wrap:nowrap; }
+.calculator-workbench .calculator-heading h1 { flex:1; overflow-wrap:anywhere; }
+.calculator-heading-actions { flex-wrap:nowrap; gap:4px; }
+.calculator-pin { display:inline-flex; align-items:center; justify-content:center; width:var(--ln-calculator-control-height); height:var(--ln-calculator-control-height); border-radius:var(--ln-calculator-control-radius); color:var(--color-muted); }
+.calculator-pin:hover { background:var(--color-warm); color:var(--color-ink); }
+.calculator-pin[aria-pressed="true"] { color:var(--color-moss); background:var(--color-action-surface,var(--color-sage-surface)); }
+.calculator-more > summary { min-height:var(--ln-calculator-control-height); border-radius:var(--ln-calculator-control-radius); list-style:none; color:var(--color-graphite); }
+.calculator-more > summary::-webkit-details-marker { display:none; }
+.calculator-more > summary:hover { background:var(--color-warm); color:var(--color-ink); }
+.calculator-more > div { top:calc(100% + 4px); min-width:168px; border-radius:var(--ln-radius-panel-inner,6px); box-shadow:var(--shadow-soft); }
+.calculator-more > div button { min-height:36px; border-radius:var(--ln-radius-control-sm,4px); font-size:var(--ln-ui-body-font-size); color:var(--color-ink); }
+.calculator-more > div button:hover { background:var(--color-warm); }
+@media(pointer:coarse) { .calculator-pin { width:44px; height:44px; } .calculator-more > summary, .calculator-more > div button { min-height:44px; } }
+/* Catalog: tiles fill each card's rows and cards in a row share a height. */
+.calculator-categories { align-items:stretch; }
+.calculator-catalog .calculator-category-tools, .calculator-catalog .category-solutions .calculator-category-tools, .calculator-catalog .category-virology-microbiology .calculator-category-tools { grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); }
+.calculator-fit-plot { min-width:0; }
+.calculator-fit-plot svg { display:block; max-width:100%; border:1px solid var(--color-hairline); border-radius:var(--ln-radius-panel-inner,6px); }
+.calculator-fit-plot figcaption { margin-top:4px; }
+/* Fields share the column; a short form does not stretch across a wide single column. */
+.calculator-workbench.calculator-compact .calculator-field { max-width:none; }
+.calculator-workbench.calculator-compact[data-layout="simple"] .calculator-input-form { max-width:720px; }
+/* The step calculator is a drawer with a title; the linked step is one quiet line, recording sits under the result. */
+.calculator-step-drawer { --ln-dialog-width:35rem; }
+.calculator-step-picker { flex:none; padding:10px 16px; border-bottom:1px solid var(--color-hairline); }
+.calculator-step-picker select { width:100%; height:36px; border:1px solid var(--control-border,var(--color-hairline)); border-radius:var(--ln-calculator-control-radius); background-color:var(--color-surface); font-size:var(--ln-control-font-size-md); }
+.calculator-step-drawer > iframe { flex:1; min-height:0; width:100%; border:0; }
+.calculator-context { display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; font-size:var(--ln-ui-label-font-size); color:var(--color-muted); }
+.calculator-context a { display:inline-flex; align-items:center; gap:4px; min-height:32px; color:var(--color-moss); }
+.calculator-context span { min-width:0; overflow-wrap:anywhere; }
+.calculator-record-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid var(--color-hairline); max-width:560px; }
+.calculator-record-row input { min-width:0; height:var(--calc-control); padding-inline:10px; border:1px solid var(--control-border,var(--color-hairline)); background:var(--color-surface); }
+.calculator-record-row p { grid-column:1/-1; font-size:var(--ln-ui-label-font-size); color:var(--color-muted); }
+.calculator-record-row p:empty { display:none; }
+@media(pointer:coarse) { .calculator-step-picker select { height:44px; } .calculator-context a { min-height:44px; } }
+.calculator-workbench .calculator-action { white-space:nowrap; }
+.calculator-workbench.calculator-compact h3 { font-size:14px; }
+.calculator-workbench small { font-size:12px; }
+/* Mode choices inside a narrow sub-column (transfection tubes) stack instead of squeezing labels letter by letter. */
+@container calc-mode (max-width:340px) { .calculator-workbench .calculator-mode-options:has(> :nth-child(3)) { grid-auto-flow:row; grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@container calc-mode (max-width:200px) { .calculator-workbench .calculator-mode-options { grid-auto-flow:row; grid-template-columns:minmax(0,1fr); } }

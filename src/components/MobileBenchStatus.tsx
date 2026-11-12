@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertTriangle, Cloud, CloudOff, RefreshCw, Trash2, X } from "lucide-react";
+import { DialogHeader } from "@/components/ui/DialogShell";
+import { AlertTriangle, Cloud, CloudOff, RefreshCw, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "@/components/I18nProvider";
 import Link from "next/link";
@@ -91,12 +92,9 @@ export function MobileBenchStatus() {
     </section>
     {reviewOpen ? <div className="ln-modal-layer fixed inset-0 z-50">
       <button type="button" aria-label="Close sync review" onClick={() => { setReviewOpen(false); reviewTrigger.current?.focus(); }} className="ln-modal-backdrop absolute inset-0 bg-ink/25" />
-      <section role="dialog" aria-modal="true" aria-labelledby="sync-review-title" className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[82dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-soft">
-        <div className="sticky top-0 flex items-start justify-between gap-3 border-b border-hairline bg-surface/95 px-4 py-3 backdrop-blur">
-          <div><h2 id="sync-review-title" className="text-xl font-semibold text-ink">Review sync issues</h2><p className="mt-1 text-xs text-muted">Your local record is kept until you retry or discard it.</p></div>
-          <button type="button" aria-label="Close sync review" onClick={() => { setReviewOpen(false); reviewTrigger.current?.focus(); }} className="focus-ring flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-hairline"><X className="h-4 w-4" /></button>
-        </div>
-        <ul className="divide-y divide-hairline">
+      <section role="dialog" aria-modal="true" aria-labelledby="sync-review-title" data-form="sheet" className="ln-dialog absolute inset-x-0 bottom-0 max-h-[82dvh]">
+        <DialogHeader title="Review sync issues" titleId="sync-review-title" subtitle="Your local record is kept until you retry or discard it." closeLabel="Close sync review" onClose={() => { setReviewOpen(false); reviewTrigger.current?.focus(); }} />
+        <ul className="ln-dialog-body divide-y divide-hairline" data-flush>
           {conflicts.map((item) => <li key={item.clientMutationId} className="p-4">
             <div className="flex items-start justify-between gap-3"><div><p className="text-sm font-semibold text-ink">{actionLabels[item.actionType]}</p><p className="mt-1 text-xs text-muted">Recorded {new Date(item.deviceCreatedAt).toLocaleString()} · retry {item.retryCount}</p></div><span className="rounded-full bg-error-surface px-2 py-1 text-xs font-semibold text-error">Needs review</span></div>
             <p className="mt-3 rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-sm leading-5 text-graphite">{item.lastError ?? "The server could not accept this record."}</p>

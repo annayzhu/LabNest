@@ -1,0 +1,51 @@
+/* One dialog shell: the same header, edges, corners, shadow and backdrop for every modal.
+   The class goes on a native <dialog> or on a role="dialog" section inside a .ln-modal-layer. */
+.ln-dialog { --ln-dialog-width: 32rem; --ln-dialog-inset: 16px; box-sizing: border-box; flex-direction: column; padding: 0; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-soft); overflow: hidden; text-align: start; font-size: var(--ln-ui-body-font-size, 13px); animation: ln-modal-card-in 340ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.ln-dialog:not(dialog), dialog.ln-dialog[open] { display: flex; }
+dialog.ln-dialog { width: min(var(--ln-dialog-width), calc(100vw - 2rem)); max-width: none; max-height: calc(100dvh - 2rem); margin: auto; }
+dialog.ln-dialog::backdrop, .ln-dialog-backdrop { background: color-mix(in srgb, var(--ink) 35%, transparent); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+dialog.ln-dialog::backdrop { animation: ln-modal-backdrop-in 220ms ease both; }
+
+.ln-dialog-header { flex: none; display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 10px 8px var(--ln-dialog-inset); border-bottom: 1px solid var(--hairline); background: var(--surface); }
+.ln-dialog-heading { flex: 1; min-width: 0; }
+.ln-dialog .ln-dialog-heading h2 { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.3; color: var(--ink); overflow-wrap: anywhere; }
+.ln-dialog .ln-dialog-heading p { margin: 2px 0 0; font-size: 12px; line-height: 1.4; color: var(--muted); overflow-wrap: anywhere; }
+.ln-dialog-close { position: relative; flex: none; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; min-height: 0; border-radius: var(--ln-radius-control-md); color: var(--muted); }
+.ln-dialog-close:hover:not(:disabled) { background: var(--stone); color: var(--ink); }
+.ln-dialog-close:disabled { opacity: 0.45; }
+.ln-dialog-close svg { width: 16px; height: 16px; }
+/* A 44 px target on touch screens without a bigger button. */
+@media (pointer: coarse) { .ln-dialog-close::after { content: ""; position: absolute; inset: -6px; } }
+
+.ln-dialog-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: var(--ln-dialog-inset); overscroll-behavior: contain; }
+.ln-dialog-body[data-flush] { padding: 0; }
+.ln-dialog-footer { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px var(--ln-dialog-inset); border-top: 1px solid var(--hairline); background: var(--surface); }
+.ln-dialog-footer > [data-start] { margin-right: auto; }
+/* Sections inside a dialog are divided by a hairline, never boxed again. */
+.ln-dialog-section + .ln-dialog-section { margin-top: var(--ln-dialog-inset); padding-top: var(--ln-dialog-inset); border-top: 1px solid var(--hairline); }
+
+@media (min-width: 744px) {
+  dialog.ln-dialog[data-form="drawer"] { --ln-dialog-width: 35rem; width: min(var(--ln-dialog-width), calc(100vw - 4rem)); height: 100dvh; max-height: none; margin: 0 0 0 auto; border-width: 0 0 0 1px; border-radius: var(--ln-radius-panel) 0 0 var(--ln-radius-panel); animation-name: ln-dialog-drawer-in; }
+}
+@media (max-width: 743.98px) {
+  .ln-dialog:is([data-form="sheet"], [data-form="drawer"]) { border-width: 1px 0 0; border-radius: var(--ln-radius-panel) var(--ln-radius-panel) 0 0; animation-name: ln-modal-sheet-in; }
+  dialog.ln-dialog:is([data-form="sheet"], [data-form="drawer"]) { width: 100vw; max-height: 86dvh; margin: auto 0 0; }
+  dialog.ln-dialog[data-form="drawer"] { height: 86dvh; }
+  .ln-dialog:is([data-form="sheet"], [data-form="drawer"]) > .ln-dialog-header { position: relative; padding-top: 14px; }
+  /* A visual marker only; there is no drag gesture. */
+  .ln-dialog:is([data-form="sheet"], [data-form="drawer"]) > .ln-dialog-header::before { content: ""; position: absolute; top: 5px; left: 50%; width: 36px; height: 4px; margin-left: -18px; border-radius: 999px; background: var(--border-strong, var(--hairline)); }
+  .ln-dialog:is([data-form="sheet"], [data-form="drawer"]) > .ln-dialog-body { padding-bottom: calc(var(--ln-dialog-inset) + env(safe-area-inset-bottom)); }
+  .ln-dialog:is([data-form="sheet"], [data-form="drawer"]) > .ln-dialog-body:has(+ .ln-dialog-footer) { padding-bottom: var(--ln-dialog-inset); }
+  .ln-dialog:is([data-form="sheet"], [data-form="drawer"]) > .ln-dialog-footer { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .ln-dialog:is([data-form="sheet"], [data-form="drawer"]) > .ln-dialog-footer > :is(button, a) { flex: 1 1 0; }
+}
+@keyframes ln-dialog-drawer-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
+@media (prefers-reduced-motion: reduce) { .ln-dialog, dialog.ln-dialog::backdrop { animation: none !important; } }
+@media print { dialog.ln-dialog { display: none !important; } }
+
+/* One disclosure row: text and an arrow on the right; used where a native <details> stays. */
+.ln-summary-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 2.5rem; list-style: none; cursor: pointer; }
+.ln-summary-row::-webkit-details-marker { display: none; }
+.ln-summary-row::after { content: ""; flex: none; width: 16px; height: 16px; background: currentColor; opacity: 0.75; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 16px 16px no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 16px 16px no-repeat; }
+details[open] > .ln-summary-row::after { transform: rotate(180deg); }
+@media (pointer: coarse) { .ln-summary-row { min-height: 2.75rem; } }

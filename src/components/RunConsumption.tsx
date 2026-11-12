@@ -1,4 +1,5 @@
 'use client';
+import { DialogHeader, dialogClass } from "@/components/ui/DialogShell";
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { newClientMutationId } from '@/lib/client-mutation-id';
@@ -42,9 +43,10 @@ export function CompletionConsumptionDialog({ lines, stock, onCancel, onSkip, on
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => { const element = dialog.current; if (element && !element.open) element.showModal(); return () => element?.close(); }, []);
   // A native modal: Escape cancels, focus stays inside, the page behind is inert.
-  return createPortal(<dialog ref={dialog} aria-labelledby="consumption-title" className="ln-material-dialog ln-consumption-dialog bg-surface text-ink" onCancel={event => { event.preventDefault(); onCancel(); }}>
-      <h2 id="consumption-title" className="text-lg font-semibold text-ink">Deduct this run’s use from stock?</h2>
-      <p className="mt-1 text-sm text-muted">Change any actual amount; only ticked lines with a stock item are deducted. Nothing is written until the experiment is completed; you can also complete without deducting and record use later under “Reagents and consumables used in this run”.</p>
+  return createPortal(<dialog ref={dialog} aria-labelledby="consumption-title" data-form="sheet" className={dialogClass("ln-material-dialog ln-consumption-dialog")} onCancel={event => { event.preventDefault(); onCancel(); }}>
+      <DialogHeader title="Deduct this run’s use from stock?" titleId="consumption-title" onClose={onCancel} />
+      <div className="ln-dialog-body">
+      <p className="text-sm text-muted">Change any actual amount; only ticked lines with a stock item are deducted. Nothing is written until the experiment is completed; you can also complete without deducting and record use later under “Reagents and consumables used in this run”.</p>
       <table className="ln-consumption-table mt-3 w-full text-sm">
         <thead><tr><th scope="col"><span className="sr-only">Deduct</span></th><th scope="col">Material</th><th scope="col">Expected use</th><th scope="col">Actual use</th><th scope="col">Stock</th></tr></thead>
         <tbody>{draft.map((item, index) => <tr key={item.line.key}>
@@ -55,11 +57,12 @@ export function CompletionConsumptionDialog({ lines, stock, onCancel, onSkip, on
           <td><select aria-label={`Stock item for ${item.line.name}`} disabled={!item.include} value={item.stockId} onChange={event => patch(index, { stockId: event.target.value })}><option value="">Record only, don’t deduct</option>{stock.map(entry => <option key={entry.id} value={entry.id}>{`${entry.name} · ${entry.lotNumber ?? 'Lot not recorded'}${entry.managementMode !== 'precise' ? ' (not precisely tracked)' : ''}`}</option>)}</select></td>
         </tr>)}</tbody>
       </table>
-      <div className="mt-4 flex flex-wrap justify-end gap-2">
+      {!chosen.length || invalid ? <p role="status" className="mt-3 text-xs text-muted">Tick at least one line and give every ticked line an actual amount of 0 or more; or use “Complete without deducting”.</p> : null}
+      </div>
+      <div className="ln-dialog-footer">
         <Button type="button" onClick={onCancel}>Back</Button>
         <Button type="button" onClick={onSkip}>Complete without deducting</Button>
         <Button type="button" variant="primary" disabled={!chosen.length || invalid} onClick={deduct}>{`Complete and record use (${chosen.length})`}</Button>
       </div>
-      {!chosen.length || invalid ? <p role="status" className="mt-2 text-right text-xs text-muted">Tick at least one line and give every ticked line an actual amount of 0 or more; or use “Complete without deducting”.</p> : null}
   </dialog>, document.body);
 }

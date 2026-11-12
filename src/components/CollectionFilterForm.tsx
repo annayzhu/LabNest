@@ -31,13 +31,13 @@ export function CollectionFilterForm({ path, query, searchPlaceholder, filters, 
     return () => { form?.removeEventListener("change", apply); };
   }, []);
 
-  return <Form action={path} className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-    <label ref={search} className="relative min-w-[200px] flex-1 xl:max-w-sm">
+  return <Form action={path} className="ln-collection-form flex min-w-0 flex-1 flex-wrap items-center gap-2">
+    <label ref={search} className="ln-collection-search relative min-w-[200px] flex-1 xl:max-w-sm">
       <span className="sr-only">Search</span>
       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
       <input type="search" name="q" defaultValue={query ?? ""} placeholder={searchPlaceholder} className="focus-ring h-[var(--ln-control-height-md)] w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm pl-9 pr-[var(--ln-control-padding-x-md)] text-[length:var(--ln-ui-local-search-font-size)] text-ink placeholder:text-muted" />
     </label>
-    {filters.length ? <div>
+    {filters.length ? <div className="ln-collection-filters">
       <button ref={button} type="button" popoverTarget={id} aria-expanded={false} className={`${selectClass} flex cursor-pointer items-center gap-1.5 font-medium ${activeCount ? "border-action-border text-moss" : ""}`}>
         <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />Filters{activeCount ? <span className="rounded-full bg-action-surface px-1.5 text-xs leading-5">{activeCount}</span> : null}
       </button>
@@ -51,7 +51,7 @@ export function CollectionFilterForm({ path, query, searchPlaceholder, filters, 
         </label>)}
       </div>
     </div> : null}
-    {sortOptions.length ? <label>
+    {sortOptions.length ? <label className="ln-collection-sort">
       <span className="sr-only">Sort</span>
       <select name="sort" defaultValue={sort ?? defaultSort ?? sortOptions[0]?.value} className={`${selectClass} max-w-52`}>
         {sortOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}

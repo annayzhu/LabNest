@@ -214,3 +214,8 @@
   .settings-content > .ln-section > :nth-child(2),
   .settings-content > [id] > .ln-section > :nth-child(2) { padding: 0.75rem var(--settings-card-pad); }
 }
+
+/* On a phone the tab row scrolls sideways; its right edge fades to show there is more. */
+@media (max-width: 743.98px) {
+  .settings-nav { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); padding-right: 28px; }
+}

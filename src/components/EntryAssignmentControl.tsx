@@ -1,5 +1,7 @@
 "use client";
 
+import { DialogHeader, dialogClass } from "@/components/ui/DialogShell";
+import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { newClientMutationId } from "@/lib/client-mutation-id";
@@ -86,16 +88,18 @@ export function EntryAssignmentControl({ id, target, initialOpen = false }: { id
     {activeTarget ? activeTarget.invalid ? <span className="text-warning">原归属已失效</span> : <Link href={`/${activeTarget.type === "result" ? "results" : "experiments"}/${activeTarget.id}`} className="text-moss underline">{activeTarget.title}</Link> : <span className="text-muted">未归入</span>}
     {activeTarget ? <PageActionsMenu label="更多归属操作"><button type="button" onClick={() => void open()} className="min-h-11 w-full px-3 text-left text-moss">更改或取消归属…</button></PageActionsMenu> : <button type="button" onClick={() => void open()} className="min-h-10 rounded-[var(--ln-radius-control-md)] border border-hairline px-3 text-moss">归入…</button>}
     {message ? <span role="status">{message}</span> : null}
-    <dialog aria-label="整理快速记录" ref={dialog} className="m-auto w-[min(32rem,calc(100%-24px))] max-h-[calc(100dvh-24px)] overflow-y-auto rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 text-ink backdrop:bg-black/30">
-      <h2 className="text-lg font-semibold">整理快速记录</h2><p className="mt-1 text-sm text-muted">引用同一条原始记录，保留正文、图片和原记录时间。</p>
-      <fieldset disabled={!options || busy}><label className="mt-4 block">归入类型<select aria-label="归入类型" className={formInputClass} value={kind} onChange={event => { setKind(event.target.value as typeof kind); setTargetId(""); setNewTitle(""); setSearch(""); }}><option value="experiment">实验</option><option value="result">实验结果</option></select></label>
+    <dialog aria-label="整理快速记录" ref={dialog} data-form="sheet" className={dialogClass()}>
+      <DialogHeader title="整理快速记录" subtitle="引用同一条原始记录，保留正文、图片和原记录时间。" closeLabel="关闭" closeDisabled={busy} onClose={() => dialog.current?.close()} />
+      <div className="ln-dialog-body">
+      <fieldset disabled={!options || busy}><label className="block">归入类型<select aria-label="归入类型" className={formInputClass} value={kind} onChange={event => { setKind(event.target.value as typeof kind); setTargetId(""); setNewTitle(""); setSearch(""); }}><option value="experiment">实验</option><option value="result">实验结果</option></select></label>
       {kind === "result" ? <label className="mt-3 block">所属实验<select aria-label="所属实验" className={formInputClass} value={experimentId} onChange={event => { setExperimentId(event.target.value); setTargetId(""); }}><option value="">选择实验</option>{options?.experiments.map(item => <option key={item.id} value={item.id}>{item.runCode} · {item.title}</option>)}</select></label> : null}
       <label className="mt-3 block">搜索<input aria-label="搜索归属目标" className={formInputClass} value={search} onChange={event => setSearch(event.target.value)} /></label>
       <label className="mt-3 block">已有目标<select aria-label="已有归属目标" className={formInputClass} value={targetId} onChange={event => { setTargetId(event.target.value); setNewTitle(""); }}><option value="">选择已有目标</option>{(kind === "experiment" ? experiments : results).map(item => <option key={item.id} value={item.id}>{"runCode" in item ? `${item.runCode} · ` : ""}{item.title}{"researchPlan" in item && item.researchPlan ? ` · ${item.researchPlan.title}` : ""}</option>)}</select></label>
       <label className="mt-3 block">或新建{kind === "experiment" ? "实验" : "结果"}并归入<input aria-label="新目标名称" className={formInputClass} value={newTitle} onChange={event => { setNewTitle(event.target.value); setTargetId(""); }} placeholder="目标名称" /></label>
       </fieldset>
       {message ? <p role="alert" className="mt-3 text-error">{message}</p> : null}
-      <div className="mt-5 flex flex-wrap gap-2"><button type="button" disabled={busy || !options || (!targetId && !newTitle) || (kind === "result" && !experimentId)} onClick={() => void save(kind)} className="min-h-11 rounded-[var(--ln-radius-control-md)] bg-moss px-4 text-white disabled:opacity-40">{busy ? "处理中…" : "确认归入"}</button><button type="button" disabled={busy} onClick={() => dialog.current?.close()} className="min-h-11 px-3">取消</button>{activeTarget ? <button type="button" disabled={busy || !options} onClick={() => void save("none")} className="min-h-11 px-3 text-error">取消归入</button> : null}</div>
+      </div>
+      <div className="ln-dialog-footer">{activeTarget ? <Button type="button" data-start variant="destructive" disabled={busy || !options} onClick={() => void save("none")}>取消归入</Button> : null}<Button type="button" disabled={busy} onClick={() => dialog.current?.close()}>取消</Button><Button type="button" variant="primary" disabled={busy || !options || (!targetId && !newTitle) || (kind === "result" && !experimentId)} onClick={() => void save(kind)}>{busy ? "处理中…" : "确认归入"}</Button></div>
     </dialog>
   </div>;
 }

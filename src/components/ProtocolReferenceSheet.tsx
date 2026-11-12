@@ -1,7 +1,7 @@
 'use client';
+import { DialogHeader, dialogClass } from "@/components/ui/DialogShell";
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
 import { ProtocolContentBlockView } from './ProtocolDocumentView';
 import { ChipRenderContext, type ChipRender } from './protocol/ChipText';
 import type { runStepContent } from '@/lib/run-step-content';
@@ -24,9 +24,9 @@ export function ProtocolReferenceSheet({ groups, references, chipContexts, stepR
     element.querySelector(`[data-reference-step="${CSS.escape(stepRef ?? '')}"]`)?.scrollIntoView({ block: 'start' });
     return () => element.close();
   }, [stepRef]);
-  return createPortal(<dialog ref={dialog} aria-labelledby="run-reference-title" className="ln-run-dialog is-sheet bg-surface text-ink" onCancel={event => { event.preventDefault(); onClose(); }} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
-    <header><h2 id="run-reference-title">Protocol original</h2><button type="button" className="focus-ring ln-run-dialog-close" aria-label="Close" onClick={onClose}><X aria-hidden /></button></header>
-    <div className="ln-reference-body run-step-content">{groups.map(group => <section key={group.key} aria-label={group.title}>
+  return createPortal(<dialog ref={dialog} aria-labelledby="run-reference-title" data-form="drawer" className={dialogClass("ln-run-dialog")} onCancel={event => { event.preventDefault(); onClose(); }} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
+    <DialogHeader title="Protocol original" titleId="run-reference-title" onClose={onClose} />
+    <div className="ln-dialog-body ln-reference-body run-step-content">{groups.map(group => <section key={group.key} aria-label={group.title}>
       {groups.length > 1 ? <h3>{group.title}</h3> : <p className="ln-reference-title">{group.title}</p>}
       <ChipRenderContext.Provider value={chipContexts[group.key] ?? null}>{(references[group.key] ?? []).map(section => <section key={section.key}>
         <h4>{section.title}</h4>

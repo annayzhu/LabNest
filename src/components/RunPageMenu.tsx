@@ -1,8 +1,9 @@
 'use client';
+import { DialogHeader, dialogClass } from "@/components/ui/DialogShell";
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { ArrowLeft, CloudDownload, Download, FileText, X } from 'lucide-react';
+import { ArrowLeft, CloudDownload, Download, FileText } from 'lucide-react';
 import { OfflineCalculator } from '@/components/calculators/OfflineCalculator';
 import { preparationChecklist, preparationPlates, type PreparationStock } from '@/lib/run-preparation';
 import { preparationWorkbook } from '@/lib/run-preparation-workbook';
@@ -40,8 +41,8 @@ function OfflineDialog({ onClose }: { onClose: () => void }) {
   const { locale } = useI18n();
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => { const element = dialog.current; if (element && !element.open) element.showModal(); return () => element?.close(); }, []);
-  return createPortal(<dialog ref={dialog} aria-labelledby="run-offline-title" className="ln-run-dialog bg-surface text-ink" onCancel={event => { event.preventDefault(); onClose(); }}>
-    <header><h2 id="run-offline-title">Use this experiment offline</h2><button type="button" className="focus-ring ln-run-dialog-close" aria-label="Close" onClick={onClose}><X aria-hidden /></button></header>
-    <OfflineCalculator run panel zh={locale === 'zh'} />
+  return createPortal(<dialog ref={dialog} aria-labelledby="run-offline-title" data-form="sheet" className={dialogClass("ln-run-dialog")} onClick={event => { if (event.target === event.currentTarget) onClose(); }} onCancel={event => { event.preventDefault(); onClose(); }}>
+    <DialogHeader title="Use this experiment offline" titleId="run-offline-title" onClose={onClose} />
+    <div className="ln-dialog-body"><OfflineCalculator run panel zh={locale === 'zh'} /></div>
   </dialog>, document.body);
 }

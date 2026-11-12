@@ -19,6 +19,18 @@ export function TopBar() {
   const searchParams = useSearchParams();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
+  const { locale } = useI18n();
+  // On a phone the bar already names the module; a page heading that says the same is hidden (kept for screen readers).
+  useEffect(() => {
+    const check = () => {
+      const bar = document.querySelector("[data-topbar-title]")?.textContent?.trim();
+      const page = document.querySelector(".page-header-title")?.textContent?.trim();
+      document.documentElement.toggleAttribute("data-page-title-repeats", Boolean(bar && page && bar === page));
+    };
+    check();
+    const timers = [window.setTimeout(check, 120), window.setTimeout(check, 600)];
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [pathname, locale]);
   const query = pathname === "/search" ? searchParams.get("q") ?? "" : "";
 
   return (
@@ -48,7 +60,7 @@ export function TopBar() {
                 <ArrowLeft className="h-5 w-5" aria-hidden />
               </button>
             )}
-            <span className="truncate text-lg font-semibold text-ink">{sectionLabel(pathname)}</span>
+            <span data-topbar-title className="truncate text-lg font-semibold text-ink">{sectionLabel(pathname)}</span>
           </div>
           <div className="flex shrink-0 items-center gap-1">
             <AiAssistantButton large />

@@ -1,12 +1,13 @@
 "use client";
 
+import { DialogHeader } from "@/components/ui/DialogShell";
 import { useRunStepSelection } from "./RunStepSelection";
 import Link from "next/link";
 import { useI18n } from "@/components/I18nProvider";
 import { ProtocolContentBlockView } from "@/components/ProtocolDocumentView";
 import { newClientMutationId } from "@/lib/client-mutation-id";
 
-import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, CheckCircle2, ChevronDown, Circle, Play, Save, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, CheckCircle2, ChevronDown, Circle, Play, Save } from "lucide-react";
 import { Fragment, useActionState, useEffect, useMemo, useState, useRef } from "react";
 import { saveProtocolRunProgress, type ProtocolRunProgressState } from "@/app/experiments/[id]/run/actions";
 import { formLabelClass, formTextareaClass } from "@/components/forms";
@@ -326,7 +327,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
 
           <div className="run-step-content mt-3 min-w-0 space-y-3" data-run-step-content><RunChipContext.Provider value={runChips.get(selectedStep.id) ?? null}><ChipRenderContext.Provider value={chipContexts[selectedStep.richContent?.chipVersion ?? ''] ?? null}>{selectedStep.richContent?.blocks.length?selectedStep.richContent.blocks.map(block=><ProtocolContentBlockView key={block.id} block={block} executionContext/>):<><p className="whitespace-pre-wrap text-base leading-7 text-graphite">{selectedStep.description}</p>{selectedStep.richContent?.source === "legacy-text" ? <p className="text-xs text-warning">{zh ? "此旧步骤的完整格式尚未确认，可点“原文”查看。" : "Full formatting for this older step is unverified. See the original."}</p> : null}</>}{runChips.get(selectedStep.id) ? <RunStepMixes step={runChips.get(selectedStep.id)!} mixes={structured?.plan.runMixes[selectedStep.id] ?? []} /> : null}</ChipRenderContext.Provider></RunChipContext.Provider></div>
           <RunStepNotes blocks={selectedStep.richContent?.notesAfter} className="mt-3" />
-          <div data-run-tools className="mt-3 grid grid-cols-2 min-[360px]:grid-cols-3 gap-2">{editable ? <StepCalculator experimentId={experimentId} stepId={selectedStep.id} /> : null}
+          <div data-run-tools className="mt-3 grid grid-cols-2 min-[360px]:grid-cols-3 gap-2">{editable ? <StepCalculator experimentId={experimentId} stepId={selectedStep.id} stepTitle={selectedStep.title} /> : null}
           <StepTimerControls compact key={selectedStep.id} experimentId={experimentId} step={selectedStep} executionPlanRevision={structured?.plan.revision} disabled={!editable || Boolean(structured?.steps[selectedStep.id] && (selectedStep.completed || structured.steps[selectedStep.id].blocked))}/>
           <StepRecordMenu experimentId={experimentId} step={selectedStep}/></div>
           <StructuredStepRecord key={`${selectedStep.id}:${structured?.plan.revision}`} experimentId={experimentId} stepId={selectedStep.id} structured={structured} editable={editable} completed={selectedStep.completed}>{record => <>
@@ -381,7 +382,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
         </div>
       )}
 
-      {hasSteps && remaining===0 && editable ? <details className="mx-4 mb-3 border-t border-hairline pt-2"><summary className="focus-ring cursor-pointer text-sm font-medium">{zh?"审核并完成本次实验":"Review and complete run"}</summary><label className="my-2 flex min-h-11 items-start gap-2 text-sm"><input type="checkbox" checked={reviewConfirmed} onChange={event=>setReviewConfirmed(event.target.checked)} className="mt-1 h-4 w-4"/>{zh?"已核对实验记录和未解决的偏差":"I reviewed the run evidence and unresolved deviations."}</label><button type="submit" name="intent" value="complete" disabled={pending||!reviewConfirmed} className={primaryButton}>{zh?"完成实验":"Complete run"}</button></details>:null}
+      {hasSteps && remaining===0 && editable ? <details className="mx-4 mb-3 border-t border-hairline pt-2"><summary className="ln-summary-row focus-ring text-sm font-medium">{zh?"审核并完成本次实验":"Review and complete run"}</summary><label className="my-2 flex min-h-11 items-start gap-2 text-sm"><input type="checkbox" checked={reviewConfirmed} onChange={event=>setReviewConfirmed(event.target.checked)} className="mt-1 h-4 w-4"/>{zh?"已核对实验记录和未解决的偏差":"I reviewed the run evidence and unresolved deviations."}</label><button type="submit" name="intent" value="complete" disabled={pending||!reviewConfirmed} className={primaryButton}>{zh?"完成实验":"Complete run"}</button></details>:null}
 
       {state.error ? <p role="alert" className="mx-4 mb-4 flex gap-2 rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />{state.error}</p> : null}
       {state.message ? <p role="status" className="mx-4 mb-4 rounded-[var(--ln-radius-control-lg)] border border-success/30 bg-success-surface px-3 py-2 text-sm text-success">{state.message}{state.savedAt ? ` Saved at ${new Date(state.savedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · Synced` : ""}</p> : null}
@@ -395,12 +396,9 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
 
     {allStepsOpen ? <div className="ln-modal-layer fixed inset-0 z-50 tablet:hidden">
       <button type="button" aria-label="Close all steps" onClick={() => setAllStepsOpen(false)} className="ln-modal-backdrop absolute inset-0 bg-ink/25 backdrop-blur-[1px]" />
-      <section role="dialog" aria-modal="true" aria-labelledby="all-steps-title" className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[82dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-soft">
-        <div className="sticky top-0 flex items-center justify-between gap-3 border-b border-hairline bg-surface/95 px-4 py-3 backdrop-blur">
-          <div><h2 id="all-steps-title" className="text-xl font-semibold text-ink">All steps</h2><p className="mt-0.5 text-xs text-muted">{completedIds.size} of {steps.length} complete</p></div>
-          <button type="button" onClick={() => setAllStepsOpen(false)} aria-label="Close all steps" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-hairline bg-warm text-muted"><X className="h-4 w-4" aria-hidden /></button>
-        </div>
-        <ol className="divide-y divide-hairline">
+      <section role="dialog" aria-modal="true" aria-labelledby="all-steps-title" data-form="sheet" className="ln-dialog absolute inset-x-0 bottom-0 max-h-[82dvh]">
+        <DialogHeader title="All steps" titleId="all-steps-title" subtitle={zh ? `已完成 ${completedIds.size} / ${steps.length} 步` : `${completedIds.size} of ${steps.length} complete`} closeLabel="Close all steps" onClose={() => setAllStepsOpen(false)} />
+        <ol className="ln-dialog-body divide-y divide-hairline" data-flush>
           {steps.map((step, index) => <li key={`sheet-step-${step.id}`}><button type="button" onClick={() => { setSelectedStepId(step.id); setAllStepsOpen(false); }} className="focus-ring flex min-h-14 w-full items-start gap-3 px-4 py-3 text-left text-sm">
             <span className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs ${completedIds.has(step.id) ? "border-moss bg-moss text-white" : step.id === currentStep?.id ? "border-action-border bg-action-surface text-moss" : "border-hairline text-muted"}`}>{completedIds.has(step.id) ? <CheckCircle2 className="h-4 w-4" aria-hidden /> : index + 1}</span>
             <span className="min-w-0"><span className="block font-semibold text-ink">{step.title}</span><span className="mt-1 block text-xs text-muted">{step.groupTitle}</span></span>
@@ -435,7 +433,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
                 <div>
                   <div className="ln-step-tools-row" data-step-tools>
                     {structured?.steps[step.id] ? <StepTimerControls compact experimentId={experimentId} step={step} executionPlanRevision={structured.plan.revision} disabled={!editable || step.completed || structured.steps[step.id].blocked}/> : null}
-                    {editable ? <StepCalculator experimentId={experimentId} stepId={step.id}/> : null}
+                    {editable ? <StepCalculator experimentId={experimentId} stepId={step.id} stepTitle={step.title}/> : null}
                     <Link onClick={() => window.dispatchEvent(new Event("labnest:preserve-run-draft"))} href={`/entries/new?mode=capture&experiment=${experimentId}&step=${step.id}`} className="focus-ring ln-original-link">Jot a note</Link>
                     {originalButton(step)}
                   </div>

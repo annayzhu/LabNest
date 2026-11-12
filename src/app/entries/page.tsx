@@ -96,8 +96,8 @@ export default async function EntriesPage({ searchParams }: { searchParams?: Pag
                       <h2 id={`entries-${group.key}`} className="text-base font-semibold tracking-[-0.02em] text-ink sm:text-xl">
                         {group.label}
                       </h2>
-                      <span className="font-mono text-xs text-muted">
-                        {group.entries.length} {group.entries.length === 1 ? "entry" : "entries"}
+                      <span className="text-xs tabular-nums text-muted" data-i18n-ignore>
+                        {locale === "zh" ? `${group.entries.length} 条` : `${group.entries.length} ${group.entries.length === 1 ? "entry" : "entries"}`}
                       </span>
                     </div>
                     <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 2xl:grid-cols-3">

@@ -94,8 +94,10 @@ export function DataTable<T>({
                       />
                     </td>
                   ) : null}
-                  {columns.map((column) => (
-                    <td key={column.key} className={column.className}>
+                  {columns.map((column, index) => (
+                    <td key={column.key} className={column.className} data-primary={index === 0 ? "" : undefined} data-empty={column.empty?.(row) ? "" : undefined}>
+                      {/* Shown only when a phone lays the row out as a card. */}
+                      {index > 0 ? <span className="ln-data-table-cell-label" aria-hidden>{column.header}</span> : null}
                       {column.render(row)}
                     </td>
                   ))}

@@ -1,4 +1,5 @@
 'use client';
+import { DialogHeader, dialogClass } from "@/components/ui/DialogShell";
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import QRCode from 'qrcode';
@@ -52,11 +53,9 @@ function FieldDevicesDialog({ experimentId, title, watch, onClose }: { experimen
   }, [local, attempt]);
   const address = addresses.includes(selected) ? selected : addresses.includes(window.location.hostname) ? window.location.hostname : addresses[0];
   const origin = local ? lanPortOrigin(address, port, window.location.protocol) : window.location.origin;
-  return createPortal(<dialog ref={dialog} aria-labelledby="field-devices-title" className="ln-field-devices bg-surface text-ink" onCancel={event => { event.preventDefault(); onClose(); }}>
-    <header>
-      <div className="min-w-0"><h2 id="field-devices-title">Continue on another device</h2><p>{title}</p></div>
-      <Button type="button" variant="ghost" onClick={onClose}>Close</Button>
-    </header>
+  return createPortal(<dialog ref={dialog} aria-labelledby="field-devices-title" data-form="sheet" className={dialogClass("ln-field-devices")} onClick={event => { if (event.target === event.currentTarget) onClose(); }} onCancel={event => { event.preventDefault(); onClose(); }}>
+    <DialogHeader title="Continue on another device" titleId="field-devices-title" subtitle={title} onClose={onClose} />
+    <div className="ln-dialog-body">
     {local ? <div className="ln-field-lan is-asking">
       <p>LAN address is detected automatically. No IP address is needed.</p>
       {loading ? <p role="status">Detecting the current network…</p> : address ? <>
@@ -72,6 +71,7 @@ function FieldDevicesDialog({ experimentId, title, watch, onClose }: { experimen
     <div className="ln-field-devices-cards">
       <TabletCard origin={origin} experimentId={experimentId} />
       <WatchCard origin={origin} experimentId={experimentId} watch={watch} />
+    </div>
     </div>
   </dialog>, document.body);
 }

@@ -1,9 +1,10 @@
 "use client";
 
+import { DialogHeader } from "@/components/ui/DialogShell";
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { AlertTriangle, Archive, RotateCcw, Trash2, X } from "lucide-react";
+import { AlertTriangle, Archive, RotateCcw, Trash2 } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
 import { formInputClass } from "@/components/forms";
 import { Button, type ButtonSize } from "@/components/ui/Button";
@@ -79,20 +80,10 @@ export function RecordLifecycleControl({
           }}
         >
           <div className="ln-modal-backdrop pointer-events-none absolute inset-0 bg-ink/35 backdrop-blur-[2px]" aria-hidden />
-          <section role="dialog" aria-modal="true" aria-labelledby={`record-lifecycle-${id}`} className="ln-modal-card relative w-full max-w-lg rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-soft">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-medium text-error">
-                  {locale === "zh" ? "记录生命周期" : "Record lifecycle"}
-                </p>
-                <h2 id={`record-lifecycle-${id}`} className="mt-1 text-xl font-semibold text-ink">
-                  {locale === "zh" ? `移入回收站或归档${label}` : `Recycle or archive this ${label}?`}
-                </h2>
-              </div>
-              <button type="button" aria-label="Close record lifecycle dialog" disabled={pending} onClick={() => setOpen(false)} className="focus-ring rounded-[var(--ln-radius-control-sm)] p-1.5 text-muted hover:bg-stone hover:text-ink"><X className="h-4 w-4" /></button>
-            </div>
+          <section role="dialog" aria-modal="true" aria-labelledby={`record-lifecycle-${id}`} className="ln-dialog relative w-full max-w-lg">
+            <DialogHeader title={locale === "zh" ? `移入回收站或归档${label}` : `Recycle or archive this ${label}?`} titleId={`record-lifecycle-${id}`} closeLabel="Close record lifecycle dialog" onClose={() => setOpen(false)} closeDisabled={pending} /><div className="ln-dialog-body">
 
-            <div className="mt-4 rounded-[var(--ln-radius-control-lg)] border border-error/25 bg-error-surface px-3 py-3">
+            <div className="rounded-[var(--ln-radius-control-lg)] border border-error/25 bg-error-surface px-3 py-3">
               <p className="font-medium text-error">{identifier} · {title}</p>
               <p className="mt-1 text-sm leading-6 text-graphite">
                 {locale === "zh"
@@ -154,7 +145,7 @@ export function RecordLifecycleControl({
             </div>
             {archiveState.error ? <ErrorMessage message={archiveState.error} /> : null}
             {restoreState.error ? <ErrorMessage message={restoreState.error} /> : null}
-          </section>
+          </div></section>
         </div>, document.body,
       ) : null}
     </>

@@ -18,7 +18,7 @@ export default async function CalculatorToolPage({
   const { calculatorId } = await params;
   if (!getCalculatorCatalog().some((tool) => tool.id === calculatorId)) notFound();
   const query = await searchParams;
-  const allowed = new Set([...getCalculatorDefinition(calculatorId).fields.flatMap(field => [field.key, `${field.key}Unit`]), "record", "experimentId", "experimentStepId", "fold", "stockToTargetFactor", "finalVolumeMl", "volumeUnit", "plates"]);
+  const allowed = new Set([...getCalculatorDefinition(calculatorId).fields.flatMap(field => [field.key, `${field.key}Unit`]), "record", "experimentId", "experimentStepId", "contextLabel", "fold", "stockToTargetFactor", "finalVolumeMl", "volumeUnit", "plates"]);
   const initialInputs = Object.fromEntries(
     Object.entries(query)
       .filter(([key, value]) => allowed.has(key) && typeof value === "string" && value.length <= 10000)

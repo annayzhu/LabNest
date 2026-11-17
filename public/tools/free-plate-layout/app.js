@@ -30,7 +30,7 @@
   ]);
   const I18N = {
     zh: {
-            selectionHelp: "单击单选，Ctrl/⌘ 单击逐个增减，拖动框选，Shift 单击连选；单击空白处取消选择。", selectAll: "全选", invert: "反选", deselect: "取消选择", clearWells: "清空所选孔",
+            selectionHelp: "单击单选，Ctrl/⌘ 单击逐个增减，拖动框选，Shift 单击连选；单击空白处取消选择。按住已选孔拖动可移动，落点上的孔会换到原位置；Ctrl/⌘ C 复制，指向目标孔后 Ctrl/⌘ V 粘贴。", selectAll: "全选", invert: "反选", deselect: "取消选择", clearWells: "清空所选孔",
       colorBy: "着色", backup: "备份项目", excelTemplate: "当前板 CSV 模板", import: "导入孔板表格", confirmImport: "确认导入", confirmDelete: "确认删除", print: "打印 / PDF", dimensionsTitle: "参数维度",
       newDimension: "新维度名称", newDimensionPlaceholder: "例如：细胞系、药物、批次", type: "类型", add: "＋ 添加", assignTitle: "为所选孔赋值",
  applySelected: "应用到所选孔", clearChecked: "清除勾选参数",
@@ -45,7 +45,7 @@
       defaultNames: { sample: "样本", treatment: "处理", dose: "剂量", timepoint: "时间点", replicate: "重复", value: "原始值" },
     },
     en: {
-            selectionHelp: "Click for one well, Ctrl/⌘-click to add or remove, drag to box-select, or Shift-click for a range. Click empty space to deselect.", selectAll: "All", invert: "Invert", deselect: "Deselect", clearWells: "Clear wells",
+            selectionHelp: "Click for one well, Ctrl/⌘-click to add or remove, drag to box-select, or Shift-click for a range. Click empty space to deselect. Drag a selected well to move the selection; wells where it lands swap into its old place. Ctrl/⌘ C copies; point at a well and press Ctrl/⌘ V to paste.", selectAll: "All", invert: "Invert", deselect: "Deselect", clearWells: "Clear wells",
       colorBy: "Color", backup: "Back up project", excelTemplate: "Current plate CSV template", import: "Import plate tables", confirmImport: "Confirm import", confirmDelete: "Confirm delete", print: "Print / PDF", dimensionsTitle: "Parameters",
       newDimension: "New parameter", newDimensionPlaceholder: "e.g. Cell line, drug, batch", type: "Type", add: "+ Add", assignTitle: "Assign selected wells",
  applySelected: "Apply to wells", clearChecked: "Clear checked",
@@ -75,6 +75,30 @@
     { id: "replicate", name: "重复", type: "number" },
     { id: "value", name: "原始值", type: "number" },
   ];
+  // Inside LabNest (same origin) the planner follows the current system style; standalone it keeps its own colours.
+  const HOST_THEME_KEY = "labnest.tool-theme.v1";
+  function applyHostTheme() {
+    let payload = null;
+    try { payload = JSON.parse(localStorage.getItem(HOST_THEME_KEY) || "null"); } catch { payload = null; }
+    const tokens = payload?.version === 1 ? payload.tokens : null;
+    const valid = tokens && Object.values(tokens).every((value) => /^#[0-9a-f]{6}$/i.test(String(value)));
+    const root = document.documentElement;
+    const mapping = {
+      "--canvas": "paper", "--canvas-deep": "stone", "--surface": "warm", "--surface-soft": "stone",
+      "--ink": "ink", "--ink-soft": "graphite", "--muted": "muted", "--line": "hairline", "--line-strong": "borderStrong",
+      "--pine": "accent", "--pine-strong": "accentHover", "--pine-soft": "accentSurface", "--accent": "accent",
+      "--plate-tray-a": "stone", "--plate-tray-b": "panel", "--plate-tray-border": "borderStrong",
+      "--plate-empty": "warm", "--plate-empty-border": "accentBorder", "--plate-filled": "accentSurfaceHover",
+    };
+    for (const [property, token] of Object.entries(mapping)) {
+      if (valid) root.style.setProperty(property, tokens[token]);
+      else root.style.removeProperty(property);
+    }
+    root.dataset.hostTheme = valid ? String(payload.themeId || "") : "";
+  }
+  applyHostTheme();
+  window.addEventListener("storage", (event) => { if (event.key === HOST_THEME_KEY || event.key === null) applyHostTheme(); });
+
   const elements = Object.fromEntries(
     [
       "projectName", "plateNameError", "clearPlateLayoutButton", "saveStatus", "undoButton", "redoButton", "selectionCount",
@@ -101,6 +125,10 @@
   let workspaceUndoStack = [];
   let workspaceRedoStack = [];
   let pointerSession = null;
+  let wellClipboard = null;
+  let hoveredWell = null;
+  // After a click on the plate, ⌘C/⌘V act on wells even if the page still reports an old text selection.
+  let lastPointerOnPlate = false;
   let plateZoom = 1;
   let plateFit = true;
   let plateCellAspect = 1;
@@ -542,6 +570,8 @@
   };
   const PLATE_AXIS_WIDTH = 24;
   const PLATE_AXIS_HEIGHT = 20;
+  // The plate tray: padding plus border on each side of the grid (see .plate-grid in styles.css).
+  const PLATE_TRAY_INSET = 10;
   const PLATE_PRINT_FRAME = { width: 1040, height: 680 };
   // A fitted well follows the window's shape within limits, so neither direction is left blank.
   const MAX_CELL_ASPECT = 1.4;
@@ -572,7 +602,7 @@
     // Below the desktop layout the page scrolls, so only the width limits the plate.
     const widthOnly = !frame && window.matchMedia("(max-width: 1023px)").matches;
     const height = frame?.height ?? scroller.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
-    const room = (total, count, axis) => Math.max(8, (total - axis - geometry.gap * count) / count);
+    const room = (total, count, axis) => Math.max(8, (total - PLATE_TRAY_INSET * 2 - axis - geometry.gap * count) / count);
     const fitWidth = room(width, columns, PLATE_AXIS_WIDTH);
     const fitHeight = widthOnly ? fitWidth : room(height, rows, PLATE_AXIS_HEIGHT);
     let cellHeight;
@@ -632,7 +662,7 @@
         const params = wells[wellId]?.params || {};
         const entries = getDisplayEntries(params);
         const colorValue = colorDimension ? params[colorDimension] : undefined;
-        const colors = colorValue !== undefined && colorValue !== "" ? colorFor(colorValue) : ["#fafbf8", "#4d5955", "#dfe5e1"];
+        const colors = colorValue !== undefined && colorValue !== "" ? colorFor(colorValue) : ["var(--plate-empty)", "var(--ink-soft)", "var(--plate-empty-border)"];
         const primary = entries[0] ? displayValue(entries[0][0], entries[0][1]) : "";
         const secondary = entries[1] ? displayValue(entries[1][0], entries[1][1]) : "";
         const tertiary = entries[2] ? displayValue(entries[2][0], entries[2][1]) : "";
@@ -651,7 +681,166 @@
       }
     }
     elements.plateGrid.innerHTML = html.join("");
+    renderPlateHints();
     renderLegend();
+  }
+
+  // Drag-to-swap and copy/paste. Highlights and edits come from the same Core plan.
+  const MODIFIER_KEY = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl+";
+  const HINT_CLASSES = ["drop-landing", "drop-swap", "drop-invalid", "paste-target", "paste-overwrite", "paste-invalid"];
+
+  function markWells(wellIds, className) {
+    for (const wellId of wellIds) elements.plateGrid.querySelector(`[data-well="${wellId}"]`)?.classList.add(className);
+  }
+
+  function renderPlateHints() {
+    elements.plateGrid.querySelectorAll(HINT_CLASSES.map((name) => `.${name}`).join(",")).forEach((well) => well.classList.remove(...HINT_CLASSES));
+    if (pointerSession?.move) {
+      const plan = pointerSession.plan;
+      if (!plan || plan.unchanged) return;
+      if (!plan.ok) { markWells(plan.landing, "drop-invalid"); return; }
+      markWells(plan.landing, "drop-landing");
+      markWells(plan.displaced, "drop-swap");
+      return;
+    }
+    if (!wellClipboard || pointerSession) return;
+    const plan = currentPastePlan();
+    if (!plan) return;
+    const targets = plan.targets.map((target) => target.wellId);
+    if (!plan.ok) { markWells(targets, "paste-invalid"); return; }
+    const overwritten = new Set(plan.overwritten);
+    markWells(targets.filter((wellId) => !overwritten.has(wellId)), "paste-target");
+    markWells(plan.overwritten, "paste-overwrite");
+  }
+
+  function wellHasData(well) {
+    return Object.values(well?.params || {}).some((value) => value !== "" && value !== undefined && value !== null);
+  }
+
+  function updateMoveDrag(event) {
+    elements.plateCanvas.classList.add("is-moving");
+    const scrollRect = elements.plateScroll.getBoundingClientRect();
+    const edge = 28;
+    if (event.clientX < scrollRect.left + edge) elements.plateScroll.scrollLeft -= 16;
+    else if (event.clientX > scrollRect.right - edge) elements.plateScroll.scrollLeft += 16;
+    if (event.clientY < scrollRect.top + edge) elements.plateScroll.scrollTop -= 16;
+    else if (event.clientY > scrollRect.bottom - edge) elements.plateScroll.scrollTop += 16;
+    const inside = event.clientX >= scrollRect.left && event.clientX <= scrollRect.right && event.clientY >= scrollRect.top && event.clientY <= scrollRect.bottom;
+    const target = inside ? document.elementFromPoint(event.clientX, event.clientY)?.closest?.(".well") : null;
+    // Gaps between wells keep the last target; leaving the plate cancels the drop.
+    if (!inside) pointerSession.plan = null;
+    else if (target && elements.plateGrid.contains(target)) {
+      pointerSession.plan = Core.planSwap(project.plateSize, [...selection], pointerSession.startWell, target.dataset.well);
+    }
+    renderPlateHints();
+  }
+
+  function finishMoveDrag(session, drop) {
+    const plan = session.plan;
+    renderPlateHints();
+    if (!drop || !plan || plan.unchanged) return;
+    if (!plan.ok) {
+      showToast(bilingual("有孔会移出孔板，未移动", "Some wells would leave the plate; nothing moved"));
+      return;
+    }
+    const swapped = plan.displaced.filter((wellId) => wellHasData(currentWells()[wellId])).length;
+    selection = new Set(plan.landing);
+    selectionAnchor = plan.landing[0];
+    commit(() => {
+      project.plates[project.plateSize] = Core.applyMoves(currentWells(), plan.moves);
+    });
+    showToast(swapped
+      ? bilingual(`已移动 ${plan.landing.length} 个孔，与 ${swapped} 个孔交换位置`, `Moved ${plan.landing.length} wells and swapped ${swapped}`)
+      : bilingual(`已移动 ${plan.landing.length} 个孔`, `Moved ${plan.landing.length} wells`));
+  }
+
+  function cancelMoveDrag() {
+    const session = pointerSession;
+    pointerSession = null;
+    elements.plateCanvas.classList.remove("is-moving");
+    if (elements.plateCanvas.hasPointerCapture?.(session.pointerId)) elements.plateCanvas.releasePointerCapture(session.pointerId);
+    renderPlateHints();
+  }
+
+  function plateKeysAvailable(event) {
+    const target = event.target;
+    if (target instanceof HTMLElement && (target.closest("input, textarea, select, [contenteditable='true']"))) return false;
+    if (!elements.liquidDrawer.hidden || !elements.projectFileDialog.hidden) return false;
+    if (lastPointerOnPlate || elements.plateCanvas.contains(document.activeElement)) return true;
+    return !String(window.getSelection?.() || "").trim();
+  }
+
+  function pasteAnchor() {
+    if (hoveredWell) return hoveredWell;
+    return Core.makeWellIds(project.plateSize).find((wellId) => selection.has(wellId)) || null;
+  }
+
+  function currentPastePlan() {
+    const anchor = pasteAnchor();
+    if (!anchor || !wellClipboard) return null;
+    const wells = currentWells();
+    const occupied = Object.keys(wells).filter((wellId) => wellHasData(wells[wellId]));
+    return Core.planPaste(project.plateSize, wellClipboard, anchor, occupied);
+  }
+
+  function copySelectedWells() {
+    const wells = currentWells();
+    // Parameters travel by name so a copy can be pasted onto another plate of this workspace.
+    wellClipboard = Core.copyShape(project.plateSize, [...selection], (wellId) => {
+      if (!wellHasData(wells[wellId])) return null;
+      return project.dimensions
+        .filter((dimension) => wells[wellId].params[dimension.id] !== undefined && wells[wellId].params[dimension.id] !== "")
+        .map((dimension) => ({ id: dimension.id, name: dimension.name, type: dimension.type, unit: dimension.unit || "", value: wells[wellId].params[dimension.id] }));
+    });
+    const filled = wellClipboard.items.filter((item) => item.value).length;
+    showToast(filled
+      ? bilingual(`已复制 ${filled} 个孔，指向目标孔后按 ${MODIFIER_KEY}V 粘贴`, `Copied ${filled} wells. Point at a well and press ${MODIFIER_KEY}V`)
+      : bilingual("所选孔都是空的，没有可复制的内容", "The selected wells are empty; nothing to copy"));
+    if (!filled) wellClipboard = null;
+    renderPlateHints();
+  }
+
+  function dimensionForPaste(entry) {
+    const byName = (dimension) => dimension.name.trim().toLocaleLowerCase() === entry.name.trim().toLocaleLowerCase();
+    // A value only keeps its meaning in a parameter of the same type and, for numbers, the same unit (10 µM is not 10 nM).
+    const fits = (dimension) => dimension.type === entry.type && (entry.type !== "number" || (dimension.unit || "") === entry.unit);
+    const sameId = project.dimensions.find((dimension) => dimension.id === entry.id);
+    if (sameId && fits(sameId) && (byName(sameId) || dimensionDisplayName(sameId) === dimensionDisplayName(entry))) return sameId;
+    const named = project.dimensions.find((dimension) => byName(dimension) && fits(dimension));
+    if (named) return named;
+    const id = sameId ? `dimension_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}` : entry.id;
+    const created = { id, name: entry.name, type: entry.type === "number" ? "number" : "text", unit: entry.unit || "" };
+    project.dimensions.push(created);
+    if (!project.colorDimension) project.colorDimension = id;
+    return created;
+  }
+
+  function pasteCopiedWells() {
+    const plan = currentPastePlan();
+    if (!plan) {
+      showToast(bilingual("先选中或指向要粘贴到的孔", "Select or point at the well to paste into"));
+      return;
+    }
+    if (!plan.ok) {
+      showToast(bilingual(`有 ${plan.outside} 个孔会超出孔板，未粘贴`, `${plan.outside} wells would fall off the plate; nothing pasted`));
+      return;
+    }
+    selection = new Set(plan.targets.map((target) => target.wellId));
+    selectionAnchor = plan.targets[0].wellId;
+    const dimensionCount = project.dimensions.length;
+    commit(() => {
+      const wells = currentWells();
+      for (const { wellId, value } of plan.targets) {
+        const params = {};
+        for (const entry of value) params[dimensionForPaste(entry).id] = entry.value;
+        wells[wellId] = { params };
+      }
+    });
+    const added = project.dimensions.length - dimensionCount;
+    const parts = [bilingual(`已粘贴 ${plan.targets.length} 个孔`, `Pasted ${plan.targets.length} wells`)];
+    if (plan.overwritten.length) parts.push(bilingual(`覆盖 ${plan.overwritten.length} 个`, `replaced ${plan.overwritten.length}`));
+    if (added) parts.push(bilingual(`新建 ${added} 个参数`, `added ${added} parameters`));
+    showToast(`${parts.join(bilingual("，", ", "))}${bilingual(`；${MODIFIER_KEY}Z 撤销`, `. ${MODIFIER_KEY}Z to undo`)}`);
   }
 
   function renderLegend() {
@@ -2284,7 +2473,7 @@
       const miniWells = Core.makeWellIds(plate.plateSize).map((wellId) => {
         const value = dimension ? wells[wellId]?.params?.[dimension.id] : "";
         const filled = wells[wellId] && Object.values(wells[wellId].params || {}).some((item) => item !== "" && item !== undefined);
-        const background = value !== "" && value !== undefined ? colorFor(value, overviewColorName)[0] : filled ? "#dfe9e7" : "#f8f5f0";
+        const background = value !== "" && value !== undefined ? colorFor(value, overviewColorName)[0] : filled ? "var(--plate-filled)" : "var(--plate-empty)";
         return `<i class="overview-mini-well" style="background:${background}" title="${wellId}${value !== "" && value !== undefined ? ` · ${escapeHtml(value)}` : ""}"></i>`;
       }).join("");
       return `<button class="overview-plate${plate.id === project.id ? " active" : ""}" type="button" data-overview-plate="${escapeHtml(plate.id)}"><span class="overview-plate-heading"><strong>${escapeHtml(plate.name)}</strong><span>${plate.plateSize} ${bilingual("孔", "well")}</span></span><span class="overview-mini-grid" style="grid-template-columns:repeat(${spec.columns},1fr)">${miniWells}</span><span class="overview-plate-meta">${Object.keys(wells).length} / ${plate.plateSize} ${bilingual("孔已有信息", "wells assigned")}</span></button>`;
@@ -2466,6 +2655,7 @@
   });
 
   document.addEventListener("pointerdown", (event) => {
+    lastPointerOnPlate = Boolean(event.target.closest?.("#plateCanvas"));
     if (clearConfirmationTimer && !event.target.closest("#clearWellsButton")) resetClearConfirmation();
     if (plateLayoutClearTimer && !event.target.closest("#clearPlateLayoutButton")) resetPlateLayoutClearConfirmation();
     if (dimensionDeleteTimer && !event.target.closest(".dimension-delete")) resetDimensionDeleteConfirmation();
@@ -2485,9 +2675,24 @@
       shiftKey: event.shiftKey,
       original: new Set(selection),
       dragging: false,
+      // Pressing on a well that is already selected moves the selection; anywhere else box-selects.
+      move: Boolean(well && selection.has(well.dataset.well) && !event.ctrlKey && !event.metaKey && !event.shiftKey),
+      plan: null,
     };
     elements.plateCanvas.setPointerCapture(event.pointerId);
     event.preventDefault();
+  });
+
+  elements.plateGrid.addEventListener("pointerover", (event) => {
+    const next = event.target.closest(".well")?.dataset.well || null;
+    if (next === hoveredWell) return;
+    hoveredWell = next;
+    if (wellClipboard && !pointerSession) renderPlateHints();
+  });
+  elements.plateCanvas.addEventListener("pointerleave", () => {
+    if (!hoveredWell) return;
+    hoveredWell = null;
+    if (wellClipboard && !pointerSession) renderPlateHints();
   });
 
   elements.zoomInButton.addEventListener("click", () => stepPlateZoom(0.1));
@@ -2505,6 +2710,10 @@
     const distance = Math.hypot(event.clientX - pointerSession.startX, event.clientY - pointerSession.startY);
     if (distance < 5 && !pointerSession.dragging) return;
     pointerSession.dragging = true;
+    if (pointerSession.move) {
+      updateMoveDrag(event);
+      return;
+    }
     const canvasRect = elements.plateCanvas.getBoundingClientRect();
     const minX = Math.min(pointerSession.startX, event.clientX);
     const maxX = Math.max(pointerSession.startX, event.clientX);
@@ -2532,6 +2741,11 @@
     const session = pointerSession;
     pointerSession = null;
     elements.selectionBox.hidden = true;
+    elements.plateCanvas.classList.remove("is-moving");
+    if (session.move && session.dragging) {
+      finishMoveDrag(session, event.type !== "pointercancel");
+      return;
+    }
     if (!session.dragging && session.startWell) {
       if (session.shiftKey && selectionAnchor) {
         const range = Core.rangeSelection(project.plateSize, selectionAnchor, session.startWell);
@@ -2550,6 +2764,8 @@
     } else if (!session.dragging) {
       selection = new Set();
       selectionAnchor = null;
+      wellClipboard = null;
+      renderPlateHints();
     } else if (session.dragging) {
       selectionAnchor = [...selection].at(-1) || selectionAnchor;
     }
@@ -4104,10 +4320,31 @@
       closeProjectFileDialog();
       return;
     }
+    if (event.key === "Escape" && pointerSession?.move) {
+      cancelMoveDrag();
+      return;
+    }
     const modifier = event.ctrlKey || event.metaKey;
     if (modifier && event.key.toLowerCase() === "z") {
       event.preventDefault();
       if (event.shiftKey) redo(); else undo();
+    }
+    if (modifier && !event.shiftKey && !event.altKey && plateKeysAvailable(event)) {
+      const key = event.key.toLowerCase();
+      if (key === "c" && selection.size) {
+        event.preventDefault();
+        copySelectedWells();
+        return;
+      }
+      if (key === "v" && wellClipboard) {
+        event.preventDefault();
+        pasteCopiedWells();
+        return;
+      }
+    }
+    if (event.key === "Escape" && wellClipboard) {
+      wellClipboard = null;
+      renderPlateHints();
     }
     if (event.key === "Escape" && selection.size) {
       selection = new Set();

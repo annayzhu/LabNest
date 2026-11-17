@@ -1,4 +1,9 @@
 export const systemThemeStorageKey = "labnest.system-theme";
+/** Set once the user picks a style; before that, a stored "moon-dai" is only the old automatic default. */
+export const systemThemeChosenKey = "labnest.system-theme-chosen";
+export const defaultSystemThemeId = "lilac-mist";
+/** Light tokens of the current style, shared with same-origin embedded tools so they can follow it. */
+export const toolThemeStorageKey = "labnest.tool-theme.v1";
 
 type SystemThemeTokens = Readonly<Record<
   | "--paper" | "--warm" | "--stone" | "--sand-panel"
@@ -138,6 +143,34 @@ const establishedThemes = [
       "--ai":"#f7ca1d","--ai-fg":"#1f2a44",
     },
   }),
+  defineSystemTheme({
+    id: "lilac-mist", name: "丁香浅紫", motif: "ruyi-cloud",
+    description: "通篇浅丁香紫底色，紫色操作与杏橙撞色，柔和而不失焦点。",
+    tokens: {
+      "--paper":"#f8f6fc","--warm":"#fcfbfe","--stone":"#f0ecf8","--sand-panel":"#e5def3",
+      "--ink":"#26222f","--graphite":"#514a63","--muted":"#635b76","--disabled":"#aaa4b6",
+      "--moss":"#6a55a8","--moss-hover":"#59478f","--moss-surface":"#eeeafa","--moss-surface-hover":"#e6e0f7","--moss-border":"#cfc5ea",
+      "--action":"#6a55a8","--action-hover":"#59478f","--action-surface":"#eeeafa","--action-surface-hover":"#e6e0f7","--action-border":"#cfc5ea",
+      "--sage":"#6a55a8","--sage-surface":"#f1eefb","--fog":"#6e6788","--fog-surface":"#f2f0f7",
+      "--clay":"#e08a4f","--pale-sand":"#fbeee3","--hairline":"#e4dfee","--border-strong":"#cfc7e0",
+      "--brand-mark-bg":"#6a55a8","--brand-mark-fg":"#ffffff","--brand-mark-border":"#59478f",
+      "--ai":"#e08a4f","--ai-fg":"#2a1708",
+    },
+  }),
+  defineSystemTheme({
+    id: "sky-mist", name: "晴空浅蓝", motif: "huiwen",
+    description: "通篇浅天蓝底色，蓝色操作与珊瑚撞色，清爽明快。",
+    tokens: {
+      "--paper":"#f5f9fe","--warm":"#fbfdff","--stone":"#ebf2fb","--sand-panel":"#dce8f6",
+      "--ink":"#1f2a36","--graphite":"#475a70","--muted":"#5a6c80","--disabled":"#a3afbd",
+      "--moss":"#2a66a8","--moss-hover":"#22568f","--moss-surface":"#e5effa","--moss-surface-hover":"#d9e7f8","--moss-border":"#b7cfec",
+      "--action":"#2a66a8","--action-hover":"#22568f","--action-surface":"#e5effa","--action-surface-hover":"#d9e7f8","--action-border":"#b7cfec",
+      "--sage":"#2a66a8","--sage-surface":"#eaf2fb","--fog":"#557089","--fog-surface":"#edf3f9",
+      "--clay":"#e8875f","--pale-sand":"#fbebe4","--hairline":"#dce5ef","--border-strong":"#c3d1e2",
+      "--brand-mark-bg":"#2a66a8","--brand-mark-fg":"#ffffff","--brand-mark-border":"#22568f",
+      "--ai":"#e8875f","--ai-fg":"#2b140b",
+    },
+  }),
 ] as const;
 
 // Backgrounds keep the hue of the user-supplied samples, lightened toward the established papers; accents remain contrast-derived.
@@ -161,8 +194,8 @@ export function isSystemThemeId(value: string | null): value is SystemThemeId {
 }
 
 export function systemThemeCssText() {
-  return systemThemes.map((theme, index) => {
-    const selector = index === 0
+  return systemThemes.map((theme) => {
+    const selector = theme.id === defaultSystemThemeId
       ? `:root,html[data-labnest-theme="${theme.id}"]`
       : `html[data-labnest-theme="${theme.id}"]`;
     const declarations = Object.entries(theme.tokens)
@@ -177,10 +210,16 @@ export function resolvedThemeTokens(themeId:string,mode:'light'|'dark'):Record<s
  const index=Math.max(0,systemThemes.findIndex(theme=>theme.id===themeId));const theme=systemThemes[index];
  if(mode==='light')return {...theme.tokens,'--surface':'#ffffff','--warning':'#805b24','--warning-surface':'#faf0dc','--control-border':'#77848d','--success':'#276340','--success-surface':'#e9f5ec','--error':'#a12a39','--error-surface':'#fcebef'};
  // Each existing scheme has its own dark palette; IDs and user selections stay stable.
- const darkPalettes=[['#aac9e1','#e2b99d','#151d24'],['#89d5e8','#f2ada3','#132126'],['#80d6cc','#feb66d','#17221c'],['#dcabda','#8adb8d','#231b24'],['#9bbeff','#fec25d','#182033'],['#7ed49d','#f9919f','#17231d'],['#a0bdfe','#f8d64c','#1c2032']];
+ const darkPalettes=[['#aac9e1','#e2b99d','#151d24'],['#89d5e8','#f2ada3','#132126'],['#80d6cc','#feb66d','#17221c'],['#dcabda','#8adb8d','#231b24'],['#9bbeff','#fec25d','#182033'],['#7ed49d','#f9919f','#17231d'],['#a0bdfe','#f8d64c','#1c2032'],['#c3b4f2','#f5b98a','#1d1a26'],['#9cc4f2','#f2ab8e','#151d27']];
  const [accent,selection,paper]=darkPalettes[index < establishedThemes.length ? index : referenceThemes[index-establishedThemes.length].base];
  return {...theme.tokens,'--paper':paper,'--warm':'#1a242d','--stone':'#202c35','--sand-panel':'#283641','--surface':'#1c2730','--ink':'#edf2f5','--graphite':'#d0dce4','--muted':'#b3c2cd','--disabled':'#7d8a94','--moss':accent,'--moss-hover':'#d8e9f4','--action':accent,'--action-hover':'#d8e9f4','--sage':accent,'--moss-surface':'#263b46','--moss-surface-hover':'#304754','--moss-border':'#678493','--sage-surface':'#263b46','--action-surface':'#263b46','--action-surface-hover':'#304754','--action-border':'#678493','--fog':'#b4cedd','--fog-surface':'#263844','--pale-sand':'#3b302a','--clay':'#e2b99d','--hairline':'#455966','--border-strong':'#8aa2b1','--control-border':'#8aa2b1','--brand-mark-bg':accent,'--brand-mark-fg':'#15212a','--brand-mark-border':accent,'--ai':selection,'--ai-fg':'#251c16','--ai-hover':hoverShade(selection,'#251c16'),'--warning':'#f1ce92','--warning-surface':'#3b3020','--success':'#a6dfb3','--success-surface':'#203b2b','--error':'#ffb8bf','--error-surface':'#402b33','--info':'#b7d9e8','--info-surface':'#233844'};
 }
 export function appearanceThemeCssText(){
  return systemThemes.map(theme=>['light','dark'].map(mode=>{const tokens=resolvedThemeTokens(theme.id,mode as 'light'|'dark');const declarations=Object.entries(tokens).map(([key,value])=>`${key}:${value}`).join(';');const documentTokens=Object.entries(resolvedThemeTokens(theme.id,'light')).map(([key,value])=>`${key}:${value}`).join(';');return `html[data-labnest-theme="${theme.id}"][data-labnest-mode="${mode}"]{${declarations};color-scheme:${mode}}html[data-labnest-theme="${theme.id}"] :is(.document-a4-paper,.scientific-document-view,.tiptap.document-editor-content){${documentTokens};color-scheme:light}`;}).join('')).join('');
+}
+
+/** The light tokens a same-origin tool needs to match the current style; tools stay light in dark mode. */
+export function toolThemePayload(themeId:string){
+ const t=resolvedThemeTokens(themeId,'light');
+ return {version:1,themeId,tokens:{paper:t['--paper'],warm:t['--warm'],stone:t['--stone'],panel:t['--sand-panel'],surface:t['--surface'],ink:t['--ink'],graphite:t['--graphite'],muted:t['--muted'],accent:t['--action'],accentHover:t['--action-hover'],accentSurface:t['--action-surface'],accentSurfaceHover:t['--action-surface-hover'],accentBorder:t['--action-border'],hairline:t['--hairline'],borderStrong:t['--border-strong']}};
 }

@@ -1,5 +1,3 @@
-﻿构建日期：20261104
-源码版本：961e641
+﻿构建日期：20261116
+源码版本：616fcec33a1265a8a8615c1ced367cc8eda6a4c9
 格式：单文件离线 HTML（CSS、JavaScript 及 Excel 导出组件均已内嵌）
-
-Source commit: aab4c49ff99be35c9812bad4da97e48b38c4e560

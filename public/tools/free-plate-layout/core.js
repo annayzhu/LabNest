@@ -72,6 +72,87 @@
     return result;
   }
 
+  function wellIdAt(size, row, column) {
+    const spec = getSpec(size);
+    if (row < 0 || row >= spec.rows.length || column < 0 || column >= spec.columns) return null;
+    return `${spec.rows[row]}${column + 1}`;
+  }
+
+  function inReadingOrder(size, wellIds) {
+    return [...new Set(wellIds)]
+      .map((id) => ({ id, position: parseWell(size, id) }))
+      .filter((item) => item.position)
+      .sort((left, right) => left.position.index - right.position.index);
+  }
+
+  // Dragging `fromWell` onto `toWell` shifts the whole selection by that offset.
+  // Wells already sitting where the selection lands go back, in reading order,
+  // into the wells the selection leaves. The result is a permutation of wells.
+  function planSwap(size, selectedIds, fromWell, toWell) {
+    const from = parseWell(size, fromWell);
+    const to = parseWell(size, toWell);
+    const sources = inReadingOrder(size, selectedIds);
+    if (!from || !to || !sources.length) return { ok: false, reason: "empty", landing: [], displaced: [], moves: [] };
+    const rowShift = to.row - from.row;
+    const columnShift = to.column - from.column;
+    const landing = [];
+    const moves = [];
+    let outside = false;
+    for (const source of sources) {
+      const target = wellIdAt(size, source.position.row + rowShift, source.position.column + columnShift);
+      if (!target) { outside = true; continue; }
+      landing.push(target);
+      moves.push([source.id, target]);
+    }
+    if (outside) return { ok: false, reason: "out-of-bounds", landing, displaced: [], moves: [] };
+    if (!rowShift && !columnShift) return { ok: true, unchanged: true, landing, displaced: [], moves: [] };
+    const sourceIds = new Set(sources.map((source) => source.id));
+    const landingIds = new Set(landing);
+    const displaced = inReadingOrder(size, landing.filter((id) => !sourceIds.has(id))).map((item) => item.id);
+    const vacated = sources.map((source) => source.id).filter((id) => !landingIds.has(id));
+    displaced.forEach((id, index) => moves.push([id, vacated[index]]));
+    return { ok: true, landing, displaced, moves };
+  }
+
+  function applyMoves(wells, moves) {
+    const next = { ...wells };
+    for (const [, to] of moves) delete next[to];
+    for (const [from, to] of moves) if (wells[from]) next[to] = wells[from];
+    return next;
+  }
+
+  // Offsets are relative to the first selected well in reading order, which is
+  // the well that lands on the paste target. Empty wells keep the shape but are
+  // never pasted.
+  function copyShape(size, selectedIds, valueOf) {
+    const items = inReadingOrder(size, selectedIds);
+    if (!items.length) return null;
+    const first = items[0].position;
+    return {
+      items: items.map(({ id, position }) => {
+        const value = valueOf(id);
+        return { rowOffset: position.row - first.row, columnOffset: position.column - first.column, value: value ?? null };
+      }),
+    };
+  }
+
+  function planPaste(size, clipboard, anchorWell, occupiedIds = []) {
+    const anchor = parseWell(size, anchorWell);
+    if (!anchor || !clipboard?.items?.length) return { ok: false, reason: "invalid-anchor", targets: [], overwritten: [], outside: 0 };
+    const targets = [];
+    let outside = 0;
+    for (const item of clipboard.items) {
+      if (item.value === null || item.value === undefined) continue;
+      const wellId = wellIdAt(size, anchor.row + item.rowOffset, anchor.column + item.columnOffset);
+      if (wellId) targets.push({ wellId, value: item.value });
+      else outside += 1;
+    }
+    const occupied = new Set(occupiedIds);
+    const overwritten = targets.filter((target) => occupied.has(target.wellId)).map((target) => target.wellId);
+    if (!targets.length && !outside) return { ok: false, reason: "empty", targets, overwritten, outside };
+    return { ok: !outside, reason: outside ? "out-of-bounds" : null, targets, overwritten, outside };
+  }
+
   function asFiniteNumber(value) {
     if (value === "" || value === null || value === undefined) return null;
     const number = Number(value);
@@ -157,6 +238,11 @@
     orderedWellIds,
     rangeSelection,
     rectangleSelection,
+    wellIdAt,
+    planSwap,
+    applyMoves,
+    copyShape,
+    planPaste,
     asFiniteNumber,
     applyOperation,
     calculateWells,

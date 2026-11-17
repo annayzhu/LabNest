@@ -22,7 +22,7 @@ try {
 
   for (const themeId of themeIds) {
     await page.locator(`.system-theme-option:has(input[value="${themeId}"])`).click();
-    await page.waitForFunction((id) => document.documentElement.dataset.labnestTheme === id || (id === "moon-dai" && !document.documentElement.dataset.labnestTheme), themeId);
+    await page.waitForFunction((id) => document.documentElement.dataset.labnestTheme === id || (id === "lilac-mist" && !document.documentElement.dataset.labnestTheme), themeId);
     await page.waitForFunction(() => {
       const current = document.querySelector('aside .sidebar-nav-item[aria-current="page"]');
       if (!current) return false;

@@ -19,6 +19,13 @@
   --warning: #805b24;
   --warning-soft: #faf0dc;
   --success: #526f60;
+  /* The plate tray and empty wells; inside LabNest these follow the system style. */
+  --plate-tray-a: #f6f7f4;
+  --plate-tray-b: #eceee9;
+  --plate-tray-border: #d6dcd8;
+  --plate-empty: #fafbf8;
+  --plate-empty-border: #dfe5e1;
+  --plate-filled: #dfe9e7;
   --shadow: none;
   --shadow-soft: none;
   --radius-xl: 8px;
@@ -142,8 +149,8 @@ label > span { display: block; margin-bottom: 3px; color: var(--ink-soft); font-
 .overview-plate-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .overview-plate-heading strong { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
 .overview-plate-heading span { flex: none; color: var(--muted); font-size: 12px; }
-.overview-mini-grid { display: grid; gap: 2px; margin-top: 8px; padding: 6px; border-radius: 6px; background: var(--surface-soft); }
-.overview-mini-well { aspect-ratio: 1; min-width: 2px; border: 1px solid var(--line-strong); border-radius: 50%; background: #fafbf8; }
+.overview-mini-grid { display: grid; gap: 2px; margin-top: 8px; padding: 6px; border: 1px solid var(--plate-tray-border); border-radius: 6px; background: linear-gradient(145deg, var(--plate-tray-a), var(--plate-tray-b)); }
+.overview-mini-well { aspect-ratio: 1; min-width: 2px; border: 1px solid var(--line-strong); border-radius: 50%; background: var(--plate-empty); }
 .overview-plate-meta { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; }
 
 .workspace-grid { display: grid; flex: 1; grid-template-columns: minmax(0, 1fr) 320px; gap: 8px; min-height: 0; }
@@ -174,9 +181,9 @@ label > span { display: block; margin-bottom: 3px; color: var(--ink-soft); font-
 /* The plate takes everything the column has left. */
 .plate-scroll { display: flex; flex: 1 1 0; min-height: 0; padding: 8px; overflow: auto; scrollbar-color: var(--line-strong) transparent; }
 .plate-canvas { position: relative; flex: none; margin: auto; user-select: none; }
-.plate-grid { --cell-width: 56px; --cell-height: 56px; --cell-gap: 5px; --well-radius: 7px; --well-font: 10px; display: grid; grid-template-columns: 24px repeat(var(--plate-columns), var(--cell-width)); grid-template-rows: 20px repeat(var(--plate-rows), var(--cell-height)); gap: var(--cell-gap); }
+.plate-grid { --cell-width: 56px; --cell-height: 56px; --cell-gap: 5px; --well-radius: 7px; --well-font: 10px; display: grid; grid-template-columns: 24px repeat(var(--plate-columns), var(--cell-width)); grid-template-rows: 20px repeat(var(--plate-rows), var(--cell-height)); gap: var(--cell-gap); padding: 9px; border: 1px solid var(--plate-tray-border); border-radius: 14px; background: linear-gradient(145deg, var(--plate-tray-a), var(--plate-tray-b)); }
 .axis-label { display: grid; place-items: center; color: var(--muted); font-size: 12px; font-weight: 500; line-height: 1; }
-.well { position: relative; display: block; width: var(--cell-width); height: var(--cell-height); padding: 2px 3px; overflow: hidden; border: 1px solid var(--well-border, #dfe5e1); border-radius: var(--well-radius); background: var(--well-bg, #fafbf8); color: var(--well-ink, #4d5955); font-size: var(--well-font); line-height: 1.22; text-align: left; }
+.well { position: relative; display: block; width: var(--cell-width); height: var(--cell-height); padding: 2px 3px; overflow: hidden; border: 1px solid var(--well-border, var(--plate-empty-border)); border-radius: var(--well-radius); background: var(--well-bg, var(--plate-empty)); color: var(--well-ink, #4d5955); font-size: var(--well-font); line-height: 1.22; text-align: left; }
 .well:hover { border-color: var(--pine); }
 .well.selected { z-index: 2; border-color: var(--pine); box-shadow: 0 0 0 2px var(--pine); }
 .well:active:not(:disabled) { transform: none; }
@@ -196,6 +203,14 @@ label > span { display: block; margin-bottom: 3px; color: var(--ink-soft); font-
 .plate-grid:not([data-lines="1"], [data-lines="2"], [data-lines="3"]) .well-primary:last-child { -webkit-line-clamp: 3; }
 .plate-grid:not([data-lines="1"], [data-lines="2"], [data-lines="3"]) .well-primary:nth-last-child(2) { display: -webkit-box; white-space: normal; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .plate-grid:is([data-lines="5"], [data-lines="6"], [data-lines="7"], [data-lines="8"], [data-lines="9"]) .well-primary { display: -webkit-box; white-space: normal; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+/* Pressing a selected well starts a move, so touch must not pan from there. */
+.well.selected { cursor: grab; touch-action: none; }
+.plate-canvas.is-moving, .plate-canvas.is-moving .well { cursor: grabbing; }
+.plate-canvas.is-moving .well.selected:not(.drop-landing, .drop-swap, .drop-invalid) { border-color: var(--well-border, var(--plate-empty-border)); box-shadow: none; opacity: .55; }
+.well.drop-landing, .well.paste-target { z-index: 3; border-color: var(--pine); box-shadow: 0 0 0 2px var(--pine), inset 0 0 0 999px rgba(63, 98, 93, .16); }
+.well.paste-target { border-style: dashed; }
+.well.drop-swap, .well.paste-overwrite { z-index: 3; border-color: var(--warning); box-shadow: 0 0 0 2px var(--warning), inset 0 0 0 999px rgba(128, 91, 36, .14); }
+.well.drop-invalid, .well.paste-invalid { z-index: 3; border-color: var(--danger); box-shadow: 0 0 0 2px var(--danger), inset 0 0 0 999px rgba(143, 78, 82, .16); }
 .selection-box { position: absolute; z-index: 8; border: 1px solid var(--pine); border-radius: 4px; background: rgba(63, 98, 93, .13); pointer-events: none; }
 .plate-footer-row { display: flex; flex: none; align-items: flex-start; gap: 8px; padding: 4px 10px; border-top: 1px solid var(--line); }
 .plate-legend { display: flex; flex: 1 1 auto; flex-wrap: wrap; gap: 2px 12px; min-width: 0; max-height: 19px; overflow: hidden; }
@@ -570,7 +585,7 @@ label > span { display: block; margin-bottom: 3px; color: var(--ink-soft); font-
   .plate-canvas { margin: 0; }
   .plate-canvas::before { display: block; margin-bottom: 8px; font-size: 14pt; font-weight: 600; content: attr(data-print-title); }
   .plate-legend { max-height: none; }
-  .well { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .well, .plate-grid, .overview-mini-grid { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   body.liquid-printing .page-shell { display: none !important; }
   body.liquid-printing .liquid-drawer { position: static; display: block !important; }
   body.liquid-printing .liquid-drawer-panel { display: block; height: auto; border: 0; }
@@ -667,7 +682,7 @@ label > span { display: block; margin-bottom: 3px; color: var(--ink-soft); font-
 .liquid-layout-section { margin-top: 10px; }
 .liquid-layout-section h4 { margin: 0 0 6px; font-size: 13px; font-weight: 600; }
 .liquid-layout-preview { display: grid; grid-template-columns: repeat(var(--preview-columns), minmax(0, 1fr)); gap: 2px; max-width: 640px; }
-.liquid-preview-well { display: grid; aspect-ratio: 1.15; min-width: 0; place-items: center; padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 3px; background: #fafbf8; font-size: 10px; line-height: 1; }
+.liquid-preview-well { display: grid; aspect-ratio: 1.15; min-width: 0; place-items: center; padding: 0; overflow: hidden; border: 1px solid var(--plate-empty-border); border-radius: 3px; background: var(--plate-empty); font-size: 10px; line-height: 1; }
 .liquid-preview-well.is-assigned { border-color: var(--well-border); background: var(--well-bg); color: var(--well-ink); cursor: pointer; }
 .liquid-preview-well.is-assigned:hover, .liquid-preview-well.is-assigned:focus-visible { outline: 2px solid var(--pine); outline-offset: 0; }
 .liquid-preview-detail { margin: 4px 0 0; color: var(--ink-soft); font-size: 13px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }

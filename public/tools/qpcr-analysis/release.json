@@ -1,19 +1,19 @@
 {
   "repository": "https://github.com/annayzhu/qPCR-analysis-studio",
-  "commit": "4c8a9b952de762907173106a0f6bffc92391b1f5",
+  "commit": "329a060e532650eab6ec72e22533de1e0682a32e",
   "baseline": "7e812fc2ed899a16ce8410edaebfeaf6fcc8b36b",
-  "publication": "branch labnest-tool-workflow-20261104",
+  "publication": "branch main",
   "build": "node scripts/build-offline.mjs",
   "node": "v22.23.1",
   "lockfileSha256": "12e268ee5314b955bd0eaeda46785f4673c00dc1431bd01690a3c57af363931c",
   "files": {
     "index.html": {
-      "sha256": "0265d8f7c6069aba7abc90a5b1feef0e5ea4c516570ce6629905dc69cc5e5f0a",
-      "bytes": 2743025
+      "sha256": "65602e01e58cd07bd3f4aa231198e4b0af526f87498f60a797fc7137516de2e5",
+      "bytes": 2751382
     },
     "offline.zip": {
-      "sha256": "0b35c5209e74a7de46f651fdf3f630e693b08a39133460c16bf608fe1995bc6a",
-      "bytes": 797308
+      "sha256": "82c947ff6461e0d96bdbc31e11ceefb302dd56e1c995ebd63f6d85ced1798153",
+      "bytes": 799878
     }
   }
 }

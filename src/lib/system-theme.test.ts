@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { systemThemeCssText, systemThemes } from "./system-theme";
+import { defaultSystemThemeId, systemThemeCssText, systemThemes, toolThemePayload } from "./system-theme";
 
 function relativeLuminance(hex: string) {
   const [red, green, blue] = hex.match(/[\da-f]{2}/gi)!.map((part) => {
@@ -46,5 +46,17 @@ describe("system themes", () => {
       expect(css).toContain(`data-labnest-theme="${theme.id}"`);
       expect(css).toContain(`--ai:${theme.tokens["--ai"]}`);
     });
+  });
+});
+
+describe("light purple and light blue styles (Q481–Q485)", () => {
+  it("offers both, puts the default on :root, and shares light tokens with tools", () => {
+    expect(systemThemes.map((theme) => theme.id)).toEqual(expect.arrayContaining(["lilac-mist", "sky-mist"]));
+    expect(systemThemeCssText()).toContain(`:root,html[data-labnest-theme="${defaultSystemThemeId}"]`);
+    const payload = toolThemePayload("lilac-mist");
+    expect(payload.tokens.accent).toBe("#6a55a8");
+    expect(payload.tokens.stone).toBe("#f0ecf8");
+    expect(contrastRatio("#ffffff", toolThemePayload("sky-mist").tokens.accent)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(payload.tokens.accent, payload.tokens.accentSurface)).toBeGreaterThanOrEqual(4.5);
   });
 });

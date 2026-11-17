@@ -1,20 +1,26 @@
 {
   "repository": "https://github.com/annayzhu/qPCR-Plate-Layout-Planner",
-  "commit": "aab4c49ff99be35c9812bad4da97e48b38c4e560",
+  "commit": "616fcec33a1265a8a8615c1ced367cc8eda6a4c9",
+  "source": "git archive of the committed revision; uncommitted files excluded",
   "build": "node scripts/build-portable.mjs",
+  "node": "v22.23.1",
   "lockfileSha256": "838600def2475cb4129ba48105ecf9bf7fef7ca5866b582313b39b8662f3f22b",
   "files": {
     "index.html": {
-      "sha256": "9b62bdac4ca1e82bff1225ce1a608048a004bf3a1cac975a17a7c1b987cf269f",
-      "bytes": 1844595
+      "sha256": "ea4f43e4e783cd694bb05d178f2489b6aaaf638cf3c60806d18bb2d8403b94b9",
+      "bytes": 1850063
+    },
+    "README_CN_EN.txt": {
+      "sha256": "c0b0961b3e60c56ba4ce8b005da3b7267c2308ec5ee2190762ebd8cf52123557",
+      "bytes": 4041
     },
     "VERSION.txt": {
-      "sha256": "394f756e8a7faeafcfc8b90d65a10ded7e2b198f31037e310d63f5e4b3fb50b3",
-      "bytes": 194
+      "sha256": "111f374d212ba8f949a2238e2163f321b801f389a4febf3050f4ebf3254d4647",
+      "bytes": 170
     },
-    "offline.zip": {
-      "sha256": "436b62aa2788bcc61e391e2fe8e1f4c891ee16e24db1853a9586412af7f4cc9f",
-      "bytes": 537439
+    "THIRD_PARTY_LICENSES.txt": {
+      "sha256": "22b6018941da2d15df99b68b84bad3101c63f1405e038c98de7a74e90af26566",
+      "bytes": 53151
     }
   }
 }

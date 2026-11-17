@@ -1,3 +1,41 @@
+// Inside LabNest (same origin) the analyzer follows the current system style, which LabNest
+// publishes as light tokens. Standalone copies never see the key and keep their own colours;
+// result and status colours are not touched.
+(function () {
+  "use strict";
+  var key = "labnest.tool-theme.v1";
+  var mapping = {
+    "--canvas": "paper", "--ink": "ink", "--muted": "muted", "--line": "hairline", "--line-strong": "borderStrong",
+    "--navy": "accent", "--navy-deep": "accentHover", "--teal": "accent", "--teal-soft": "accentSurface",
+    "--plate-tray-a": "stone", "--plate-tray-b": "panel", "--plate-tray-border": "borderStrong",
+    "--plate-empty": "warm", "--plate-empty-border": "accentBorder"
+  };
+  function tokens() {
+    try {
+      var payload = JSON.parse(window.localStorage.getItem(key) || "null");
+      var values = payload && payload.version === 1 ? payload.tokens : null;
+      if (!values) return null;
+      return Object.keys(mapping).every(function (name) { return /^#[0-9a-f]{6}$/i.test(String(values[mapping[name]])); }) ? values : null;
+    } catch (error) {
+      return null;
+    }
+  }
+  function apply() {
+    var values = tokens();
+    var style = document.documentElement.style;
+    Object.keys(mapping).forEach(function (name) {
+      if (values) style.setProperty(name, values[mapping[name]]);
+      else style.removeProperty(name);
+    });
+  }
+  apply();
+  // Inside a LabNest page the host already names the tool, so the banner is not repeated.
+  if (window.parent !== window) document.documentElement.setAttribute("data-labnest-hosted", "true");
+  window.addEventListener("storage", function (event) {
+    if (event.key === key || event.key === null) apply();
+  });
+})();
+
 (function () {
   "use strict";
 

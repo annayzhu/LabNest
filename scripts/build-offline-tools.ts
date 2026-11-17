@@ -14,10 +14,10 @@ import tailwind from '@tailwindcss/postcss';
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { appearanceThemeCssText, systemThemeCssText } from '../src/lib/system-theme';
+import { appearanceThemeCssText, defaultSystemThemeId, systemThemeCssText } from '../src/lib/system-theme';
 
 const root = process.cwd();
-const outputRoot = path.join(root, 'outputs', 'tools', 'portable-tools');
+const outputRoot = path.resolve(process.env.OFFLINE_TOOLS_OUT ?? path.join(root, 'outputs', 'tools', 'portable-tools'));
 const studioRoot = path.resolve(process.env.VISUALIZATION_STUDIO_ROOT ?? path.join(root, '..', 'Visualization-studio'));
 
 const readme = (name: string, extra: string[] = []) => [
@@ -77,7 +77,7 @@ async function calculator() {
     tailwindCss(root, path.join(root, 'src/app/globals.css')),
   ]);
   return writePackage('06_Experimental_Calculator', {
-    'index.html': page({ title: 'LabNest 实验计算器（离线版）', lang: 'zh-CN', css: systemThemeCssText() + appearanceThemeCssText() + base + css, js, htmlAttributes: ' data-labnest-theme="moon-dai" data-labnest-mode="light"' }),
+    'index.html': page({ title: 'LabNest 实验计算器（离线版）', lang: 'zh-CN', css: systemThemeCssText() + appearanceThemeCssText() + base + css, js, htmlAttributes: ` data-labnest-theme="${defaultSystemThemeId}" data-labnest-mode="light"` }),
     'README_使用说明.txt': readme('LabNest 实验计算器', ['离线版包含全部计算、方法说明、复制和导出；“存入实验”等需要 LabNest 服务器的功能不在离线版里。']),
   }, [[path.join(root, 'public/icons/lab-soft-v1'), 'icons/lab-soft-v1']]);
 }

@@ -3,17 +3,18 @@
 .ln-plate-layout figcaption { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: baseline; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
 .ln-plate-layout figcaption strong { color: var(--ink); font-size: var(--ln-control-font-size-md); font-weight: 600; }
 .ln-plate-layout-scroll { max-width: 100%; overflow-x: auto; }
-.ln-plate-layout-grid { display: grid; gap: 3px; max-width: 46rem; user-select: none; -webkit-user-select: none; }
+.ln-plate-layout-grid { display: grid; gap: 3px; max-width: 46rem; padding: 6px; border: 1px solid var(--border-strong); border-radius: 12px; background: linear-gradient(160deg, var(--stone), var(--sand-panel)); user-select: none; -webkit-user-select: none; }
+/* The plate tray follows the system style, matching both plate planners. */
 .ln-plate-layout[data-size="384"] .ln-plate-layout-grid { gap: 2px; min-width: 30rem; }
 .ln-plate-layout[data-size="6"] .ln-plate-layout-grid, .ln-plate-layout[data-size="12"] .ln-plate-layout-grid { max-width: 26rem; }
 .ln-plate-layout[data-size="24"] .ln-plate-layout-grid { max-width: 34rem; }
-.ln-plate-layout-axis { display: flex; align-items: center; justify-content: center; min-width: 0; padding: 0; font: 500 0.66rem/1 var(--font-data); color: var(--muted); border-radius: var(--ln-radius-control-sm); }
+.ln-plate-layout-axis { display: flex; align-items: center; justify-content: center; min-width: 0; padding: 0; font: 500 max(12px, 0.75rem)/1 var(--font-data); color: var(--muted); border-radius: var(--ln-radius-control-sm); }
 button.ln-plate-layout-axis:hover { background: var(--warm); color: var(--ink); }
 .ln-plate-layout-well { display: flex; align-items: center; justify-content: center; aspect-ratio: 1; min-width: 0; overflow: hidden; padding: 0 0.12rem; border: 1px solid var(--hairline); border-radius: 999px; background: var(--surface); color: var(--graphite); font: 500 0.75rem/1.1 var(--font-data); text-align: center; white-space: nowrap; text-overflow: ellipsis; }
 .ln-plate-layout-well[data-plate-tone] { border-color: color-mix(in srgb, var(--ln-tone) 60%, var(--hairline)); background: color-mix(in srgb, var(--ln-tone) 22%, var(--surface)); color: var(--ink); }
 .ln-plate-layout-well[data-filled]:not([data-plate-tone]) { border-style: dashed; border-color: var(--muted); }
 .ln-plate-layout[data-size="384"] .ln-plate-layout-well { font-size: 0; border-width: 1px; }
-.ln-plate-layout[data-size="384"] .ln-plate-layout-axis { font-size: 0.5rem; }
+.ln-plate-layout[data-size="384"] .ln-plate-layout-axis { font-size: 12px; }
 .ln-plate-layout[data-size="6"] .ln-plate-layout-well, .ln-plate-layout[data-size="12"] .ln-plate-layout-well, .ln-plate-layout[data-size="24"] .ln-plate-layout-well { font-size: 0.75rem; white-space: normal; }
 .ln-plate-layout-well[data-stacked] { flex-direction: column; gap: 1px; line-height: 1.15; }
 .ln-plate-layout-well[data-stacked] > span { max-width: 84%; overflow-wrap: anywhere; }
@@ -89,7 +90,7 @@ button.ln-plate-layout-axis:hover { background: var(--warm); color: var(--ink); 
 @media print {
   .ln-document-plate { break-inside: avoid; border: 0; padding: 0; }
   .ln-document-plate-bar { display: none; }
-  .ln-plate-layout-well[data-plate-tone] { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .ln-plate-layout-well[data-plate-tone], .ln-plate-layout-grid { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 .ln-plate-layout-well[data-lines] { flex-direction: column; gap: 1px; aspect-ratio: 5 / 4; padding: 0; border-radius: var(--ln-radius-control-sm, 4px); font-family: var(--font-sans); font-size: clamp(7.5px, 1.5cqi, 13px); line-height: 1.15; font-weight: 400; letter-spacing: -0.02em; white-space: nowrap; }
 .ln-plate-layout-well[data-lines] > span:first-child { color: var(--ink); font-weight: 500; }
